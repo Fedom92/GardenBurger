@@ -1,16 +1,14 @@
 import { useState } from "react";
-import logo from "../img/logo-odentid.png";
-import background from "../img/login-background.png"
+import logo from "../img/logo_blanco.webp";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth";
 import { auth } from "../firebaseConfig/firebase";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebaseConfig/firebase";
-import { query, collection, where, getDocs, limit } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { Modal } from "react-bootstrap";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import ReCAPTCHA from "react-google-recaptcha";
-import "../style/Main.css";
 import Swal from "sweetalert2";
+import "../style/Main.css";
 import CryptoJS from 'crypto-js';
 
 const Login = () => {
@@ -18,58 +16,44 @@ const Login = () => {
   const [emailReseteo, setEmailReseteo] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
-  const [error2, setError2] = useState(false);
-  const navigate = useNavigate();
-  const [mostrarModal, setMostrarModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [captchaResolved, setCaptchaResolved] = useState(false);
-  const [showItem, setShowItem] = useState(false);
+  const [mostrarModal, setMostrarModal] = useState(false)
+  const navigate = useNavigate();
 
   const togglePasswordVisibility = (e) => {
     e.preventDefault();
     setShowPassword(!showPassword);
   };
 
-  const handleCaptchaResolved = () => {
-    setCaptchaResolved(true);
-  };
-
   const submit = async (e) => {
     e.preventDefault();
-    if (captchaResolved) {
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-        const q = query(collection(db, 'user'), where('correo', '==', email), limit(1));
-        const querySnapshot = await getDocs(q);
+      const userDocRef = doc(db, "usuarios", userCredential.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
 
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          const userRole = doc.data().rol;
-          const valorEncriptado = CryptoJS.AES.encrypt(userRole, process.env.REACT_APP_cryptoKey).toString();
-          localStorage.setItem('rol', valorEncriptado);
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const valorEncriptado = CryptoJS.AES.encrypt(userData.rol, process.env.REACT_APP_cryptoKey).toString();
+        localStorage.setItem('rol', valorEncriptado);
 
-          if (doc.data().rol === process.env.REACT_APP_rolBloq) {
-            await signOut(auth);
-            localStorage.setItem("rol", JSON.stringify(null));
-          } else if (doc.data().rol === process.env.REACT_APP_rolAd) {
-            navigate("/agenda");
-          } else {
-            navigate("/pacientes");
-          }
+        if (userData.rol === process.env.REACT_APP_rolBloq) {
+          await signOut(auth);
+          localStorage.setItem("rol", JSON.stringify(null));
         } else {
-          console.error("No documents");
-          window.alert("Error al Logearse, Verifique su conexión!")
+          navigate('/caja');
         }
-      } catch (error) {
-        console.error("Submit Login.jsx " + error)
-        setError(true);
-        setTimeout(clearError, 3000);
+
+      } else {
+        console.error("No documents");
+        window.alert("Error al Logearse, Verifique su conexión!")
       }
-    } else {
-      setError2(true)
-      setTimeout(clearError, 2000);
-    }
+    } catch (error) {
+      console.error("Submit Login.jsx " + error)
+      setError(true);
+      setTimeout(clearError, 3000);
+    };
   };
 
 
@@ -103,25 +87,24 @@ const Login = () => {
 
   const clearError = () => {
     setError("");
-    setError2("");
   };
 
   return (
     <>
-      <div className="login" style={{ overflow: "hidden" }}>
+      <div className="login">
         <div className="background-container">
-          <img className="background-image" alt="Background" src={background} />
+          <div className="background-image" />
           <div className="text-overlay">
             <h1 className="welcome-text">
               <span>Bienvenido a</span>
-              <span>la plataforma Odentid</span>
+              <span>Garden Burger</span>
             </h1>
           </div>
         </div>
         <div className="login-page" style={{ transform: "scale(0.9)" }}>
-          <img className="logo" src={logo} alt="Odentid" />
+          <img className="logo" src={logo} alt="GardenBurger Logo" />
           <form className="p-4" onSubmit={submit}>
-            <h3 style={{ textAlign: "left" }}>Iniciar Sesión</h3>
+            <h3>Iniciar Sesión</h3>
             <div className="email">
               <input
                 onChange={(e) => setEmail(e.target.value)}
@@ -131,11 +114,10 @@ const Login = () => {
               />
               <label htmlFor="email">Email</label>
             </div>
-            <div className="password" style={{ display: "flex" }}>
+            <div className="password d-flex">
               <input
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  setShowItem(true)
                 }}
                 type={showPassword ? "text" : "password"}
                 id="password"
@@ -143,7 +125,7 @@ const Login = () => {
               />
               <label htmlFor="password">Contraseña</label>
               <button
-                style={{ border: "none", background: "transparent", cursor: "pointer", color: "#000", borderRadius: "0px" }} // Agrega un margen de valor cero al botón
+                style={{ border: "none", background: "transparent", cursor: "pointer", color: "#000", borderRadius: "0px" }}
                 onClick={togglePasswordVisibility}
                 tabIndex="-1"
               >
@@ -153,17 +135,7 @@ const Login = () => {
             {error && (
               <span className="error">Informacion de Sesion Incorrecta.</span>
             )}
-            {showItem &&
-              <div className="captcha" style={{ display: "flex", justifyContent: "center", alignItems: "center", transform: "scale(0.9)" }}>
-                <ReCAPTCHA
-                  sitekey={process.env.REACT_APP_captcha}
-                  onChange={handleCaptchaResolved}
-                />
-              </div>
-            }
-            {error2 && (
-              <span className="error">Captcha Invalido.</span>
-            )}
+
 
             <button className="button-login" type="submit">
               Iniciar Sesión
@@ -180,13 +152,14 @@ const Login = () => {
                 alignSelf: "center"
               }}
             >
-              <span style={{ cursor: "pointer" }}>
+              <span className="pointer-event">
                 Olvidé mi Clave
               </span>
             </button>
           </form>
         </div>
       </div>
+
 
       {mostrarModal && (
         <Modal

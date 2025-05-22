@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { doc, updateDoc, where, collection, getDocs, query,limit } from "firebase/firestore";
+import { doc, updateDoc, where, collection, getDocs, query, } from "firebase/firestore";
 import { auth, db, deslogear, } from "../../firebaseConfig/firebase";
 import { updateProfile, updateEmail, onAuthStateChanged } from "firebase/auth";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -24,7 +24,6 @@ const MiPerfil = () => {
   const [id, setId] = useState("");
   const [, setMostrarPerfil] = useState(true);
   const [modalShowEditClave, setModalShowEditClave] = useState(false);
-  const [, setMostrarNotificaciones] = useState(false);
   const [mostrarBotonFoto, setMostrarBotonFoto] = useState(false);
   const storage = getStorage();
   const navigate = useNavigate()
@@ -35,22 +34,28 @@ const MiPerfil = () => {
   }, []);
 
   const fetchUserData = async (user) => {
-    const userQuery = query(collection(db, "user"), where("correo", "==", user.email), limit(1));
-    const userDocsSnapshot = await getDocs(userQuery);
-    if (!userDocsSnapshot.empty) {
-      const userData2 = userDocsSnapshot.docs[0].data();
-      const userId = userDocsSnapshot.docs[0].id;
-      setUser(userData2);
-      setApellido(userData2.apellido);
-      setNombres(userData2.nombres);
-      setCorreo(userData2.correo);
-      setTelefono(userData2.telefono);
-      setFechaAlta(userData2.fechaAlta);
-      setFoto(userData2.foto);
-      setRol(userData2.rol === process.env.REACT_APP_rolAd ? "Admin" : "Recepcionista");
-      setId(userId)
+    if (user) {
+      const userQuery = query(collection(db, "usuarios"), where("correo", "==", user.email));
+      const userDocsSnapshot = await getDocs(userQuery);
+      if (!userDocsSnapshot.empty) {
+        const userData2 = userDocsSnapshot.docs[0].data();
+        const userId = userDocsSnapshot.docs[0].id;
+        setUser(userData2);
+        setApellido(userData2.apellido);
+        setNombres(userData2.nombres);
+        setCorreo(userData2.correo);
+        setTelefono(userData2.telefono);
+        setFechaAlta(userData2.fechaAlta);
+        setFoto(userData2.foto);
+        setRol(userData2.rol === process.env.REACT_APP_rolSupAdmin ?
+          'Super Admin' : userData2.rol === process.env.REACT_APP_rolAdmin ?
+            'Admin' : userData2.rol === process.env.REACT_APP_rolOper ?
+              'Operador' : 'Bloqueado'
+        );
+        setId(userId)
+      }
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleEdit = (e) => {
@@ -76,7 +81,7 @@ const MiPerfil = () => {
       });
       await updateEmail(user, correo);
 
-      const userDocRef = doc(db, "user", id);
+      const userDocRef = doc(db, "usuarios", id);
       await updateDoc(userDocRef, {
         nombres,
         apellido,
@@ -91,7 +96,6 @@ const MiPerfil = () => {
         confirmButtonColor: '#00C5C1',
       }).then(() => {
         deslogear(auth);
-        localStorage.setItem("user", JSON.stringify(null));
         navigate("/")
       })
     } catch (e) {
@@ -104,11 +108,6 @@ const MiPerfil = () => {
     }
   }
 
-  const notificaciones = () => {
-    window.alert("NO SE HA ACORDADO ESTA ETAPA AUN")
-    setMostrarNotificaciones(true)
-  };
-
 
   const handleUploadImage = async (e) => {
     try {
@@ -120,7 +119,13 @@ const MiPerfil = () => {
       setFoto(downloadURL);
       setMostrarBotonFoto(true)
     } catch (error) {
-      console.error("Error al cargar la imagen al almacenamiento. Vuelva a iniciar sesión e intente de nuevo", error);
+      console.error("Error funcion handleUploadImage", error);
+      Swal.fire({
+        title: '¡Error!',
+        text: 'Error al cargar su foto. Vuelva a iniciar sesión e intente de nuevo.',
+        icon: 'error',
+        confirmButtonColor: '#d33',
+      })
     }
   }
 
@@ -131,7 +136,7 @@ const MiPerfil = () => {
       await updateProfile(user, {
         photoURL: foto,
       });
-      const userDocRef = doc(db, "user", id);
+      const userDocRef = doc(db, "usuarios", id);
       await updateDoc(userDocRef, {
         foto: foto
       });
@@ -142,10 +147,10 @@ const MiPerfil = () => {
         confirmButtonColor: '#00C5C1',
       }).then(() => {
         deslogear(auth);
-        localStorage.setItem("user", JSON.stringify(null));
         navigate("/")
       })
     } catch (error) {
+      console.error("Error funcion subirFoto", error);
       Swal.fire({
         title: '¡Error!',
         text: 'Error al guardar la imagen. Vuelva a iniciar sesión e intente de nuevo.',
@@ -162,16 +167,15 @@ const MiPerfil = () => {
           <span className="loader position-absolute start-50 top-50 mt-3"></span>
         </div>
       ) : (
-        <div className="w-100">
+        <div className="w-100 mt-5">
           <div className="container mw-100">
             <div className="d-flex">
               <h1>Mi Perfil</h1>
             </div>
 
             <nav className="nav nav-borders">
-              <div className="nav-link active ms-0" onClick={() => { setMostrarPerfil(true); setModalShowEditClave(false); setMostrarNotificaciones(false); }} >Perfil</div>
-              <div className="nav-link" onClick={() => { setMostrarPerfil(false); setModalShowEditClave(true); setMostrarNotificaciones(false); }} >Seguridad</div>
-              <div className="nav-link" onClick={() => { setMostrarPerfil(false); setModalShowEditClave(false); notificaciones() }} >Notificaciones</div>
+              <div className="nav-link active ms-0" onClick={() => { setMostrarPerfil(true); setModalShowEditClave(false); }} >Perfil</div>
+              <div className="nav-link" onClick={() => { setMostrarPerfil(false); setModalShowEditClave(true); }} >Seguridad</div>
             </nav>
             <hr className="mt-0 mb-4" />
             <div className="row">

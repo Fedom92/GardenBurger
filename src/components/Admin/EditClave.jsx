@@ -49,7 +49,6 @@ const EditClave = (props) => {
                     }).then(() => {
                         props.onHide();
                         deslogear(auth);
-                        localStorage.setItem("user", JSON.stringify(null));
                         navigate("/")
                     });
                 });
@@ -96,56 +95,50 @@ const EditClave = (props) => {
                         </Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <div className="container">
-                            <div className="col">
-                                <form>
-                                    <div className="row">
-                                        <div className="col mb-6">
-                                            <label className="form-label">Nueva Contraseña</label>
-                                            <input
-                                                onChange={(e) => setNewPassword(e.target.value)}
-                                                type="password"
-                                                className="form-control"
-                                                minLength={6}
-                                                autoComplete="off"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
+                        <div className="container" style={{ marginTop: "-10px" }}>
+                            <form>
+                                <div className="row mb-2">
+                                    <label className="form-label">Nueva Contraseña</label>
+                                    <input
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        type="password"
+                                        className="form-control"
+                                        minLength={6}
+                                        autoComplete="off"
+                                        required
+                                    />
+                                </div>
 
-                                    <div className="row">
-                                        <div className="col mb-6">
-                                            <label className="form-label">Reingrese Nueva Contraseña</label>
-                                            <input
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                type="password"
-                                                className="form-control"
-                                                minLength={6}
-                                                autoComplete="off"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
+                                <div className="row mb-2">
+                                    <label className="form-label">Reingrese Nueva Contraseña</label>
+                                    <input
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        type="password"
+                                        className="form-control"
+                                        minLength={6}
+                                        autoComplete="off"
+                                        required
+                                    />
+                                </div>
 
-                                    <div className="row">
-                                        <div style={{ display: "flex" }}>
-                                            <button
-                                                type="submit"
-                                                onClick={validateFields}
-                                                className="btn button-main"
-                                                style={{ margin: "4px" }}
-                                            >
-                                                Guardar Nueva Clave
-                                            </button>
-                                            {error && (
-                                                <div className="alert alert-danger" role="alert" style={{ margin: '10px' }}>
-                                                    {error}
-                                                </div>
-                                            )}
-                                        </div>
+                                <div className="row">
+                                    <div style={{ display: "flex" }}>
+                                        <button
+                                            type="submit"
+                                            onClick={validateFields}
+                                            className="btn button-main"
+                                            style={{ margin: "4px" }}
+                                        >
+                                            Guardar Nueva Clave
+                                        </button>
+                                        {error && (
+                                            <div className="alert alert-danger" role="alert" style={{ margin: '10px' }}>
+                                                {error}
+                                            </div>
+                                        )}
                                     </div>
-                                </form>
-                            </div>
+                                </div>
+                            </form>
                         </div>
                     </Modal.Body>
                 </Modal>)}
@@ -161,37 +154,35 @@ const EditClave = (props) => {
                         <Modal.Title>Valide nuevamente su Usuario para continuar</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <div className="container">
-                            <div className="col">
-                                <form>
-                                    <div className="row">
-                                        <div className="col mb-6">
-                                            <label className="form-label">Ingrese su usuario</label>
-                                            <input
-                                                onChange={(e) => setRevalidUsuario(e.target.value)}
-                                                type="email"
-                                                className="form-control"
-                                                autoComplete="off"
-                                                required
-                                            />
-                                        </div>
+                        <div className="container" style={{ marginTop: "-10px" }}>
+                            <form>
+                                <div className="row">
+                                    <div className="col mb-2">
+                                        <label className="form-label">Ingrese su usuario</label>
+                                        <input
+                                            onChange={(e) => setRevalidUsuario(e.target.value)}
+                                            type="email"
+                                            className="form-control"
+                                            autoComplete="off"
+                                            required
+                                        />
                                     </div>
+                                </div>
 
-                                    <div className="row">
-                                        <div className="col mb-6">
-                                            <label className="form-label">Ingrese su Contraseña</label>
-                                            <input
-                                                onChange={(e) => setRevalidPass(e.target.value)}
-                                                type="password"
-                                                className="form-control"
-                                                minLength={6}
-                                                autoComplete="off"
-                                                required
-                                            />
-                                        </div>
+                                <div className="row">
+                                    <div className="col mb-2">
+                                        <label className="form-label">Ingrese su Contraseña</label>
+                                        <input
+                                            onChange={(e) => setRevalidPass(e.target.value)}
+                                            type="password"
+                                            className="form-control"
+                                            minLength={6}
+                                            autoComplete="off"
+                                            required
+                                        />
                                     </div>
-                                </form>
-                            </div>
+                                </div>
+                            </form>
                         </div>
                     </Modal.Body>
                     <Modal.Footer>

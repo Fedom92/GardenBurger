@@ -107,7 +107,7 @@ const HorariosAtencionCitas = ({ horariosParam, show, onHide }) => {
     return (
         <Modal show={show} onHide={onHide} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
             <Modal.Header closeButton onClick={() => { clear() }}>
-                <Modal.Title>Crear/Editar/Eliminar horarios</Modal.Title>
+                <Modal.Title>Crear/Editar/Eliminar Horarios</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <form onSubmit={idAEditar !== null ? handleUpdate : handleCreate}>

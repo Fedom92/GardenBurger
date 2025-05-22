@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { collection, addDoc, query, orderBy, getDocs, where, doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
-import peruFlag from "../../img/peru.png"
 import 'moment/locale/es';
 import moment from "moment";
 
@@ -14,21 +13,18 @@ function CreateCita(props) {
   const [idc, setIdc] = useState("");
   const [tipoIdc, setTipoIdc] = useState("dni");
   const [estado, setEstado] = useState("Agendada");
-  const [selectedCode, setSelectedCode] = useState("+51");
   const [numero, setNumero] = useState("");
   const [fecha, setFecha] = useState("");
   const [horaInicio, setHoraInicio] = useState("08:00");
   const [horaFin, setHoraFin] = useState("08:30");
   const [comentario, setComentario] = useState("");
   const [error, setError] = useState("");
-  const [doctor, setDoctor] = useState("");
   const [editable, setEditable] = useState(true);
   const [optionsHoraInicio, setOptionsHoraInicio] = useState([]);
   const [optionsHoraFin, setOptionsHoraFin] = useState([]);
   const [valorBusquedaOptions, setValorBusquedaOptions] = useState([]);
   const [, setHorariosAtencion] = useState([]);
   const [showBuscador, setShowBuscador] = useState(true);
-  const [doctoresOption, setDoctoresOption] = useState([]);
   const [estadoOptions, setEstadoOptions] = useState([]);
 
   const citasCollection = collection(db, "citas");
@@ -41,9 +37,6 @@ function CreateCita(props) {
 
   const estadosCollectiona = collection(db, "estados");
   const estadosCollection = useRef(query(estadosCollectiona));
-
-  const userCollectiona = collection(db, "user");
-  const userCollection = useRef(query(userCollectiona));
 
   const updateOptionsPacientes = useCallback((snapshot) => {
     const options = snapshot.docs.map((doc) => doc.data().valorBusqueda);
@@ -125,7 +118,6 @@ function CreateCita(props) {
       setApellidoConNombre(props.paciente.apellidoConNombre);
       setTipoIdc(props.paciente.tipoIdc);
       setIdc(props.paciente.idc);
-      setSelectedCode(props.paciente.selectedCode);
       setIdPacienteCita(props.paciente.id);
       setShowBuscador(false);
       setEditable(false);
@@ -134,7 +126,6 @@ function CreateCita(props) {
       setTipoIdc("dni")
       setIdc("");
       setIdPacienteCita("");
-      setSelectedCode("+51");
       setNumero("");
     }
   }, [props.paciente]);
@@ -151,7 +142,6 @@ function CreateCita(props) {
           setApellidoConNombre(data.apellidoConNombre);
           setTipoIdc(data.tipoIdc);
           setIdc(data.idc);
-          setSelectedCode(data.selectedCode);
           setNumero(data.numero);
           setIdPacienteCita(props.id);
           setEditable(false);
@@ -169,21 +159,6 @@ function CreateCita(props) {
     setEstadoOptions(options);
   }, []);
 
-  const getOptionsDoctores = useCallback(snapshot => {
-    const docsOptions = snapshot.docs
-      .filter(doc => doc.data().uid !== "Recepcionista")
-      .map((doc, index) => (
-        <option key={`doctores-${index}`}
-          value={JSON.stringify({
-            uid: doc.data().uid || "admin",
-            nombreApellido: doc.data().nombres + " " + doc.data().apellido
-          })}>
-          {doc.data().nombres + " " + doc.data().apellido}
-        </option>
-      ));
-    setDoctoresOption(docsOptions);
-  }, []);
-
   useEffect(() => {
     const fetchData = async () => {
 
@@ -191,15 +166,10 @@ function CreateCita(props) {
         const optionsEstadosSnapshot = await getDocs(estadosCollection.current);
         await getOptionsEstado(optionsEstadosSnapshot);
       };
-
-      if (!props.doctoresoption) {
-        const doctoresSnapshot = await getDocs(userCollection.current);
-        await getOptionsDoctores(doctoresSnapshot);
-      }
     }
 
     fetchData();
-  }, [props.estadooptions, props.doctoresoption, getOptionsDoctores, getOptionsEstado]);
+  }, [props.estadooptions, getOptionsEstado]);
 
 
 
@@ -214,14 +184,12 @@ function CreateCita(props) {
       idc: idc,
       idPacienteCita: idPacienteCita,
       estado: estado,
-      selectedCode: selectedCode,
       numero: numero,
       fecha: fecha,
       mes: mesVariable,
       comentario: comentario,
       horaInicio: horaInicio,
       horaFin: horaFin,
-      doctor: doctor,
     };
 
     try {
@@ -246,7 +214,6 @@ function CreateCita(props) {
       setIdPacienteCita("")
       setTipoIdc("dni")
       setIdc("");
-      setSelectedCode("+51");
       setNumero("");
       setEditable(true);
       return;
@@ -264,7 +231,6 @@ function CreateCita(props) {
       setIdPacienteCita(doc.id)
       setTipoIdc(data.tipoIdc);
       setIdc(data.idc);
-      setSelectedCode(data.selectedCode);
       setNumero(data.numero);
       setEditable(false);
     }
@@ -274,14 +240,12 @@ function CreateCita(props) {
     setApellidoConNombre("");
     setTipoIdc("dni")
     setIdc("");
-    setSelectedCode("+51");
     setNumero("");
     setEstado("Agendada");
     setFecha("");
     setHoraInicio("08:00");
     setHoraFin("08:30");
     setComentario("");
-    setDoctor("");
   };
 
   const validateFields = (e) => {
@@ -292,9 +256,7 @@ function CreateCita(props) {
       numero.trim() === "" ||
       fecha.trim() === "" ||
       horaInicio.trim() === "" ||
-      horaFin.trim() === "" ||
-      doctor.trim() === ""
-    ) {
+      horaFin.trim() === "") {
       setError("Respeta los campos obligatorios *");
       setTimeout(clearError, 2000);
       return false;
@@ -323,7 +285,7 @@ function CreateCita(props) {
         <div className="container">
           <div className="col">
             <div className="row">
-              {showBuscador && (<div className="col-6 mb-2" style={{ display: "flex" }}>
+              {showBuscador && (<div className="col-12 mb-2" style={{ display: "flex" }}>
                 <input
                   placeholder="Buscador por Apellido, Nombre o DNI"
                   type="text"
@@ -341,19 +303,6 @@ function CreateCita(props) {
                 </datalist>
                 <i className="fa-solid fa-magnifying-glass" style={{ display: "flex", alignItems: "center", marginLeft: "-26px" }}></i>
               </div>)}
-              <div className="col-6 mb-2 align-items-center" style={{ display: "flex" }}>
-                <label className="form-label" style={{ marginRight: "5px", marginTop: "4px" }}>Doctor*</label>
-                <select
-                  value={doctor}
-                  onChange={(e) => setDoctor(e.target.value)}
-                  className="form-control"
-                  multiple={false}
-                  required
-                >
-                  <option value="">Selecciona un doctor...</option>
-                  {props.doctoresoption || doctoresOption}
-                </select>
-              </div>
             </div>
 
             <form style={{ transform: "scale(0.98)" }}>
@@ -414,46 +363,6 @@ function CreateCita(props) {
               <div className="row">
                 <div className="col-8 mb-2">
                   <label className="form-label">Teléfono*</label>
-                  <div style={{ display: "flex" }}>
-                    {selectedCode === "+51" && (
-                      <img
-                        src={peruFlag}
-                        alt="Bandera de Perú"
-                        style={{ width: "45px", marginRight: "4px" }}
-                      />
-                    )}
-                    <select
-                      value={selectedCode}
-                      onChange={(e) => {
-                        const codArea = e.target.value;
-                        setSelectedCode(codArea);
-                        if (codArea !== "+51") {
-                          setNumero("");
-                        }
-                      }}
-                      className="form-control-tipoIDC me-1"
-                      multiple={false}
-                      disabled={!editable}
-                      style={{ width: "fit-content" }}
-                      required
-                    >
-                      <option value="">Otro Pais</option>
-                      <option value="+51">Perú (+51)</option>
-                    </select>
-                    {selectedCode !== "+51" && (
-                      <input
-                        value={selectedCode}
-                        onChange={(e) => {
-                          setSelectedCode(e.target.value);
-                        }}
-                        className="form-control-tipoIDC me-1"
-                        type="text"
-                        style={{ width: "fit-content" }}
-                        placeholder="Cod. area"
-                        disabled={!editable}
-                        required
-                      />
-                    )}
                     <input
                       value={numero || ""}
                       onChange={(e) => setNumero(e.target.value)}
@@ -462,7 +371,6 @@ function CreateCita(props) {
                       disabled={!editable}
                       required
                     />
-                  </div>
                 </div>
                 <div className="col-4 mb-2">
                   <label className="form-label">Estado*</label>

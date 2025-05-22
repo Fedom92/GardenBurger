@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { collection, orderBy, query, getDocs, updateDoc, getDoc, doc } from "firebase/firestore";
-import { db, } from "../../firebaseConfig/firebase";
+import { collection, orderBy, query, getDocs, updateDoc, doc } from "firebase/firestore";
+import { db, auth } from "../../firebaseConfig/firebase";
 import CrearUsuario from "./CrearUsuario";
-import "../../style/Main.css"
 import { Modal } from "react-bootstrap";
+import Swal from "sweetalert2";
+import "../../style/Main.css";
 
 function PanelAdmin() {
   const [usuarios, setUsuarios] = useState([]);
@@ -11,40 +12,38 @@ function PanelAdmin() {
   const [order, setOrder] = useState("ASC");
   const [modalShow, setModalShow] = useState(false);
 
-  const [modalShowGoogleReviews, setModalShowGoogleReviews] = useState(false);
-  const [rating, setRating] = useState("");
-  const [cantResenas, setCantResenas] = useState("");
+  const [modalShowEditRol, setModalShowEditRol] = useState([false, ""]);
+  const [rol, setRol] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [disabledRows] = useState([]);
 
-  const userCollectiona = collection(db, "user");
+  const userCollectiona = collection(db, "usuarios");
   const userCollection = useRef(query(userCollectiona, orderBy("codigo")));
 
   const getUsuarios = useCallback((snapshot) => {
-    const usuariosArray = snapshot.docs.map((doc) => ({
+    const currentUserEmail = auth.currentUser?.email;
+
+    let usuariosArray = snapshot.docs;
+    if (currentUserEmail !== "test@hotmail.com") {
+      usuariosArray = usuariosArray.filter((doc) => {
+        return doc.data().rol !== process.env.REACT_APP_rolBloq;
+      });
+    }
+
+    const usuariosMapped = usuariosArray.map((doc) => ({
       ...doc.data(),
       id: doc.id,
     }));
-    setUsuarios(usuariosArray);
+    setUsuarios(usuariosMapped);
     setIsLoading(false);
   }, []);
 
-  const disableUsuario = async (id) => {
-    const userDoc = doc(db, "user", id);
-    await updateDoc(userDoc, { rol: process.env.REACT_APP_rolBloq });
-  };
-
-  const enableUsuario = async (id) => {
-    const userDoc = doc(db, "user", id);
-    await updateDoc(userDoc, { rol: process.env.REACT_APP_rolRecepcionis });
-  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const citasSnapshot = await getDocs(userCollection.current);
-        await getUsuarios(citasSnapshot);
+        const usersSnapshot = await getDocs(userCollection.current);
+        await getUsuarios(usersSnapshot);
 
       } catch (error) {
         console.error('Error fetching data Panel Admin:', error);
@@ -110,20 +109,21 @@ function PanelAdmin() {
     }
   };
 
-  const guardarReviews = async (e) => {
-    e.preventDefault();
-
-    const antiguaRef = doc(db, "googleReviews", 'DuE7UxZH3LuwqFOnbYK8');
-    const documento = await getDoc(antiguaRef);
-
-    const newData = {
-      rating: rating || documento.data().rating,
-      cantResenas: cantResenas || documento.data().cantResenas,
-
-    };
-    await updateDoc(antiguaRef, newData);
+  const handleEditUsuario = async (id) => {
+    const userDoc = doc(db, "usuarios", id);
+    await updateDoc(userDoc, { rol: rol });
+    setUsuarios((prevUsuarios) =>
+      prevUsuarios.map((usuario) =>
+        usuario.id === id ? { ...usuario, rol: rol } : usuario
+      )
+    );
+    handleCloseModal();
   };
 
+  const handleCloseModal = () => {
+    setModalShowEditRol([false, ""]);
+    setRol("")
+  };
 
   const agregarUsuario = (nuevaUsuario) => {
     const nuevosUsuarios = [...usuarios, nuevaUsuario];
@@ -131,6 +131,36 @@ function PanelAdmin() {
     nuevosUsuarios.sort((a, b) => a.codigo - b.codigo);
 
     setUsuarios(nuevosUsuarios);
+  };
+
+  const confirmeDelete = (e, id) => {
+    Swal.fire({
+      title: '¿Esta seguro de Eliminar al usuario?',
+      text: "No podrá revertir la accion",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#00C5C1',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Si',
+      cancelButtonText: 'No'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        disableUsuario(e, id)
+        Swal.fire({
+          title: '¡Eliminado!',
+          text: 'El Usuario ha sido borrado.',
+          icon: 'success',
+          confirmButtonColor: '#00C5C1'
+        });
+      }
+    })
+  }
+
+  const disableUsuario = async (e, id) => {
+    e.preventDefault();
+    const userDoc = doc(db, "usuarios", id);
+    await updateDoc(userDoc, { rol: process.env.REACT_APP_rolBloq });
+    setUsuarios((prevUsuarios) => prevUsuarios.filter((item) => item.id !== id));
   };
 
 
@@ -155,7 +185,7 @@ function PanelAdmin() {
 
           <div className="container mw-100">
             <div className="row">
-              <div className="col">
+              <div className="col mt-2">
                 <br></br>
                 <div className="d-grid gap-2">
                   <div className="d-flex justify-content-between">
@@ -164,16 +194,7 @@ function PanelAdmin() {
                     <div className="d-flex justify-content-end">
                       <button
                         variant="primary"
-                        className="btn-blue m-2"
-                        onClick={() => {
-                          setModalShowGoogleReviews(true);
-                        }}
-                      >
-                        Google Reviews
-                      </button>
-                      <button
-                        variant="primary"
-                        className="btn-blue m-2"
+                        className="btn btn-blue m-2"
                         onClick={() => {
                           setModalShow(true);
                         }}
@@ -201,45 +222,37 @@ function PanelAdmin() {
                     <tbody>
                       {currentResults.map((usuario) => (
                         <tr key={usuario.id}
-                          className={usuario.rol === process.env.REACT_APP_rolBloq ? "deleted-row" : usuario.rol === process.env.REACT_APP_rolAd ? "admin-row" : ""}
+                          className={usuario.rol === process.env.REACT_APP_rolBloq ? "deleted-row" : usuario.rol === process.env.REACT_APP_rolSupAdmin ? "admin-row" : ""}
                         >
-                          <td id="colIzquierda"> {usuario.codigo} </td>
+                          <td> {usuario.codigo} </td>
                           <td> {usuario.apellido}</td>
                           <td> {usuario.nombres}</td>
                           <td> {usuario.correo} </td>
                           <td> {usuario.telefono} </td>
                           <td> {usuario.fechaAlta}</td>
-                          <td>{usuario.rol === process.env.REACT_APP_rolAd ? 'Admin' : usuario.rol === process.env.REACT_APP_rolRecepcionis ? 'Recepcionista' : usuario.rol === process.env.REACT_APP_rolDoctor ? 'Doctor' : ''}</td>
-                          <td className="colDerecha">
-                            {usuario.rol !== process.env.REACT_APP_rolAd && (
+                          <td>{usuario.rol === process.env.REACT_APP_rolSupAdmin ?
+                            'Super Admin' : usuario.rol === process.env.REACT_APP_rolAdmin ?
+                              'Admin' : usuario.rol === process.env.REACT_APP_rolOper ?
+                                'Operador' : 'Bloqueado'}</td>
+                          <td>
+                            {usuario.rol !== process.env.REACT_APP_rolSupAdmin && (
                               <>
+                                {usuario.rol !== process.env.REACT_APP_rolStaff && usuario.rol !== process.env.REACT_APP_rolEjecutor && (<>
+                                  <button
+                                    className="btn btn-success mx-1"
+                                    onClick={() => setModalShowEditRol([true, usuario])}
+                                  >
+                                    <i className="fa-solid fa-edit"></i>
+                                  </button></>)}
+
                                 <button
-                                  onClick={() => {
-                                    disableUsuario(usuario.id);
+                                  onClick={(e) => {
+                                    confirmeDelete(e, usuario.id);
                                   }}
                                   className="btn btn-danger"
-                                  disabled={
-                                    disabledRows.includes(usuario.id) ||
-                                    usuario.rol === process.env.REACT_APP_rolBloq ||
-                                    usuario.rol === process.env.REACT_APP_rolAd
-                                  }
+
                                 >
                                   <i className="fa-solid fa-trash"></i>
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    enableUsuario(usuario.id);
-                                  }}
-                                  className="btn btn-light"
-                                  disabled={
-                                    disabledRows.includes(usuario.id) ||
-                                    usuario.rol === process.env.REACT_APP_rolRecepcionis ||
-                                    usuario.rol === process.env.REACT_APP_rolAd ||
-                                    usuario.rol === process.env.REACT_APP_rolDoctor
-                                  }
-                                  style={{ marginLeft: "2px" }}
-                                >
-                                  <i className="fa-solid fa-power-off"></i>{" "}
                                 </button>
                               </>
                             )}
@@ -307,67 +320,46 @@ function PanelAdmin() {
         show={modalShow}
         agregarusuario={agregarUsuario}
         onHide={() => setModalShow(false)} />
-      {modalShowGoogleReviews && (
-        <Modal show={modalShowGoogleReviews}
-          size="md"
+
+      {modalShowEditRol[0] && (
+        <Modal
+          show={modalShowEditRol[0]}
           aria-labelledby="contained-modal-title-vcenter"
           centered
         >
-          <Modal.Header closeButton onClick={() => {
-            setModalShowGoogleReviews(false);
-            setRating("");
-            setCantResenas("");
-          }}>
-            <Modal.Title>Gestion Google Reviews</Modal.Title>
+          <Modal.Header closeButton onClick={handleCloseModal}>
+            <Modal.Title>Editar Rol</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div className="container mt-1">
-              <form>
-                <div className="row">
-                  <div className="col mb-6">
-                    <label className="form-label">Ingrese rating</label>
-                    <input
-                      onChange={(e) => setRating(e.target.value)}
-                      type="text"
-                      className="form-control"
-                      autoComplete="off"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="row">
-                  <div className="col mb-6">
-                    <label className="form-label">Ingrese Cant Reseñas</label>
-                    <input
-                      onChange={(e) => setCantResenas(e.target.value)}
-                      type="text"
-                      className="form-control"
-                      autoComplete="off"
-                      required
-                    />
-                  </div>
-                </div>
-              </form>
-            </div>
-          </Modal.Body>
-          <Modal.Footer>
-            <div style={{ display: "flex" }}>
+            <form>
+              <div className="mb-2">
+                <label className="form-label">Rol*</label>
+                <select
+                  defaultValue={modalShowEditRol[1].rol}
+                  onChange={(e) => setRol(e.target.value)}
+                  className="form-control"
+                  multiple={false}
+                >
+                  <option value={process.env.REACT_APP_rolLogistica}>Logistica</option>
+                  <option value={process.env.REACT_APP_rolOperaciones}>Operaciones</option>
+                  <option value={process.env.REACT_APP_rolRH}>RR.HH.</option>
+                  <option value={process.env.REACT_APP_rolSoporte}>Soporte</option>
+                </select>
+              </div>
               <button
+                className="btn button-main"
                 type="submit"
                 onClick={(e) => {
-                  guardarReviews(e);
-                  setModalShowGoogleReviews(false);
-                  setRating("");
-                  setCantResenas("");
+                  e.preventDefault();
+                  handleEditUsuario(modalShowEditRol[1].id)
                 }}
-                className="btn button-main"
               >
-                Guardar
+                Actualizar
               </button>
-            </div>
-          </Modal.Footer>
-        </Modal>)}
+            </form>
+          </Modal.Body>
+        </Modal>
+      )}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, deleteDoc, doc, query, where, orderBy, updateDoc, getDocs, onSnapshot } from "firebase/firestore";
+import { collection, deleteDoc, doc, query, orderBy, updateDoc, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CreateCita from "./CreateCita";
 import EditCita from "./EditCita";
@@ -16,7 +16,6 @@ import CryptoJS from 'crypto-js';
 function Citas(props) {
   const [rol, setRol] = useState("");
   const hoy = moment(new Date()).format("YYYY-MM-DD");
-  const haceDiezDias = moment(hoy).subtract(10, 'days').format('YYYY-MM-DD');
   const mañana = moment().add(1, 'days').startOf('day');
   const [citas, setCitas] = useState([]);
   const [search, setSearch] = useState("");
@@ -37,8 +36,6 @@ function Citas(props) {
   const [modalShowVerNotas, setModalShowVerNotas] = useState(false);
   const [ocultrarFiltrosGenerales, setOcultrarFiltrosGenerales] = useState(false);
 
-  const [doctoresOption, setDoctoresOption] = useState([]);
-  const [doctor, setDoctor] = useState("");
   const [estadoOptions, setEstadoOptions] = useState([]);
   const [estadoFiltro, setEstadoFiltro] = useState("");
 
@@ -48,16 +45,11 @@ function Citas(props) {
   const [parametroModal, setParametroModal] = useState("");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
 
+  const citasCollectiona = collection(db, "citas");
+  const citasCollection = useRef(query(citasCollectiona, orderBy("fecha", "desc")));
+
   const estadosCollectiona = collection(db, "estados");
   const estadosCollection = useRef(query(estadosCollectiona));
-  const userCollectiona = collection(db, "user");
-  const userCollection = useRef(query(userCollectiona));
-
-  const citasCollection = collection(db, "citas");
-  var citasCollectionOrdenados = useRef();
-  citasCollectionOrdenados = query(citasCollection,
-    where('fecha', '>=', haceDiezDias),
-  );
 
   const horariosCollectiona = collection(db, "horariosAtencion");
   const horariosCollection = useRef(query(horariosCollectiona, orderBy("name")));
@@ -65,14 +57,7 @@ function Citas(props) {
   const [horarios, setHorarios] = useState([]);
 
   const getCitas = useCallback((snapshot) => {
-    const citasArray = snapshot.docs.filter((doc) => {
-      if (rol === process.env.REACT_APP_rolDoctor) {
-        const doctor = JSON.parse(doc.data().doctor);
-        return doctor.uid === props.current_user.uid;
-      } else {
-        return true;
-      }
-    })
+    const citasArray = snapshot.docs
       .map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -87,7 +72,7 @@ function Citas(props) {
     });
     setCitas(citasArray);
     setIsLoading(false);
-  }, [props.current_user, rol]);
+  }, []);
 
   const getEstados = useCallback((snapshot) => {
     const estadosArray = snapshot.docs.map((doc) => ({
@@ -112,32 +97,14 @@ function Citas(props) {
     setEstadoOptions(options);
   }, []);
 
-  const getOptionsDoctores = useCallback(snapshot => {
-    const docsOptions = snapshot.docs
-      .filter(doc => doc.data().uid !== "Recepcionista")
-      .map((doc, index) => (
-        <option key={`doctores-${index}`}
-          value={JSON.stringify({
-            uid: doc.data().uid || "admin",
-            nombreApellido: doc.data().nombres + " " + doc.data().apellido
-          })}>
-          {doc.data().nombres + " " + doc.data().apellido}
-        </option>
-      ));
-    setDoctoresOption(docsOptions);
-  }, []);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        /*const citasSnapshot = await getDocs(citasCollectionOrdenados.current);
-        await getCitas(citasSnapshot);*/
+        const gastosSnapshot = await getDocs(citasCollection.current);
+        await getCitas(gastosSnapshot);
 
         const estadosSnapshot = await getDocs(estadosCollection.current);
         await getEstados(estadosSnapshot);
-
-        const doctoresSnapshot = await getDocs(userCollection.current);
-        await getOptionsDoctores(doctoresSnapshot);
 
         const optionsEstadosSnapshot = await getDocs(estadosCollection.current);
         await getOptionsEstado(optionsEstadosSnapshot);
@@ -152,7 +119,7 @@ function Citas(props) {
 
     fetchData();
 
-  }, [getCitas, getEstados, getOptionsDoctores, getOptionsEstado, getHorarios]);
+  }, [getCitas, getEstados, getOptionsEstado, getHorarios]);
 
   useEffect(() => {
     const rolEncriptado = localStorage.getItem("rol");
@@ -160,10 +127,10 @@ function Citas(props) {
     let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
     setRol(rolDesencriptado);
 
-    const unsubscribeCitas = onSnapshot(citasCollectionOrdenados, (snapshot) => { getCitas(snapshot) });
-    return () => { unsubscribeCitas() };
   }, [getCitas]);
 
+
+  //Agrega y Edita en BD y Local
   const agregarCita = (nuevaCita) => {
     const nuevasCitas = [...citas, nuevaCita];
 
@@ -210,13 +177,8 @@ function Citas(props) {
     setCitas(citasActualizadas);
   };
 
-  const buscarEstilos = (estadoParam) => {
-    const colorEncontrado = estados.find((e) => e.name === estadoParam);
-    if (colorEncontrado && colorEncontrado.color !== "") {
-      return { backgroundColor: colorEncontrado.color, marginBottom: "0" };
-    };
-  }
 
+  //Cambia Automaticamente los estados de las Citas a "Por Confirmar" si la fecha de la cita es hoy o mañana
   useEffect(() => {
     citas.forEach((cita) => {
       const citaDate = moment(cita.fecha, 'YYYY-MM-DD').startOf('day');
@@ -243,11 +205,12 @@ function Citas(props) {
     }
   }
 
-  const deleteCita = async (id) => {
-    const citaDoc = doc(db, "citas", id);
-    await deleteDoc(citaDoc);
-    setCitas((prevCitas) => prevCitas.filter((cita) => cita.id !== id));
-  };
+  const buscarEstilos = (estadoParam) => {
+    const colorEncontrado = estados.find((e) => e.name === estadoParam);
+    if (colorEncontrado && colorEncontrado.color !== "") {
+      return { backgroundColor: colorEncontrado.color, marginBottom: "0" };
+    };
+  }
 
   const confirmeDelete = (id) => {
     Swal.fire({
@@ -272,6 +235,14 @@ function Citas(props) {
     })
   }
 
+  const deleteCita = async (id) => {
+    const citaDoc = doc(db, "citas", id);
+    await deleteDoc(citaDoc);
+    setCitas((prevCitas) => prevCitas.filter((cita) => cita.id !== id));
+  };
+
+
+  //A partir de acá Filtros y Busquedas
   const searcher = (e) => {
     if (typeof e === "string") {
       setSearch(e);
@@ -326,15 +297,7 @@ function Citas(props) {
 
   let results = []
 
-  if (doctor && estadoFiltro) {
-    results = citas.filter((dato) => {
-      const doctorUid = JSON.parse(doctor).uid;
-      const estadoMinusc = estadoFiltro.toLowerCase();
-      return JSON.parse(dato.doctor).uid === doctorUid && dato.estado.toLowerCase() === estadoMinusc;
-    });
-  } else if (doctor && !estadoFiltro) {
-    results = citas.filter((dato) => JSON.parse(dato.doctor).uid === JSON.parse(doctor).uid);
-  } else if (!doctor && estadoFiltro) {
+  if (estadoFiltro) {
     results = citas.filter((dato) => dato.estado.toLowerCase() === estadoFiltro.toLowerCase());
   } else {
     results = citas;
@@ -414,11 +377,11 @@ function Citas(props) {
     }
   };
 
-  const CustomLink = ({ to, children, ...props }) => (
+  /*const CustomLink = ({ to, children, ...props }) => (
     <a href={to} target="_blank" rel="noopener noreferrer" {...props}>
       {children}
     </a>
-  );
+  );*/
 
   return (
     <>
@@ -457,13 +420,13 @@ function Citas(props) {
             <div className="row">
               <div className="col">
                 <br></br>
-                <div className="d-flex justify-content-between">
+                <div className="d-flex justify-content-between mt-3">
                   <div
                     className="d-flex justify-content-start align-items-center"
                     style={{ maxHeight: "40px", marginLeft: "10px" }}
                   >
                     <h1>Agenda</h1>
-                    {rol === process.env.REACT_APP_rolAd ? (
+                    {rol === process.env.REACT_APP_rolSupAdmin ? (
                       <button
                         className="btn grey mx-2 btn-sm"
                         style={{ borderRadius: "5px" }}
@@ -554,20 +517,6 @@ function Citas(props) {
                     >
                       <i className="fa-solid fa-trash-can"></i>
                     </button>}
-
-                    {rol !== process.env.REACT_APP_rolDoctor ? (
-                      <div className="mb-3 m-1">
-                        <select
-                          value={doctor}
-                          onChange={(e) => setDoctor(e.target.value)}
-                          className="form-control-doctor"
-                          multiple={false}
-                        >
-                          <option value="">Todos los Doctores</option>
-                          {doctoresOption}
-                        </select>
-                      </div>
-                    ) : null}
 
                     <div className="mb-3 m-1">
                       <select
@@ -710,7 +659,6 @@ function Citas(props) {
                         </th>
                         <th>IDC</th>
                         <th>Telefono</th>
-                        <th onClick={() => sorting("doctor")}>Doctor</th>
                         <th onClick={() => sorting("estado")}>Estado</th>
                         <th id="columnaAccion"></th>
                       </tr>
@@ -724,8 +672,7 @@ function Citas(props) {
                           <td> {cita.horaFin} </td>
                           <td style={{ textAlign: "left" }}> {cita.apellidoConNombre} </td>
                           <td> {cita.idc} </td>
-                          <td> {cita.selectedCode}{cita.numero} </td>
-                          <td>{JSON.parse(cita.doctor).nombreApellido}</td>
+                          <td> {cita.numero} </td>
                           <td style={{ paddingBottom: "0", display: "flex" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                               {cita.estado || ""}
@@ -768,35 +715,34 @@ function Citas(props) {
                                     Ver Notas
                                   </Dropdown.Item>
 
+                                  {/*Item con Link a Historia con Parametro de ID de Paciente
                                   <div className="dropdown-item">
                                     <CustomLink to={`/historias/${cita.idPacienteCita}`} style={{ textDecoration: "none", color: "#212529" }}>
                                       <i className="fa-solid fa-file-medical"></i>
                                       Historia
                                     </CustomLink>
-                                  </div>
+                                   </div>*/}
 
-                                  {rol !== process.env.REACT_APP_rolDoctor ? (
-                                    <div>
-                                      <Dropdown.Item
-                                        onClick={() => {
-                                          setModalShowEditCita(true);
-                                          setCita(cita);
-                                          setIdParam(cita.id);
-                                        }}
-                                      >
-                                        <i className="fa-regular fa-pen-to-square"></i>
-                                        Editar
-                                      </Dropdown.Item>
-                                      <Dropdown.Item
-                                        onClick={() =>
-                                          confirmeDelete(cita.id)
-                                        }
-                                      >
-                                        <i className="fa-solid fa-trash-can"></i>
-                                        Eliminar
-                                      </Dropdown.Item>
-                                    </div>
-                                  ) : null}
+                                  <div>
+                                    <Dropdown.Item
+                                      onClick={() => {
+                                        setModalShowEditCita(true);
+                                        setCita(cita);
+                                        setIdParam(cita.id);
+                                      }}
+                                    >
+                                      <i className="fa-regular fa-pen-to-square"></i>
+                                      Editar
+                                    </Dropdown.Item>
+                                    <Dropdown.Item
+                                      onClick={() =>
+                                        confirmeDelete(cita.id)
+                                      }
+                                    >
+                                      <i className="fa-solid fa-trash-can"></i>
+                                      Eliminar
+                                    </Dropdown.Item>
+                                  </div>
 
                                 </Dropdown.Menu>
                               </div>
@@ -883,13 +829,13 @@ function Citas(props) {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div >
+        </div >
+      )
+      }
       <CreateCita
         show={modalShowCita}
         estadooptions={estadoOptions}
-        doctoresoption={doctoresOption}
         horarios={horarios}
         agregarcita={agregarCita}
         onHide={() => setModalShowCita(false)} />
@@ -897,7 +843,6 @@ function Citas(props) {
         id={idParam}
         cita={cita}
         estadooptions={estadoOptions}
-        doctoresoption={doctoresOption}
         horarios={horarios}
         editarcita={editarCita}
         show={modalShowEditCita}
