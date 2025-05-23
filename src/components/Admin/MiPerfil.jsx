@@ -11,12 +11,10 @@ import "../../style/Main.css"
 
 const MiPerfil = () => {
   const [user, setUser] = useState("");
-  const [nombres, setNombres] = useState("");
-  const [apellido, setApellido] = useState("");
+  const [nombreCompleto, setNombreCompleto] = useState("");
   const [correo, setCorreo] = useState("");
   const [telefono, setTelefono] = useState("");
   const [fechaAlta, setFechaAlta] = useState("");
-  const [rol, setRol] = useState("");
   const [foto, setFoto] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [editable, setEditable] = useState(false);
@@ -41,17 +39,11 @@ const MiPerfil = () => {
         const userData2 = userDocsSnapshot.docs[0].data();
         const userId = userDocsSnapshot.docs[0].id;
         setUser(userData2);
-        setApellido(userData2.apellido);
-        setNombres(userData2.nombres);
+        setNombreCompleto(userData2.nombreCompleto);
         setCorreo(userData2.correo);
         setTelefono(userData2.telefono);
         setFechaAlta(userData2.fechaAlta);
         setFoto(userData2.foto);
-        setRol(userData2.rol === process.env.REACT_APP_rolSupAdmin ?
-          'Super Admin' : userData2.rol === process.env.REACT_APP_rolAdmin ?
-            'Admin' : userData2.rol === process.env.REACT_APP_rolOper ?
-              'Operador' : 'Bloqueado'
-        );
         setId(userId)
       }
       setIsLoading(false);
@@ -74,7 +66,6 @@ const MiPerfil = () => {
     try {
       e.preventDefault();
       const user = auth.currentUser;
-      const nombreCompleto = nombres + " " + apellido;
 
       await updateProfile(user, {
         displayName: nombreCompleto,
@@ -83,8 +74,6 @@ const MiPerfil = () => {
 
       const userDocRef = doc(db, "usuarios", id);
       await updateDoc(userDocRef, {
-        nombres,
-        apellido,
         nombreCompleto,
         correo,
         telefono,
@@ -200,15 +189,10 @@ const MiPerfil = () => {
                   <div className="card-body">
                     <form>
                       <div className="row gx-3 mb-3">
-                        <div className="col-md-6">
-                          <label className="small mb-1">Nombres</label>
-                          <input className="form-control" id="inputNombres" type="text" placeholder="Ingresa tus Nombres" value={nombres || ""}
-                            onChange={(e) => setNombres(e.target.value)} disabled={!editable} style={{ textAlign: "center" }} />
-                        </div>
-                        <div className="col-md-6">
-                          <label className="small mb-1">Apellido</label>
-                          <input className="form-control" id="inputApellido" type="text" placeholder="Ingresa tu Apellido" value={apellido || ""}
-                            onChange={(e) => setApellido(e.target.value)} disabled={!editable} style={{ textAlign: "center" }} />
+                        <div className="col-md-12">
+                          <label className="small mb-1">Nombre Completo</label>
+                          <input className="form-control" id="inputNombres" type="text" placeholder="Ingresa tus Nombres" value={nombreCompleto || ""}
+                            onChange={(e) => setNombreCompleto(e.target.value)} disabled={!editable} style={{ textAlign: "center" }} />
                         </div>
                       </div>
                       <div className="row gx-3 mb-3">
@@ -225,11 +209,7 @@ const MiPerfil = () => {
                       </div>
 
                       <div className="row gx-3 mb-3">
-                        <div className="col-md-6">
-                          <label className="small mb-1">Rol</label>
-                          <input className="form-control" id="inputLocation" type="text" value={rol} disabled style={{ textAlign: "center" }} />
-                        </div>
-                        <div className="col-md-6">
+                        <div className="col-md-12">
                           <label className="small mb-1">Fecha de Alta</label>
                           <input className="form-control" id="inputBirthday" type="text" name="birthday" value={fechaAlta} disabled style={{ textAlign: "center" }} />
                         </div>

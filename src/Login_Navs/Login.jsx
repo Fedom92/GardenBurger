@@ -42,7 +42,7 @@ const Login = () => {
           await signOut(auth);
           localStorage.setItem("rol", JSON.stringify(null));
         } else {
-          navigate('/caja');
+          navigate('/productos');
         }
 
       } else {

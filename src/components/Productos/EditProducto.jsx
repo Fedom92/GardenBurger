@@ -3,8 +3,9 @@ import { getDoc, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import moment from "moment";
-
-const EditCita = (props) => {
+ 
+//TODO
+const EditProducto = (props) => {
   const { editarcita, ...propsModal } = props;
   const [apellidoConNombre, setApellidoConNombre] = useState(props.cita.apellidoConNombre || "");
   const [tipoIdc, setTipoIdc] = useState(props.cita.tipoIdc || "");
@@ -244,4 +245,4 @@ const EditCita = (props) => {
   );
 };
 
-export default EditCita;
+export default EditProducto;

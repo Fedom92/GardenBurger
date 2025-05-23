@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Dropdown } from "react-bootstrap";
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { db } from "../../../firebaseConfig/firebase.js";
 
 const ListaSeleccionEstadoCita = ({ citaId, estadosParam, editarcita }) => {
     const [estados, setEstados] = useState([]);

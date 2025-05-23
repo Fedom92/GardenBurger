@@ -18,7 +18,7 @@ function PanelAdmin() {
   const [isLoading, setIsLoading] = useState(true);
 
   const userCollectiona = collection(db, "usuarios");
-  const userCollection = useRef(query(userCollectiona, orderBy("codigo")));
+  const userCollection = useRef(query(userCollectiona, orderBy("rol")));
 
   const getUsuarios = useCallback((snapshot) => {
     const currentUserEmail = auth.currentUser?.email;
@@ -208,9 +208,7 @@ function PanelAdmin() {
                   <table className="table__body">
                     <thead>
                       <tr>
-                        <th onClick={() => sorting("codigo")}>Código</th>
-                        <th onClick={() => sorting("apellido")}>Apellido</th>
-                        <th onClick={() => sorting("nombres")}>Nombres</th>
+                        <th onClick={() => sorting("nombreCompleto")}>Nombre Completo</th>
                         <th onClick={() => sorting("correo")}>Email</th>
                         <th onClick={() => sorting("telefono")}>Telefono</th>
                         <th onClick={() => sorting("fechaAlta")}>Fecha Agregado</th>
@@ -222,35 +220,34 @@ function PanelAdmin() {
                     <tbody>
                       {currentResults.map((usuario) => (
                         <tr key={usuario.id}
-                          className={usuario.rol === process.env.REACT_APP_rolBloq ? "deleted-row" : usuario.rol === process.env.REACT_APP_rolSupAdmin ? "admin-row" : ""}
+                          className={usuario.rol === process.env.REACT_APP_rolBloq ? "deleted-row" : usuario.rol === process.env.REACT_APP_admin ? "admin-row" : ""}
                         >
-                          <td> {usuario.codigo} </td>
-                          <td> {usuario.apellido}</td>
-                          <td> {usuario.nombres}</td>
+                          <td> {usuario.nombreCompleto}</td>
                           <td> {usuario.correo} </td>
                           <td> {usuario.telefono} </td>
                           <td> {usuario.fechaAlta}</td>
-                          <td>{usuario.rol === process.env.REACT_APP_rolSupAdmin ?
-                            'Super Admin' : usuario.rol === process.env.REACT_APP_rolAdmin ?
-                              'Admin' : usuario.rol === process.env.REACT_APP_rolOper ?
-                                'Operador' : 'Bloqueado'}</td>
+                          <td>{usuario.rol === process.env.REACT_APP_admin ?
+                            'Admin' : usuario.rol === process.env.REACT_APP_encargado ?
+                              'Encargado' : usuario.rol === process.env.REACT_APP_cajero ?
+                                'Cajero' : usuario.rol === process.env.REACT_APP_cocina ?
+                                  'Cocina' : usuario.rol === process.env.REACT_APP_delivery ?
+                                    'Delivery' : usuario.rol === process.env.REACT_APP_contador ?
+                                      'Contador' : 'Bloqueado'}</td>
                           <td>
-                            {usuario.rol !== process.env.REACT_APP_rolSupAdmin && (
+                            {usuario.rol !== process.env.REACT_APP_admin && (
                               <>
-                                {usuario.rol !== process.env.REACT_APP_rolStaff && usuario.rol !== process.env.REACT_APP_rolEjecutor && (<>
-                                  <button
-                                    className="btn btn-success mx-1"
-                                    onClick={() => setModalShowEditRol([true, usuario])}
-                                  >
-                                    <i className="fa-solid fa-edit"></i>
-                                  </button></>)}
+                                <button
+                                  className="btn btn-success mx-1"
+                                  onClick={() => setModalShowEditRol([true, usuario])}
+                                >
+                                  <i className="fa-solid fa-edit"></i>
+                                </button>
 
                                 <button
                                   onClick={(e) => {
                                     confirmeDelete(e, usuario.id);
                                   }}
                                   className="btn btn-danger"
-
                                 >
                                   <i className="fa-solid fa-trash"></i>
                                 </button>
@@ -340,10 +337,11 @@ function PanelAdmin() {
                   className="form-control"
                   multiple={false}
                 >
-                  <option value={process.env.REACT_APP_rolLogistica}>Logistica</option>
-                  <option value={process.env.REACT_APP_rolOperaciones}>Operaciones</option>
-                  <option value={process.env.REACT_APP_rolRH}>RR.HH.</option>
-                  <option value={process.env.REACT_APP_rolSoporte}>Soporte</option>
+                  <option value={process.env.REACT_APP_encargado}>Encargado</option>
+                  <option value={process.env.REACT_APP_cajero}>Cajero</option>
+                  <option value={process.env.REACT_APP_cocina}>Cocina</option>
+                  <option value={process.env.REACT_APP_delivery}>Delivery</option>
+                  <option value={process.env.REACT_APP_contador}>Contador</option>
                 </select>
               </div>
               <button

@@ -194,11 +194,12 @@ const CrearUsuario = (props) => {
                     required
                   >
                     <option value="">Selecciona un rol ....</option>
-                    <option value={process.env.REACT_APP_rolAdmin}>Admin</option>
-                    <option value={process.env.REACT_APP_rolLogistica}>Logistica</option>
-                    <option value={process.env.REACT_APP_rolOperaciones}>Operaciones</option>
-                    <option value={process.env.REACT_APP_rolRH}>RR.HH.</option>
-                    <option value={process.env.REACT_APP_rolSoporte}>Soporte</option>
+                    <option value={process.env.REACT_APP_admin}>Admin</option>
+                    <option value={process.env.REACT_APP_encargado}>Encargado</option>
+                    <option value={process.env.REACT_APP_cajero}>Cajero</option>
+                    <option value={process.env.REACT_APP_cocina}>Cocina</option>
+                    <option value={process.env.REACT_APP_delivery}>Delivery</option>
+                    <option value={process.env.REACT_APP_contador}>Contador</option>
                   </select>
                 </div>
               </div>

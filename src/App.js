@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Login from './Login_Navs/Login';
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import Agenda from "./components/Agenda/Agenda";
+import Productos from "./components/Productos/Productos";
 import PanelAdmin from "./components/Admin/PanelAdmin";
 import MiPerfil from "./components/Admin/MiPerfil";
 import Navigation from "./Login_Navs/Navigation"
@@ -41,10 +41,10 @@ function App() {
     let bytesDesencriptado = CryptoJS.AES.decrypt(rolEncriptado, process.env.REACT_APP_cryptoKey);
     let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
 
-    if (currentUser && rolDesencriptado === process.env.REACT_APP_rolSupAdmin) {
+    if (currentUser && rolDesencriptado === process.env.REACT_APP_admin) {
       return children;
     } else {
-      return <Navigate to="/agenda" />;
+      return <Navigate to="/productos" />;
     }
   };
 
@@ -54,7 +54,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
-          <Route path="/agenda" element={<RequireAuth><Agenda /></RequireAuth>} />
+          <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
 
           <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
 

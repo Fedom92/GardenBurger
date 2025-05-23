@@ -83,7 +83,7 @@ const Navigation = () => {
             {isLoading && (
                 <>
                     <div className="sidebar-title">
-                        <Link to="/agenda" className="text-decoration-none link-light"><Nav title="Agenda" Icon={FaCalendarAlt} isActive={isActive} /></Link>
+                        <Link to="/productos" className="text-decoration-none link-light"><Nav title="Productos" Icon={FaCalendarAlt} isActive={isActive} /></Link>
                     </div>
 
                     <div className="sidebar">
@@ -92,7 +92,7 @@ const Navigation = () => {
                                 <Nav title="Configuracion" Icon={FaTools} isActive={isActive} />
                             </div>
                             <div className="sidebar-content">
-                                {tipoUsuario === process.env.REACT_APP_rolSupAdmin ? (
+                                {tipoUsuario === process.env.REACT_APP_admin ? (
                                     <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUserTie} isActive={isActive} /></Link>) : null}
                                 <Link to="/miPerfil" className="text-decoration-none link-light"><Nav title="Mi Perfil" Icon={FaUser} isActive={isActive} /></Link>
                             </div>

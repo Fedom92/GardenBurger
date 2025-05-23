@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "react-bootstrap";
 import { addDoc, collection, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase.js";
-import "../../style/Main.css";
+import { db } from "../../../firebaseConfig/firebase.js";
+import "../../../style/Main.css";
 
-const Estados = ({ show, estadosParam, onHide }) => {
+const Categorias = ({ show, estadosParam, onHide }) => {
   const [idAEditar, setIdAEditar] = useState(null);
   const [nroOrden, setNroOrden] = useState(0);
   const [estado, setEstado] = useState("");
   const [error, setError] = useState("");
   const [estados, setEstados] = useState([]);
-  const estadosCollection = collection(db, "estados");
+  const estadosCollection = collection(db, "categorias");
   const [color, setColor] = useState("");
 
   const getEstados = (estadosParam) => {
@@ -220,4 +220,4 @@ const Estados = ({ show, estadosParam, onHide }) => {
   );
 };
 
-export default Estados;
+export default Categorias;
