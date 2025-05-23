@@ -20,6 +20,7 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-export-table-to-excel": "^1.0.6",
+    "react-hook-form": "^7.56.4",
     "react-icons": "^4.8.0",
     "react-router-dom": "^6.9.0",
     "react-scripts": "5.0.1",
