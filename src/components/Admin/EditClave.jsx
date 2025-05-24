@@ -45,7 +45,7 @@ const EditClave = (props) => {
                         title: '¡Éxito!',
                         text: 'Modificación de clave exitosa.',
                         icon: 'success',
-                        confirmButtonColor: '#00C5C1',
+                        confirmButtonColor: '#198754',
                     }).then(() => {
                         props.onHide();
                         deslogear(auth);
@@ -96,7 +96,7 @@ const EditClave = (props) => {
                     </Modal.Header>
                     <Modal.Body>
                         <div className="container" style={{ marginTop: "-10px" }}>
-                            <form>
+                            <form name="editarClave">
                                 <div className="row mb-2">
                                     <label className="form-label">Nueva Contraseña</label>
                                     <input

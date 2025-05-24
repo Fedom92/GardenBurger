@@ -67,7 +67,7 @@ const Login = () => {
           title: '¡Éxito!',
           text: 'Mail con instrucciones para reestablecer clave ENVIADO!',
           icon: 'success',
-          confirmButtonColor: '#00C5C1',
+          confirmButtonColor: '#198754',
         })
       })
       .catch(() => {
@@ -103,7 +103,7 @@ const Login = () => {
         </div>
         <div className="login-page" style={{ transform: "scale(0.9)" }}>
           <img className="logo" src={logo} alt="GardenBurger Logo" />
-          <form className="p-4" onSubmit={submit}>
+          <form name="login" className="p-4" onSubmit={submit}>
             <h3>Iniciar Sesión</h3>
             <div className="email">
               <input

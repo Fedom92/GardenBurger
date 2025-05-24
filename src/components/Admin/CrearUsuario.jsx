@@ -11,12 +11,12 @@ const CrearUsuario = (props) => {
   const { register, handleSubmit, reset } = useForm();
 
   const { agregarusuario, ...propsModal } = props;
-  const hoy = moment(new Date()).format("YYYY-MM-DD");
+  const hoy = moment(new Date()).format("DD/MM/YYYY");
   const [error, setError] = useState('');
 
   const userCollection = collection(db, "usuarios");
 
-  const validateInputs = async (data) => {
+  const validarInputs = async (data) => {
     if (!data.correo || !/@[^.]+\.com(\.\w+)?$/.test(data.correo)) {
       return "Correo electrónico inválido";
     }
@@ -37,11 +37,11 @@ const CrearUsuario = (props) => {
     return null;
   };
 
-  const validateFields = async (data) => {
-    const errorMsg = await validateInputs(data);
+  const validarFields = async (data) => {
+    const errorMsg = await validarInputs(data);
     if (errorMsg) {
       setError(errorMsg);
-      setTimeout(clearError, 2000);
+      setTimeout(setError(""), 2000);
       return;
     }
 
@@ -61,7 +61,8 @@ const CrearUsuario = (props) => {
       await setDoc(doc(db, "usuarios", user.uid), nuevoUsuario);
       await updateProfile(user, { displayName: data.nombreCompleto });
       await updateCurrentUser(auth, usuarioAnterior);
-
+      
+      clearForm();
     } catch (error) {
       console.error("Error al agregar usuario: ", error);
       Swal.fire({
@@ -73,8 +74,10 @@ const CrearUsuario = (props) => {
     };
   }
 
-  const clearError = () => {
+  const clearForm = () => {
+    reset();
     setError("");
+    props.onHide();
   };
 
   return (
@@ -84,11 +87,7 @@ const CrearUsuario = (props) => {
       aria-labelledby="contained-modal-title-vcenter"
       centered
     >
-      <Modal.Header closeButton onClick={() => {
-        props.onHide();
-        clearError();
-        reset();
-      }}>
+      <Modal.Header closeButton onClick={() => clearForm()}>
         <Modal.Title id="contained-modal-title-vcenter">
           <h1>Crear Usuario</h1>
         </Modal.Title>
@@ -96,18 +95,20 @@ const CrearUsuario = (props) => {
       <Modal.Body className="pt-0">
         <div className="container">
           <div className="col">
-            <form onSubmit={handleSubmit(validateFields)}>
+            <form name="crearUsuario" onSubmit={handleSubmit(validarFields)}>
               <div className="row">
                 <div className="col-12 mb-2">
                   <label className="form-label">Nombre Completo*</label>
                   <input type="text" className="form-control" required {...register("nombreCompleto")} />
                 </div>
               </div>
+
               <div className="row">
                 <div className="col-6 mb-2">
                   <label className="form-label">Telefono</label>
                   <input type="text" className="form-control" {...register("telefono")} />
                 </div>
+
                 <div className="col-6 mb-2">
                   <label className="form-label">Rol*</label>
                   <select className="form-control" multiple={false} style={{ height: "48px" }} required {...register("rol")}>
@@ -132,6 +133,7 @@ const CrearUsuario = (props) => {
                   <label className="form-label">Password*</label>
                   <input type="password" className="form-control" minLength={6} autoComplete="off" required {...register("password")} />
                 </div>
+
                 <div className="col-6 mb-2">
                   <label className="form-label">Reingresar Password*</label>
                   <input type="password" className="form-control" minLength={6} autoComplete="off" required {...register("confirmPassword")} />

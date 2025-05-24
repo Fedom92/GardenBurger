@@ -36,7 +36,7 @@ const Navigation = () => {
             title: '¿Desea cerrar sesión?',
             showDenyButton: true,
             confirmButtonText: 'Cerrar sesión',
-            confirmButtonColor: '#00C5C1',
+            confirmButtonColor: '#198754',
             denyButtonText: `Cancelar`,
         }).then((result) => {
             if (result.isConfirmed) {

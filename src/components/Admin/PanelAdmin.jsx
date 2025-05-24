@@ -139,8 +139,7 @@ function PanelAdmin() {
       text: "No podrá revertir la accion",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#00C5C1',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#198754',
       confirmButtonText: 'Si',
       cancelButtonText: 'No'
     }).then((result) => {
@@ -150,7 +149,7 @@ function PanelAdmin() {
           title: '¡Eliminado!',
           text: 'El Usuario ha sido borrado.',
           icon: 'success',
-          confirmButtonColor: '#00C5C1'
+          confirmButtonColor: '#198754'
         });
       }
     })
@@ -328,7 +327,7 @@ function PanelAdmin() {
             <Modal.Title>Editar Rol</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <form>
+            <form name="editarRol">
               <div className="mb-2">
                 <label className="form-label">Rol*</label>
                 <select

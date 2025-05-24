@@ -82,7 +82,7 @@ const MiPerfil = () => {
         title: '¡Éxito!',
         text: 'Modificación de usuario exitosa.',
         icon: 'success',
-        confirmButtonColor: '#00C5C1',
+        confirmButtonColor: '#198754',
       }).then(() => {
         deslogear(auth);
         navigate("/")
@@ -133,7 +133,7 @@ const MiPerfil = () => {
         title: '¡Éxito!',
         text: 'Modificación de Foto exitosa.',
         icon: 'success',
-        confirmButtonColor: '#00C5C1',
+        confirmButtonColor: '#198754',
       }).then(() => {
         deslogear(auth);
         navigate("/")
@@ -187,7 +187,7 @@ const MiPerfil = () => {
                 <div className="card mb-4">
                   <div className="card-header">Detalles de la Cuenta</div>
                   <div className="card-body">
-                    <form>
+                    <form name="miPerfil">
                       <div className="row gx-3 mb-3">
                         <div className="col-md-12">
                           <label className="small mb-1">Nombre Completo</label>

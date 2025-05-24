@@ -4,7 +4,6 @@ import { db } from "../../firebaseConfig/firebase";
 import CrearProducto from "./CrearProducto";
 import EditProducto from "./EditProducto";
 import Categorias from "./Parametros/Categorias";
-import { Dropdown } from "react-bootstrap";
 import "../../style/Main.css"
 import Swal from "sweetalert2";
 import CryptoJS from 'crypto-js';
@@ -25,7 +24,7 @@ function Productos(props) {
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
 
   const productosCollectiona = collection(db, "productos");
-  const productosCollection = useRef(query(productosCollectiona, orderBy("fecha", "desc")));
+  const productosCollection = useRef(query(productosCollectiona, orderBy("descripcion", "desc")));
 
   const categoriasCollectiona = collection(db, "categorias");
   const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nombre")));
@@ -81,33 +80,21 @@ function Productos(props) {
   }, [getProductos]);
 
 
-  //Agrega y Edita en BD y Local
+  //Agrega y Edita en vista Local
   const agregarProducto = (nuevoProducto) => {
     const nuevosProductos = [...productos, nuevoProducto];
-
-    nuevosProductos.sort((a, b) => {
-      if (a.fecha === b.fecha) {
-        return a.horaInicio.localeCompare(b.horaInicio);
-      } else {
-        return b.fecha.localeCompare(a.fecha);
-      }
-    });
+    nuevosProductos.sort((a, b) =>
+      a.descripcion.localeCompare(b.descripcion)
+    );
     setProductos(nuevosProductos);
   };
 
   const editarProducto = (nuevoProductoActualizado) => {
     const productosActualizados = productos.map((producto) =>
-      producto.id === nuevoProductoActualizado.id ? { ...producto, ...nuevoProductoActualizado } : producto
+      producto.id === nuevoProductoActualizado.id ? { ...producto, ...nuevoProductoActualizado } : producto);
+    productosActualizados.sort((a, b) =>
+      a.descripcion.localeCompare(b.descripcion)
     );
-
-    productosActualizados.sort((a, b) => {
-      if (a.fecha === b.fecha) {
-        return a.horaInicio.localeCompare(b.horaInicio);
-      } else {
-        return b.fecha.localeCompare(a.fecha);
-      }
-    });
-
     setProductos(productosActualizados);
   };
 
@@ -126,8 +113,7 @@ function Productos(props) {
       text: "No podra revertir la accion",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#00C5C1',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#198754',
       confirmButtonText: 'Si',
       cancelButtonText: 'No'
     }).then((result) => {
@@ -135,9 +121,9 @@ function Productos(props) {
         deleteProducto(id)
         Swal.fire({
           title: '¡Borrado!',
-          text: 'Producto eliminada.',
+          text: 'Producto eliminado.',
           icon: 'success',
-          confirmButtonColor: '#00C5C1'
+          confirmButtonColor: '#198754'
         });
       }
     })
@@ -177,8 +163,8 @@ function Productos(props) {
   }
 
   results = !search
-    ? results
-    : results.filter((dato) => {
+    ? productos
+    : productos.filter((dato) => {
       const apellidoConNombreSinAcentos = quitarAcentos(dato.apellidoConNombre);
       const searchSinAcentos = quitarAcentos(search);
 
@@ -217,6 +203,8 @@ function Productos(props) {
       setOrder("ASC");
     }
   };
+
+  //TODO Faltaría un filtro seleccionador por categoria
 
   return (
     <>
@@ -285,10 +273,10 @@ function Productos(props) {
                   <table className="table__body">
                     <thead>
                       <tr>
-                        <th onClick={() => sorting("categoria")}>Categoria</th>
                         <th onClick={() => sorting("descripcion")} style={{ textAlign: "left" }}>
                           Descripción
                         </th>
+                        <th onClick={() => sorting("categoria")}>Categoria</th>
                         <th onClick={() => sorting("precio")}>Precio</th>
                         <th>Imagen</th>
                         <th id="columnaAccion"></th>
@@ -296,58 +284,40 @@ function Productos(props) {
                     </thead>
 
                     <tbody>
-                      {resultsPaginados.map((producto, index) => (
+                      {resultsPaginados.map((producto) => (
                         <tr key={producto.id}>
-                          <td> {producto.categoria} </td>
                           <td style={{ textAlign: "left" }}> {producto.descripcion} </td>
+                          <td> {producto.categoria} </td>
                           <td> {producto.precio} </td>
                           <td>
-                            <a
+                            {producto.imagen ? <a
                               href={producto.imagen}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-primary text-decoration-underline"
                             >
                               Ver Imagen
-                            </a>
+                            </a> : ''}
                           </td>
 
-                          <td id="columnaAccion" className="colDerecha">
-                            <Dropdown>
-                              <Dropdown.Toggle
-                                variant="primary"
-                                className="btn btn-secondary mx-1 btn-md"
-                                id="dropdown-actions"
-                                style={{ background: "none", border: "none" }}
-                              >
-                                <i className="fa-solid fa-ellipsis-vertical" id="tdConColor"></i>
-                              </Dropdown.Toggle>
+                          <td>
+                            <button
+                              className="btn btn-success mx-1"
+                              onClick={() => {
+                                setModalShowEditProducto(true);
+                                setProducto(producto);
+                                setIdParam(producto.id);
+                              }}
+                            >
+                              <i className="fa-solid fa-edit"></i>
+                            </button>
 
-                              <div className="dropdown__container">
-                                <Dropdown.Menu>
-                                  <div>
-                                    <Dropdown.Item
-                                      onClick={() => {
-                                        setModalShowEditProducto(true);
-                                        setProducto(producto);
-                                        setIdParam(producto.id);
-                                      }}
-                                    >
-                                      <i className="fa-regular fa-pen-to-square"></i>
-                                      Editar
-                                    </Dropdown.Item>
-                                    <Dropdown.Item
-                                      onClick={() =>
-                                        confirmeDelete(producto.id)
-                                      }
-                                    >
-                                      <i className="fa-solid fa-trash-can"></i>
-                                      Eliminar
-                                    </Dropdown.Item>
-                                  </div>
-                                </Dropdown.Menu>
-                              </div>
-                            </Dropdown>
+                            <button
+                              onClick={() => confirmeDelete(producto.id)}
+                              className="btn btn-danger"
+                            >
+                              <i className="fa-solid fa-trash"></i>
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -416,16 +386,15 @@ function Productos(props) {
         categorias_options={categoriasOptions}
         agregar_producto={agregarProducto}
         onHide={() => setModalShowProducto(false)} />
-      {/*<EditProducto
+      <EditProducto
         id={idParam}
         producto={producto}
-        categorias={categorias}
-        editarproducto={editarProducto}
+        categorias_options={categoriasOptions}
+        editar_producto={editarProducto}
         show={modalShowEditProducto}
         onHide={() => setModalShowEditProducto(false)}
-      />*/}
+      />
       <Categorias
-        categoriasParam={categorias}
         show={modalShowCategorias}
         onHide={() => setModalShowCategorias(false)}
       />

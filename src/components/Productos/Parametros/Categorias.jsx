@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Modal } from "react-bootstrap";
 import { addDoc, collection, doc, setDoc, deleteDoc, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase.js";
+import { useForm } from "react-hook-form";
 
 const Categorias = ({ show, onHide }) => {
+  const { register, handleSubmit, setValue, reset } = useForm();
+
   const [idAEditar, setIdAEditar] = useState(null);
-  const [categoria, setCategoria] = useState("");
   const [categorias, setCategorias] = useState([]);
   const [error, setError] = useState("");
 
@@ -35,32 +37,25 @@ const Categorias = ({ show, onHide }) => {
 
   }, [getCategorias]);
 
-  const inputRef = useRef(null);
-
   const categoriaExiste = (nombre) => {
     return categorias.some(
       (categoria) => categoria.nombre.toLowerCase() === nombre.toLowerCase()
     );
   };
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (categoria.trim() === "") {
-      setError("La Categoría no puede estar vacía");
-      return;
-    }
-    if (categoriaExiste(categoria)) {
+  const handleCreate = async (data) => {
+    if (categoriaExiste(data.categoria)) {
       setError("La Categoría ya existe");
       return;
     }
-    const newState = { nombre: categoria };
+    const newState = { nombre: data.categoria };
 
     try {
       const docRef = await addDoc(categoriasCollection, newState)
       const newId = docRef.id;
 
-      setCategoria("");
       setError("");
+      reset();
       setCategorias([...categorias, { id: newId, ...newState }]);
 
     } catch (error) {
@@ -70,19 +65,18 @@ const Categorias = ({ show, onHide }) => {
 
   const handleEdit = (item) => {
     setIdAEditar(item.id);
-    setCategoria(item.nombre);
+    setValue("categoria", item.nombre)
     setError("");
   };
 
-  const handleUpdate = (e) => {
-    e.preventDefault();
-    if (categoria.trim() === "") {
+  const handleUpdate = (data) => {
+    if (data.categoria.trim() === "") {
       setError("La categoria no puede estar vacía");
       return;
     }
     const categoriaToUpdate = categorias.filter((item) => item.id === idAEditar);
 
-    const newState = { nombre: categoria };
+    const newState = { nombre: data.categoria };
 
     const categoriasActualizadas = categorias.map((item) =>
       item.id === idAEditar ? { ...item, ...newState } : item
@@ -91,7 +85,7 @@ const Categorias = ({ show, onHide }) => {
 
     setDoc(doc(categoriasCollection, categoriaToUpdate[0].id), newState).then(() => {
       setIdAEditar(null);
-      setCategoria("");
+      reset();
       setError("");
     });
   };
@@ -100,7 +94,6 @@ const Categorias = ({ show, onHide }) => {
     await deleteDoc(doc(categoriasCollection, id));
     const newStates = categorias.filter((item) => item.id !== id);
     setCategorias(newStates);
-    setCategoria("");
     setError("");
   };
 
@@ -111,35 +104,33 @@ const Categorias = ({ show, onHide }) => {
       aria-labelledby="contained-modal-title-vcenter"
       centered
     >
-      <Modal.Header closeButton>
+      <Modal.Header closeButton onClick={() => {
+        reset();
+      }}>
         <Modal.Title>Crear/Editar/Eliminar Categorias</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <form onSubmit={idAEditar !== null ? handleUpdate : handleCreate}>
+        <form name="categorias" onSubmit={handleSubmit(idAEditar !== null ? handleUpdate : handleCreate)}>
           <div className="mb-3">
             <label className="form-label">Nombre Categoria</label>
-            <input
-              type="text"
-              className="form-control"
-              value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
-              ref={inputRef}
-            />
+            <input type="text" className="form-control" required {...register("categoria")} />
             {error && <small className="text-danger">{error}</small>}
           </div>
-          <button className="btn button-main" type="submit">
+
+          <button type="submit" className=" btn btn-success">
             {idAEditar !== null ? "Actualizar" : "Crear"}
           </button>
 
           {idAEditar !== null && (
             <button
               className="btn btn-secondary mx-2"
-              onClick={() => setIdAEditar(null)}
+              onClick={() => { setIdAEditar(null); reset(); setError(""); }}
             >
               Cancelar
             </button>
           )}
         </form>
+
         <div className="mt-3">
           {categorias.map((categoria) => (
             <div
@@ -149,12 +140,14 @@ const Categorias = ({ show, onHide }) => {
               <div>{categoria.nombre}</div>
               <div>
                 <button
+                  type="button"
                   className="btn button-main mx-1 btn-sm"
                   onClick={() => handleEdit(categoria)}
                 >
                   <i className="fa-solid fa-edit"></i>
                 </button>
                 <button
+                  type="button"
                   className="btn btn-danger btn-sm"
                   onClick={() => handleDelete(categoria.id)}
                 >

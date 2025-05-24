@@ -127,7 +127,7 @@ const Categorias = ({ show, estadosParam, onHide }) => {
         <Modal.Title>Crear/Editar/Eliminar Estado</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <form onSubmit={idAEditar !== null ? handleUpdate : handleCreate}>
+        <form name="estados" onSubmit={idAEditar !== null ? handleUpdate : handleCreate}>
           <div className="row">
             <div className="col-3 sm-1" style={{ textAlign: "center" }}>
               <label className="form-label">N° Orden</label>
