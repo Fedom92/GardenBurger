@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, EmailAuthProvider, reauthenticateWithCredential, updatePassword, signOut } from "firebase/auth";
+import { getAuth, EmailAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_apiKey,
@@ -16,7 +16,4 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth();
 export const db = getFirestore(app)
 export const verifCredenciales = EmailAuthProvider.credential;
-export const reautenticar = reauthenticateWithCredential;
-export const actualizarClave = updatePassword;
-export const deslogear = signOut;
-export { updateProfile, updateEmail, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
+export { signOut, reauthenticateWithCredential, updatePassword, updateProfile, updateEmail, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";

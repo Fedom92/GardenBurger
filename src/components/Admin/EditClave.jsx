@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { auth, verifCredenciales, reautenticar, actualizarClave, deslogear } from "../../firebaseConfig/firebase";
+import { auth, verifCredenciales } from "../../firebaseConfig/firebase";
+import { reauthenticateWithCredential, signOut, updatePassword } from "firebase/auth";
 import { Modal, } from "react-bootstrap";
 import { useNavigate } from 'react-router-dom';
 import Swal from "sweetalert2";
@@ -38,9 +39,9 @@ const EditClave = (props) => {
 
         const credentials = verifCredenciales(revalidUsuario, revalidPass);
 
-        await reautenticar(auth.currentUser, credentials)
+        await reauthenticateWithCredential(auth.currentUser, credentials)
             .then(({ user }) => {
-                actualizarClave(user, newPassword).then(() => {
+                updatePassword(user, newPassword).then(() => {
                     Swal.fire({
                         title: '¡Éxito!',
                         text: 'Modificación de clave exitosa.',
@@ -48,7 +49,7 @@ const EditClave = (props) => {
                         confirmButtonColor: '#198754',
                     }).then(() => {
                         props.onHide();
-                        deslogear(auth);
+                        signOut(auth);
                         navigate("/")
                     });
                 });

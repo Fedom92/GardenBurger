@@ -7,11 +7,6 @@
   --color-menu2: #0a0a0a;
   --color-menu3: #141414;
   --color-letras-menu: #ffffff;
-
-  --color-grey: #e9e6de;
-  --color-white: #FFFFFF;
-  --color-black: #000000;
-  --color-red: #ff0000;
 }
 
 
@@ -20,14 +15,14 @@ body {
 }
 
 h1 {
-  color: var(--color-black) !important;
+  color: black !important;
   letter-spacing: 1px;
   font-weight: 600;
   font-size: 2rem;
 }
 
 p {
-  color: var(--color-black) !important;
+  color: black !important;
 }
 
 h3 {
@@ -35,28 +30,15 @@ h3 {
   font-weight: 600 !important;
 }
 
-#boton-main {
-  background: var( --color-secundario);
-  color: var(--color-white);
-}
-
 .button-main {
-  background: var( --color-secundario);
-  color: var(--color-white);
+  background: var(--color-secundario);
+  color: white;
   font-size: 14px;
 }
 
 .button-main:hover {
-  background-color: var( --color-secundario);
-  color: var(--color-white);
-}
-
-.grey {
-  color: var(--color-primario-normal)
-}
-
-.greenWater {
-  color: var( --color-secundario);
+  background-color: var(--color-secundario);
+  color: white;
 }
 
 .mainpage {
@@ -64,12 +46,12 @@ h3 {
   min-height: 100vh;
   align-items: flex-start;
   object-fit: cover;
-  background-color: var(--color-white);
+  background-color: white;
 }
 
-.btn-blue {
-  background-color: var( --color-secundario);
-  color: var(--color-white);
+.btn-contorno {
+  background-color: var(--color-secundario);
+  color: white;
   border: none;
   padding: 5px 25px;
   border-radius: 10px;
@@ -77,24 +59,12 @@ h3 {
   font-size: 14px;
 }
 
-.btn-blue:hover {
-  background-color: var( --color-secundario);
+.btn-contorno:hover {
+  background-color: var(--color-secundario);
 }
 
-/*#table-xls-button {
-  background-color: var(--color-white);
-  padding: 20px;
-  border: solid green 2px;
-  border-radius: 10px;
-  height: 46px;
-  background-image: url('../img/excel.png');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 26px;
-}*/
 
 /*<!------------Inicia estilos tablas---------------->*/
-/*Aplica estilo a todas las td hijas de table*/
 table.table__body td,
 th {
   text-align: center;
@@ -137,7 +107,7 @@ table.table__body_history td:not(#thHistory) {
 .tabla_con_bordes,
 .tabla_con_bordes th,
 .tabla_con_bordes td {
-  border: 2px solid var(--color-black) !important;
+  border: 2px solid black !important;
   border-collapse: collapse !important;
 }
 
@@ -149,7 +119,7 @@ a {
 table {
   width: 100%;
   background-color: var(--color-fondo);
-  color: var(--color-black);
+  color: black;
 }
 
 table,
@@ -160,40 +130,10 @@ td {
   text-align: left;
 }
 
-td:not(#colDireccion, #colCliente, #colServicios) {
-  line-clamp: 1;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-#colDireccion {
-  width: min-content;
-  max-width: 400px;
-  word-wrap: break-word;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-#colCliente {
-  width: min-content;
-  max-width: 300px;
-  word-wrap: break-word;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-#colServicios {
-  width: min-content;
-  max-width: 430px;
-  word-wrap: break-word;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
 
 thead th {
   cursor: pointer;
-  color: var(--color-black);
+  color: black;
   font-weight: bold;
   text-align: center;
 }
@@ -208,7 +148,7 @@ tbody tr.hide {
 }
 
 tbody tr:not(.admin-row):hover {
-  background-color: var(--color-grey) !important;
+  background-color: gray !important;
 }
 
 
@@ -245,62 +185,11 @@ tbody tr.hide td p {
   margin-left: 5px;
 }
 
-#tdConColor {
-  color: var( --color-secundario);
-  background-color: none;
-}
-
-.cursor-none {
-  cursor: default;
-}
-
-.dropdown__container {
-  position: fixed !important;
-  z-index: 1 !important;
-}
-
-.dropdown-menu.show {
-  margin-left: 24px !important;
-}
-
-.primColumnaFija {
-  position: sticky;
-  left: -12px;
-  z-index: 2;
-  background-color: inherit;
-}
-
-.segColumnaFija {
-  position: sticky;
-  left: 12px;
-  z-index: 1;
-  background-color: inherit;
-}
-
-.tercColumnaFija {
-  position: sticky;
-  left: 71px;
-  z-index: 1;
-  background-color: inherit;
-}
-
-.quarColumnaFija {
-  position: sticky;
-  left: 150px;
-  z-index: 1;
-  background-color: inherit;
-}
-
-.quintColumnaFija {
-  position: sticky;
-  left: 240px;
-  z-index: 1;
-  background-color: inherit;
-}
-
 /*<!------------Termina estilos tablas---------------->*/
 
-/*ESTILOS LOGIN.CSS*/
+
+
+/*<!------------Estilo LOGIN---------------->*/
 .login {
   display: flex;
   justify-content: center;
@@ -359,7 +248,7 @@ tbody tr.hide td p {
   background-color: transparent;
   padding: 20px 10px 3px;
   border: 1px solid var(--color-secundario);
-  color: var(--color-black);
+  color: black;
 }
 
 .login-page form input {
@@ -375,7 +264,7 @@ tbody tr.hide td p {
   position: absolute;
   font-size: 13px;
   left: 3px;
-  color: var(--color-black);
+  color: black;
   transition: 0.2s ease;
 }
 
@@ -383,21 +272,21 @@ tbody tr.hide td p {
 .login-page form input:focus~label,
 .login-page form input:valid~label {
   top: 0;
-  color: var(--color-black)
+  color: black
 }
 
 .error {
-  color: var(--color-red);
+  color: red;
   font-size: 12px;
   margin: 0 auto;
   text-align: center;
 }
 
 .login-page form button {
-  background-color: var(--color-black);
+  background-color: black;
   border: none;
   border-radius: 20px;
-  color: var(--color-white);
+  color: white;
   padding: 0 10px 10px 10px;
   cursor: pointer;
 }
@@ -423,7 +312,7 @@ tbody tr.hide td p {
   width: 50%;
   height: 100%;
   animation: EntradaDerechaAIzquierda 2s ease 0s 1 normal forwards;
-  background-color: var(--color-black);
+  background-color: black;
 }
 
 .text-overlay {
@@ -479,8 +368,11 @@ tbody tr.hide td p {
   }
 }
 
+/*<!------------Termina Estilo LOGIN---------------->*/
 
-/*<!--ESTILOS PARA TARIFARIO--> (NO HACE FALTA REVISAR COLORES AQUI)*/
+
+
+/*<!------------Estilo PanelAdmin---------------->*/
 .deleted-row {
   background-color: #8f8c8c;
   color: #f2f2f2;
@@ -491,8 +383,11 @@ tbody tr.hide td p {
   color: #f2f2f2;
 }
 
-/*<!--ESTILOS PARA MiPerfil-->*/
+/*<!------------Termina Estilo PanelAdmin---------------->*/
 
+
+
+/*<!------------Estilo MiPerfil---------------->*/
 .img-account-profile {
   height: 10rem;
 }
@@ -525,116 +420,7 @@ tbody tr.hide td p {
 }
 
 .card-body input:disabled {
-  background-color: var(--color-grey);
-}
-
-.form-control,
-.dataTable-input {
-  display: block;
-  width: 100%;
-  padding: 0.875rem 1.125rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border-radius: 0.35rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-multiple-control {
-  display: block;
-  height: 84%;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border-radius: 0.35rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-
-}
-
-.menu-multiple-control {
-  margin: 0;
-  padding: 0;
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border-radius: 0.35rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-control-doctor {
-  display: block;
-  width: 100%;
-  padding: 0.375rem 1.125rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  border-radius: 0.8rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-control-desplegable {
-  display: block;
-  width: 100%;
-  padding: 0.375rem 1.125rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  border-radius: 0.8rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-control-personal-formatoPago {
-  display: block;
-  width: 92%;
-  margin: 0;
-  padding: 0.875rem 1.825rem;
-  font-size: 0.875rem;
-  font-weight: 650;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  border-radius: 0.85rem;
-  align-items: center;
-  justify-content: center;
-}
-
-.form-control-2023 {
-  display: block;
-  padding: 0.375rem 1.125rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  border-radius: 0.8rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  background-color: gray;
 }
 
 .nav-borders .nav-link.active {
@@ -656,13 +442,36 @@ tbody tr.hide td p {
   margin-right: 1rem;
 }
 
+/*<!------------Termina Estilo PanelAdmin---------------->*/
+
+
+
+/*<!------------Estilo Formulario---------------->*/
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 0.875rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1;
+  color: black;
+  background-color: var(--color-fondo-inputs);
+  background-clip: padding-box;
+  border: 1px solid gray;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 0.35rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
 input[type="file"]::before {
   content: none !important;
 }
 
 input,
 select {
-  color: var(--color-black) !important;
+  color: black !important;
 }
 
 #custom-file-upload {
@@ -672,54 +481,20 @@ select {
   cursor: pointer;
 }
 
-.form-control_history {
-  display: block;
-  width: 100%;
-  padding: 0.875rem 1.125rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  text-align: left;
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border-radius: 0.35rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+/*<!------------Termina Estilo Formularios---------------->*/
+
+
+
+/*<!------------Estilo Dropdowns Acciones---------------->*/
+.dropdown__container {
+  position: fixed !important;
+  z-index: 1 !important;
 }
 
-.form-control-check {
-  display: block;
-  width: 100%;
-  padding: 0.875rem 1.125rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border-radius: 0.35rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+.dropdown-menu.show {
+  margin-left: 24px !important;
 }
 
-.form-control-check {
-  background-color: var(--color-white);
-}
-
-
-#textoIntroHistory {
-  font-weight: bold;
-  color: var(--color-black);
-}
-
-
-/*ESTILOS DROPDOWN ACTIONS ACCIONES*/
 .dropdown-toggle::after {
   display: none !important;
 }
@@ -732,19 +507,11 @@ select {
   margin-right: 6px;
 }
 
-#botonDescargaPDF {
-  background-color: transparent;
-  color: rgb(33, 37, 41);
-  font: weight 400px;
-  margin-left: 4px;
-  border: 0;
-}
+/*<!------------Termina Estilo Dropdowns Acciones---------------->*/
 
-#botonDescargaPDF:hover {
-  background-color: #f8f9fa;
-}
 
-/*ESTILOS LOADING.CSS*/
+
+/*<!------------Estilo Loading---------------->*/
 .loader {
   width: 48px;
   height: 48px;
@@ -766,7 +533,11 @@ select {
   }
 }
 
-/*ESTILOS UPNAV.CSS*/
+/*<!------------Termina Estilo Loading---------------->*/
+
+
+
+/*<!------------Estilo UpNav---------------->*/
 .navbar {
   position: absolute;
   background-color: var(--color-primario-normal);
@@ -796,29 +567,29 @@ select {
   padding: 10px;
   border-radius: 4px;
   margin-right: 1px;
-  background-color: var(--color-white);
+  background-color: white;
   color: var(--color-primario-normal);
   width: 291px;
   border-radius: 50px;
-  border: 1px solid var(--color-white);
+  border: 1px solid white;
   will-change: border;
   margin-left: -8px !important;
 }
 
 .search-bar input:hover,
 .search-bar select:hover {
-  border: 1px solid var( --color-secundario);
+  border: 1px solid var(--color-secundario);
 }
 
 .search-bar input:focus,
 .search-bar select:focus {
-  outline: 1px solid var(--color-white) !important;
+  outline: 1px solid white !important;
 }
 
 .search-bar i:not(#historyi) {
   margin-left: -38px;
   pointer-events: none;
-  color: var(--color-black);
+  color: black;
 }
 
 .icono {
@@ -840,81 +611,8 @@ select {
   margin-right: 10px;
 }
 
-.profile-dinero {
-  height: 1.3rem;
-  margin-right: 10px;
-}
-
 .right-navbar {
   width: 28%;
-}
-
-.form-control-formatoPago {
-  display: block;
-  padding: 0.875rem 1.125rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  border-radius: 0.85rem;
-  align-items: center;
-  justify-content: center;
-}
-
-.form-control-fechas {
-  display: block;
-  padding: 0.875rem 1.125rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  border-radius: 0.85rem;
-  align-items: center;
-  justify-content: center;
-}
-
-.form-control-fechas-metricas {
-  display: block;
-  padding: 0.875rem 0.9rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  border-radius: 0.85rem;
-  align-items: center;
-  justify-content: center;
-  width: 65%;
-  height: 40px;
-}
-
-.form-control-informeVentas {
-  display: block;
-  padding: 0.375rem 1.125rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--color-black);
-  background-color: var(--color-fondo-inputs);
-  background-clip: padding-box;
-  border: 1px solid var(--color-grey);
-  border-radius: 0.85rem;
-  align-items: center;
-  justify-content: center;
-}
-
-#tituloFormatoPago {
-  margin: 0;
-  font-size: 1rem;
-  align-items: center;
-  font-weight: bold;
 }
 
 @media (max-width: 1440px) and (max-height: 768px) {
@@ -943,7 +641,11 @@ select {
   margin-right: 5px;
 }
 
-/*STYLES DE ESTADOS COLOR*/
+/*<!------------Termina Estilo UpNav---------------->*/
+
+
+
+/*<!------------Estilo ESTADOS---------------->*/
 .color-input-container {
   display: flex;
   align-items: center;
@@ -967,7 +669,11 @@ select {
   margin-left: 4px;
 }
 
-/*ESTILOS NAVIGATION.CSS*/
+/*<!------------Termina Estilo ESTADOS---------------->*/
+
+
+
+/*<!------------Estilo Navigation---------------->*/
 .navigation {
   position: sticky;
   top: 0;
@@ -980,7 +686,6 @@ select {
   padding: 5px 5px;
   z-index: 2;
 }
-
 
 .navigation.active {
   width: max-content;
@@ -999,7 +704,6 @@ select {
   align-items: center;
   z-index: 1;
   cursor: pointer;
-
 }
 
 .navigation.active .menu {
@@ -1055,7 +759,7 @@ select {
 
 .profile-img-inactive {
   position: sticky;
-  height: 50px;
+  height: 34px;
   width: 50px;
   object-fit: contain;
 }
@@ -1098,9 +802,7 @@ select {
   display: none;
 }
 
-
-
-/* Estilo Sidebar */
+/*<!------------Navigation Sidebar---------------->*/
 .sidebar-title span i {
   display: inline-block;
   width: 1.5em;
@@ -1134,7 +836,7 @@ select {
 }
 
 .sidebar-item.plain {
-  color: var(--color-white);
+  color: white;
   text-decoration: none;
 }
 
@@ -1147,11 +849,15 @@ select {
   width: 1.7em;
 }
 
-/*ESTILO PARA CALENDAR        (NO HACE FALTA REVISAR COLORES AQUI)*/
+/*<!------------Termina Estilo Navigation---------------->*/
+
+
+
+/*<!------------Estilo Libreria Calendar---------------->*/
 .react-calendar {
   width: 350px;
   max-width: 100%;
-  background: var(--color-white);
+  background: white;
   border: 1px solid #a0a096;
   font-family: Arial, Helvetica, sans-serif;
   line-height: 1.125em;
@@ -1243,7 +949,7 @@ select {
 }
 
 .react-calendar__month-view__days__day--weekend {
-  color: var(--color-red);
+  color: red;
 }
 
 .react-calendar__month-view__days__day--neighboringMonth {
@@ -1297,8 +1003,35 @@ select {
   background-color: #e6e6e6;
 }
 
-/* PLANTILLA PDF */
+/*<!------------Termina Estilo Calendar---------------->*/
 
+
+
+/*<!------------Estilo Plantilla PDF---------------->*/
+/* TODO ACTUALIZAR SEGUN TICKET DE CAJA*/
+/*#table-xls-button {
+  background-color: white;
+  padding: 20px;
+  border: solid green 2px;
+  border-radius: 10px;
+  height: 46px;
+  background-image: url('../img/excel.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 26px;
+}
+  #botonDescargaPDF {
+  background-color: transparent;
+  color: rgb(33, 37, 41);
+  font: weight 400px;
+  margin-left: 4px;
+  border: 0;
+}
+
+#botonDescargaPDF:hover {
+  background-color: #f8f9fa;
+}
+*/
 .plantilla-pdf {
   display: grid;
   grid-template-columns: 1fr;
@@ -1537,75 +1270,4 @@ select {
   }
 }
 
-
-/* Propiedades GENERALES */
-
-.fondo-color-primario {
-  background-color: var(--color-primario-normal);
-}
-
-.border-hover:hover {
-  border: 1px solid var( --color-secundario);
-}
-
-.textarea-no-resize {
-  resize: none;
-  overflow: hidden;
-  border: 0;
-  width: 100%;
-  word-wrap: break-word;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-@media (min-width: 768px) and (max-width: 768px) {
-
-  .col-sm-1,
-  .col-sm-2,
-  .col-sm-3,
-  .col-sm-4,
-  .col-sm-5,
-  .col-sm-6,
-  .col-sm-7,
-  .col-sm-8,
-  .col-sm-9,
-  .col-sm-10,
-  .col-sm-11,
-  .col-sm-12 {
-    width: 92% !important;
-  }
-}
-
-@media only screen and (max-width: 768px) {
-  .small-font {
-    font-size: 14px;
-    /* Ajusta el tamaño de la fuente según sea necesario */
-  }
-
-  .smaller-font {
-    font-size: 12px;
-  }
-
-  .small-input {
-    width: 110%;
-    padding: 10px;
-    /* Ajusta el ancho del input según sea necesario */
-  }
-
-  .less-padding {
-    padding: 16px 4px 0 4px;
-  }
-
-  .small-select {
-    width: 80%;
-    /* Ajusta el ancho del select según sea necesario */
-  }
-}
-
-.menu-font {
-  font-size: 30px;
-  margin-bottom: 10px;
-}
+/*<!------------Termina Estilo Plantilla PDF---------------->*/

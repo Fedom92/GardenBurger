@@ -1,5 +1,5 @@
 import Nav from "./NavIcons/Nav";
-import { FaAngleLeft, FaUserTie, FaUser, FaSignOutAlt, FaCalendarAlt, FaTools } from 'react-icons/fa';
+import { FaAngleLeft, FaUserTie, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaTools } from 'react-icons/fa';
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -45,9 +45,8 @@ const Navigation = () => {
         });
     };
 
-    const handleClick = (stateSetter, currentState) => {
-        setOpen(false);
-        stateSetter(!currentState);
+    const toggleOpen = () => {
+        setOpen(prev => !prev);
     };
 
     useEffect(() => {
@@ -58,16 +57,8 @@ const Navigation = () => {
         setTipoUsuario(rolDesencriptado);
         setIsLoading(true)
 
-        const pathToOpenState = {
-            "/miPerfil": setOpen,
-            "/admin": setOpen,
-        };
-
-        setOpen(false);
-
-        if (pathToOpenState[location.pathname]) {
-            pathToOpenState[location.pathname](true);
-        }
+        const rutasQueAbrenSubmenu = ["/miPerfil", "/admin"];
+        setOpen(rutasQueAbrenSubmenu.includes(location.pathname));
     }, [location.pathname]);
 
     return (
@@ -77,18 +68,21 @@ const Navigation = () => {
             </div>
             <header>
                 <div className="profile">
-                    <img src={isActive ? '' : icono} alt="profile" className={isActive ? "profile-img-inactive" : "profile-picture-login"} />
+                    <img src={icono} alt="profile" className={isActive ? "profile-img-inactive" : "profile-picture-login"} />
                 </div>
             </header>
             {isLoading && (
                 <>
                     <div className="sidebar-title">
-                        <Link to="/productos" className="text-decoration-none link-light"><Nav title="Productos" Icon={FaCalendarAlt} isActive={isActive} /></Link>
+                        <Link to="/productos" className="text-decoration-none link-light"><Nav title="Productos" Icon={FaHamburger} isActive={isActive} /></Link>
                     </div>
 
+                    <div className="sidebar-title">
+                        <Link to="/envios" className="text-decoration-none link-light"><Nav title="Envios" Icon={FaMotorcycle} isActive={isActive} /></Link>
+                    </div>
                     <div className="sidebar">
                         <div className={open ? "sidebar-item open" : "sidebar-item"}>
-                            <div className="sidebar-title link-light" onClick={() => handleClick(setOpen, open)}>
+                            <div className="sidebar-title link-light" onClick={toggleOpen}>
                                 <Nav title="Configuracion" Icon={FaTools} isActive={isActive} />
                             </div>
                             <div className="sidebar-content">

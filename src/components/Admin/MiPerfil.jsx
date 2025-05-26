@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { doc, updateDoc, where, collection, getDocs, query, } from "firebase/firestore";
-import { auth, db, deslogear, } from "../../firebaseConfig/firebase";
-import { updateProfile, updateEmail, onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../../firebaseConfig/firebase";
+import { signOut, updateProfile, updateEmail, onAuthStateChanged } from "firebase/auth";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate } from 'react-router-dom';
 import EditClave from "./EditClave";
@@ -67,9 +67,6 @@ const MiPerfil = () => {
       e.preventDefault();
       const user = auth.currentUser;
 
-      await updateProfile(user, {
-        displayName: nombreCompleto,
-      });
       await updateEmail(user, correo);
 
       const userDocRef = doc(db, "usuarios", id);
@@ -84,7 +81,7 @@ const MiPerfil = () => {
         icon: 'success',
         confirmButtonColor: '#198754',
       }).then(() => {
-        deslogear(auth);
+        signOut(auth);
         navigate("/")
       })
     } catch (e) {
@@ -135,7 +132,7 @@ const MiPerfil = () => {
         icon: 'success',
         confirmButtonColor: '#198754',
       }).then(() => {
-        deslogear(auth);
+        signOut(auth);
         navigate("/")
       })
     } catch (error) {

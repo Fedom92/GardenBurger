@@ -41,13 +41,7 @@ const UpNav = () => {
             <nav className="navbar w-100 position-absolute">
                 <div className="col d-flex justify-content-end align-items-center right-navbar">
 
-                    <p className="fw-normal mb-0" style={{ marginRight: "20px" }}>
-                        Bienvenido {currentUser.displayName || ""}
-                    </p>
-
-
                     <div className="notificacion">
-
                         <Dropdown>
                             <Dropdown.Toggle
                                 variant="primary"

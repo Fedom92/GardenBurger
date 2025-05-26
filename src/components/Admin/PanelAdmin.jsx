@@ -193,7 +193,7 @@ function PanelAdmin() {
                     <div className="d-flex justify-content-end">
                       <button
                         variant="primary"
-                        className="btn btn-blue m-2"
+                        className="btn btn-contorno m-2"
                         onClick={() => {
                           setModalShow(true);
                         }}

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { collection, setDoc, doc, query, limit, getDocs, where } from "firebase/firestore";
 import { db, auth } from "../../firebaseConfig/firebase";
-import { createUserWithEmailAndPassword, updateProfile, updateCurrentUser } from "firebase/auth"
+import { createUserWithEmailAndPassword, updateCurrentUser } from "firebase/auth"
 import { Modal } from "react-bootstrap";
 import moment from 'moment';
 import Swal from "sweetalert2";
@@ -59,7 +59,6 @@ const CrearUsuario = (props) => {
       const { user } = await createUserWithEmailAndPassword(auth, data.correo, data.password);
 
       await setDoc(doc(db, "usuarios", user.uid), nuevoUsuario);
-      await updateProfile(user, { displayName: data.nombreCompleto });
       await updateCurrentUser(auth, usuarioAnterior);
       
       clearForm();

@@ -217,7 +217,7 @@ function Productos(props) {
                     <h1>Productos</h1>
                     {rol === process.env.REACT_APP_admin ? (
                       <button
-                        className="btn grey mx-2 btn-sm"
+                        className="btn mx-2 btn-sm"
                         style={{ borderRadius: "5px" }}
                         onClick={() => {
                           funcMostrarAjustes(true);
@@ -229,7 +229,7 @@ function Productos(props) {
                     {rol !== process.env.REACT_APP_rolDoctor ? (
                       <button
                         variant="primary"
-                        className="btn-blue m-1"
+                        className="btn-contorno m-1"
                         onClick={() => setModalShowProducto(true)}
                       >
                         Agregar Producto
@@ -239,7 +239,7 @@ function Productos(props) {
                       <div>
                         <button
                           variant="tertiary"
-                          className="btn-blue m-1"
+                          className="btn-contorno m-1"
                           onClick={() => setModalShowCategorias(true)}
                         >
                           Categorias
