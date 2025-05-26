@@ -7,6 +7,7 @@ import Categorias from "./Parametros/Categorias";
 import "../../style/Main.css"
 import Swal from "sweetalert2";
 import CryptoJS from 'crypto-js';
+import TablaGenerica from "../../Utils/TablasGenericas";
 
 function Productos(props) {
   const [rol, setRol] = useState("");
@@ -136,73 +137,63 @@ function Productos(props) {
   };
 
 
-  //A partir de acá Filtros y Busquedas
-  const searcher = (e) => {
-    if (typeof e === "string") {
-      setSearch(e);
-    } else {
-      setSearch(e.target.value);
-    }
-  };
 
-  const [paginaActual, setPaginaActual] = useState(1);
-  const filasPorPagina = 50;
-
-  const handleCambioPagina = (pagina) => {
-    setPaginaActual(pagina);
-  };
-
-  let results = []
-
-  function quitarAcentos(texto) {
-    return texto
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-  }
-
-  results = !search
-    ? productos
-    : productos.filter((dato) => {
-      const apellidoConNombreSinAcentos = quitarAcentos(dato.apellidoConNombre);
-      const searchSinAcentos = quitarAcentos(search);
-
-      return (
-        apellidoConNombreSinAcentos.includes(searchSinAcentos) ||
-        dato.idc.toString().includes(searchSinAcentos)
-      );
-    });
-
-  var paginasTotales = Math.ceil(results.length / filasPorPagina);
-  var startIndex = (paginaActual - 1) * filasPorPagina;
-  var endIndex = startIndex + filasPorPagina;
-  var resultsPaginados = results.slice(startIndex, endIndex);
-
-  const sorting = (col) => {
-    if (order === "ASC") {
-      const sorted = [...productos].sort((a, b) => {
-        const valueA =
-          typeof a[col] === "string" ? a[col].toLowerCase() : a[col];
-        const valueB =
-          typeof b[col] === "string" ? b[col].toLowerCase() : b[col];
-        return valueA > valueB ? 1 : -1;
-      });
-      setProductos(sorted);
-      setOrder("DSC");
-    }
-    if (order === "DSC") {
-      const sorted = [...productos].sort((a, b) => {
-        const valueA =
-          typeof a[col] === "string" ? a[col].toLowerCase() : a[col];
-        const valueB =
-          typeof b[col] === "string" ? b[col].toLowerCase() : b[col];
-        return valueA < valueB ? 1 : -1;
-      });
-      setProductos(sorted);
-      setOrder("ASC");
-    }
-  };
+  const columnasProductos = [
+    {
+      accessorKey: "descripcion",
+      header: "Descripción",
+    },
+    {
+      accessorKey: "categoria",
+      header: "Categoría",
+    },
+    {
+      accessorKey: "precio",
+      header: "Precio",
+    },
+    {
+      accessorKey: "imagen",
+      header: "Imagen",
+      cell: ({ getValue }) =>
+        getValue() ? (
+          <a
+            href={getValue()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary text-decoration-underline"
+          >
+            Ver Imagen
+          </a>
+        ) : null,
+    },
+    {
+      id: "acciones",
+      header: "Acciones",
+      cell: ({ row }) => {
+        const producto = row.original;
+        return (
+          <>
+            <button
+              className="btn btn-success mx-1"
+              onClick={() => {
+                setModalShowEditProducto(true);
+                setProducto(producto);
+                setIdParam(producto.id);
+              }}
+            >
+              <i className="fa-solid fa-edit"></i>
+            </button>
+            <button
+              onClick={() => confirmeDelete(producto.id)}
+              className="btn btn-danger"
+            >
+              <i className="fa-solid fa-trash"></i>
+            </button>
+          </>
+        );
+      },
+    },
+  ];
 
   //TODO Faltaría un filtro seleccionador por categoria
 
@@ -214,17 +205,6 @@ function Productos(props) {
         </div>
       ) : (
         <div className="w-100">
-          <div className="search-bar d-flex col-2 m-2 ms-3 w-50">
-            <input
-              value={search}
-              onChange={searcher}
-              type="text"
-              placeholder="Buscar..."
-              className="form-control-upNav m-2"
-            />
-            <i className="fa-solid fa-magnifying-glass"></i>
-          </div>
-
           <div className="container mw-100">
             <div className="row">
               <div className="col">
@@ -269,111 +249,12 @@ function Productos(props) {
                   </div>
                 </div>
 
-                <div className="table__container">
-                  <table className="table__body">
-                    <thead>
-                      <tr>
-                        <th onClick={() => sorting("descripcion")} style={{ textAlign: "left" }}>
-                          Descripción
-                        </th>
-                        <th onClick={() => sorting("categoria")}>Categoria</th>
-                        <th onClick={() => sorting("precio")}>Precio</th>
-                        <th>Imagen</th>
-                        <th id="columnaAccion"></th>
-                      </tr>
-                    </thead>
+                <TablaGenerica
+                  data={productos}
+                  columnas={columnasProductos}
+                  camposBusqueda={["descripcion", "categoria"]}
+                />;
 
-                    <tbody>
-                      {resultsPaginados.map((producto) => (
-                        <tr key={producto.id}>
-                          <td style={{ textAlign: "left" }}> {producto.descripcion} </td>
-                          <td> {producto.categoria} </td>
-                          <td> {producto.precio} </td>
-                          <td>
-                            {producto.imagen ? <a
-                              href={producto.imagen}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary text-decoration-underline"
-                            >
-                              Ver Imagen
-                            </a> : ''}
-                          </td>
-
-                          <td>
-                            <button
-                              className="btn btn-success mx-1"
-                              onClick={() => {
-                                setModalShowEditProducto(true);
-                                setProducto(producto);
-                                setIdParam(producto.id);
-                              }}
-                            >
-                              <i className="fa-solid fa-edit"></i>
-                            </button>
-
-                            <button
-                              onClick={() => confirmeDelete(producto.id)}
-                              className="btn btn-danger"
-                            >
-                              <i className="fa-solid fa-trash"></i>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="table__footer">
-                  <div className="table__footer-left">
-                    Mostrando {startIndex + 1} - {endIndex} de {results.length}
-                  </div>
-
-                  <div className="table__footer-right">
-                    <span>
-                      <button
-                        onClick={() => handleCambioPagina(paginaActual - 1)}
-                        disabled={paginaActual === 1}
-                        style={{ border: "0", background: "none" }}
-                      >
-                        &lt; Previo
-                      </button>
-                    </span>
-
-                    {[...Array(paginasTotales)].map((_, index) => {
-                      const pagina = index + 1;
-                      return (
-                        <span key={pagina}>
-                          <span
-                            onClick={() => handleCambioPagina(pagina)}
-                            className={pagina === paginaActual ? "active" : ""}
-                            style={{
-                              margin: "2px",
-                              backgroundColor: pagina === paginaActual ? "#003057" : "transparent",
-                              color: pagina === paginaActual ? "#FFFFFF" : "#000000",
-                              padding: "4px 8px",
-                              borderRadius: "4px",
-                              cursor: "pointer"
-                            }}
-                          >
-                            {pagina}
-                          </span>
-                        </span>
-                      );
-                    })}
-
-                    <span>
-                      <button
-                        onClick={() => handleCambioPagina(paginaActual + 1)}
-                        disabled={paginaActual === paginasTotales}
-                        style={{ border: "0", background: "none" }}
-                      >
-                        Siguiente &gt;
-                      </button>
-                    </span>
-                  </div>
-                </div>
               </div>
             </div>
           </div >
