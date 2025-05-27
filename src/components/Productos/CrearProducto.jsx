@@ -15,7 +15,7 @@ function CrearProducto(props) {
     const nuevoProducto = {
       categoria: data.categoria,
       descripcion: data.descripcion,
-      precio: data.precio,
+      precio: Number(data.precio),
       imagen: data.imagen,
     };
 

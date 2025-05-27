@@ -1,5 +1,5 @@
 import Nav from "./NavIcons/Nav";
-import { FaAngleLeft, FaUserTie, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaTools } from 'react-icons/fa';
+import { FaAngleLeft, FaUserTie, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools } from 'react-icons/fa';
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -78,8 +78,13 @@ const Navigation = () => {
                     </div>
 
                     <div className="sidebar-title">
-                        <Link to="/envios" className="text-decoration-none link-light"><Nav title="Envios" Icon={FaMotorcycle} isActive={isActive} /></Link>
+                        <Link to="/gestion-deliverys" className="text-decoration-none link-light"><Nav title="Deliverys" Icon={FaMotorcycle} isActive={isActive} /></Link>
                     </div>
+
+                     <div className="sidebar-title">
+                        <Link to="/pedidos-caja" className="text-decoration-none link-light"><Nav title="Caja" Icon={FaCashRegister} isActive={isActive} /></Link>
+                    </div>
+
                     <div className="sidebar">
                         <div className={open ? "sidebar-item open" : "sidebar-item"}>
                             <div className="sidebar-title link-light" onClick={toggleOpen}>

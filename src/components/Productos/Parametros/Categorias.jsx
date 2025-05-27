@@ -70,10 +70,6 @@ const Categorias = ({ show, onHide }) => {
   };
 
   const handleUpdate = (data) => {
-    if (data.categoria.trim() === "") {
-      setError("La categoria no puede estar vacía");
-      return;
-    }
     const categoriaToUpdate = categorias.filter((item) => item.id === idAEditar);
 
     const newState = { nombre: data.categoria };
@@ -112,7 +108,7 @@ const Categorias = ({ show, onHide }) => {
       <Modal.Body>
         <form name="categorias" onSubmit={handleSubmit(idAEditar !== null ? handleUpdate : handleCreate)}>
           <div className="mb-3">
-            <label className="form-label">Nombre Categoria</label>
+            <label className="form-label">Nombre Categoria*</label>
             <input type="text" className="form-control" required {...register("categoria")} />
             {error && <small className="text-danger">{error}</small>}
           </div>
@@ -141,7 +137,7 @@ const Categorias = ({ show, onHide }) => {
               <div>
                 <button
                   type="button"
-                  className="btn button-main mx-1 btn-sm"
+                  className="btn btn-success mx-1 btn-sm"
                   onClick={() => handleEdit(categoria)}
                 >
                   <i className="fa-solid fa-edit"></i>

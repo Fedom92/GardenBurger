@@ -12,7 +12,7 @@ const EditProducto = (props) => {
     reset({
       categoria: producto.categoria || "",
       descripcion: producto.descripcion || "",
-      precio: producto.precio || "",
+      precio: Number(producto.precio) || "",
       imagen: producto.imagen || "",
     });
   }, [producto, reset]);
@@ -25,7 +25,7 @@ const EditProducto = (props) => {
     const newData = {
       categoria: data.categoria || productoData.categoria,
       descripcion: data.descripcion || productoData.descripcion,
-      precio: data.precio || productoData.precio,
+      precio: Number(data.precio) || Number(productoData.precio),
       imagen: data.imagen || productoData.imagen
     };
 
@@ -64,7 +64,7 @@ const EditProducto = (props) => {
 
                 <div className="col-4 mb-2">
                   <label className="form-label">Precio*</label>
-                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} />
+                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} />
                 </div>
               </div>
 

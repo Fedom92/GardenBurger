@@ -92,18 +92,20 @@ const Login = () => {
   return (
     <>
       <div className="login">
+
         <div className="background-container">
           <div className="background-image" />
           <div className="text-overlay">
             <h1 className="welcome-text">
-              <span>Bienvenido a</span>
-              <span>Garden Burger</span>
+              <span>Bienvenido a la</span>
+              <span>Plataforma</span>
             </h1>
           </div>
         </div>
-        <div className="login-page" style={{ transform: "scale(0.9)" }}>
+
+        <div className="login-page">
           <img className="logo" src={logo} alt="GardenBurger Logo" />
-          <form name="login" className="p-4" onSubmit={submit}>
+          <form name="login" onSubmit={submit}>
             <h3>Iniciar Sesión</h3>
             <div className="email">
               <input
@@ -146,7 +148,6 @@ const Login = () => {
               onClick={handleModal}
               style={{
                 display: "inline-block",
-                width: "150px",
                 background: "white",
                 color: "black",
                 alignSelf: "center"
@@ -164,7 +165,7 @@ const Login = () => {
       {mostrarModal && (
         <Modal
           show={mostrarModal}
-          size="lg"
+          size="md"
           aria-labelledby="contained-modal-title-vcenter"
           centered
         >
@@ -176,7 +177,7 @@ const Login = () => {
               <div className="col">
                 <form>
                   <div className="row">
-                    <div className="col mb-6">
+                    <div className="col">
                       <label className="form-label">Ingrese su correo</label>
                       <input
                         onChange={(e) => setEmailReseteo(e.target.value)}

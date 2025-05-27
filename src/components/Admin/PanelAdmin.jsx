@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { collection, orderBy, query, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db, auth } from "../../firebaseConfig/firebase";
 import CrearUsuario from "./CrearUsuario";
+import Envios from "./Parametros/Envios";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
@@ -11,6 +12,8 @@ function PanelAdmin() {
   const [search, setSearch] = useState("");
   const [order, setOrder] = useState("ASC");
   const [modalShow, setModalShow] = useState(false);
+  const [mostrarAjustes, setMostrarAjustes] = useState(false);
+  const [modalShowEnvios, setModalShowEnvios] = useState(false);
 
   const [modalShowEditRol, setModalShowEditRol] = useState([false, ""]);
   const [rol, setRol] = useState(false);
@@ -162,6 +165,13 @@ function PanelAdmin() {
     setUsuarios((prevUsuarios) => prevUsuarios.filter((item) => item.id !== id));
   };
 
+  function funcMostrarAjustes() {
+    if (mostrarAjustes) {
+      setMostrarAjustes(false);
+    } else {
+      setMostrarAjustes(true);
+    }
+  }
 
   return (
     <>
@@ -188,7 +198,34 @@ function PanelAdmin() {
                 <br></br>
                 <div className="d-grid gap-2">
                   <div className="d-flex justify-content-between">
-                    <h1>Panel Administrador</h1>
+                    <div
+                      className="d-flex justify-content-start align-items-center"
+                      style={{ maxHeight: "40px", marginLeft: "10px" }}
+                    >
+                      <h1>Panel Administrador</h1>
+                      <button
+                        className="btn mx-2 btn-sm"
+                        style={{ borderRadius: "5px" }}
+                        onClick={() => {
+                          funcMostrarAjustes(true);
+                        }}
+                      >
+                        <i className="fa-solid fa-gear"></i>
+                      </button>
+
+
+                      {mostrarAjustes && (
+                        <div>
+                          <button
+                            variant="tertiary"
+                            className="btn-contorno m-1"
+                            onClick={() => setModalShowEnvios(true)}
+                          >
+                            Envios
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="d-flex justify-content-end">
                       <button
@@ -310,53 +347,59 @@ function PanelAdmin() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
       <CrearUsuario
         show={modalShow}
         agregarusuario={agregarUsuario}
         onHide={() => setModalShow(false)} />
 
-      {modalShowEditRol[0] && (
-        <Modal
-          show={modalShowEditRol[0]}
-          aria-labelledby="contained-modal-title-vcenter"
-          centered
-        >
-          <Modal.Header closeButton onClick={handleCloseModal}>
-            <Modal.Title>Editar Rol</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <form name="editarRol">
-              <div className="mb-2">
-                <label className="form-label">Rol*</label>
-                <select
-                  defaultValue={modalShowEditRol[1].rol}
-                  onChange={(e) => setRol(e.target.value)}
-                  className="form-control"
-                  multiple={false}
+      <Envios
+        show={modalShowEnvios}
+        onHide={() => setModalShowEnvios(false)} />
+      {
+        modalShowEditRol[0] && (
+          <Modal
+            show={modalShowEditRol[0]}
+            aria-labelledby="contained-modal-title-vcenter"
+            centered
+          >
+            <Modal.Header closeButton onClick={handleCloseModal}>
+              <Modal.Title>Editar Rol</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <form name="editarRol">
+                <div className="mb-2">
+                  <label className="form-label">Rol*</label>
+                  <select
+                    defaultValue={modalShowEditRol[1].rol}
+                    onChange={(e) => setRol(e.target.value)}
+                    className="form-control"
+                    multiple={false}
+                  >
+                    <option value={process.env.REACT_APP_encargado}>Encargado</option>
+                    <option value={process.env.REACT_APP_cajero}>Cajero</option>
+                    <option value={process.env.REACT_APP_cocina}>Cocina</option>
+                    <option value={process.env.REACT_APP_delivery}>Delivery</option>
+                    <option value={process.env.REACT_APP_contador}>Contador</option>
+                  </select>
+                </div>
+                <button
+                  className="btn button-main"
+                  type="submit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleEditUsuario(modalShowEditRol[1].id)
+                  }}
                 >
-                  <option value={process.env.REACT_APP_encargado}>Encargado</option>
-                  <option value={process.env.REACT_APP_cajero}>Cajero</option>
-                  <option value={process.env.REACT_APP_cocina}>Cocina</option>
-                  <option value={process.env.REACT_APP_delivery}>Delivery</option>
-                  <option value={process.env.REACT_APP_contador}>Contador</option>
-                </select>
-              </div>
-              <button
-                className="btn button-main"
-                type="submit"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleEditUsuario(modalShowEditRol[1].id)
-                }}
-              >
-                Actualizar
-              </button>
-            </form>
-          </Modal.Body>
-        </Modal>
-      )}
+                  Actualizar
+                </button>
+              </form>
+            </Modal.Body>
+          </Modal>
+        )
+      }
     </>
   );
 }
