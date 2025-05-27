@@ -7,18 +7,15 @@ import Categorias from "./Parametros/Categorias";
 import "../../style/Main.css"
 import Swal from "sweetalert2";
 import CryptoJS from 'crypto-js';
-import TablaGenerica from "../../Utils/TablasGenericas";
+import TablaGenerica from "../../Utils/TablaGenerica";
 
-function Productos(props) {
+const Productos = () => {
   const [rol, setRol] = useState("");
   const [productos, setProductos] = useState([]);
-  const [search, setSearch] = useState("");
   const [modalShowProducto, setModalShowProducto] = useState(false);
   const [modalShowEditProducto, setModalShowEditProducto] = useState(false);
   const [producto, setProducto] = useState([]);
   const [idParam, setIdParam] = useState("");
-  const [order, setOrder] = useState("ASC");
-  const [categorias, setCategorias] = useState([]);
   const [categoriasOptions, setCategoriasOptions] = useState([]);
   const [modalShowCategorias, setModalShowCategorias] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +46,6 @@ function Productos(props) {
       <option key={categoria.id} value={categoria.nombre}>{categoria.nombre}</option>
     ));
 
-    setCategorias(categoriasArray);
     setCategoriasOptions(opciones);
   }, []);
 
@@ -137,20 +133,8 @@ function Productos(props) {
   };
 
 
-
   const columnasProductos = [
-    {
-      accessorKey: "descripcion",
-      header: "Descripción",
-    },
-    {
-      accessorKey: "categoria",
-      header: "Categoría",
-    },
-    {
-      accessorKey: "precio",
-      header: "Precio",
-    },
+    { columnasBasicas: ["descripcion", "categoria", "precio"] },
     {
       accessorKey: "imagen",
       header: "Imagen",
@@ -253,6 +237,7 @@ function Productos(props) {
                   data={productos}
                   columnas={columnasProductos}
                   camposBusqueda={["descripcion", "categoria"]}
+                  campoSelector="categoria"
                 />;
 
               </div>

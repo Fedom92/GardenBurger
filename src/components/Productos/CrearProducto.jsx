@@ -4,7 +4,7 @@ import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 
-function CrearProducto(props) {
+const CrearProducto = (props) => {
   const { register, handleSubmit, reset } = useForm();
   const { agregar_producto, categorias_options, ...propsModal } = props;
   const [error, setError] = useState("");

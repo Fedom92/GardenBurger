@@ -7,7 +7,7 @@ import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
 
-function PanelAdmin() {
+const PanelAdmin = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [search, setSearch] = useState("");
   const [order, setOrder] = useState("ASC");
