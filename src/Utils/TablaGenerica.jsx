@@ -29,7 +29,7 @@ const TablaGenerica = ({ data, columnas, camposBusqueda = [], campoSelector = nu
     const datosFiltrados = useMemo(() => {
         let resultado = data;
 
-        if (search) {
+        if (camposBusqueda.length > 0 && search) {
             const normalizado = quitarAcentos(search);
             resultado = resultado.filter((item) =>
                 camposBusqueda.some((campo) => {
@@ -39,7 +39,7 @@ const TablaGenerica = ({ data, columnas, camposBusqueda = [], campoSelector = nu
             );
         }
 
-        if (filtroSelector) {
+        if (campoSelector && filtroSelector) {
             resultado = resultado.filter(
                 (item) => String(item[campoSelector]) === filtroSelector
             );
@@ -89,7 +89,7 @@ const TablaGenerica = ({ data, columnas, camposBusqueda = [], campoSelector = nu
                     </select>
                 )}
 
-                {camposBusqueda && (
+                {camposBusqueda.length > 0 && (
                     <input
                         type="text"
                         value={search}
