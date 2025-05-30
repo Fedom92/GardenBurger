@@ -166,7 +166,7 @@ const Categorias = ({ show, estadosParam, onHide }) => {
             </div>
           </div>
 
-          <button className="btn button-main" type="submit">
+          <button className="btn btn-success" type="submit">
             {idAEditar !== null ? "Actualizar" : "Crear"}
           </button>
 
@@ -200,7 +200,7 @@ const Categorias = ({ show, estadosParam, onHide }) => {
                 /></div>
               <div className="col-2">
                 <button
-                  className="btn button-main mx-1 btn-sm"
+                  className="btn btn-success mx-1 btn-sm"
                   onClick={() => handleEdit(state)}
                 >
                   <i className="fa-solid fa-edit"></i>

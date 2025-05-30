@@ -49,7 +49,6 @@ const CrearUsuario = (props) => {
     const nuevoUsuario = {
       correo: data.correo,
       fechaAlta: hoy,
-      foto: "",
       nombreCompleto: data.nombreCompleto,
       rol: data.rol,
       telefono: data.telefono,

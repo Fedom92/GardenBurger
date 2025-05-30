@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { doc, updateDoc, where, collection, getDocs, query, } from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig/firebase";
-import { signOut, updateProfile, updateEmail, onAuthStateChanged } from "firebase/auth";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { signOut, updateEmail, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 import EditClave from "./EditClave";
 import Swal from "sweetalert2";
@@ -15,15 +14,12 @@ const MiPerfil = () => {
   const [correo, setCorreo] = useState("");
   const [telefono, setTelefono] = useState("");
   const [fechaAlta, setFechaAlta] = useState("");
-  const [foto, setFoto] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [editable, setEditable] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
   const [id, setId] = useState("");
   const [, setMostrarPerfil] = useState(true);
   const [modalShowEditClave, setModalShowEditClave] = useState(false);
-  const [mostrarBotonFoto, setMostrarBotonFoto] = useState(false);
-  const storage = getStorage();
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -43,7 +39,6 @@ const MiPerfil = () => {
         setCorreo(userData2.correo);
         setTelefono(userData2.telefono);
         setFechaAlta(userData2.fechaAlta);
-        setFoto(userData2.foto);
         setId(userId)
       }
       setIsLoading(false);
@@ -94,58 +89,6 @@ const MiPerfil = () => {
     }
   }
 
-
-  const handleUploadImage = async (e) => {
-    try {
-      const file = e.target.files[0];
-      const storageRef = ref(storage, `imagenes_perfil/${file.name}`);
-      await uploadBytes(storageRef, file);
-
-      const downloadURL = await getDownloadURL(storageRef);
-      setFoto(downloadURL);
-      setMostrarBotonFoto(true)
-    } catch (error) {
-      console.error("Error funcion handleUploadImage", error);
-      Swal.fire({
-        title: '¡Error!',
-        text: 'Error al cargar su foto. Vuelva a iniciar sesión e intente de nuevo.',
-        icon: 'error',
-        confirmButtonColor: '#d33',
-      })
-    }
-  }
-
-  const subirFoto = async (e) => {
-    try {
-      e.preventDefault();
-      const user = auth.currentUser;
-      await updateProfile(user, {
-        photoURL: foto,
-      });
-      const userDocRef = doc(db, "usuarios", id);
-      await updateDoc(userDocRef, {
-        foto: foto
-      });
-      Swal.fire({
-        title: '¡Éxito!',
-        text: 'Modificación de Foto exitosa.',
-        icon: 'success',
-        confirmButtonColor: '#198754',
-      }).then(() => {
-        signOut(auth);
-        navigate("/")
-      })
-    } catch (error) {
-      console.error("Error funcion subirFoto", error);
-      Swal.fire({
-        title: '¡Error!',
-        text: 'Error al guardar la imagen. Vuelva a iniciar sesión e intente de nuevo.',
-        icon: 'error',
-        confirmButtonColor: '#d33',
-      })
-    }
-  }
-
   return (
     <>
       {isLoading ? (
@@ -164,22 +107,7 @@ const MiPerfil = () => {
               <div className="nav-link" onClick={() => { setMostrarPerfil(false); setModalShowEditClave(true); }} >Seguridad</div>
             </nav>
             <hr className="mt-0 mb-4" />
-            <div className="row">
-              <div className="col-xl-4">
-                <div className="card mb-4 mb-xl-0">
-                  <div className="card-header">Imagen de Perfil</div>
-                  <div className="card-body text-center">
-                    <img className="img-account-profile rounded-circle mb-2" src={foto || "http://bootdey.com/img/Content/avatar/avatar1.png"} alt="Ejemplo Imagen de Perfil" />
-                    <div className="small font-italic text-muted mb-4">JPG or PNG no mayor a 5 MB</div>
-                    <button className="btn button-main" id="custom-file-upload" onChange={handleUploadImage} type="button" style={{ margin: "1px" }}>
-                      <label>Subir archivo
-                        <input type="file" accept="image/jpeg, image/png, image/jpg" style={{ display: "none" }} /></label>
-                    </button>
-                    {mostrarBotonFoto && (<button className="btn button-main" id="custom-file-upload" onClick={subirFoto} type="button" style={{ margin: "1px" }}>
-                      Guardar foto</button>)}
-                  </div>
-                </div>
-              </div>
+            <div className="row justify-content-center">
               <div className="col-xl-8">
                 <div className="card mb-4">
                   <div className="card-header">Detalles de la Cuenta</div>
@@ -211,10 +139,10 @@ const MiPerfil = () => {
                           <input className="form-control" id="inputBirthday" type="text" name="birthday" value={fechaAlta} disabled style={{ textAlign: "center" }} />
                         </div>
                       </div>
-                      <button className="btn button-main" type="submit" onClick={editable ? handleSave : handleEdit} style={{ margin: "1px" }}>
+                      <button className="btn btn-success" type="submit" onClick={editable ? handleSave : handleEdit} style={{ margin: "1px" }}>
                         {editable ? "Guardar Cambios" : "Editar Informacion"}
                       </button>
-                      {mostrarCancelar && (<button className="btn button-main" type="submit" onClick={handleCancelar} style={{ margin: "1px" }}>
+                      {mostrarCancelar && (<button className="btn btn-danger" type="submit" onClick={handleCancelar} style={{ margin: "1px" }}>
                         Cancelar
                       </button>)}
                     </form>

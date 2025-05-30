@@ -181,13 +181,13 @@ const PanelAdmin = () => {
         </div>
       ) : (
         <div className="w-100">
-          <div className="search-bar d-flex col-2 m-2 ms-3 w-50">
+          <div className="search-bar d-flex col-3 m-2">
             <input
               value={search}
               onChange={searcher}
               type="text"
               placeholder="Buscar..."
-              className="form-control-upNav  m-2"
+              className="w-100"
             />
             <i className="fa-solid fa-magnifying-glass"></i>
           </div>
@@ -386,7 +386,7 @@ const PanelAdmin = () => {
                   </select>
                 </div>
                 <button
-                  className="btn button-main"
+                  className="btn btn-success"
                   type="submit"
                   onClick={(e) => {
                     e.preventDefault();

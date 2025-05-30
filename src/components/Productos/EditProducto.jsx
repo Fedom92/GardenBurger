@@ -18,7 +18,7 @@ const EditProducto = (props) => {
   }, [producto, reset]);
 
   const update = async (data) => {
-    const productoRef = doc(db, "productos", props.id);
+    const productoRef = doc(db, "productos", producto.id);
     const productoDoc = await getDoc(productoRef);
     const productoData = productoDoc.data();
 
@@ -30,7 +30,7 @@ const EditProducto = (props) => {
     };
 
     await updateDoc(productoRef, newData);
-    editar_producto({ id: props.id, ...newData });
+    editar_producto({ id: producto.id, ...newData });
 
     clearForm();
   };

@@ -78,7 +78,7 @@ const TablaGenerica = ({ data, columnas, camposBusqueda = [], campoSelector = nu
                     <select
                         value={filtroSelector}
                         onChange={(e) => setFiltroSelector(e.target.value)}
-                        className="form-control mb-3 w-auto"
+                        className="form-control mb-3 w-auto p-2"
                     >
                         <option value="">-- Filtrar por {campoSelector} --</option>
                         {opcionesSelector.map((opcion) => (
@@ -95,7 +95,7 @@ const TablaGenerica = ({ data, columnas, camposBusqueda = [], campoSelector = nu
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Buscar..."
-                        className="form-control mb-3 w-auto"
+                        className="form-control mb-3 w-auto p-2"
                     />
                 )}
             </div>

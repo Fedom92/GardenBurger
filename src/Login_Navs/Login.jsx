@@ -200,7 +200,7 @@ const Login = () => {
                   pedirReseteoClave(e);
                   setMostrarModal(false);
                 }}
-                className="btn button-main"
+                className="btn btn-success"
               >
                 Enviar Correo
               </button>

@@ -2,13 +2,12 @@ import React from 'react'
 import Swal from 'sweetalert2';
 import { Dropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSignOutAlt } from 'react-icons/fa';
-import profile from "../../src/img/profile.webp";
+import { FaUserCog, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from "../context/AuthContext";
 
 const UpNav = () => {
     const navigate = useNavigate();
-    const { currentUser, logout } = useAuth();
+    const { logout } = useAuth();
 
     const handleLogout = async () => {
         try {
@@ -40,21 +39,18 @@ const UpNav = () => {
         <>
             <nav className="navbar w-100 position-absolute">
                 <div className="col d-flex justify-content-end align-items-center right-navbar">
-
                     <div className="notificacion">
                         <Dropdown>
                             <Dropdown.Toggle
                                 variant="primary"
-                                className="btn btn-secondary mx-1 btn-md"
+                                className="border-2 border-white bg-black rounded-3 p-0"
                                 id="dropdown-actions"
-                                style={{ background: "none", border: "none" }}
                             >
-                                <img
-                                    src={currentUser.photoURL || profile}
-                                    alt="profile"
-                                    className="profile-picture"
-                                />
+                                <i className="p-2">
+                                    <FaUserCog className='fs-3'/>
+                                </i>
                             </Dropdown.Toggle>
+
                             <div className="dropdown__container">
                                 <Dropdown.Menu>
                                     <div className="dropdown-item">
@@ -82,10 +78,7 @@ const UpNav = () => {
                                 </Dropdown.Menu>
                             </div>
                         </Dropdown>
-
                     </div>
-
-
                 </div>
             </nav >
         </>

@@ -9,6 +9,7 @@ import Navigation from "./Login_Navs/Navigation"
 import UpNav from "./Login_Navs/UpNav"
 import CryptoJS from 'crypto-js';
 import { useAuth } from "./context/AuthContext";
+import Caja from "./components/POS/Caja";
 
 function App() {
   const { currentUser } = useAuth()
@@ -55,6 +56,7 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
           <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
+          <Route path="/pedidos-caja" element={<RequireAuth><RequireAdmin><Caja /></RequireAdmin></RequireAuth>} />
 
           <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
 

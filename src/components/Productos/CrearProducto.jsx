@@ -44,51 +44,51 @@ const CrearProducto = (props) => {
       <Modal.Body className="pt-0">
         <div className="container">
           <div className="col">
-              <form name="crearProducto" onSubmit={handleSubmit(guardarBD)}>
-                <div className="row">
-                  <div className="col-8 mb-2">
-                    <label className="form-label">Descripción*</label>
-                    <input type="text" className="form-control" autoComplete="off" required {...register("descripcion")} />
-                  </div>
-
-                  <div className="col-4 mb-2">
-                    <label className="form-label">Precio*</label>
-                    <input type="number" className="form-control" autoComplete="off" required {...register("precio")} />
-                  </div>
+            <form name="crearProducto" onSubmit={handleSubmit(guardarBD)}>
+              <div className="row">
+                <div className="col-8 mb-2">
+                  <label className="form-label">Descripción*</label>
+                  <input type="text" className="form-control" autoComplete="off" required {...register("descripcion")} />
                 </div>
 
-                <div className="row">
-                  <div className="col-6 mb-2">
-                    <label className="form-label">Categoria*</label>
-                    <select className="form-control" multiple={false} required {...register("categoria")}>
-                      <option value="">Selecciona acá....</option>
-                      {categorias_options}
-                    </select>
-                  </div>
+                <div className="col-4 mb-2">
+                  <label className="form-label">Precio*</label>
+                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} />
+                </div>
+              </div>
 
-                  <div className="col-6 mb-2">
-                    <label className="form-label">Link Imagen</label>
-                    <input type="text" className="form-control" autoComplete="off" {...register("imagen")} />
-                  </div>
+              <div className="row">
+                <div className="col-6 mb-2">
+                  <label className="form-label">Categoria*</label>
+                  <select className="form-control" multiple={false} required {...register("categoria")}>
+                    <option value="">Selecciona acá....</option>
+                    {categorias_options}
+                  </select>
                 </div>
 
-                <div className="d-flex justify-content-end align-items-baseline">
-                  {error && (
-                    <div
-                      className="alert alert-danger p-0 me-1"
-                      role="alert"
-                    >
-                      {error}
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    className="btn btn-success"
+                <div className="col-6 mb-2">
+                  <label className="form-label">Link Imagen</label>
+                  <input type="text" className="form-control" autoComplete="off" {...register("imagen")} />
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end align-items-baseline">
+                {error && (
+                  <div
+                    className="alert alert-danger p-0 me-1"
+                    role="alert"
                   >
-                    Agregar
-                  </button>
-                </div>
-              </form>
+                    {error}
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  className="btn btn-success"
+                >
+                  Agregar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </Modal.Body>

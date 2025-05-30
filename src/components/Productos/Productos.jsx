@@ -15,7 +15,6 @@ const Productos = () => {
   const [modalShowProducto, setModalShowProducto] = useState(false);
   const [modalShowEditProducto, setModalShowEditProducto] = useState(false);
   const [producto, setProducto] = useState([]);
-  const [idParam, setIdParam] = useState("");
   const [categoriasOptions, setCategoriasOptions] = useState([]);
   const [modalShowCategorias, setModalShowCategorias] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +41,7 @@ const Productos = () => {
       id: doc.id,
       ...doc.data(),
     }));
+
     const opciones = categoriasArray.map((categoria) => (
       <option key={categoria.id} value={categoria.nombre}>{categoria.nombre}</option>
     ));
@@ -74,7 +74,7 @@ const Productos = () => {
     let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
     setRol(rolDesencriptado);
 
-  }, [getProductos]);
+  }, []);
 
 
   //Agrega y Edita en vista Local
@@ -138,17 +138,23 @@ const Productos = () => {
     {
       accessorKey: "imagen",
       header: "Imagen",
-      cell: ({ getValue }) =>
-        getValue() ? (
-          <a
-            href={getValue()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary text-decoration-underline"
-          >
-            Ver Imagen
+      cell: ({ getValue, row }) => {
+        const url = getValue();
+        return url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            <img
+              src={url}
+              alt={`Imagen de ${row.original.descripcion ?? "producto"}`}
+              height={60}
+              loading="lazy"
+              className="text-primary text-decoration-underline"
+              style={{ cursor: "pointer", objectFit: "cover", borderRadius: 4 }}
+            />
           </a>
-        ) : null,
+        ) : (
+          <span className="text-muted">No Img</span>
+        );
+      },
     },
     {
       id: "acciones",
@@ -162,7 +168,6 @@ const Productos = () => {
               onClick={() => {
                 setModalShowEditProducto(true);
                 setProducto(producto);
-                setIdParam(producto.id);
               }}
             >
               <i className="fa-solid fa-edit"></i>
@@ -178,8 +183,6 @@ const Productos = () => {
       },
     },
   ];
-
-  //TODO Faltaría un filtro seleccionador por categoria
 
   return (
     <>
@@ -210,15 +213,15 @@ const Productos = () => {
                         <i className="fa-solid fa-gear"></i>
                       </button>
                     ) : null}
-                    {rol !== process.env.REACT_APP_rolDoctor ? (
-                      <button
-                        variant="primary"
-                        className="btn-contorno m-1"
-                        onClick={() => setModalShowProducto(true)}
-                      >
-                        Agregar Producto
-                      </button>
-                    ) : null}
+
+                    <button
+                      variant="primary"
+                      className="btn-contorno m-1"
+                      onClick={() => setModalShowProducto(true)}
+                    >
+                      Agregar Producto
+                    </button>
+
                     {mostrarAjustes && (
                       <div>
                         <button
@@ -253,7 +256,6 @@ const Productos = () => {
         agregar_producto={agregarProducto}
         onHide={() => setModalShowProducto(false)} />
       <EditProducto
-        id={idParam}
         producto={producto}
         categorias_options={categoriasOptions}
         editar_producto={editarProducto}

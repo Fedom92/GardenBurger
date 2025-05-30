@@ -30,17 +30,6 @@ h3 {
   font-weight: 600 !important;
 }
 
-.button-main {
-  background: var(--color-secundario);
-  color: white;
-  font-size: 14px;
-}
-
-.button-main:hover {
-  background-color: var(--color-secundario);
-  color: white;
-}
-
 .mainpage {
   display: flex;
   min-height: 100vh;
@@ -67,12 +56,6 @@ h3 {
 /*<!------------Inicia estilos tablas---------------->*/
 table.table__body td,
 th {
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-}
-
-table.table__body_history td:not(#thHistory) {
   text-align: center;
   align-items: center;
   justify-content: center;
@@ -126,7 +109,6 @@ table,
 th,
 td {
   border-collapse: collapse;
-  padding: 0.7rem;
   text-align: left;
 }
 
@@ -529,13 +511,6 @@ select {
   background-color: var(--color-primario-normal);
   color: var(--color-primario-normal) !important;
   font-weight: 700 !important;
-  padding: 14px;
-}
-
-@media (max-width: 767px) {
-  .navbar {
-    padding: 16px;
-  }
 }
 
 .search-bar {
@@ -550,16 +525,13 @@ select {
 }
 
 .search-bar input {
-  padding: 10px;
-  border-radius: 4px;
-  margin-right: 1px;
+  width: 100%;
+  padding: 3px;
   background-color: white;
   color: var(--color-primario-normal);
-  width: 291px;
-  border-radius: 50px;
+  border-radius: 8px;
   border: 1px solid white;
   will-change: border;
-  margin-left: -8px !important;
 }
 
 .search-bar input:hover,
@@ -572,8 +544,8 @@ select {
   outline: 1px solid white !important;
 }
 
-.search-bar i:not(#historyi) {
-  margin-left: -38px;
+.search-bar i {
+  margin-left: -30px;
   pointer-events: none;
   color: black;
 }
@@ -582,13 +554,6 @@ select {
   font-size: 20px;
   margin-right: 12px;
   color: var(--color-primario-normal);
-}
-
-.profile-picture {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  margin-right: 10px;
 }
 
 .profile-picture-login {
