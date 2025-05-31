@@ -7,6 +7,7 @@ import PanelAdmin from "./components/Admin/PanelAdmin";
 import MiPerfil from "./components/Admin/MiPerfil";
 import Navigation from "./Login_Navs/Navigation"
 import UpNav from "./Login_Navs/UpNav"
+import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import CryptoJS from 'crypto-js';
 import { useAuth } from "./context/AuthContext";
 import Caja from "./components/POS/Caja";
@@ -59,6 +60,8 @@ function App() {
           <Route path="/pedidos-caja" element={<RequireAuth><RequireAdmin><Caja /></RequireAdmin></RequireAuth>} />
 
           <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
+          <Route path="/crear-solicitud" element={<CrearSolicitud />} />
+
 
           {/*Para limitar Links por Rol
           tipoUsuario !== process.env.REACT_APP_rolStaff && tipoUsuario !== process.env.REACT_APP_rolEjecutor && tipoUsuario !== process.env.REACT_APP_rolOperaciones ? (
