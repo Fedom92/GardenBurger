@@ -12,13 +12,14 @@ const Categorias = ({ show, onHide }) => {
   const [error, setError] = useState("");
 
   const categoriasCollection = collection(db, "categorias");
-  const categoriasCollectionOrdenados = useRef(query(categoriasCollection, orderBy("nombre")));
+  const categoriasCollectionOrdenados = useRef(query(categoriasCollection, orderBy("nroOrden", "asc")));
 
   const getCategorias = useCallback((snapshot) => {
     const categoriasArray = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
+
     setCategorias(categoriasArray);
   }, []);
 
@@ -44,11 +45,14 @@ const Categorias = ({ show, onHide }) => {
   };
 
   const handleCreate = async (data) => {
-    if (categoriaExiste(data.categoria)) {
+    if (categoriaExiste(data.nombre)) {
       setError("La Categoría ya existe");
       return;
     }
-    const newState = { nombre: data.categoria };
+    const newState = {
+      nombre: data.nombre,
+      nroOrden: Number(data.nroOrden)
+    };
 
     try {
       const docRef = await addDoc(categoriasCollection, newState)
@@ -65,14 +69,18 @@ const Categorias = ({ show, onHide }) => {
 
   const handleEdit = (item) => {
     setIdAEditar(item.id);
-    setValue("categoria", item.nombre)
+    setValue("nombre", item.nombre);
+    setValue("nroOrden", Number(item.nroOrden));
     setError("");
   };
 
   const handleUpdate = (data) => {
     const categoriaToUpdate = categorias.filter((item) => item.id === idAEditar);
 
-    const newState = { nombre: data.categoria };
+    const newState = {
+      nombre: data.nombre,
+      nroOrden: Number(data.nroOrden)
+    };
 
     const categoriasActualizadas = categorias.map((item) =>
       item.id === idAEditar ? { ...item, ...newState } : item
@@ -108,8 +116,11 @@ const Categorias = ({ show, onHide }) => {
       <Modal.Body>
         <form name="categorias" onSubmit={handleSubmit(idAEditar !== null ? handleUpdate : handleCreate)}>
           <div className="mb-3">
+            <label className="form-label">Nro Orden*</label>
+            <input type="number" className="form-control" required {...register("nroOrden")} min={0} />
+
             <label className="form-label">Nombre Categoria*</label>
-            <input type="text" className="form-control" required {...register("categoria")} />
+            <input type="text" className="form-control" required {...register("nombre")} />
             {error && <small className="text-danger">{error}</small>}
           </div>
 
@@ -133,8 +144,9 @@ const Categorias = ({ show, onHide }) => {
               key={categoria.id}
               className="d-flex align-items-center justify-content-between border p-2"
             >
-              <div>{categoria.nombre}</div>
-              <div>
+              <div className="col-1">{categoria.nroOrden}</div>
+              <div className="col-8">{categoria.nombre}</div>
+              <div className="col-2">
                 <button
                   type="button"
                   className="btn btn-success mx-1 btn-sm"

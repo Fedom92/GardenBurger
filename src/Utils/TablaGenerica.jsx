@@ -17,7 +17,7 @@ function generarColumnas(columnas) {
     });
 }
 
-const TablaGenerica = ({ data, columnas, camposBusqueda = [], campoSelector = null }) => {
+const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqueda = [], campoSelector = null }) => {
     const columnasProcesadas = useMemo(() => generarColumnas(columnas), [columnas]);
     const [search, setSearch] = useState("");
     const [filtroSelector, setFiltroSelector] = useState("");
@@ -25,6 +25,7 @@ const TablaGenerica = ({ data, columnas, camposBusqueda = [], campoSelector = nu
         pageIndex: 0,
         pageSize: 25,
     });
+    const [sorting, setSorting] = useState(sortBy ? [{ id: sortBy, desc: ordenDescendente }] : []);
 
     const datosFiltrados = useMemo(() => {
         let resultado = data;
@@ -53,8 +54,10 @@ const TablaGenerica = ({ data, columnas, camposBusqueda = [], campoSelector = nu
         columns: columnasProcesadas,
         state: {
             pagination,
+            sorting,
         },
         onPaginationChange: setPagination,
+        onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),

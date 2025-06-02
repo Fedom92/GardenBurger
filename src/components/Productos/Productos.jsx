@@ -239,6 +239,8 @@ const Productos = () => {
                 <TablaGenerica
                   data={productos}
                   columnas={columnasProductos}
+                  sortBy="descripcion"
+                  ordenDescendente={false}
                   camposBusqueda={["descripcion", "categoria"]}
                   campoSelector="categoria"
                 />;
@@ -254,7 +256,8 @@ const Productos = () => {
         show={modalShowProducto}
         categorias_options={categoriasOptions}
         agregar_producto={agregarProducto}
-        onHide={() => setModalShowProducto(false)} />
+        onHide={() => setModalShowProducto(false)}
+      />
       <EditProducto
         producto={producto}
         categorias_options={categoriasOptions}
