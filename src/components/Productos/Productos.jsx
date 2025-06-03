@@ -24,7 +24,7 @@ const Productos = () => {
   const productosCollection = useRef(query(productosCollectiona, orderBy("descripcion", "desc")));
 
   const categoriasCollectiona = collection(db, "categorias");
-  const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nombre")));
+  const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));
 
   const getProductos = useCallback((snapshot) => {
     const productosArray = snapshot.docs

@@ -183,8 +183,8 @@ tbody tr.hide td p {
   position: absolute;
   display: flex;
   flex-direction: column;
-  align-items: center;  
-  top: 10%; 
+  align-items: center;
+  top: 10%;
   left: 20%;
   aspect-ratio: 1;
   border-radius: 9px;
@@ -594,7 +594,21 @@ select {
 
 /*<!------------Termina Estilo UpNav---------------->*/
 
+/*<!--------------------Estilo Caja------------------>*/
 
+.nav-pills .nav-link.active,
+.nav-pills .show>.nav-link {
+  background-color: black !important;
+  color: white !important;
+  font-weight: 500;
+}
+
+.card-product:hover {
+  border: 1px solid black;
+  transform: scale(0.96);
+}
+
+/*<!--------------Termina Estilo Caja---------------->*/
 
 /*<!------------Estilo ESTADOS---------------->*/
 .color-input-container {

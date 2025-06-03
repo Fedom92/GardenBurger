@@ -75,8 +75,8 @@ const EditProducto = (props) => {
                 </div>
 
                 <div className="col-6">
-                  <label className="form-label">Link Imagen</label>
-                  <input type="text" className="form-control" autoComplete="off" {...register("imagen")} />
+                  <label className="form-label">Link Imagen*</label>
+                  <input type="text" className="form-control" autoComplete="off" required {...register("imagen")} />
                 </div>
               </div>
 
