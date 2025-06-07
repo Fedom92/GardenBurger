@@ -76,7 +76,7 @@ const CrearProducto = (props) => {
               <div className="row">
                 <div className="col-12">
                   <label className="form-label">Ingredientes</label>
-                  <input type="text" className="form-control text-break" autoComplete="off" {...register("ingredientes")} />
+                  <textarea className="form-control" rows="3" autoComplete="off" {...register("ingredientes")}></textarea>
                 </div>
               </div>
 

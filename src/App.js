@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import './App.css';
 import Login from './Login_Navs/Login';
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Productos from "./components/Productos/Productos";
 import PanelAdmin from "./components/Admin/PanelAdmin";
 import MiPerfil from "./components/Admin/MiPerfil";
@@ -9,8 +9,10 @@ import Navigation from "./Login_Navs/Navigation"
 import UpNav from "./Login_Navs/UpNav"
 import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import CryptoJS from 'crypto-js';
-import { useAuth } from "./context/AuthContext";
 import Caja from "./components/POS/Caja";
+import Delivery from "./components/Delivery/Delivery";
+import Cocina from "./components/Cocina/Cocina";
+import { useAuth } from "./context/AuthContext";
 
 function App() {
   const { currentUser } = useAuth()
@@ -46,7 +48,7 @@ function App() {
     if (currentUser && rolDesencriptado === process.env.REACT_APP_admin) {
       return children;
     } else {
-      return <Navigate to="/productos" />;
+      return <Navigate to="/miPerfil" />;
     }
   };
 
@@ -58,10 +60,10 @@ function App() {
           <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
           <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
           <Route path="/pedidos-caja" element={<RequireAuth><RequireAdmin><Caja /></RequireAdmin></RequireAuth>} />
-
+          <Route path="/gestion-deliverys" element={<RequireAuth><RequireAdmin><Delivery /></RequireAdmin></RequireAuth>} />
+          <Route path="/gestion-cocina" element={<RequireAuth><RequireAdmin><Cocina /></RequireAdmin></RequireAuth>} />
           <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
           <Route path="/crear-solicitud" element={<CrearSolicitud />} />
-
 
           {/*Para limitar Links por Rol
           tipoUsuario !== process.env.REACT_APP_rolStaff && tipoUsuario !== process.env.REACT_APP_rolEjecutor && tipoUsuario !== process.env.REACT_APP_rolOperaciones ? (
