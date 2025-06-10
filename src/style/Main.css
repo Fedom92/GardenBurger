@@ -22,7 +22,7 @@ h1 {
 }
 
 p {
-  color: black !important;
+  color: black ;
 }
 
 h3 {
@@ -183,8 +183,8 @@ tbody tr.hide td p {
   position: absolute;
   display: flex;
   flex-direction: column;
-  align-items: center;  
-  top: 10%; 
+  align-items: center;
+  top: 10%;
   left: 20%;
   aspect-ratio: 1;
   border-radius: 9px;
@@ -365,6 +365,7 @@ tbody tr.hide td p {
 }
 
 .card {
+
   box-shadow: 0 0.15rem 1.75rem 0 rgb(33 40 50 / 15%);
 }
 
@@ -1222,3 +1223,315 @@ select {
 }
 
 /*<!------------Termina Estilo Plantilla PDF---------------->*/
+
+
+/*<!------------ empieza Wally css---------------->*/
+/*<!------------crear solicitud---------------->*/
+
+
+.mainpageCS {
+  display: flex;
+  min-height: 100vh;
+  align-items: flex-start;
+  object-fit: cover;
+  background-color: black;
+}
+
+.mainpageVP {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  flex-direction: column;
+  object-fit: cover;
+}
+
+.itemsConteiner {
+  max-width: 50rem;
+  background-color: #e4e4e4;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+.logoCS {
+  width: 100%;
+}
+
+.carrito {
+
+  padding: 0.5rem;
+  width: 4rem;
+  font-weight: bolder;
+  font-size: 1.2rem;
+  color: black;
+  background-color: white;
+  border-radius: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+}
+
+
+.itemListConteiner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.itemContactBar h6 {
+  font-weight: normal;
+}
+
+.carrousel {
+  height: 300px;
+  margin: 1rem;
+  border-radius: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: solid 1px;
+  display: none;
+}
+
+.cardCS {
+  margin: 1rem;
+  padding: 1rem;
+  max-width: 36rem;
+  border: solid 1px grey;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.8);
+  border-radius: 0.7rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background-color: #000;
+  
+}
+
+.Toastify__toast.compact-toast {
+  min-height: 40px !important;
+  max-width: fit-content;
+  margin: 0.5rem;
+  padding: 0.5rem 2rem 0.5rem 1rem  !important;
+
+}
+
+.cardColumnCS {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.cardRowCS {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+
+
+.cardCS:hover {
+
+  box-shadow: 0px 4px 8px white;
+}
+
+ .imagenCS{
+  display: flex;
+  justify-content: center;
+  }
+
+  .imagenCS img {
+  display: flex;
+  justify-content: center;
+    object-fit: cover; /* Cubre todo el espacio manteniendo proporciones */
+  object-position: center;
+  max-width: 10rem;
+   aspect-ratio: 1/1; /* Opcional: fuerza relación cuadrada (elimina si no la necesitas) */
+} 
+
+ .imagen{
+  display: flex;
+  justify-content: center;
+  max-width: 0.5rem;
+}
+
+
+
+.imagen img {
+  display: flex;
+  justify-content: center;
+    object-fit: cover; /* Cubre todo el espacio manteniendo proporciones */
+  object-position: center;
+   aspect-ratio: 1/1; /* Opcional: fuerza relación cuadrada (elimina si no la necesitas) */
+} 
+
+
+.tituloCategoria {
+  margin: 1rem;
+  color: white;
+  border-top: 1px solid white;
+  border-bottom: 1px solid white;
+  font-weight: bolder;
+
+}
+
+.titulo {
+  color: white;
+  font-weight: bold;
+  margin: 0.5rem 0;
+  text-align: center;
+}
+
+.tituloVP {
+  color: black;
+  text-align: center;
+  font-size: min(1rem, 3vw); /* Usa el valor menor entre 24px y 3% del ancho de la pantalla */
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 10px;
+}
+
+.ingredientes {
+  color: white;
+  font-weight: lighter;
+  font-style: italic;
+  text-align: center;
+}
+
+.precioAnterior {
+  color: grey;
+  font-size: 0.8rem;
+  text-decoration: line-through;
+}
+
+.precio {
+  font-weight: bolder;
+  font-size: 1.2rem;
+  color: white;
+
+}
+
+.precioVP{
+  font-weight: bolder;
+  font-size: 1.2rem;
+  color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0px 10px;
+}
+
+
+.btnVerde {
+  padding: 0.5rem;
+  border-radius: 1rem;
+  border: none;
+  background-color: lightgreen;
+  color: green;
+  cursor: pointer;
+  width: fit-content;
+}
+
+
+.itemCarrito {
+  margin: 0.5rem;
+  height: 3.5rem;
+box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  justify-items: center;
+  align-items: center;
+  background-color: white;
+
+}
+
+.itemCarrito img {
+  height: 2.5rem;
+  width: auto;
+}
+
+.cantidad {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+
+.disminuir,
+.aumentar {
+
+  width: 32px;
+  height: 50%;
+  font-weight: bold;
+  color: green;
+  background-color: #e7e7e7;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.disminuir {
+  border-bottom-left-radius: 8px;
+  border-top-left-radius: 8px;
+}
+
+.aumentar {
+  border-bottom-right-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.eliminar{
+  width: 32px;
+  height: 50%;
+  font-weight: bold;
+  background-color: #e7e7e7;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.numeroCantidad {
+  padding: 0.5rem;
+  grid-area: cantidad;
+  justify-content: flex-start;
+}
+
+
+.error {
+  margin: 3rem;
+  font-style: italic;
+  text-align: center;
+  font-size: 2rem;
+}
+
+input::placeholder {
+  font-style: italic;
+}
+
+
+
+.mobile-img {
+  display: block;
+}
+
+.desktop-img {
+  display: none;
+}
+
+/* A partir de 500px, muestra la de escritorio y oculta la móvil */
+@media (min-width: 500px) {
+  .mobile-img {
+    display: none;
+  }
+
+  .desktop-img {
+    display: block;
+  }
+}

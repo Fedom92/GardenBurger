@@ -11,6 +11,10 @@ import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import CryptoJS from 'crypto-js';
 import { useAuth } from "./context/AuthContext";
 import Caja from "./components/POS/Caja";
+import { PaginaCarrito } from './components/Solicitudes/PaginaCarrito';
+import { CartProvider  } from './context/CartContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const { currentUser } = useAuth()
@@ -52,7 +56,15 @@ function App() {
 
   return (
     <div className="App mainpage">
+          <CartProvider>
       <BrowserRouter>
+      <ToastContainer 
+        autoClose={3000}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+      />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
@@ -61,6 +73,7 @@ function App() {
 
           <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
           <Route path="/crear-solicitud" element={<CrearSolicitud />} />
+          <Route path="/ver-pedido" element={<PaginaCarrito/>} />
 
 
           {/*Para limitar Links por Rol
@@ -70,7 +83,10 @@ function App() {
             </>
           ) : (null)*/}
         </Routes>
+         <ToastContainer />
       </BrowserRouter>
+      </CartProvider>
+
     </div>
   );
 }
