@@ -17,6 +17,7 @@ const CrearProducto = (props) => {
       descripcion: data.descripcion,
       precio: Number(data.precio),
       imagen: data.imagen,
+      ingredientes: data.ingredientes,
     };
 
     try {
@@ -35,7 +36,7 @@ const CrearProducto = (props) => {
   };
 
   return (
-    <Modal {...propsModal} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
+    <Modal {...propsModal} size="md" aria-labelledby="contained-modal-title-vcenter" centered>
       <Modal.Header closeButton onClick={() => clearForm()}>
         <Modal.Title id="contained-modal-title-vcenter">
           <h1>Nuevo Producto</h1>
@@ -46,19 +47,19 @@ const CrearProducto = (props) => {
           <div className="col">
             <form name="crearProducto" onSubmit={handleSubmit(guardarBD)}>
               <div className="row">
-                <div className="col-8 mb-2">
+                <div className="col-8">
                   <label className="form-label">Descripción*</label>
                   <input type="text" className="form-control" autoComplete="off" required {...register("descripcion")} />
                 </div>
 
-                <div className="col-4 mb-2">
+                <div className="col-4">
                   <label className="form-label">Precio*</label>
                   <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} />
                 </div>
               </div>
 
               <div className="row">
-                <div className="col-6 mb-2">
+                <div className="col-6">
                   <label className="form-label">Categoria*</label>
                   <select className="form-control" multiple={false} required {...register("categoria")}>
                     <option value="">Selecciona acá....</option>
@@ -66,18 +67,24 @@ const CrearProducto = (props) => {
                   </select>
                 </div>
 
-                <div className="col-6 mb-2">
-                  <label className="form-label">Link Imagen</label>
-                  <input type="text" className="form-control" autoComplete="off" {...register("imagen")} />
+                <div className="col-6 ">
+                  <label className="form-label">Link Imagen*</label>
+                  <input type="text" className="form-control" autoComplete="off" required {...register("imagen")} />
                 </div>
               </div>
 
-              <div className="d-flex justify-content-end align-items-baseline">
+              <div className="row">
+                <div className="col-12">
+                  <label className="form-label">Ingredientes</label>
+                  <textarea className="form-control" rows="3" autoComplete="off" {...register("ingredientes")}></textarea>
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end align-items-baseline mt-2">
                 {error && (
                   <div
                     className="alert alert-danger p-0 me-1"
-                    role="alert"
-                  >
+                    role="alert">
                     {error}
                   </div>
                 )}

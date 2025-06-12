@@ -1,5 +1,5 @@
 import Nav from "./NavIcons/Nav";
-import { FaAngleLeft, FaUserTie, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools } from 'react-icons/fa';
+import { FaAngleLeft, FaUsers , FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus  } from 'react-icons/fa';
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -74,14 +74,18 @@ const Navigation = () => {
             {isLoading && (
                 <>
                     <div className="sidebar-title">
-                        <Link to="/productos" className="text-decoration-none link-light"><Nav title="Productos" Icon={FaHamburger} isActive={isActive} /></Link>
+                        <Link to="/productos" className="text-decoration-none link-light"><Nav title="Productos" Icon={FaCartPlus} isActive={isActive} /></Link>
+                    </div>
+
+                    <div className="sidebar-title">
+                        <Link to="/gestion-cocina" className="text-decoration-none link-light"><Nav title="Cocina" Icon={FaHamburger} isActive={isActive} /></Link>
                     </div>
 
                     <div className="sidebar-title">
                         <Link to="/gestion-deliverys" className="text-decoration-none link-light"><Nav title="Deliverys" Icon={FaMotorcycle} isActive={isActive} /></Link>
                     </div>
 
-                     <div className="sidebar-title">
+                    <div className="sidebar-title">
                         <Link to="/pedidos-caja" className="text-decoration-none link-light"><Nav title="Caja" Icon={FaCashRegister} isActive={isActive} /></Link>
                     </div>
 
@@ -92,7 +96,7 @@ const Navigation = () => {
                             </div>
                             <div className="sidebar-content">
                                 {tipoUsuario === process.env.REACT_APP_admin ? (
-                                    <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUserTie} isActive={isActive} /></Link>) : null}
+                                    <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUsers } isActive={isActive} /></Link>) : null}
                                 <Link to="/miPerfil" className="text-decoration-none link-light"><Nav title="Mi Perfil" Icon={FaUser} isActive={isActive} /></Link>
                             </div>
                         </div>

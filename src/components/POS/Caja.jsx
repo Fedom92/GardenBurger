@@ -1,23 +1,53 @@
 
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { collection, updateDoc, doc, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CryptoJS from 'crypto-js';
+import { useForm } from "react-hook-form";
 import '../../style/Main.css';
 
 
 const Caja = () => {
+    const { register, handleSubmit, reset, watch } = useForm();
+    const envioRaw = watch("envio");
+    const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
+    const metodoPago = watch("metodoPago");
+
     const [rol, setRol] = useState("");
     const [search, setSearch] = useState("");
     const [producto, setProducto] = useState([]);
     const [productos, setProductos] = useState([]);
+    const [carrito, setCarrito] = useState([]);
+    const [envio_options, setEnvio_options] = useState([]);
+
+    const [categorias, setCategorias] = useState([]);
+    const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
+
     const [modalShowProducto, setModalShowProducto] = useState(false);
     const [mostrarAjustes, setMostrarAjustes] = useState(false);
+    const [recargo] = useState(Number(process.env.REACT_APP_recargoMP));
     const [isLoading, setIsLoading] = useState(true);
 
+    const totalFinal = useMemo(() => {
+        const subtotalCarrito = carrito.reduce((sum, producto) => sum + (producto.precio * producto.cantidad), 0);
+
+        const costoEnvio = envioSeleccionado?.costo_envio || 0;
+        const totalBase = subtotalCarrito + costoEnvio;
+
+        const recargoMP = metodoPago === "MP" ? totalBase * (recargo / 100) : 0;
+
+        return totalBase + recargoMP;
+    }, [carrito, envioSeleccionado, metodoPago, recargo]);
+
     const productosCollectiona = collection(db, "productos");
-    const productosCollection = useRef(query(productosCollectiona, orderBy("descripcion", "desc")));
+    const productosCollection = useRef(query(productosCollectiona, orderBy("descripcion", "asc")));
+
+    const categoriasCollectiona = collection(db, "categorias");
+    const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));
+
+    const enviosCollectiona = collection(db, "envios");
+    const enviosCollection = useRef(query(enviosCollectiona, orderBy("zona_envio", "asc")));
 
     const getProductos = useCallback((snapshot) => {
         const productosArray = snapshot.docs
@@ -26,7 +56,34 @@ const Caja = () => {
                 ...doc.data(),
             }));
         setProductos(productosArray);
+
         setIsLoading(false);
+    }, []);
+
+    const getCategorias = useCallback((snapshot) => {
+        const categoriasArray = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+        categoriasArray.unshift({ id: "todas", nombre: "" });
+        setCategorias(categoriasArray);
+
+    }, []);
+
+    const getEnvios = useCallback((snapshot) => {
+        const enviosObj = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        const opciones = enviosObj.map((envio) => (
+            <option key={envio.id}
+                value={JSON.stringify({ zona_envio: envio.zona_envio, costo_envio: envio.costo_envio })}>
+                {envio.zona_envio}
+            </option>
+        ));
+
+        setEnvio_options(opciones);
     }, []);
 
     useEffect(() => {
@@ -35,6 +92,11 @@ const Caja = () => {
                 const gastosSnapshot = await getDocs(productosCollection.current);
                 await getProductos(gastosSnapshot);
 
+                const categoriasSnapshot = await getDocs(categoriasCollection.current);
+                await getCategorias(categoriasSnapshot);
+
+                const enviosSnapshot = await getDocs(enviosCollection.current);
+                await getEnvios(enviosSnapshot);
             } catch (error) {
                 console.error('Error fetching data Caja:', error);
             }
@@ -42,7 +104,7 @@ const Caja = () => {
 
         fetchData();
 
-    }, [getProductos]);
+    }, [getProductos, getCategorias, getEnvios]);
 
     useEffect(() => {
         const rolEncriptado = localStorage.getItem("rol");
@@ -61,6 +123,51 @@ const Caja = () => {
         }
     }
 
+    const handleAgregarAlCarrito = (producto) => {
+        setCarrito((prevCarrito) => {
+            const productoExistente = prevCarrito.find((item) => item.id === producto.id);
+
+            if (productoExistente) {
+                // Si ya existe, aumenta la cantidad y actualiza el subtotal
+                return prevCarrito.map((item) =>
+                    item.id === producto.id
+                        ? {
+                            ...item,
+                            cantidad: item.cantidad + 1,
+                            subtotal: (item.cantidad + 1) * item.precio
+                        }
+                        : item
+                );
+            } else {
+                // Si no existe, lo agrega con cantidad 1 y subtotal inicial
+                return [...prevCarrito, {
+                    ...producto,
+                    cantidad: 1,
+                    subtotal: producto.precio // 1 * precio
+                }];
+            }
+        });
+    };
+
+    const handleEliminarDelCarrito = (id) => {
+        setCarrito((prev) => {
+            return prev
+                .map((item) =>
+                    item.id === id
+                        ? {
+                            ...item,
+                            cantidad: item.cantidad - 1,
+                            subtotal: (item.cantidad - 1) * item.precio
+                        }
+                        : item
+                )
+                .filter((item) => item.cantidad > 0);
+        });
+    };
+
+    const printOrder = () => {
+
+    }
 
     return (
         <>
@@ -69,26 +176,25 @@ const Caja = () => {
                     <span className="loader position-absolute start-50 top-50 mt-3"></span>
                 </div>
             ) : (
-                <div className="w-100">
+                <div className="w-100" id="caja">
                     <div className="search-bar d-flex col-3 m-2">
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             type="text"
-                            placeholder="Buscar..."
+                            placeholder="Buscar Producto..."
                         />
                         <i className="fa-solid fa-magnifying-glass"></i>
                     </div>
 
-                    <div className="container mw-100">
+                    <div className="container mw-100 p-1 mt-4">
                         <br></br>
                         <div
-                            className="d-flex justify-content-start align-items-center mt-1">
-                            <h1>Sistema Caja</h1>
+                            className="d-flex justify-content-start align-items-center">
+                            <h3>Sistema Caja</h3>
                             {rol === process.env.REACT_APP_admin ? (
                                 <button
-                                    className="btn mx-2 btn-sm"
-                                    style={{ borderRadius: "5px" }}
+                                    className="btn mx-2 btn-md"
                                     onClick={() => {
                                         funcMostrarAjustes(true);
                                     }}
@@ -98,250 +204,209 @@ const Caja = () => {
                             ) : null}
                         </div>
 
-                        <section className="section-content padding-y-sm bg-default mt-1">
-                            <div className="container-fluid">
-                                <div className="row">
-                                    <div className="col-md-4">
-                                        <div className="card">
-                                            <span id="cart">
-                                                <table className="table table-hover shopping-cart-wrap">
-                                                    <thead className="text-muted">
-                                                        <tr>
-                                                            <th scope="col" width="120">Qty</th>
-                                                            <th scope="col">Item</th>
-                                                            <th scope="col" width="120">Price</th>
-                                                            <th scope="col" className="text-right" width="200">Delete</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
+                        <main className="container-fluid">
+                            <div className="row">
+                                <section className="col-4 p-0" id="ticket">
+                                    <div className="card mb-1" id="datos_clientes">
+                                        <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Nombre..." autoComplete="off" required {...register("nombre")} />
+                                        <input type="text" className="form-control fw-bold fs-6 p-1 mb-1" placeholder="Dirección..." autoComplete="off" required {...register("direccion")} />
+                                        <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entrecalles")} />
+                                        <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Teléfono..." autoComplete="off" required {...register("telefono")} />
+                                        <textarea className="form-control" rows="2" placeholder="Observaciones..." autoComplete="off" {...register("observaciones")}></textarea>
+                                    </div>
+
+                                    <hr style={{ margin: "0.5rem 0" }}></hr>
+
+                                    <div className="card mt-2 mb-2" id="tabla_productos">
+                                        <table className="table-hover shopping-cart-wrap">
+                                            <thead>
+                                                <tr>
+                                                    <th className="col">N°</th>
+                                                    <th className="col text-start">Item</th>
+                                                    <th className="col">Subtotal</th>
+                                                    <th className="col"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {carrito.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="4" className="text-center text-muted">
+                                                            No hay productos
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    carrito.map((producto, index) => (
+                                                        <tr key={producto.id}>
+                                                            <td className="text-center">{producto.cantidad}</td>
+                                                            <td className="text-start">
+                                                                <p className="title text-truncate mb-0">{producto.descripcion}</p>
+                                                            </td>
                                                             <td className="text-center">
-                                                                <div className="m-btn-group m-btn-group--pill btn-group mr-2" role="group" aria-label="...">
-                                                                    <button type="button" className="m-btn btn btn-default" disabled>3</button>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <figure className="media">
-                                                                    <div className="img-wrap"><img alt="" src="assets/images/items/1.jpg" className="img-thumbnail img-xs" /></div>
-                                                                    <figcaption className="media-body">
-                                                                        <h6 className="title text-truncate">Product name </h6>
-                                                                    </figcaption>
-                                                                </figure>
-                                                            </td>
-                                                            <td>
                                                                 <div className="price-wrap">
-                                                                    <var className="price">$145</var>
+                                                                    <var className="price">${producto.subtotal}</var>
                                                                 </div>
                                                             </td>
-                                                            <td className="text-right">
-                                                                <a href=" " className="btn btn-outline-danger"> <i className="fa fa-trash"></i></a>
+                                                            <td className="text-center">
+                                                                <button
+                                                                    className="btn text-danger p-0"
+                                                                    onClick={() => handleEliminarDelCarrito(producto.id)}
+                                                                >
+                                                                    <i className="fa fa-circle-xmark fs-4"></i>
+                                                                </button>
                                                             </td>
                                                         </tr>
-                                                    </tbody>
-                                                </table>
-                                            </span>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <hr style={{ margin: "0.5rem 0" }}></hr>
+
+                                    <div id="datos_pago">
+                                        <div className="row p-0 m-auto">
+                                            <div className="col-3"></div>
+                                            <div className="col-4 d-flex align-items-center text-end">
+                                                <label className="form-label mb-0">Envío</label>
+
+                                                <select className="form-control border-0 text-center" multiple={false} required {...register("envio")}>
+                                                    <option value="">....</option>
+                                                    {envio_options}
+                                                </select>
+                                                :
+                                            </div>
+                                            <div className="col-3 d-flex align-items-center">
+                                                <span className="p-0">$</span>
+                                                <input type="number" className="form-control border-0 bg-transparent" autoComplete="off" disabled value={envioSeleccionado?.costo_envio || 0}
+                                                />
+                                            </div>
+                                            <div className="col-1"></div>
                                         </div>
-                                        <div className="box">
-                                            <dl className="dlist-align">
-                                                <dt>Tax: </dt>
-                                                <dd className="text-right">12%</dd>
-                                            </dl>
-                                            <dl className="dlist-align">
-                                                <dt>Discount:</dt>
-                                                <dd className="text-right"><a href=" ">0%</a></dd>
-                                            </dl>
-                                            <dl className="dlist-align">
-                                                <dt>Sub Total:</dt>
-                                                <dd className="text-right">$215</dd>
-                                            </dl>
-                                            <dl className="dlist-align">
-                                                <dt>Total: </dt>
-                                                <dd className="text-right h4 b"> $215 </dd>
-                                            </dl>
-                                            <div className="row">
-                                                <div className="col-md-6">
-                                                    <a href=" " className="btn  btn-default btn-error btn-lg btn-block"><i className="fa fa-times-circle "></i> Cancel </a>
+
+                                        <div className="row p-0 m-auto">
+                                            <div className="col-3 p-0">
+                                                {metodoPago === "MP" && (<span className="p-0 m-0">Recargo 10%</span>)}
+                                            </div>
+                                            <div className="col-4 text-end">
+                                                <label className="form-label mb-0">Metodo Pago:</label>
+                                            </div>
+                                            <div className="col-3">
+                                                <select className="form-control border-0 p-0 px-1 m-0" multiple={false} required {...register("metodoPago")}>
+                                                    <option value="">....</option>
+                                                    <option value="EFECTIVO">Efectivo</option>
+                                                    <option value="MP">MP</option>
+                                                    <option value="%">Dividido</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-2"></div>
+                                        </div>
+
+                                        {metodoPago === "%" && (
+                                            <div className="row p-0 m-auto">
+                                                <div className="col-3 p-0">
                                                 </div>
-                                                <div className="col-md-6">
-                                                    <a href=" " className="btn  btn-primary btn-lg btn-block"><i className="fa fa-shopping-bag"></i> Charge </a>
+                                                <div className="col-4 text-end">
+                                                    <label className="form-label mb-0">Dividido:</label>
                                                 </div>
+                                                <div className="col-3">
+                                                    <select className="form-control border-0 p-0 px-1 m-0" multiple={false} required {...register("metodoPago")}>
+                                                        <option value="">....</option>
+                                                        <option value="EFECTIVO">Efectivo</option>
+                                                        <option value="MP">MP</option>
+                                                        <option value="%">Dividido</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-1"></div>
+                                            </div>)}
+
+                                        <div className="row p-0 m-auto d-flex align-items-center">
+                                            <div className="col-2"></div>
+                                            <div className="col-5 text-end">
+                                                <label className="form-label fw-bold mb-0">Total:</label>
+                                            </div>
+                                            <div className="col-5 d-flex align-items-center">
+                                                <span className="p-0">$</span>
+                                                <input type="number" className="form-control border-0 bg-transparent" autoComplete="off" min={0} disabled value={totalFinal.toFixed(2) || 0} />
+                                            </div>
+                                        </div>
+
+                                        <div className="row" id="acciones">
+                                            <div className="d-flex justify-content-center align-items-center gap-3">
+                                                <button
+                                                    className="btn btn-danger"
+                                                    type="reset"
+                                                    onClick={() => { reset(); setCarrito([]) }}
+                                                >
+                                                    Limpiar <i className="fas fa-trash-alt"></i>
+                                                </button>
+                                                <button
+                                                    className="btn btn-success"
+                                                    type="submit"
+                                                    onClick={() => printOrder()}>
+                                                    Crear Pedido <i className="fas fa-burger"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
+                                </section>
 
-                                    <div className="col-md-8 card padding-y-sm card ">
-                                        <ul className="nav bg radius nav-pills nav-fill mb-3 bg" role="tablist">
-                                            <li className="nav-item">
-                                                <a className="nav-link active show" data-toggle="pill" href="#nav-tab-card">
-                                                    <i className="fa fa-tags"></i> All</a></li>
-                                            <li className="nav-item">
-                                                <a className="nav-link" data-toggle="pill" href="#nav-tab-paypal">
-                                                    <i className="fa fa-tags "></i>  Category 1</a></li>
-                                            <li className="nav-item">
-                                                <a className="nav-link" data-toggle="pill" href="#nav-tab-bank">
-                                                    <i className="fa fa-tags "></i>  Category 2</a></li>
-                                            <li className="nav-item">
-                                                <a className="nav-link" data-toggle="pill" href="#nav-tab-bank">
-                                                    <i className="fa fa-tags "></i>  Category 3</a></li>
-                                            <li className="nav-item">
-                                                <a className="nav-link" data-toggle="pill" href="#nav-tab-bank">
-                                                    <i className="fa fa-tags "></i>  Category 4</a></li>
-                                            <li className="nav-item">
-                                                <a className="nav-link" data-toggle="pill" href="#nav-tab-bank">
-                                                    <i className="fa fa-tags "></i>  Category 5</a></li>
-                                        </ul>
+                                <section className="col-8 card" id="productos">
+                                    <ul className="nav nav-pills nav-fill gap-1 p-0 d-flex overflow-auto" role="tablist" style={{ whiteSpace: "nowrap" }}>
+                                        {categorias.map((categoria) => (
+                                            <li className="nav-item" key={categoria.id}>
+                                                <button
+                                                    className={`d-flex align-items-center nav-link text-black lex-shrink-0 p-2 ${categoriaSeleccionada === categoria.nombre ? "active" : ""}`}
+                                                    onClick={() => setCategoriaSeleccionada(categoria.nombre)}
+                                                >
+                                                    <i className="fa fa-tags"></i> {categoria.nombre}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
 
-                                        <div className="row">
-                                            <div className="col-md-3">
-                                                <figure className="card card-product">
-                                                    <span className="badge-new"> NEW </span>
-                                                    <div className="img-wrap">
-                                                        <img alt="" src="assets/images/items/3.jpg" />
-                                                        <a className="btn-overlay" href=" "><i className="fa fa-search-plus"></i> Quick view</a>
-                                                    </div>
-                                                    <figcaption className="info-wrap">
-                                                        <a href=" " className="title">Good item name</a>
-                                                        <div className="action-wrap">
-                                                            <a href=" " className="btn btn-primary btn-sm float-right"> <i className="fa fa-cart-plus"></i> Add </a>
-                                                            <div className="price-wrap h5">
-                                                                <span className="price-new">$1280</span>
-                                                            </div>
+                                    <div className="row">
+                                        {productos
+                                            .filter((p) =>
+                                                search
+                                                    ? p.descripcion?.toLowerCase().includes(search.toLowerCase())
+                                                    : true
+                                            )
+                                            .filter(
+                                                (p) => categoriaSeleccionada === "" || p.categoria === categoriaSeleccionada
+                                            )
+                                            .map((producto) => (
+                                                <div className="col-2 p-0" key={producto.id}>
+                                                    <button
+                                                        onClick={() => handleAgregarAlCarrito(producto)}
+                                                        className="card card-product h-100 d-flex flex-column justify-content-between"
+                                                    >
+                                                        <div className="img-wrap flex-grow-1 d-flex align-items-center justify-content-center">
+                                                            <img
+                                                                src={producto.imagen}
+                                                                alt={producto.descripcion}
+                                                                className="img-fluid w-75"
+                                                            />
                                                         </div>
-                                                    </figcaption>
-                                                </figure>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <figure className="card card-product">
-                                                    <span className="badge-new"> NEW </span>
-                                                    <div className="img-wrap"> <img alt="" src="assets/images/items/4.jpg" />
-                                                        <a className="btn-overlay" href=" "><i className="fa fa-search-plus"></i> Quick view</a>
-                                                    </div>
-                                                    <figcaption className="info-wrap">
-                                                        <a href=" " className="title">The name of product</a>
-                                                        <div className="action-wrap">
-                                                            <a href=" " className="btn btn-primary btn-sm float-right"> <i className="fa fa-cart-plus"></i> Add </a>
-                                                            <div className="price-wrap h5">
-                                                                <span className="price-new">$280</span>
+                                                        <figcaption className="info-wrap">
+                                                            <p className="d-flex justify-content-center title lh-1 m-auto" style={{ fontSize: "0.8rem", minHeight: "1.5rem" }}>
+                                                                {producto.descripcion}
+                                                            </p>
+                                                            <div className="action-wrap">
+                                                                <div className="price-wrap h6 p-1 m-0">
+                                                                    <span className="price-new">${producto.precio}</span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </figcaption>
-                                                </figure>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <figure className="card card-product">
-                                                    <span className="badge-new"> NEW </span>
-                                                    <div className="img-wrap"> <img alt="" src="assets/images/items/5.jpg" />
-                                                        <a className="btn-overlay" href=" "><i className="fa fa-search-plus"></i> Quick view</a>
-                                                    </div>
-                                                    <figcaption className="info-wrap">
-                                                        <a href=" " className="title">Name of product</a>
-                                                        <div className="action-wrap">
-                                                            <a href=" " className="btn btn-primary btn-sm float-right"> <i className="fa fa-cart-plus"></i> Add </a>
-                                                            <div className="price-wrap h5">
-                                                                <span className="price-new">$280</span>
-                                                            </div>
-                                                        </div>
-                                                    </figcaption>
-                                                </figure>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <figure className="card card-product">
-                                                    <span className="badge-new"> NEW </span>
-                                                    <div className="img-wrap"> <img alt="" src="assets/images/items/6.jpg" />
-                                                        <a className="btn-overlay" href=" "><i className="fa fa-search-plus"></i> Quick view</a>
-                                                    </div>
-                                                    <figcaption className="info-wrap">
-                                                        <a href=" " className="title">The name of product</a>
-                                                        <div className="action-wrap">
-                                                            <a href=" " className="btn btn-primary btn-sm float-right"> <i className="fa fa-cart-plus"></i> Add </a>
-                                                            <div className="price-wrap h5">
-                                                                <span className="price-new">$280</span>
-                                                            </div>
-                                                        </div>
-                                                    </figcaption>
-                                                </figure>
-                                            </div>
-                                        </div>
-                                        <div className="row">
-                                            <div className="col-md-3">
-                                                <figure className="card card-product">
-                                                    <span className="badge-new"> NEW </span>
-                                                    <div className="img-wrap">
-                                                        <img alt="" src="assets/images/items/1.jpg" />
-                                                        <a className="btn-overlay" href=" "><i className="fa fa-search-plus"></i> Quick view</a>
-                                                    </div>
-                                                    <figcaption className="info-wrap">
-                                                        <a href=" " className="title">Good item name</a>
-                                                        <div className="action-wrap">
-                                                            <a href=" " className="btn btn-primary btn-sm float-right"> <i className="fa fa-cart-plus"></i> Add </a>
-                                                            <div className="price-wrap h5">
-                                                                <span className="price-new">$1280</span>
-                                                            </div>
-                                                        </div>
-                                                    </figcaption>
-                                                </figure>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <figure className="card card-product">
-                                                    <span className="badge-new"> NEW </span>
-                                                    <div className="img-wrap"> <img alt="" src="assets/images/items/2.jpg" />
-                                                        <a className="btn-overlay" href=" "><i className="fa fa-search-plus"></i> Quick view</a>
-                                                    </div>
-                                                    <figcaption className="info-wrap">
-                                                        <a href=" " className="title">The name of product</a>
-                                                        <div className="action-wrap">
-                                                            <a href=" " className="btn btn-primary btn-sm float-right"> <i className="fa fa-cart-plus"></i> Add </a>
-                                                            <div className="price-wrap h5">
-                                                                <span className="price-new">$280</span>
-                                                            </div>
-                                                        </div>
-                                                    </figcaption>
-                                                </figure>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <figure className="card card-product">
-                                                    <span className="badge-new"> NEW </span>
-                                                    <div className="img-wrap"> <img alt="" src="assets/images/items/7.jpg" />
-                                                        <a className="btn-overlay" href=" "><i className="fa fa-search-plus"></i> Quick view</a>
-                                                    </div>
-                                                    <figcaption className="info-wrap">
-                                                        <a href=" " className="title">Name of product</a>
-                                                        <div className="action-wrap">
-                                                            <a href=" " className="btn btn-primary btn-sm float-right"> <i className="fa fa-cart-plus"></i> Add </a>
-                                                            <div className="price-wrap h5">
-                                                                <span className="price-new">$280</span>
-                                                            </div>
-                                                        </div>
-                                                    </figcaption>
-                                                </figure>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <figure className="card card-product">
-                                                    <span className="badge-new"> NEW </span>
-                                                    <div className="img-wrap"> <img alt="" src="assets/images/items/comp.png" />
-                                                        <a className="btn-overlay" href=" "><i className="fa fa-search-plus"></i> Quick view</a>
-                                                    </div>
-                                                    <figcaption className="info-wrap">
-                                                        <a href=" " className="title">The name of product</a>
-                                                        <div className="action-wrap">
-                                                            <a href=" " className="btn btn-primary btn-sm float-right"> <i className="fa fa-cart-plus"></i> Add </a>
-                                                            <div className="price-wrap h5">
-                                                                <span className="price-new">$280</span>
-                                                            </div>
-                                                        </div>
-                                                    </figcaption>
-                                                </figure>
-                                            </div>
-                                        </div>
+                                                        </figcaption>
+                                                    </button>
+                                                </div>
+                                            ))}
                                     </div>
-
-                                </div>
-                            </div>
-                        </section>
-                    </div>
+                                </section>
+                            </div >
+                        </main >
+                    </div >
                 </div >
-            )
-            }
+            )}
         </>
     );
 }
