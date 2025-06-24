@@ -1339,6 +1339,7 @@ select {
  .imagenCS{
   display: flex;
   justify-content: center;
+  
   }
 
   .imagenCS img {
@@ -1348,6 +1349,7 @@ select {
   object-position: center;
   max-width: 10rem;
    aspect-ratio: 1/1; /* Opcional: fuerza relación cuadrada (elimina si no la necesitas) */
+   border-radius: 1rem;
 } 
 
  .imagen{
@@ -1526,6 +1528,15 @@ input::placeholder {
 .desktop-img {
   display: none;
 }
+
+.iconosCS{
+  background-color: black;
+  padding: 2rem;
+}
+
+
+
+
 
 /* A partir de 500px, muestra la de escritorio y oculta la móvil */
 @media (min-width: 500px) {

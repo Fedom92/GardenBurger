@@ -168,6 +168,70 @@ const CrearSolicitud = () => {
           </div>
         </section>
 
+
+        <div className="iconosCS d-flex justify-content-center">
+          <div className="row ">
+            <div className="col-6 col-md-3 imagenCS">
+              <div className="p-3">
+                <div className="position-relative">
+                  <a href="#SIMPLE">
+                    <img src='https://drive.google.com/thumbnail?id=1PVIyV2BUkqTbF54RnWGfIS4zB0-VrNGt' alt="imagen" />
+                    <div className="position-absolute bottom-0 start-50 translate-middle-x w-100 text-center p-2 text-white"
+                      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
+                      <div className="mb-0">Hamburguesas</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+
+            <div className="col-6 col-md-3 imagenCS">
+              <div className="p-3">
+                <div className="position-relative">
+                  <a href="#CAJA PAPAS">
+                    <img src='https://http2.mlstatic.com/D_694997-MLA73778019288_012024-C.jpg' alt="imagen" />
+                    <div className="position-absolute bottom-0 start-50 translate-middle-x w-100 text-center p-2 text-white"
+                      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
+                      <div className="mb-0">Papas</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-6 col-md-3 imagenCS">
+              <div className="p-3">
+                <div className="position-relative">
+                  <a href="#NUGGETS">
+                    <img src='https://imag.bonviveur.com/los-nuggets-de-pollo.jpg' alt="imagen" />
+                    <div className="position-absolute bottom-0 start-50 translate-middle-x w-100 text-center p-2 text-white"
+                      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
+                      <div className="mb-0">Nuggets</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-6 col-md-3 imagenCS">
+              <div className="p-3">
+                <div className="position-relative">
+                  <a href="#BEBIDAS">
+                    <img src='https://ceprosg.com.ar/wp-content/uploads/2020/07/41100-1.jpg' alt="imagen" />
+                    <div className="position-absolute bottom-0 start-50 translate-middle-x w-100 text-center p-2 text-white"
+                      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
+                      <div className="mb-0">Bebidas</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
         <div className='mainpageCS itemListConteiner'>
           {categorias.length > 0 && productos.length > 0 ? (
             categorias.map(categoria => {
@@ -177,7 +241,7 @@ const CrearSolicitud = () => {
 
               return (
                 <div className="w-100 d-flex flex-column align-items-center" key={categoria.id}>
-                  <h2 className="w-75 tituloCategoria">{categoria.nombre}</h2>
+                  <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
                   <div>
                     {productosEnCategoria.length > 0 ? (
                       productosEnCategoria.map(producto => (
