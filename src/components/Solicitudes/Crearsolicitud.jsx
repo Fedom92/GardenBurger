@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { CartContext } from '../../context/CartContext.jsx'
 import { collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { Link } from 'react-router-dom';
@@ -9,6 +10,7 @@ import Swal from "sweetalert2";
 import { Card } from "./Card.jsx"
 import logo from '../../img/logo_negro3.png';
 import logoMobile from '../../img/logo_negro.webp';
+import { useForm } from 'react-hook-form'
 
 // const CrearSolicitud = () => {
 
@@ -99,6 +101,31 @@ const CrearSolicitud = () => {
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { carrito, cantidadHambPapas, disminuir, aumentar, eliminar, totalCarrito, cantidadBebidas, vaciarCarrito } = useContext(CartContext);
+
+  //registro
+  const { register, handleSubmit } = useForm();
+
+  let [docId, setDocId] = useState("");
+
+  const comprar = (data) => {
+    const pedido = {
+      cliente: data,
+      productos: carrito,
+      total: totalCarrito(),
+      estado: "generada"
+    }
+
+    const pedidosRef = collection(db, "pedidos")
+
+    addDoc(pedidosRef, pedido)
+      .then((doc) => {
+        setDocId(doc.id)
+        vaciarCarrito();
+      })
+
+  }
+  //fin registro
 
   useEffect(() => {
     const fetchData = async () => {
@@ -161,7 +188,12 @@ const CrearSolicitud = () => {
             <h5>Leonardo Da Vinci 4225 - Gregorio de Laferrere</h5>
           </div>
           <h6>La Matanza, La Matanza (Buenos Aires)</h6>
-          <Link to={`/ver-pedido`}>Ver pedido</Link>
+          {carrito.length > 0 &&
+            <div className="position-fixed bottom-0 end-0 z-2 m-3">
+              <a href='/crear-solicitud#finalizarCompra' className="btnVerde p-3">Ver pedido
+                <i className="fa fa-arrow-down ms-2 animated-arrow" aria-hidden="true"></i>
+              </a>
+            </div>}
           <div className="d-flex justify-content-center">
             <i className="fa fa-motorcycle m-1" aria-hidden="true"></i>
             <h5>Envios a domicilio</h5>
@@ -241,23 +273,83 @@ const CrearSolicitud = () => {
 
               return (
                 <div className="w-100 d-flex flex-column align-items-center" key={categoria.id}>
-                  <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
-                  <div>
-                    {productosEnCategoria.length > 0 ? (
-                      productosEnCategoria.map(producto => (
-                        <Card key={producto.id} producto={producto} />
-                      ))
-                    ) : (
-                      <p>No hay productos en esta categoría</p>
-                    )}
-                  </div>
+                  {categoria.nombre != 'EXTRA' ? (
+                    <>
+                      <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
+                      <div>
+                        {productosEnCategoria.length > 0 ? (
+                          productosEnCategoria.map(producto => (
+                            <Card key={producto.id} producto={producto} />
+                          ))
+                        ) : (
+                          <p>No hay productos en esta categoría</p>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-100 d-flex flex-column align-items-center" style={{ display: cantidadHambPapas() > 0 ? 'block' : 'none' }}>
+                      <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
+                      <div>
+                        {productosEnCategoria.length > 0 ? (
+                          productosEnCategoria.map(producto => (
+                            <Card key={producto.id} producto={producto} />
+                          ))
+                        ) : (
+                          <p>No hay productos en esta categoría</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })
           ) : (
             <p>No hay categorías o productos disponibles</p>
           )}
+          <h2 id='finalizarCompra' className="w-75 tituloCategoria">Finalizar Compra</h2>
+          <div className='itemsConteiner position-relative z-3'>
+
+            {carrito.map((producto) => {
+              return (
+
+                <div className='itemCarrito'>
+                  <div className="imagen">
+                    <img src={producto.imagen} alt="imagen" />
+                  </div>
+                  <div className='tituloVP'>{producto.descripcion}</div>
+                  <div className='cantidad'>
+                    <button className='disminuir' onClick={() => disminuir(producto)}>-</button>
+                    <h4 className='numeroCantidad'>{producto.amountInCart}</h4>
+                    <button className='aumentar' onClick={() => aumentar(producto)}>+</button>
+                  </div>
+                  {/* <p className="precio">${(producto.price.finalPrice*producto.amountInCart).toFixed(2)}</p> */}
+                  <div className="precioVP">${(producto.precio * producto.amountInCart).toFixed(2)}</div>
+                  <button className='eliminar' onClick={() => eliminar(producto)}>❌</button>
+                </div>
+
+              )
+            })}
+            {carrito.length > 0 ?
+              <div className="d-flex flex-column align-items-center">
+                <div className="m-2 fw-bold">Total: ${totalCarrito()}</div>
+                {cantidadBebidas() === 0 &&
+                  <a className="m-2" href="#BEBIDAS">No te olvides de agregar tu bebida! Hacé click aquí</a>}
+
+                <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
+                  <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required/>
+                  <input type="email" placeholder='Ingrese su e-mail' {...register("email", { required: true })} required />
+                  <input type="tel" id="telefono" placeholder='Ingrese su número de teléfono' {...register("telefono", { required: true })} required />
+                  <button className='btnVerde' type="submit">Comprar</button>
+                </form>
+
+              </div>
+              : <><p className='error'>Sin productos seleccionados</p><a href='/crear-solicitud#SIMPLE'><p className='fw-bold'>Ir a inicio</p></a></>}
+
+
+          </div>
         </div>
+
+
       </main>
     </div>
   );

@@ -249,7 +249,7 @@ tbody tr.hide td p {
 }
 
 .error {
-  color: red;
+  color: black;
   font-size: 12px;
   margin: 0 auto;
   text-align: center;
@@ -1534,8 +1534,44 @@ input::placeholder {
   padding: 2rem;
 }
 
+    .fraccionDetalle{
+      display: grid;
+      grid-template-columns: 1fr;
+      
+    }
+
+        .formulario{
+      margin:1rem;
+      display: flex;
+      flex-direction: column;
+      align-items:center;
+    }
+
+        .formulario input{
+      margin:0.5rem;
+      padding: 1rem;
+      border-radius: 1rem;
+      border:none;
+      background-color: #EEEEEE;
+      width: 100%;
+    }
+
+    .formulario button{
+      padding: 1rem;
+      margin:1rem;
+      border-radius: 1rem;
+
+    }
 
 
+@keyframes bounce {
+  0%, 100% { transform: translateY(3px); }
+  50% { transform: translateY(-3px); }
+}
+
+.animated-arrow {
+  animation: bounce 2s infinite;
+}
 
 
 /* A partir de 500px, muestra la de escritorio y oculta la móvil */
