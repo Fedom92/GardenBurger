@@ -8,6 +8,7 @@ import MiPerfil from "./components/Admin/MiPerfil";
 import Navigation from "./Login_Navs/Navigation"
 import UpNav from "./Login_Navs/UpNav"
 import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
+import Menu from "./components/Solicitudes/Menu.jsx";
 import CryptoJS from 'crypto-js';
 import Caja from "./components/POS/Caja";
 import { PaginaCarrito } from './components/Solicitudes/PaginaCarrito';
@@ -76,6 +77,7 @@ function App() {
           <Route path="/gestion-cocina" element={<RequireAuth><RequireAdmin><Cocina /></RequireAdmin></RequireAuth>} />
           <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
           <Route path="/crear-solicitud" element={<CrearSolicitud />} />
+          <Route path="/menu" element={<Menu />} />
           <Route path="/ver-pedido" element={<PaginaCarrito/>} />
 
           {/*Para limitar Links por Rol
