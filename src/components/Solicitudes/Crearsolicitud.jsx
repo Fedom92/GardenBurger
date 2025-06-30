@@ -10,7 +10,8 @@ import Swal from "sweetalert2";
 import { Card } from "./Card.jsx"
 import logo from '../../img/logo_negro3.png';
 import logoMobile from '../../img/logo_negro.webp';
-import { useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form';
+
 
 // const CrearSolicitud = () => {
 
@@ -104,7 +105,8 @@ const CrearSolicitud = () => {
   const { carrito, cantidadHambPapas, disminuir, aumentar, eliminar, totalCarrito, cantidadBebidas, vaciarCarrito } = useContext(CartContext);
 
   //registro
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit,watch, formState: { errors }} = useForm();
+   const opcionSeleccionada = watch("opcion");
 
   let [docId, setDocId] = useState("");
 
@@ -116,6 +118,17 @@ const CrearSolicitud = () => {
       estado: "generada"
     }
 
+    const mensaje = `¡Hola! Quiero hacer una compra:
+    - Nombre: ${data.nombre}
+    - Email: ${data.email}
+    - Teléfono: ${data.telefono}
+    - Opción: ${data.opcion === "delivery" ? "Delivery" : "Retiro en local"}
+    ${data.opcion === "delivery" ? `- Dirección: ${data.direccion}` : ""}
+    - Detalle: http://192.168.0.11:3000/crear-solicitud
+    `;
+
+    const mensajeCodificado = encodeURIComponent(mensaje);
+
     const pedidosRef = collection(db, "pedidos")
 
     addDoc(pedidosRef, pedido)
@@ -123,6 +136,8 @@ const CrearSolicitud = () => {
         setDocId(doc.id)
         vaciarCarrito();
       })
+
+      window.open(`https://wa.me/91136252593?text=${mensajeCodificado}`, "_blank");
 
   }
   //fin registro
@@ -174,6 +189,16 @@ const CrearSolicitud = () => {
   if (loading) {
     return <p>Cargando...</p>;
   }
+
+    //   if(docId){
+    //     return(
+    //         <>
+    //            <h4>Muchas gracias por su compra</h4>
+    //            <p>Su codigo de referencia para el seguimiento de envío es: {docId}</p>
+    //            <Link to='/'><p className='titulo'>Ir a inicio</p></Link> 
+    //         </>
+    //     )  
+    // }
 
   return (
     <div>
@@ -273,7 +298,7 @@ const CrearSolicitud = () => {
 
               return (
                 <div className="w-100 d-flex flex-column align-items-center" key={categoria.id}>
-                  {categoria.nombre != 'EXTRA' ? (
+                  {categoria.nombre !== 'EXTRA' ? (
                     <>
                       <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
                       <div>
@@ -339,6 +364,37 @@ const CrearSolicitud = () => {
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required/>
                   <input type="email" placeholder='Ingrese su e-mail' {...register("email", { required: true })} required />
                   <input type="tel" id="telefono" placeholder='Ingrese su número de teléfono' {...register("telefono", { required: true })} required />
+                  <div className="radio-group">
+                    <label>
+                      <input 
+                        type="radio" 
+                        value="retiro" 
+                        {...register("opcion", { required: "Debes seleccionar una opción" })} 
+                      />
+                      Lo retiro
+                    </label>
+                    <label>
+                      <input 
+                        type="radio" 
+                        value="delivery" 
+                        {...register("opcion", { required: "Debes seleccionar una opción" })} 
+                      />
+                      Delivery
+                    </label>
+                    </div>
+                    {errors.opcion && <p style={{ color: 'red' }}>{errors.opcion.message}</p>}
+                    {opcionSeleccionada === "delivery" && (
+                      <>
+                        <input
+                          type="text"
+                          placeholder="Dirección de envío"
+                          {...register("direccion", {
+                            required: opcionSeleccionada === "delivery" ? "La dirección es obligatoria" : false,
+                          })}
+                        />
+                        {errors.direccion && <p style={{ color: 'red' }}>{errors.direccion.message}</p>}
+                      </>
+                    )}
                   <button className='btnVerde' type="submit">Comprar</button>
                 </form>
 
