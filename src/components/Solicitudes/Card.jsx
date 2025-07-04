@@ -14,7 +14,7 @@ export const Card = ({ producto }) => {
         <p className="ingredientes">{(producto.ingredientes)}</p>
         <div className="cardRowCS">
           <div className="imagenCS">
-            <img src={producto.imagen} alt="imagen" />
+            <img src={producto.imagen} alt={producto.descripcion} loading="lazy" />
           </div>
           <div className="cardColumnCS m-3">
             <p className="precio">${(producto.precio).toFixed(2)}</p>

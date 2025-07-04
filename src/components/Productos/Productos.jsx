@@ -243,8 +243,7 @@ const Productos = () => {
                   ordenDescendente={false}
                   camposBusqueda={["descripcion", "categoria"]}
                   campoSelector="categoria"
-                />;
-
+                />
               </div>
             </div>
           </div >

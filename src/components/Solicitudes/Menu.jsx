@@ -9,8 +9,6 @@ import './menu.css';
 import html2pdf from 'html2pdf.js';
 
 
-
-
 const Menu = () => {
   const exportarPDF = () => {
     const elemento = document.getElementById('menu');
@@ -21,10 +19,10 @@ const Menu = () => {
       jsPDF: { orientation: 'portrait' }
     }).save();
   };
-    const [categorias, setCategorias] = useState([]);
+
+  const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
-  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,122 +68,86 @@ const Menu = () => {
     return <p>Cargando...</p>;
   }
 
+  const categoriasEspeciales = ["SIMPLE", "DOBLE", "TRIPLE"];
+
+  const hamburguesas = productos
+    .filter(p => categoriasEspeciales.includes(p.categoria))
+    .reduce((acum, product) => {
+      const descripcionSimple = product.descripcion.replace(/ (SIMPLE|DOBLE|TRIPLE)$/, "").trim();
+      if (!acum[descripcionSimple]) {
+        acum[descripcionSimple] = { descripcion: descripcionSimple, ingredientes: product.ingredientes, variantes: {} };
+      }
+      acum[descripcionSimple].variantes[product.categoria] = product.precio;
+      return acum;
+    }, {});
+
   return (
     <div>
       <div className="menu bebas-neue-regular" id="menu">
         <h1>GARDEN BURGER</h1>
         <h2>MENÚ</h2>
 
-        {categorias.length > 0 && productos.length > 0 ? (
-                    categorias.map(categoria => {
-                      const productosEnCategoria = productos.filter(
-                        producto => producto.categoria === categoria.nombre //categoria
-                      );
-        
-                      return (
-                        <div className="w-100 d-flex flex-column align-items-center" key={categoria.id}>
-                          {categoria.nombre !== 'EXTRA' ? (
-                            <>
-                              <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
-                              <div>
-                                {productosEnCategoria.length > 0 ? (
-                                  productosEnCategoria.map(producto => (
-                                    <p>{producto.descripcion} ${producto.precio}</p>
-                                  ))
-                                ) : (
-                                  <p>No hay productos en esta categoría</p>
-                                )}
-                              </div>
-                            </>
-                          ) : (
-                            <div className="w-100 d-flex flex-column align-items-center" >
-                              <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
-                              <div>
-                                {productosEnCategoria.length > 0 ? (
-                                  productosEnCategoria.map(producto => (
-                                    <p>{producto.descripcion} ${producto.precio}</p>
-                                  ))
-                                ) : (
-                                  <p>No hay productos en esta categoría</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
+        {productos.length === 0 || categorias.length === 0 ? (
+          <p>No hay categorías o productos disponibles</p>
+        ) : (
+          <>
+            {/* Hamburguesas */}
+            <div className="w-100 d-flex flex-column align-items-center">
+              <h2 id="hamburguesas" className="w-75 tituloCategoria">HAMBURGUESAS</h2>
+              <div className="items">
+                {Object.entries(hamburguesas).map(([key, data]) => (
+                  <div className="item" key={key}>
+                    <h3>{data.descripcion}</h3>
+                    {data.ingredientes && <p className="desc">{data.ingredientes}</p>}
+                    <div className="precios">
+                      {categoriasEspeciales.map(cat =>
+                        data.variantes[cat] ? (
+                          <span key={cat}>
+                            {cat}: ${data.variantes[cat].toLocaleString("es-AR")}
+                          </span>
+                        ) : null
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Resto de categorías */}
+            {categorias.map(categoria => {
+              if (categoriasEspeciales.includes(categoria.nombre)) return null;
+
+              const productosEnCategoria = productos.filter(p => p.categoria === categoria.nombre);
+
+              return (
+                <div className="w-100 d-flex flex-column align-items-center" key={categoria.id}>
+                  <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
+                  <div>
+                    {productosEnCategoria.length > 0 ? (
+                      productosEnCategoria.map(prod => (
+                        <div key={prod.id}>
+                          {prod.ingredientes && <p className="desc">{prod.ingredientes}</p>}
+                          <p>{prod.descripcion} ${prod.precio.toLocaleString("es-AR")}</p>
                         </div>
-                      );
-                    })
-                  ) : (
-                    <p>No hay categorías o productos disponibles</p>
-                  )}
+                      ))
+                    ) : (
+                      <p>No hay productos en esta categoría</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
 
-        {/** FRIED ONION */}
-        <div className="item">
-          <h3>FRIED ONION</h3>
-          <p className="desc">Pan de papa, medallón de carne 110g smasheado con cebolla, cheddar, bacon.</p>
-          <div className="precios">
-            <span>SIMPLE: $9.900</span>
-            <span>DOBLE: $10.900</span>
-            <span>TRIPLE: $11.900</span>
-          </div>
-        </div>
-
-        {/** ALIOLI */}
-        <div className="item">
-          <h3>ALIOLI</h3>
-          <p className="desc">Pan de papa, medallón de carne 110g, cheddar, bacon, salsa alioli (Mayonesa con ajo).</p>
-          <div className="precios">
-            <span>SIMPLE: $9.900</span>
-            <span>DOBLE: $10.900</span>
-            <span>TRIPLE: $11.900</span>
-          </div>
-        </div>
-
-        {/** POLLO CRISPY */}
-        <div className="item">
-          <h3>POLLO CRISPY</h3>
-          <p className="desc">Pan de papa, medallón de pollo frito, cheddar, bacon. Opcional: lechuga, tomate o salsa 1/4.</p>
-          <div className="precios">
-            <span>SIMPLE: $9.900</span>
-            <span>DOBLE: $10.900</span>
-            <span>TRIPLE: $11.900</span>
-          </div>
-        </div>
-
-        {/** TASTY */}
-        <div className="item">
-          <h3>TASTY</h3>
-          <p className="desc">Pan de papa, medallón de carne 110g, cheddar, bacon, salsa TASTY, lechuga y tomate. Opcional sin vegetales.</p>
-          <div className="precios">
-            <span>SIMPLE: $10.400</span>
-            <span>DOBLE: $11.400</span>
-            <span>TRIPLE: $12.400</span>
-          </div>
-        </div>
-
-        {/** EXTRAS */}
-        <div className="extras">
-          <h3>EXTRAS</h3>
-          <ul>
-            <li>Cheddar y bacon en papas $2.000</li>
-            <li>Cheddar en papas $1.500</li>
-            <li>Fileta de Cheddar $1.500</li>
-            <li>Fileta de alioli $1.500</li>
-            <li>Feta de Cheddar $300</li>
-            <li>Salsa alioli $400</li>
-            <li>Carne extra $1.600</li>
-            <li>Huevo $400</li>
-          </ul>
-        </div>
-
-        <div className="footer">
-          TODOS LOS COMBOS INCLUYEN PAPAS<br />
-          📍 Leonardo Da Vinci 4225
-        </div>
+      <div className="footer">
+        TODOS LOS COMBOS INCLUYEN PAPAS<br />
+        📍 Leonardo Da Vinci 4225
       </div>
 
       <button className="pdf-button" onClick={exportarPDF}>Exportar a PDF</button>
     </div>
   );
-};
-
+}
 export default Menu;
