@@ -71,7 +71,7 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
                 setUnico.add(item[campoSelector]);
             }
         });
-        return Array.from(setUnico);
+        return Array.from(setUnico).sort();
     }, [data, campoSelector]);
 
     return (

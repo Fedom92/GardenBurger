@@ -9,20 +9,25 @@
   --color-letras-menu: #ffffff;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+* {
+  font-family: "Bebas Neue", sans-serif;
+}
 
 body {
   overflow-x: hidden;
 }
 
 h1 {
-  color: black !important;
+  color: black;
   letter-spacing: 1px;
   font-weight: 600;
   font-size: 2rem;
 }
 
 p {
-  color: black ;
+  color: black;
 }
 
 h3 {
@@ -191,7 +196,7 @@ tbody tr.hide td p {
   display: flex;
   flex-direction: column;
   align-items: center;
-  top: 10%;
+  top: 5%;
   left: 20%;
   aspect-ratio: 1;
   border-radius: 9px;
@@ -210,7 +215,7 @@ tbody tr.hide td p {
   gap: 15px;
   width: 100%;
   background-color: var(--color-);
-  top: 70%;
+  top: 80%;
 }
 
 .email,
@@ -219,9 +224,10 @@ tbody tr.hide td p {
   width: 100%;
   border: none;
   background-color: transparent;
-  padding: 20px 10px 3px;
+  padding: 15px 5px 1px;
   border: 1px solid var(--color-secundario);
   color: black;
+  font-size: 1rem;
 }
 
 .login-page form input {
@@ -1306,14 +1312,14 @@ select {
   flex-direction: row;
   justify-content: center;
   background-color: #000;
-  
+
 }
 
 .Toastify__toast.compact-toast {
   min-height: 40px !important;
   max-width: fit-content;
   margin: 0.5rem;
-  padding: 0.5rem 2rem 0.5rem 1rem  !important;
+  padding: 0.5rem 2rem 0.5rem 1rem !important;
 
 }
 
@@ -1336,23 +1342,25 @@ select {
   box-shadow: 0px 4px 8px white;
 }
 
- .imagenCS{
+.imagenCS {
   display: flex;
   justify-content: center;
-  
-  }
 
-  .imagenCS img {
+}
+
+.imagenCS img {
   display: flex;
   justify-content: center;
-    object-fit: cover; /* Cubre todo el espacio manteniendo proporciones */
+  object-fit: cover;
+  /* Cubre todo el espacio manteniendo proporciones */
   object-position: center;
   max-width: 10rem;
-   aspect-ratio: 1/1; /* Opcional: fuerza relación cuadrada (elimina si no la necesitas) */
-   border-radius: 1rem;
-} 
+  aspect-ratio: 1/1;
+  /* Opcional: fuerza relación cuadrada (elimina si no la necesitas) */
+  border-radius: 1rem;
+}
 
- .imagen{
+.imagen {
   display: flex;
   justify-content: center;
   max-width: 0.5rem;
@@ -1363,10 +1371,12 @@ select {
 .imagen img {
   display: flex;
   justify-content: center;
-    object-fit: cover; /* Cubre todo el espacio manteniendo proporciones */
+  object-fit: cover;
+  /* Cubre todo el espacio manteniendo proporciones */
   object-position: center;
-   aspect-ratio: 1/1; /* Opcional: fuerza relación cuadrada (elimina si no la necesitas) */
-} 
+  aspect-ratio: 1/1;
+  /* Opcional: fuerza relación cuadrada (elimina si no la necesitas) */
+}
 
 
 .tituloCategoria {
@@ -1388,7 +1398,8 @@ select {
 .tituloVP {
   color: black;
   text-align: center;
-  font-size: min(1rem, 3vw); /* Usa el valor menor entre 24px y 3% del ancho de la pantalla */
+  font-size: min(1rem, 3vw);
+  /* Usa el valor menor entre 24px y 3% del ancho de la pantalla */
   width: fit-content;
   max-width: 100%;
   margin: 0 auto;
@@ -1415,7 +1426,7 @@ select {
 
 }
 
-.precioVP{
+.precioVP {
   font-weight: bolder;
   font-size: 1.2rem;
   color: black;
@@ -1440,7 +1451,7 @@ select {
 .itemCarrito {
   margin: 0.5rem;
   height: 3.5rem;
-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   border-radius: 0.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
@@ -1488,7 +1499,7 @@ box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   border-top-right-radius: 8px;
 }
 
-.eliminar{
+.eliminar {
   width: 32px;
   height: 50%;
   font-weight: bold;
@@ -1529,44 +1540,51 @@ input::placeholder {
   display: none;
 }
 
-.iconosCS{
+.iconosCS {
   background-color: black;
   padding: 2rem;
 }
 
-    .fraccionDetalle{
-      display: grid;
-      grid-template-columns: 1fr;
-      
-    }
+.fraccionDetalle {
+  display: grid;
+  grid-template-columns: 1fr;
 
-        .formulario{
-      margin:1rem;
-      display: flex;
-      flex-direction: column;
-      align-items:center;
-    }
+}
 
-        .formulario input{
-      margin:0.5rem;
-      padding: 1rem;
-      border-radius: 1rem;
-      border:none;
-      background-color: #EEEEEE;
-      width: 100%;
-    }
+.formulario {
+  margin: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    .formulario button{
-      padding: 1rem;
-      margin:1rem;
-      border-radius: 1rem;
+.formulario input {
+  margin: 0.5rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: none;
+  background-color: #EEEEEE;
+  width: 100%;
+}
 
-    }
+.formulario button {
+  padding: 1rem;
+  margin: 1rem;
+  border-radius: 1rem;
+
+}
 
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(3px); }
-  50% { transform: translateY(-3px); }
+
+  0%,
+  100% {
+    transform: translateY(3px);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .animated-arrow {

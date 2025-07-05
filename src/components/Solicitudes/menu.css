@@ -1,29 +1,28 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
-.bebas-neue-regular {
+.bebas-neue-regular h3,
+.bebas-neue-regular p,
+.bebas-neue-regular span,
+.bebas-neue-regular li {
   font-family: "Bebas Neue", sans-serif;
   font-weight: 400;
   font-style: normal;
+  color: darkgrey;
 }
 
-.bebas-neue-regular h1,h2,h3,p,span,li{
+.titulo_menu, .subtitulo_menu, .tituloCategoria{
   font-family: "Bebas Neue", sans-serif;
   font-weight: 400;
   font-style: normal;
-  color:darkgrey
+  text-align: center;
+  color: white;
 }
 
-
-
-
-body {
-  
-  margin: 0;
-  padding: 0;
+.items {
+  margin-top: -20px;
 }
 
-.menu {
+.menu_carta {
   font-family: Arial, sans-serif;
   max-width: 800px;
   margin: auto;
@@ -31,29 +30,23 @@ body {
   color: white;
   padding: 20px;
   border-radius: 10px;
-
 }
 
-h1, h2 {
-  text-align: center;
-  color: white !important;
-}
-
-.item {
+.menu_publico .item_menu {
   border-bottom: 1px solid #555;
   padding: 10px 0;
 }
 
-.item h3 {
+.menu_publico .item_menu h3 {
   margin: 0;
 }
 
-.desc {
+.menu_publico .desc_menu {
   font-size: 0.9em;
   margin-bottom: 5px;
 }
 
-.precios span {
+.menu_publico .precios span {
   margin-right: 15px;
   background: #444;
   padding: 5px 10px;
@@ -61,22 +54,22 @@ h1, h2 {
   display: inline-block;
 }
 
-.extras {
+.menu_publico .extras {
   margin-top: 20px;
 }
 
-.extras ul {
+.menu_publico .extras ul {
   list-style: none;
   padding-left: 0;
 }
 
-.footer {
+.menu_publico .footer {
   margin-top: 20px;
   text-align: center;
   font-weight: bold;
 }
 
-.pdf-button {
+.menu_publico .pdf-button {
   display: block;
   margin: 20px auto;
   padding: 10px 20px;

@@ -331,7 +331,7 @@ const Caja = () => {
                                         </div>
 
                                         <div className="row" id="acciones">
-                                            <div className="d-flex justify-content-center align-items-center gap-3">
+                                            <div className="d-flex justify-content-center align-items-center gap-2">
                                                 <button
                                                     className="btn btn-danger"
                                                     type="reset"
@@ -351,14 +351,14 @@ const Caja = () => {
                                 </section>
 
                                 <section className="col-8 card" id="productos">
-                                    <ul className="nav nav-pills nav-fill gap-1 p-0 d-flex overflow-auto" role="tablist" style={{ whiteSpace: "nowrap" }}>
+                                    <ul className="nav nav-pills nav-fill p-0 d-flex overflow-auto" role="tablist" style={{ whiteSpace: "nowrap", gap:"2px" }}>
                                         {categorias.map((categoria) => (
                                             <li className="nav-item" key={categoria.id}>
                                                 <button
-                                                    className={`d-flex align-items-center nav-link text-black lex-shrink-0 p-2 ${categoriaSeleccionada === categoria.nombre ? "active" : ""}`}
+                                                    className={`d-flex justify-content-center align-items-center nav-link text-black lex-shrink-0 gap-1 p-1 ${categoriaSeleccionada === categoria.nombre ? "active" : ""}`}
                                                     onClick={() => setCategoriaSeleccionada(categoria.nombre)}
                                                 >
-                                                    <i className="fa fa-tags"></i> {categoria.nombre}
+                                                    <i className="fa fa-tags" ></i> {categoria.nombre}
                                                 </button>
                                             </li>
                                         ))}

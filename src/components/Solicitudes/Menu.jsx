@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { collection, getDocs, } from "firebase/firestore";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import 'moment/locale/es';
 import { Card } from "./Card.jsx"
@@ -24,45 +24,37 @@ const Menu = () => {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const productosCollectiona = collection(db, "productos");
+  const productosCollection = useRef(productosCollectiona);
+
+  const categoriasCollectiona = collection(db, "categorias");
+  const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));
+
+  const getData = useCallback(async (queryRef, setter) => {
+    const snapshot = await getDocs(queryRef);
+    const dataArray = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setter(dataArray);
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Obtener categorías
-        const categoriasRef = collection(db, "categorias");
-        const categoriasSnapshot = await getDocs(categoriasRef);
-        const categoriasData = categoriasSnapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id
-        }));
-
-        // Obtener productos
-        const productosRef = collection(db, "productos");
-        const productosSnapshot = await getDocs(productosRef);
-        const productosData = productosSnapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id
-        }));
-
-        const categoriasDataOrdenada = categoriasSnapshot.docs
-          .map(doc => ({
-            ...doc.data(),
-            id: doc.id
-          }))
-          .sort((a, b) => a.nroOrden - b.nroOrden);
-
-
-        setCategorias(categoriasDataOrdenada);
-        setProductos(productosData);
+        await getData(productosCollection.current, setProductos);
+        await getData(categoriasCollection.current, setCategorias);
+        
       } catch (error) {
-        console.error("Error fetching data:", error);
+        alert("Error al cargar los datos.");
+        console.error("Error fetching data Menu:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
-
+  }, [getData]);
 
   if (loading) {
     return <p>Cargando...</p>;
@@ -70,22 +62,24 @@ const Menu = () => {
 
   const categoriasEspeciales = ["SIMPLE", "DOBLE", "TRIPLE"];
 
-  const hamburguesas = productos
+  const hamburguesasObj = productos
     .filter(p => categoriasEspeciales.includes(p.categoria))
     .reduce((acum, product) => {
       const descripcionSimple = product.descripcion.replace(/ (SIMPLE|DOBLE|TRIPLE)$/, "").trim();
       if (!acum[descripcionSimple]) {
-        acum[descripcionSimple] = { descripcion: descripcionSimple, ingredientes: product.ingredientes, variantes: {} };
+        acum[descripcionSimple] = { descripcion: descripcionSimple, ingredientes: product.ingredientes, carnes_precios: {} };
       }
-      acum[descripcionSimple].variantes[product.categoria] = product.precio;
+      acum[descripcionSimple].carnes_precios[product.categoria] = product.precio;
       return acum;
     }, {});
 
+  const hamburguesas = Object.values(hamburguesasObj);
+
   return (
-    <div>
-      <div className="menu bebas-neue-regular" id="menu">
-        <h1>GARDEN BURGER</h1>
-        <h2>MENÚ</h2>
+    <div className="menu_publico">
+      <div className="menu_carta bebas-neue-regular" id="menu">
+        <h1 className="titulo_menu">GARDEN BURGER</h1>
+        <h2 className="subtitulo_menu">MENÚ</h2>
 
         {productos.length === 0 || categorias.length === 0 ? (
           <p>No hay categorías o productos disponibles</p>
@@ -95,15 +89,15 @@ const Menu = () => {
             <div className="w-100 d-flex flex-column align-items-center">
               <h2 id="hamburguesas" className="w-75 tituloCategoria">HAMBURGUESAS</h2>
               <div className="items">
-                {Object.entries(hamburguesas).map(([key, data]) => (
-                  <div className="item" key={key}>
+                {hamburguesas.map((data, index) => (
+                  <div className="item_menu" key={index}>
                     <h3>{data.descripcion}</h3>
-                    {data.ingredientes && <p className="desc">{data.ingredientes}</p>}
+                    {data.ingredientes && <p className="desc_menu">{data.ingredientes}</p>}
                     <div className="precios">
                       {categoriasEspeciales.map(cat =>
-                        data.variantes[cat] ? (
+                        data.carnes_precios[cat] ? (
                           <span key={cat}>
-                            {cat}: ${data.variantes[cat].toLocaleString("es-AR")}
+                            {cat}: ${data.carnes_precios[cat].toLocaleString("es-AR")}
                           </span>
                         ) : null
                       )}
@@ -126,7 +120,7 @@ const Menu = () => {
                     {productosEnCategoria.length > 0 ? (
                       productosEnCategoria.map(prod => (
                         <div key={prod.id}>
-                          {prod.ingredientes && <p className="desc">{prod.ingredientes}</p>}
+                          {prod.ingredientes && <p className="desc_menu">{prod.ingredientes}</p>}
                           <p>{prod.descripcion} ${prod.precio.toLocaleString("es-AR")}</p>
                         </div>
                       ))
