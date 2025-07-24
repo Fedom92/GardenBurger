@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from '../../context/CartContext.jsx'
-import { collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, getDocs, query } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { Link } from 'react-router-dom';
 import { Modal } from "react-bootstrap";
@@ -12,92 +12,6 @@ import logo from '../../img/logo_negro3.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 
-
-// const CrearSolicitud = () => {
-
-//   let [categorias, setCategorias] = useState([]);
-//   let [productos, setProductos] = useState([]);
-
-//    useEffect(() => {
-
-//   const categoriasRef = collection(db, "categorias");
-
-//       getDocs(categoriasRef)
-//       .then((res)=>{
-//         setCategorias(res.docs.map((doc)=>{
-//           console.log({...doc.data(),id:doc.id})
-//           return {...doc.data(), id:doc.id}
-//         }))
-//       })
-
-//     }, []);
-
-//   useEffect(() => {
-
-
-//     const productosRef = collection(db, "productos");
-//     const q = productosRef;
-//     // const q = categoryId?query(productosRef, where("category", "==" , categoryId.toUpperCase())):productosRef;
-
-
-//     getDocs(q)
-//       .then((res)=>{
-//         setProductos(res.docs.map((doc)=>{
-//           console.log({...doc.data(),id:doc.id})
-//           return {...doc.data(), id:doc.id}
-//         }))
-//       })
-
-//     }, []);
-
-
-
-
-//   return (
-//   <div>
-//     <header>
-//       <img className='logoCS' src={logo} alt="logoGarden" />
-//     </header>
-//     <main>
-//       <section>
-//         <h3>Leonardo Da Vinci 4225 - Gregorio de Laferrere</h3>
-//         <h6>La Matanza, La Matanza (Buenos Aires)</h6>
-
-//       </section>
-//     <div className='mainpageCS itemListConteiner'>
-//       {
-//         categorias.length >0? 
-//         categorias.map(categoria=>{
-//           productos.length > 0? 
-//           productos.map(producto=>{
-//             console.log(producto.categoria)
-//             console.log(categoria.nombre)
-//             if(producto.categoria === categoria.nombre){
-
-
-//               console.log("match")
-//             return <Card key={producto.id} producto={producto} />
-//             }
-//           })
-//           : <p>Cargando...</p>
-
-//         }
-
-//         )
-
-//         : <p>Cargando...</p>
-
-//       }   
-//     </div>
-//     </main>
-//   </div>
-//   )
-
-// }
-
-// export default CrearSolicitud;
-
-
 const CrearSolicitud = () => {
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -105,13 +19,13 @@ const CrearSolicitud = () => {
   const { carrito, cantidadHambPapas, disminuir, aumentar, eliminar, totalCarrito, cantidadBebidas, vaciarCarrito } = useContext(CartContext);
 
   //registro
-  const { register, handleSubmit,watch, formState: { errors }} = useForm();
-   const opcionSeleccionada = watch("opcion");
+  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+  const opcionSeleccionada = watch("opcion");
 
   let [docId, setDocId] = useState("");
 
   const comprar = (data) => {
-    const pedido = {
+    const solicitud = {
       cliente: data,
       productos: carrito,
       total: totalCarrito(),
@@ -129,15 +43,15 @@ const CrearSolicitud = () => {
 
     const mensajeCodificado = encodeURIComponent(mensaje);
 
-    const pedidosRef = collection(db, "pedidos")
+    const solicitudesRef = collection(db, "solicitudes")
 
-    addDoc(pedidosRef, pedido)
+    addDoc(solicitudesRef, solicitud)
       .then((doc) => {
         setDocId(doc.id)
         vaciarCarrito();
       })
 
-      window.open(`https://wa.me/91136252593?text=${mensajeCodificado}`, "_blank");
+    window.open(`https://wa.me/91136252593?text=${mensajeCodificado}`, "_blank");
 
   }
   //fin registro
@@ -148,10 +62,13 @@ const CrearSolicitud = () => {
         // Obtener categorías
         const categoriasRef = collection(db, "categorias");
         const categoriasSnapshot = await getDocs(categoriasRef);
-        const categoriasData = categoriasSnapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id
-        }));
+        const categoriasDataOrdenada = categoriasSnapshot.docs
+          .map(doc => ({
+            ...doc.data(),
+            id: doc.id
+          }))
+          .sort((a, b) => a.nroOrden - b.nroOrden);
+
 
         // Obtener productos
         const productosRef = collection(db, "productos");
@@ -160,18 +77,6 @@ const CrearSolicitud = () => {
           ...doc.data(),
           id: doc.id
         }));
-
-        //     const categoriasData = [
-        //   ...new Set(productosData.map((producto) => producto.categoria)),
-        // ];
-
-        const categoriasDataOrdenada = categoriasSnapshot.docs
-          .map(doc => ({
-            ...doc.data(),
-            id: doc.id
-          }))
-          .sort((a, b) => a.nroOrden - b.nroOrden);
-
 
         setCategorias(categoriasDataOrdenada);
         setProductos(productosData);
@@ -190,15 +95,15 @@ const CrearSolicitud = () => {
     return <p>Cargando...</p>;
   }
 
-    //   if(docId){
-    //     return(
-    //         <>
-    //            <h4>Muchas gracias por su compra</h4>
-    //            <p>Su codigo de referencia para el seguimiento de envío es: {docId}</p>
-    //            <Link to='/'><p className='titulo'>Ir a inicio</p></Link> 
-    //         </>
-    //     )  
-    // }
+  //   if(docId){
+  //     return(
+  //         <>
+  //            <h4>Muchas gracias por su compra</h4>
+  //            <p>Su codigo de referencia para el seguimiento de envío es: {docId}</p>
+  //            <Link to='/'><p className='titulo'>Ir a inicio</p></Link> 
+  //         </>
+  //     )  
+  // }
 
   return (
     <div>
@@ -361,40 +266,40 @@ const CrearSolicitud = () => {
                   <a className="m-2" href="#BEBIDAS">No te olvides de agregar tu bebida! Hacé click aquí</a>}
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
-                  <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required/>
+                  <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
                   <input type="email" placeholder='Ingrese su e-mail' {...register("email", { required: true })} required />
                   <input type="tel" id="telefono" placeholder='Ingrese su número de teléfono' {...register("telefono", { required: true })} required />
                   <div className="radio-group">
                     <label>
-                      <input 
-                        type="radio" 
-                        value="retiro" 
-                        {...register("opcion", { required: "Debes seleccionar una opción" })} 
+                      <input
+                        type="radio"
+                        value="retiro"
+                        {...register("opcion", { required: "Debes seleccionar una opción" })}
                       />
                       Lo retiro
                     </label>
                     <label>
-                      <input 
-                        type="radio" 
-                        value="delivery" 
-                        {...register("opcion", { required: "Debes seleccionar una opción" })} 
+                      <input
+                        type="radio"
+                        value="delivery"
+                        {...register("opcion", { required: "Debes seleccionar una opción" })}
                       />
                       Delivery
                     </label>
-                    </div>
-                    {errors.opcion && <p style={{ color: 'red' }}>{errors.opcion.message}</p>}
-                    {opcionSeleccionada === "delivery" && (
-                      <>
-                        <input
-                          type="text"
-                          placeholder="Dirección de envío"
-                          {...register("direccion", {
-                            required: opcionSeleccionada === "delivery" ? "La dirección es obligatoria" : false,
-                          })}
-                        />
-                        {errors.direccion && <p style={{ color: 'red' }}>{errors.direccion.message}</p>}
-                      </>
-                    )}
+                  </div>
+                  {errors.opcion && <p style={{ color: 'red' }}>{errors.opcion.message}</p>}
+                  {opcionSeleccionada === "delivery" && (
+                    <>
+                      <input
+                        type="text"
+                        placeholder="Dirección de envío"
+                        {...register("direccion", {
+                          required: opcionSeleccionada === "delivery" ? "La dirección es obligatoria" : false,
+                        })}
+                      />
+                      {errors.direccion && <p style={{ color: 'red' }}>{errors.direccion.message}</p>}
+                    </>
+                  )}
                   <button className='btnVerde' type="submit">Comprar</button>
                 </form>
 

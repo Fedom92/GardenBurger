@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import 'moment/locale/es';
 import { Card } from "./Card.jsx"
@@ -25,7 +25,7 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
 
   const productosCollectiona = collection(db, "productos");
-  const productosCollection = useRef(productosCollectiona);
+  const productosCollection = useRef(query(productosCollectiona, where("visible", "==", true)));
 
   const categoriasCollectiona = collection(db, "categorias");
   const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));

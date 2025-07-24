@@ -1,12 +1,11 @@
-
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { collection, updateDoc, doc, query, orderBy, getDocs } from "firebase/firestore";
+import { collection, addDoc, updateDoc, doc, query, orderBy, getDocs, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CryptoJS from 'crypto-js';
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
+import moment from 'moment';
 import '../../style/Main.css';
-
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch } = useForm();
@@ -16,7 +15,6 @@ const Caja = () => {
 
     const [rol, setRol] = useState("");
     const [search, setSearch] = useState("");
-    const [producto, setProducto] = useState([]);
     const [productos, setProductos] = useState([]);
     const [carrito, setCarrito] = useState([]);
     const [envio_options, setEnvio_options] = useState([]);
@@ -24,10 +22,10 @@ const Caja = () => {
     const [categorias, setCategorias] = useState([]);
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
-    const [modalShowProducto, setModalShowProducto] = useState(false);
     const [mostrarAjustes, setMostrarAjustes] = useState(false);
-    const [recargo] = useState(Number(process.env.REACT_APP_recargoMP));
+    const [recargo] = useState(Number(process.env.REACT_APP_recargoMP) || "");
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState("");
 
     const totalFinal = useMemo(() => {
         const subtotalCarrito = carrito.reduce((sum, producto) => sum + (producto.precio * producto.cantidad), 0);
@@ -41,7 +39,7 @@ const Caja = () => {
     }, [carrito, envioSeleccionado, metodoPago, recargo]);
 
     const productosCollectiona = collection(db, "productos");
-    const productosCollection = useRef(query(productosCollectiona, orderBy("descripcion", "asc")));
+    const productosCollection = useRef(query(productosCollectiona, where("visible", "==", true)));
 
     const categoriasCollectiona = collection(db, "categorias");
     const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));
@@ -49,12 +47,15 @@ const Caja = () => {
     const enviosCollectiona = collection(db, "envios");
     const enviosCollection = useRef(query(enviosCollectiona, orderBy("zona_envio", "asc")));
 
+    const pedidosCollection = collection(db, "pedidos");
+
     const getProductos = useCallback((snapshot) => {
         const productosArray = snapshot.docs
             .map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
-            }));
+            }))
+            .sort((a, b) => a.descripcion.localeCompare(b.descripcion));
         setProductos(productosArray);
 
         setIsLoading(false);
@@ -65,7 +66,7 @@ const Caja = () => {
             id: doc.id,
             ...doc.data(),
         }));
-        categoriasArray.unshift({ id: "todas", nombre: "" });
+        categoriasArray.push({ id: "todas", nombre: "" });
         setCategorias(categoriasArray);
 
     }, []);
@@ -89,8 +90,8 @@ const Caja = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const gastosSnapshot = await getDocs(productosCollection.current);
-                await getProductos(gastosSnapshot);
+                const productosSnapshot = await getDocs(productosCollection.current);
+                await getProductos(productosSnapshot);
 
                 const categoriasSnapshot = await getDocs(categoriasCollection.current);
                 await getCategorias(categoriasSnapshot);
@@ -165,9 +166,52 @@ const Caja = () => {
         });
     };
 
-    const printOrder = () => {
+    const guardarBD = async (data) => {
+        const ahora = moment();
+        const fecha = ahora.format("DD/MM/YYYY");
+        const hora = ahora.format("HH:mm");
 
-    }
+        const nuevoPedido = {
+            nombre: data.nombre,
+            direccion: data.direccion,
+            entreCalles: data.entrecalles,
+            telefono: data.telefono,
+            observaciones: data.observaciones,
+            envio: envioSeleccionado,
+            metodoPago: data.metodoPago,
+            total: Number(totalFinal.toFixed(2)),
+            carrito: carrito,
+            fecha: fecha,
+            hora: hora,
+            timestamp: ahora.toISOString()
+        };
+
+        try {
+            await addDoc(pedidosCollection, nuevoPedido);
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Pedido agregado!.',
+                icon: 'success',
+                confirmButtonColor: '#198754',
+            }).then(() => {
+                limpiar();
+            });
+        } catch (error) {
+            console.error("Error al agregar pedido: ", error);
+            Swal.fire({
+                title: '¡Error!',
+                text: 'Error al Crear Usuario. Cierra sesión, recarga e intente de nuevo.',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+            });
+        }
+    };
+
+    const limpiar = () => {
+        reset();
+        setCarrito([])
+        setError("");
+    };
 
     return (
         <>
@@ -285,7 +329,7 @@ const Caja = () => {
 
                                         <div className="row p-0 m-auto">
                                             <div className="col-3 p-0">
-                                                {metodoPago === "MP" && (<span className="p-0 m-0">Recargo 10%</span>)}
+                                                {metodoPago === "MP" && (<span className="p-0 m-0">Recargo {recargo}%</span>)}
                                             </div>
                                             <div className="col-4 text-end">
                                                 <label className="form-label mb-0">Metodo Pago:</label>
@@ -300,24 +344,6 @@ const Caja = () => {
                                             </div>
                                             <div className="col-2"></div>
                                         </div>
-
-                                        {metodoPago === "%" && (
-                                            <div className="row p-0 m-auto">
-                                                <div className="col-3 p-0">
-                                                </div>
-                                                <div className="col-4 text-end">
-                                                    <label className="form-label mb-0">Dividido:</label>
-                                                </div>
-                                                <div className="col-3">
-                                                    <select className="form-control border-0 p-0 px-1 m-0" multiple={false} required {...register("metodoPago")}>
-                                                        <option value="">....</option>
-                                                        <option value="EFECTIVO">Efectivo</option>
-                                                        <option value="MP">MP</option>
-                                                        <option value="%">Dividido</option>
-                                                    </select>
-                                                </div>
-                                                <div className="col-1"></div>
-                                            </div>)}
 
                                         <div className="row p-0 m-auto d-flex align-items-center">
                                             <div className="col-2"></div>
@@ -335,14 +361,14 @@ const Caja = () => {
                                                 <button
                                                     className="btn btn-danger"
                                                     type="reset"
-                                                    onClick={() => { reset(); setCarrito([]) }}
+                                                    onClick={() => { limpiar() }}
                                                 >
                                                     Limpiar <i className="fas fa-trash-alt"></i>
                                                 </button>
                                                 <button
                                                     className="btn btn-success"
                                                     type="submit"
-                                                    onClick={() => printOrder()}>
+                                                    onClick={() => handleSubmit(guardarBD)()}>
                                                     Crear Pedido <i className="fas fa-burger"></i>
                                                 </button>
                                             </div>
@@ -351,7 +377,7 @@ const Caja = () => {
                                 </section>
 
                                 <section className="col-8 card" id="productos">
-                                    <ul className="nav nav-pills nav-fill p-0 d-flex overflow-auto" role="tablist" style={{ whiteSpace: "nowrap", gap:"2px" }}>
+                                    <ul className="nav nav-pills nav-fill p-0 d-flex overflow-auto" role="tablist" style={{ whiteSpace: "nowrap", gap: "2px" }}>
                                         {categorias.map((categoria) => (
                                             <li className="nav-item" key={categoria.id}>
                                                 <button

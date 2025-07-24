@@ -135,7 +135,7 @@ const Login = () => {
               </button>
             </div>
             {error && (
-              <span className="error">Informacion de Sesion Incorrecta.</span>
+              <span className="error-login">Informacion de Sesion Incorrecta.</span>
             )}
 
 

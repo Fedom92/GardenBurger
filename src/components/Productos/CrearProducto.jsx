@@ -18,6 +18,7 @@ const CrearProducto = (props) => {
       precio: Number(data.precio),
       imagen: data.imagen,
       ingredientes: data.ingredientes,
+      visible: true,
     };
 
     try {

@@ -141,10 +141,13 @@ tbody tr.hide {
   transform: translateX(100%);
 }
 
-tbody tr:not(.admin-row):hover {
+tbody tr:not(.admin-row):not(.fila-no-visible):hover {
   background-color: gray !important;
 }
 
+.fila-no-visible {
+  background-color: orangered !important;
+}
 
 tbody tr.hide td,
 tbody tr.hide td p {
@@ -254,7 +257,7 @@ tbody tr.hide td p {
   color: black
 }
 
-.error {
+.error-login {
   color: black;
   font-size: 12px;
   margin: 0 auto;

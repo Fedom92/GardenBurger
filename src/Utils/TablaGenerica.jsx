@@ -133,7 +133,7 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
                 </thead>
                 <tbody>
                     {table.getRowModel().rows.map((row) => (
-                        <tr key={row.id}>
+                        <tr className={!row.original.visible ? 'fila-no-visible' : ''} key={row.id}>
                             {row.getVisibleCells().map((cell) => (
                                 <td key={cell.id}>
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

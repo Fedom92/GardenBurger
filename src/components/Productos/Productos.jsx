@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, deleteDoc, doc, query, orderBy, getDocs } from "firebase/firestore";
+import { collection, updateDoc, deleteDoc, doc, query, orderBy, getDocs, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CrearProducto from "./CrearProducto";
 import EditProducto from "./EditProducto";
@@ -21,7 +21,7 @@ const Productos = () => {
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
 
   const productosCollectiona = collection(db, "productos");
-  const productosCollection = useRef(query(productosCollectiona, orderBy("descripcion", "desc")));
+  const productosCollection = useRef(query(productosCollectiona, where("visible", "==", true)));
 
   const categoriasCollectiona = collection(db, "categorias");
   const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));
@@ -31,7 +31,8 @@ const Productos = () => {
       .map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      }));
+      }))
+      .sort((a, b) => a.descripcion.localeCompare(b.descripcion));
     setProductos(productosArray);
     setIsLoading(false);
   }, []);
@@ -104,6 +105,40 @@ const Productos = () => {
     }
   }
 
+  const toggleVisibilidad = (id, visible) => {
+    Swal.fire({
+      title: visible ? '¿Quiere desactivar el producto?' : '¿Quiere activar el producto?',
+      text: visible
+        ? '(Esto solo ocultará el producto del menú)'
+        : '(Esto volverá a mostrar el producto en el menú)',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#198754',
+      confirmButtonText: 'Si',
+      cancelButtonText: 'No'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        actualizarVisibilidad(id, !visible);
+        Swal.fire({
+          title: 'Éxito!',
+          text: visible ? 'Producto Desactivado.' : 'Producto Activado.',
+          icon: 'success',
+          confirmButtonColor: '#198754'
+        });
+      }
+    })
+  }
+
+  const actualizarVisibilidad = async (id, nuevoEstado) => {
+    const productoDoc = doc(db, 'productos', id);
+    await updateDoc(productoDoc, { visible: nuevoEstado });
+    setProductos((prevProductos) =>
+      prevProductos.map((producto) =>
+        producto.id === id ? { ...producto, visible: nuevoEstado } : producto
+      )
+    );
+  };
+
   const confirmeDelete = (id) => {
     Swal.fire({
       title: '¿Esta seguro?',
@@ -141,10 +176,10 @@ const Productos = () => {
       cell: ({ getValue, row }) => {
         const url = getValue();
         return url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer">
+          <a title="VER IMG" href={url} target="_blank" rel="noopener noreferrer">
             <img
               src={url}
-              alt={`Imagen de ${row.original.descripcion ?? "producto"}`}
+              alt={`${row.original.descripcion ?? "producto"}`}
               height={60}
               loading="lazy"
               className="text-primary text-decoration-underline"
@@ -164,7 +199,15 @@ const Productos = () => {
         return (
           <>
             <button
+              className={`btn mx-1 ${producto.visible ? 'btn-dark' : 'btn-light'}`}
+              title={producto.visible ? 'DESACTIVAR' : 'ACTIVAR'}
+              onClick={() => toggleVisibilidad(producto.id, producto.visible)}
+            >
+              <i className="fa-solid fa-power-off"></i>
+            </button>
+            <button
               className="btn btn-success mx-1"
+              title="EDITAR"
               onClick={() => {
                 setModalShowEditProducto(true);
                 setProducto(producto);
@@ -175,6 +218,7 @@ const Productos = () => {
             <button
               onClick={() => confirmeDelete(producto.id)}
               className="btn btn-danger"
+              title="ELIMINAR"
             >
               <i className="fa-solid fa-trash"></i>
             </button>
