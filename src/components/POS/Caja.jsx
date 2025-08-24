@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { collection, addDoc, updateDoc, doc, query, orderBy, getDocs, where } from "firebase/firestore";
+import { collection, addDoc, updateDoc, doc, query, orderBy, getDocs, where, limit } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CryptoJS from 'crypto-js';
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import moment from 'moment';
 import '../../style/Main.css';
+
+/* 
+PEDIDOS CON MP NO PASAN A COCINA HASTA QUE APRUEBA/CANCELA CAJERO
+AGREGAR POSIBILIDAD PARA MODIFICARLO
+
+AGREGAR CAMPO GERMAN "PAGA CON" QUE SEA NUMERICO
+
+*/
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch } = useForm();
@@ -113,16 +121,7 @@ const Caja = () => {
         let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
         setRol(rolDesencriptado);
 
-    }, [getProductos]);
-
-
-    function funcMostrarAjustes() {
-        if (mostrarAjustes) {
-            setMostrarAjustes(false);
-        } else {
-            setMostrarAjustes(true);
-        }
-    }
+    }, []);
 
     const handleAgregarAlCarrito = (producto) => {
         setCarrito((prevCarrito) => {
@@ -166,27 +165,44 @@ const Caja = () => {
         });
     };
 
+    //TODO FALTAN VALIDACIONES SI NO HAY PRODUCTOS
+    //SI NO HAY ENVIO, SI NO HAY METODO DE PAGO
+    //SI NO HAY DATOS CLIENTES
     const guardarBD = async (data) => {
         const ahora = moment();
         const fecha = ahora.format("DD/MM/YYYY");
         const hora = ahora.format("HH:mm");
 
-        const nuevoPedido = {
-            nombre: data.nombre,
-            direccion: data.direccion,
-            entreCalles: data.entrecalles,
-            telefono: data.telefono,
-            observaciones: data.observaciones,
-            envio: envioSeleccionado,
-            metodoPago: data.metodoPago,
-            total: Number(totalFinal.toFixed(2)),
-            carrito: carrito,
-            fecha: fecha,
-            hora: hora,
-            timestamp: ahora.toISOString()
-        };
+        console.log(data.observaciones)
 
         try {
+            const q = query(pedidosCollection, orderBy("codigo", "desc"), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            let nuevoCodigo = 1;
+            if (!querySnapshot.empty) {
+                const maxCodigo = querySnapshot.docs[0].data().codigo.split(" ")[0];
+                nuevoCodigo = Number(maxCodigo) + 1;
+            }
+
+            const nuevoPedido = {
+                codigo: nuevoCodigo + "TODO - INICIALEs",
+                nombre: data.nombre,
+                direccion: data.direccion,
+                entreCalles: data.entrecalles || "",
+                telefono: data.telefono,
+                observaciones: data.observaciones || "",
+                envio: envioSeleccionado,
+                metodoPago: data.metodoPago,
+                montoDividido: "TODO",
+                total: Number(totalFinal.toFixed(2)),
+                carrito: carrito,
+                estado: "PENDIENTE",
+                fecha: fecha,
+                hora: hora,
+                timestamp: ahora.toISOString()
+            };
+
             await addDoc(pedidosCollection, nuevoPedido);
             Swal.fire({
                 title: '¡Éxito!',
@@ -200,7 +216,7 @@ const Caja = () => {
             console.error("Error al agregar pedido: ", error);
             Swal.fire({
                 title: '¡Error!',
-                text: 'Error al Crear Usuario. Cierra sesión, recarga e intente de nuevo.',
+                text: 'Error al Agregar Pedido. Verifica internet, recarga e intente de nuevo.',
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });
@@ -239,9 +255,7 @@ const Caja = () => {
                             {rol === process.env.REACT_APP_admin ? (
                                 <button
                                     className="btn mx-2 btn-md"
-                                    onClick={() => {
-                                        funcMostrarAjustes(true);
-                                    }}
+                                    onClick={() => setMostrarAjustes(prev => !prev)}
                                 >
                                     <i className="fa-solid fa-gear"></i>
                                 </button>

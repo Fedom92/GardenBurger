@@ -108,9 +108,7 @@ const Productos = () => {
   const toggleVisibilidad = (id, visible) => {
     Swal.fire({
       title: visible ? '¿Quiere desactivar el producto?' : '¿Quiere activar el producto?',
-      text: visible
-        ? '(Esto solo ocultará el producto del menú)'
-        : '(Esto volverá a mostrar el producto en el menú)',
+      text: visible ? '(Esto solo ocultará el producto del menú)' : '(Esto volverá a mostrar el producto en el menú)',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#198754',
@@ -166,7 +164,6 @@ const Productos = () => {
     await deleteDoc(productoDoc);
     setProductos((prevProductos) => prevProductos.filter((producto) => producto.id !== id));
   };
-
 
   const columnasProductos = [
     { columnasBasicas: ["descripcion", "categoria", "precio"] },

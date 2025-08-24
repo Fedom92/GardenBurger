@@ -45,10 +45,6 @@ const Navigation = () => {
         });
     };
 
-    const toggleOpen = () => {
-        setOpen(prev => !prev);
-    };
-
     useEffect(() => {
         let rolEncriptado = localStorage.getItem("rol");
         let bytesDesencriptado = CryptoJS.AES.decrypt(rolEncriptado, process.env.REACT_APP_cryptoKey);
@@ -91,7 +87,7 @@ const Navigation = () => {
 
                     <div className="sidebar">
                         <div className={open ? "sidebar-item open" : "sidebar-item"}>
-                            <div className="sidebar-title link-light" onClick={toggleOpen}>
+                            <div className="sidebar-title link-light" onClick={() => setOpen(prev => !prev)}>
                                 <Nav title="Configuracion" Icon={FaTools} isActive={isActive} />
                             </div>
                             <div className="sidebar-content">

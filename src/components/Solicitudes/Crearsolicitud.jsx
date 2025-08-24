@@ -12,6 +12,17 @@ import logo from '../../img/logo_negro3.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 
+/* 
+email mal
+
+AGREGAR OPCION PARA MODIFICAR EN CASO DE QUE SE CONTACTE AL CLIENTE Y PIDAN DATO FALTANTE
+
+AGREGAR METODO DE PAGO EN FORMULARIO... EFECTIVO O TRANSFERENCIA Y ADVERTIR TRANSFERENCIA RECARGO
+
+(Advertencia: HASTA QUE NO INGRESE SU TRANSFERENCIA NO SE TOMARÁ SU PEDIDO)
+
+WP ME MANDA CELU WALTER- DETALLE MAL
+*/
 const CrearSolicitud = () => {
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
