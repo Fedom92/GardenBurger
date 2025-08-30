@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from '../../context/CartContext.jsx'
-import { collection, addDoc, getDocs, query } from "firebase/firestore";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
-import { Link } from 'react-router-dom';
-import { Modal } from "react-bootstrap";
-import moment from "moment";
+import { useNavigate } from 'react-router-dom';
 import 'moment/locale/es';
-import Swal from "sweetalert2";
 import { Card } from "./Card.jsx"
 import logo from '../../img/logo_negro3.png';
 import logoMobile from '../../img/logo_negro.webp';
@@ -32,10 +29,14 @@ const CrearSolicitud = () => {
   //registro
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const opcionSeleccionada = watch("opcion");
+  const pagoSeleccionado = watch("pago");
 
   let [docId, setDocId] = useState("");
+  const navigate = useNavigate();
 
   const comprar = (data) => {
+
+
     const solicitud = {
       cliente: data,
       productos: carrito,
@@ -43,26 +44,28 @@ const CrearSolicitud = () => {
       estado: "generada"
     }
 
-    const mensaje = `¡Hola! Quiero hacer una compra:
-    - Nombre: ${data.nombre}
-    - Email: ${data.email}
-    - Teléfono: ${data.telefono}
-    - Opción: ${data.opcion === "delivery" ? "Delivery" : "Retiro en local"}
-    ${data.opcion === "delivery" ? `- Dirección: ${data.direccion}` : ""}
-    - Detalle: http://192.168.0.11:3000/crear-solicitud
-    `;
-
-    const mensajeCodificado = encodeURIComponent(mensaje);
-
     const solicitudesRef = collection(db, "solicitudes")
 
     addDoc(solicitudesRef, solicitud)
       .then((doc) => {
+        const mensaje = `¡Hola! Quiero hacer una compra:
+    - Nombre: ${data.nombre}
+    - Teléfono: ${data.telefono}
+    - Opción: ${data.opcion === "delivery" ? "Delivery" : "Retiro en local"}
+    ${data.opcion === "delivery" ? `- Dirección: ${data.direccion}` : ""}
+    - Metodo de pago: ${data.pago === "efectivo" ? "Efectivo" : "Transferencia"}
+    - Detalle: http://192.168.0.11:3000/crear-solicitud/${doc.id}`;
+
+        const mensajeCodificado = encodeURIComponent(mensaje);
+
+        window.open(`https://wa.me/${process.env.REACT_APP_celular}?text=${mensajeCodificado}`, "_blank"); //celEjemplo:911xxxxxxxx
         setDocId(doc.id)
         vaciarCarrito();
+
+        navigate(`/ver-pedido/${doc.id}`);
       })
 
-    window.open(`https://wa.me/91136252593?text=${mensajeCodificado}`, "_blank");
+
 
   }
   //fin registro
@@ -106,15 +109,6 @@ const CrearSolicitud = () => {
     return <p>Cargando...</p>;
   }
 
-  //   if(docId){
-  //     return(
-  //         <>
-  //            <h4>Muchas gracias por su compra</h4>
-  //            <p>Su codigo de referencia para el seguimiento de envío es: {docId}</p>
-  //            <Link to='/'><p className='titulo'>Ir a inicio</p></Link> 
-  //         </>
-  //     )  
-  // }
 
   return (
     <div>
@@ -278,25 +272,30 @@ const CrearSolicitud = () => {
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
-                  <input type="email" placeholder='Ingrese su e-mail' {...register("email", { required: true })} required />
                   <input type="tel" id="telefono" placeholder='Ingrese su número de teléfono' {...register("telefono", { required: true })} required />
-                  <div className="radio-group">
-                    <label>
-                      <input
-                        type="radio"
-                        value="retiro"
-                        {...register("opcion", { required: "Debes seleccionar una opción" })}
-                      />
-                      Lo retiro
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        value="delivery"
-                        {...register("opcion", { required: "Debes seleccionar una opción" })}
-                      />
-                      Delivery
-                    </label>
+                  <div className="d-flex justify-content-around">
+                    <div style={{ minWidth: "110px" }}>
+                      <label>
+                        <input
+                          style={{ margin: "0px" }}
+                          type="radio"
+                          value="retiro"
+                          {...register("opcion", { required: "Debes seleccionar una opción" })}
+                        />
+                        Lo retiro
+                      </label>
+                    </div>
+                    <div style={{ minWidth: "110px" }}>
+                      <label>
+                        <input
+                          style={{ margin: "0px" }}
+                          type="radio"
+                          value="delivery"
+                          {...register("opcion", { required: "Debes seleccionar una opción" })}
+                        />
+                        Delivery
+                      </label>
+                    </div>
                   </div>
                   {errors.opcion && <p style={{ color: 'red' }}>{errors.opcion.message}</p>}
                   {opcionSeleccionada === "delivery" && (
@@ -309,6 +308,37 @@ const CrearSolicitud = () => {
                         })}
                       />
                       {errors.direccion && <p style={{ color: 'red' }}>{errors.direccion.message}</p>}
+                    </>
+                  )}
+                  <div className="d-flex justify-content-around">
+                    <div style={{ minWidth: "110px" }}>
+                      <label>
+                        <input
+                          style={{ margin: "0px" }}
+                          type="radio"
+                          value="efectivo"
+                          {...register("pago", { required: "Debes seleccionar una opción" })}
+                        />
+                        Efectivo
+                      </label>
+                    </div>
+                    <div style={{ minWidth: "110px" }}>
+                      <label>
+                        <input
+                          style={{ margin: "0px" }}
+                          type="radio"
+                          value="transferencia"
+                          {...register("pago", { required: "Debes seleccionar una opción" })}
+                        />
+                        Transferencia
+                      </label>
+                    </div>
+                  </div>
+                  {errors.pago && <p style={{ color: 'red' }}>{errors.pago.message}</p>}
+                  {pagoSeleccionado === "transferencia" && (
+                    <>
+                      <p style={{ color: 'red' }}>{'La transferencia tiene un recargo de $'}{process.env.REACT_APP_recargoMP}</p>
+                      <p style={{ color: 'red' }}>{'Advertencia: HASTA QUE NO INGRESE LA TRANSFERENCIA NO SE TOMARÁ SU PEDIDO'}</p>
                     </>
                   )}
                   <button className='btnVerde' type="submit">Comprar</button>

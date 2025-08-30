@@ -11,13 +11,13 @@ import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import Menu from "./components/Solicitudes/Menu.jsx";
 import CryptoJS from 'crypto-js';
 import Caja from "./components/POS/Caja";
-import { PaginaCarrito } from './components/Solicitudes/PaginaCarrito';
 import { CartProvider  } from './context/CartContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Delivery from "./components/Delivery/Delivery";
 import Cocina from "./components/Cocina/Cocina";
 import { useAuth } from "./context/AuthContext";
+import { PaginaDetalle } from './components/Solicitudes/PaginaDetalle.jsx';
 
 function App() {
   const { currentUser } = useAuth()
@@ -78,7 +78,7 @@ function App() {
           <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
           <Route path="/crear-solicitud" element={<CrearSolicitud />} />
           <Route path="/menu" element={<Menu />} />
-          <Route path="/ver-pedido" element={<PaginaCarrito/>} />
+          <Route path="/ver-pedido/:id" element={<PaginaDetalle/>} />
 
           {/*Para limitar Links por Rol
           tipoUsuario !== process.env.REACT_APP_rolStaff && tipoUsuario !== process.env.REACT_APP_rolEjecutor && tipoUsuario !== process.env.REACT_APP_rolOperaciones ? (
