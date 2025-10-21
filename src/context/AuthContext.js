@@ -1,15 +1,17 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
 import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
 import { setPersistence, browserLocalPersistence } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig/firebase";
 
 const auth = getAuth();
 
 const authReducer = (state, action) => {
   switch (action.type) {
     case "LOGIN":
-      return { ...state, currentUser: action.payload, loading: false };
+      return { ...state, currentUser: action.payload.user, inicialesUsuario: action.payload.iniciales, loading: false };
     case "LOGOUT":
-      return { ...state, currentUser: null, loading: false };
+      return { ...state, currentUser: null, inicialesUsuario: "", loading: false };
     default:
       return state;
   }
@@ -17,6 +19,7 @@ const authReducer = (state, action) => {
 
 const initialState = {
   currentUser: null,
+  inicialesUsuario: "",
   loading: true,
 };
 
@@ -29,10 +32,45 @@ export function useAuth() {
 export function AuthContextProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  // Función para obtener las iniciales del usuario
+  const obtenerInicialesUsuario = async (user) => {
+    if (!user) return "";
+    
+    try {
+      const userQuery = query(collection(db, "usuarios"), where("correo", "==", user.email));
+      const userDocsSnapshot = await getDocs(userQuery);
+      
+      if (!userDocsSnapshot.empty) {
+        const userData = userDocsSnapshot.docs[0].data();
+        const nombreCompleto = userData.nombreCompleto || "";
+        
+        // Extraer las iniciales de cada palabra
+        const palabras = nombreCompleto.trim().split(" ");
+        const iniciales = palabras
+          .filter(palabra => palabra.length > 0)
+          .map(palabra => palabra.charAt(0).toUpperCase())
+          .join("");
+        
+        return iniciales;
+      }
+    } catch (error) {
+      console.error("Error al obtener iniciales del usuario:", error);
+    }
+    
+    return "";
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        dispatch({ type: "LOGIN", payload: user });
+        const iniciales = await obtenerInicialesUsuario(user);
+        dispatch({ 
+          type: "LOGIN", 
+          payload: { 
+            user, 
+            iniciales 
+          } 
+        });
       } else {
         dispatch({ type: "LOGOUT" });
       }
@@ -47,7 +85,15 @@ export function AuthContextProvider({ children }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       await setPersistence(auth, browserLocalPersistence);
-      dispatch({ type: "LOGIN", payload: userCredential.user });
+      
+      const iniciales = await obtenerInicialesUsuario(userCredential.user);
+      dispatch({ 
+        type: "LOGIN", 
+        payload: { 
+          user: userCredential.user, 
+          iniciales 
+        } 
+      });
     } catch (error) {
       console.error("Login" + error)
       window.alert("Error al Logearse, Verifique su conexión!")
@@ -72,7 +118,12 @@ export function AuthContextProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ currentUser: state.currentUser, login, logout }}>
+    <AuthContext.Provider value={{ 
+      currentUser: state.currentUser, 
+      inicialesUsuario: state.inicialesUsuario,
+      login, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,27 +1,23 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { collection, addDoc, updateDoc, doc, query, orderBy, getDocs, where, limit } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, getDocs, where, limit, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
-import CryptoJS from 'crypto-js';
+import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import moment from 'moment';
+import 'moment/locale/es';
 import '../../style/Main.css';
+import PendientesMP from './PendientesMP';
+import PendientesSolicitudes from './PendientesSolicitudes';
+import logoMP from '../../img/mercado-pago.webp';
 
-/* 
-PEDIDOS CON MP NO PASAN A COCINA HASTA QUE APRUEBA/CANCELA CAJERO
-AGREGAR POSIBILIDAD PARA MODIFICARLO
-
-AGREGAR CAMPO GERMAN "PAGA CON" QUE SEA NUMERICO
-
-*/
 
 const Caja = () => {
-    const { register, handleSubmit, reset, watch } = useForm();
+    const { register, handleSubmit, reset, watch, setValue } = useForm();
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
-
-    const [rol, setRol] = useState("");
+    const { inicialesUsuario } = useAuth();
     const [search, setSearch] = useState("");
     const [productos, setProductos] = useState([]);
     const [carrito, setCarrito] = useState([]);
@@ -30,21 +26,42 @@ const Caja = () => {
     const [categorias, setCategorias] = useState([]);
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
-    const [mostrarAjustes, setMostrarAjustes] = useState(false);
     const [recargo] = useState(Number(process.env.REACT_APP_recargoMP) || "");
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [showModalDividido, setShowModalDividido] = useState(false);
+    const [montoEfectivo, setMontoEfectivo] = useState(0);
+    const [showPendientesMP, setShowPendientesMP] = useState(false);
+    const [showPendientesSolicitudes, setShowPendientesSolicitudes] = useState(false);
 
-    const totalFinal = useMemo(() => {
-        const subtotalCarrito = carrito.reduce((sum, producto) => sum + (producto.precio * producto.cantidad), 0);
-
+    const getResumen = useMemo(() => {
+        const subtotal = carrito.reduce((acum, producto) => acum + producto.subtotal, 0);
         const costoEnvio = envioSeleccionado?.costo_envio || 0;
-        const totalBase = subtotalCarrito + costoEnvio;
+        const base = subtotal + costoEnvio;
 
-        const recargoMP = metodoPago === "MP" ? totalBase * (recargo / 100) : 0;
+        // Recargo segun metodo de pago
+        const recargoCalculado = (() => {
+            if (metodoPago === "MP") return base * (recargo / 100);
+            if (metodoPago === "%") return (base - montoEfectivo) * (recargo / 100);
+            return 0;
+          })();
 
-        return totalBase + recargoMP;
-    }, [carrito, envioSeleccionado, metodoPago, recargo]);
+        // Total final
+        const total = base + recargoCalculado;
+        const restoMP = base - montoEfectivo;
+        const montoMPConRecargo = restoMP + recargoCalculado;
+
+        return {
+            subtotal,
+            costoEnvio,
+            totalBase: base,
+            recargo: recargoCalculado,
+            total,
+            restoMP,
+            montoMPConRecargo
+          };
+    }, [carrito, envioSeleccionado, metodoPago, recargo, montoEfectivo]);
+
+    const { totalBase, total: totalFinal, montoMPConRecargo } = getResumen;
 
     const productosCollectiona = collection(db, "productos");
     const productosCollection = useRef(query(productosCollectiona, where("visible", "==", true)));
@@ -76,14 +93,10 @@ const Caja = () => {
         }));
         categoriasArray.push({ id: "todas", nombre: "" });
         setCategorias(categoriasArray);
-
     }, []);
 
     const getEnvios = useCallback((snapshot) => {
-        const enviosObj = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
+        const enviosObj = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data() }));
 
         const opciones = enviosObj.map((envio) => (
             <option key={envio.id}
@@ -106,6 +119,7 @@ const Caja = () => {
 
                 const enviosSnapshot = await getDocs(enviosCollection.current);
                 await getEnvios(enviosSnapshot);
+
             } catch (error) {
                 console.error('Error fetching data Caja:', error);
             }
@@ -115,13 +129,48 @@ const Caja = () => {
 
     }, [getProductos, getCategorias, getEnvios]);
 
-    useEffect(() => {
-        const rolEncriptado = localStorage.getItem("rol");
-        let bytesDesencriptado = CryptoJS.AES.decrypt(rolEncriptado, process.env.REACT_APP_cryptoKey);
-        let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
-        setRol(rolDesencriptado);
-
+    // Función para buscar cliente por teléfono
+    const buscarClientePorTelefono = useCallback(async (telefono) => {
+        if (!telefono || telefono.length < 10) return null;
+        
+        try {
+            const clientesCollection = collection(db, "clientes");
+            const q = query(clientesCollection, where("telefono", "==", telefono), limit(1));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                const clienteDoc = querySnapshot.docs[0];
+                return { id: clienteDoc.id, ...clienteDoc.data() };
+            }
+            return null;
+        } catch (error) {
+            console.error('Error buscando cliente:', error);
+            return null;
+        }
     }, []);
+
+    // Autocompletar datos del cliente al escribir teléfono
+    const telefonoIngresado = watch("telefono");
+    useEffect(() => {
+        const autocompletarCliente = async () => {
+            if (!telefonoIngresado || telefonoIngresado.length < 10) return;
+            
+            const cliente = await buscarClientePorTelefono(telefonoIngresado);
+            
+            if (cliente) {
+                setValue("nombre", cliente.nombre || "");
+                setValue("direccion", cliente.direccion || "");
+                setValue("entreCalles", cliente.entreCalles || "");
+            } else {
+                // Limpiar campos si no se encuentra el cliente
+                setValue("nombre", "");
+                setValue("direccion", "");
+                setValue("entreCalles", "");
+            }
+        };
+
+        autocompletarCliente();
+    }, [telefonoIngresado, buscarClientePorTelefono, setValue]);
 
     const handleAgregarAlCarrito = (producto) => {
         setCarrito((prevCarrito) => {
@@ -165,15 +214,18 @@ const Caja = () => {
         });
     };
 
-    //TODO FALTAN VALIDACIONES SI NO HAY PRODUCTOS
-    //SI NO HAY ENVIO, SI NO HAY METODO DE PAGO
-    //SI NO HAY DATOS CLIENTES
     const guardarBD = async (data) => {
+        moment.locale('es')
+        
+        // Validar datos usando la función modularizada
+        if (!validarDatos(data)) {
+            return;
+        }
+
+        // Crear timestamp en GMT-3 (Argentina)
         const ahora = moment();
         const fecha = ahora.format("DD/MM/YYYY");
         const hora = ahora.format("HH:mm");
-
-        console.log(data.observaciones)
 
         try {
             const q = query(pedidosCollection, orderBy("codigo", "desc"), limit(1));
@@ -181,29 +233,52 @@ const Caja = () => {
 
             let nuevoCodigo = 1;
             if (!querySnapshot.empty) {
-                const maxCodigo = querySnapshot.docs[0].data().codigo.split(" ")[0];
-                nuevoCodigo = Number(maxCodigo) + 1;
+                const codigoExistente = querySnapshot.docs[0].data().codigo;
+
+                // Extraer solo la parte numérica del código existente
+                const match = codigoExistente.match(/^(\d+)/);
+                if (match) {
+                    const numeroAnterior = parseInt(match[1], 10);
+                    if (!isNaN(numeroAnterior)) {
+                        nuevoCodigo = numeroAnterior + 1;
+                    }
+                }
             }
 
             const nuevoPedido = {
-                codigo: nuevoCodigo + "TODO - INICIALEs",
+                codigo: `${nuevoCodigo} - ${inicialesUsuario}`,
                 nombre: data.nombre,
                 direccion: data.direccion,
-                entreCalles: data.entrecalles || "",
+                entreCalles: data.entreCalles || "",
                 telefono: data.telefono,
                 observaciones: data.observaciones || "",
                 envio: envioSeleccionado,
                 metodoPago: data.metodoPago,
-                montoDividido: "TODO",
+                pagaCon: data.pagaCon || 0,
+                montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo.toFixed(2)) : 0,
                 total: Number(totalFinal.toFixed(2)),
                 carrito: carrito,
-                estado: "PENDIENTE",
+                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "PENDIENTE",
                 fecha: fecha,
                 hora: hora,
-                timestamp: ahora.toISOString()
+                timestamp: serverTimestamp()
             };
 
             await addDoc(pedidosCollection, nuevoPedido);
+
+            // Verificar si el cliente existe antes de guardarlo
+            const clienteExistente = await buscarClientePorTelefono(data.telefono);
+            if (!clienteExistente) {
+                const clientesCollection = collection(db, "clientes");
+                await addDoc(clientesCollection, {
+                    nombre: data.nombre || "",
+                    direccion: data.direccion || "",
+                    entreCalles: data.entreCalles || "",
+                    telefono: data.telefono,
+                    latitud: "",
+                    longitud: "",
+                });
+            }
             Swal.fire({
                 title: '¡Éxito!',
                 text: 'Pedido agregado!.',
@@ -223,10 +298,156 @@ const Caja = () => {
         }
     };
 
+    const handleMetodoPagoChange = (e) => {
+        const nuevoMetodo = e.target.value;
+        setValue("metodoPago", nuevoMetodo);
+        
+        if (nuevoMetodo === "%") {
+            setShowModalDividido(true);
+        } else {
+            setMontoEfectivo(0);
+        }
+    };
+
+    const handleConfirmarDividido = () => {
+        if (montoEfectivo <= 0) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'El monto en efectivo debe ser mayor a 0',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+            });
+            return;
+        }
+
+        if (montoEfectivo >= totalBase) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'El monto en efectivo no puede ser mayor o igual al total base',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+            });
+            return;
+        }
+
+        setShowModalDividido(false);
+    };
+
+    // Función para validar los datos antes de guardar
+    const validarDatos = (data) => {
+        // Validar dirección
+        if (!data.direccion || data.direccion.trim() === '') {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'No está la dirección del cliente',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+            });
+            return false;
+        }
+
+        // Validar teléfono
+        if (!data.telefono.startsWith('11')) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'El teléfono debe comenzar con 11',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+            });
+            return false;
+        }
+
+        // Validar carrito
+        if (carrito.length === 0) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'No hay productos en el carrito',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+            });
+            return false;
+        }
+
+        // Validar envío
+        if (!data.envio) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'No hay envío seleccionado',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+            });
+            return false;
+        }
+
+        // Validar método de pago
+        if (!data.metodoPago) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'No hay método de pago seleccionado',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+            });
+            return false;
+        }
+
+        // Validar "Paga Con" para método efectivo
+        if (data.metodoPago === "EFECTIVO") {
+            if (!data.pagaCon || data.pagaCon < totalFinal) {
+                Swal.fire({
+                    title: 'Advertencia',
+                    text: `El monto "Paga Con" debe ser igual o mayor al total ($${totalFinal.toFixed(2)})`,
+                    icon: 'warning',
+                    confirmButtonColor: '#ffc107',
+                });
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     const limpiar = () => {
         reset();
-        setCarrito([])
-        setError("");
+        setCarrito([]);
+        setMontoEfectivo(0);
+    };
+
+    // Función para manejar la aprobación de solicitudes
+    const handleAprobarSolicitud = (solicitud) => {
+        try {
+            // Llenar los campos del formulario con los datos de la solicitud
+            setValue("nombre", solicitud.cliente?.nombre || "");
+            setValue("telefono", solicitud.cliente?.telefono || "");
+            setValue("direccion", solicitud.cliente?.direccion || "");
+            setValue("metodoPago", solicitud.cliente?.metodoPago || "");
+            setValue("observaciones", `Solicitud ${solicitud.cliente?.opcion || " "}`);
+
+            // Agregar productos al carrito
+            if (solicitud.productos && solicitud.productos.length > 0) {
+                setCarrito(solicitud.productos.map(producto => ({
+                    ...producto,
+                    subtotal: producto.amountInCart * producto.precio
+                })));
+            }
+
+            // Cerrar el modal
+            setShowPendientesSolicitudes(false);
+
+            Swal.fire({
+                title: '¡Datos cargados!',
+                text: 'Los datos de la solicitud han sido cargados en el formulario',
+                icon: 'success',
+                confirmButtonColor: '#198754',
+            });
+        } catch (error) {
+            console.error('Error cargando datos de solicitud:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al cargar los datos de la solicitud',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+            });
+        }
     };
 
     return (
@@ -252,14 +473,18 @@ const Caja = () => {
                         <div
                             className="d-flex justify-content-start align-items-center">
                             <h3>Sistema Caja</h3>
-                            {rol === process.env.REACT_APP_admin ? (
-                                <button
-                                    className="btn mx-2 btn-md"
-                                    onClick={() => setMostrarAjustes(prev => !prev)}
-                                >
-                                    <i className="fa-solid fa-gear"></i>
-                                </button>
-                            ) : null}
+                            <button
+                                className="btn btn-info mx-2 btn-sm text-white fw-bold mb-1"
+                                onClick={() => setShowPendientesMP(true)}
+                            >
+                                <img src={logoMP} alt="MP" className="img-fluid" style={{height:"3vh"}}></img> Pendientes MP
+                            </button>
+                            <button
+                                className="btn btn-warning mx-2 text-white fw-bold mb-1"
+                                onClick={() => setShowPendientesSolicitudes(true)}
+                            >
+                                <i className="fa fa-list-check"></i> Ver Solicitudes
+                            </button>
                         </div>
 
                         <main className="container-fluid">
@@ -268,8 +493,10 @@ const Caja = () => {
                                     <div className="card mb-1" id="datos_clientes">
                                         <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Nombre..." autoComplete="off" required {...register("nombre")} />
                                         <input type="text" className="form-control fw-bold fs-6 p-1 mb-1" placeholder="Dirección..." autoComplete="off" required {...register("direccion")} />
-                                        <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entrecalles")} />
-                                        <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Teléfono..." autoComplete="off" required {...register("telefono")} />
+                                        <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
+                                        <input type="text" maxLength={10} onInput={(e) => {
+                                            e.target.value = e.target.value.replace(/\D/g, '');
+                                        }} className="form-control fs-6 p-1 mb-1" placeholder="Teléfono (sin 0 y sin 15)..." autoComplete="off" required {...register("telefono")} />
                                         <textarea className="form-control" rows="2" placeholder="Observaciones..." autoComplete="off" {...register("observaciones")}></textarea>
                                     </div>
 
@@ -349,7 +576,7 @@ const Caja = () => {
                                                 <label className="form-label mb-0">Metodo Pago:</label>
                                             </div>
                                             <div className="col-3">
-                                                <select className="form-control border-0 p-0 px-1 m-0" multiple={false} required {...register("metodoPago")}>
+                                                <select className="form-control border-0 p-0 px-1 m-0" multiple={false} required {...register("metodoPago")} onChange={handleMetodoPagoChange}>
                                                     <option value="">....</option>
                                                     <option value="EFECTIVO">Efectivo</option>
                                                     <option value="MP">MP</option>
@@ -358,6 +585,70 @@ const Caja = () => {
                                             </div>
                                             <div className="col-2"></div>
                                         </div>
+
+                                        {metodoPago === "EFECTIVO" && (
+                                            <div className="row p-0 m-auto">
+                                                <div className="col-3"></div>
+                                                <div className="col-4 d-flex align-items-center justify-content-end text-end">
+                                                    <label className="form-label mb-0">Paga Con:</label>
+                                                </div>
+                                                <div className="col-5 d-flex align-items-center">
+                                                    <span className="p-0">$</span>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control border-0 bg-transparent"
+                                                        autoComplete="off"
+                                                        min={0}
+                                                        placeholder="0"
+                                                        {...register("pagaCon", { valueAsNumber: true })}
+                                                    />
+                                                </div>
+                                                <div className="col-2"></div>
+                                            </div>
+                                        )}
+
+                                        {metodoPago === "%" && (
+                                            <div className="row p-0 m-auto">
+                                                <div className="col-3"></div>
+                                                <div className="col-4 d-flex align-items-center justify-content-end text-end">
+                                                    <label className="form-label mb-0">Efectivo:</label>
+                                                </div>
+                                                <div className="col-5 d-flex align-items-center">
+                                                    <span className="p-0">$</span>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control border-0 bg-transparent"
+                                                        autoComplete="off"
+                                                        min={0}
+                                                        disabled
+                                                        value={montoEfectivo.toFixed(2)}
+                                                    />
+                                                </div>
+                                                <div className="col-2"></div>
+                                            </div>
+                                        )}
+
+                                        {metodoPago === "%" && (
+                                            <div className="row p-0 m-auto">
+                                                <div className="col-3"></div>
+                                                <div className="col-4 d-flex align-items-center justify-content-end text-end">
+                                                    <label className="form-label mb-0">MP:</label>
+                                                </div>
+                                                <div className="col-5 d-flex align-items-center">
+                                                    <span className="p-0">$</span>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control border-0 bg-transparent"
+                                                        autoComplete="off"
+                                                        step={1000}
+                                                        min={0}
+                                                        disabled
+                                                        value={montoMPConRecargo.toFixed(2)}
+                                                    />
+                                                </div>
+                                                <div className="col-2"></div>
+                                            </div>
+                                        )}
 
                                         <div className="row p-0 m-auto d-flex align-items-center">
                                             <div className="col-2"></div>
@@ -447,6 +738,78 @@ const Caja = () => {
                     </div >
                 </div >
             )}
+
+            {/* Modal para método de pago dividido */}
+            {showModalDividido && (
+                <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Pago Dividido</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => {
+                                        setShowModalDividido(false);
+                                        setValue("metodoPago", "");
+                                        setMontoEfectivo(0);
+                                    }}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="mb-3">
+                                    <label className="form-label">Monto en efectivo:</label>
+                                    <div className="input-group">
+                                        <span className="input-group-text">$</span>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={montoEfectivo}
+                                            onChange={(e) => setMontoEfectivo(Number(e.target.value))}
+                                            min="0"
+                                            step="1000"
+                                            placeholder="Ingrese el monto en efectivo"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        setShowModalDividido(false);
+                                        setValue("metodoPago", "");
+                                        setMontoEfectivo(0);
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleConfirmarDividido}
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Pendientes MP */}
+            <PendientesMP 
+                isOpen={showPendientesMP} 
+                onClose={() => setShowPendientesMP(false)} 
+            />
+
+            {/* Modal de Pendientes Solicitudes */}
+            <PendientesSolicitudes 
+                isOpen={showPendientesSolicitudes} 
+                onClose={() => setShowPendientesSolicitudes(false)}
+                onAprobarSolicitud={handleAprobarSolicitud}
+            />
         </>
     );
 }

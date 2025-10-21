@@ -140,7 +140,7 @@ tbody tr:not(.admin-row):not(.fila-no-visible):hover {
 }
 
 .fila-no-visible {
-  background-color: orangered !important;
+  background-color: bisque !important;
 }
 
 tbody tr.hide td,

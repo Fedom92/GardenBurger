@@ -1,0 +1,243 @@
+/* Estilos para el ticket de impresión */
+.ticket-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.ticket-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+}
+
+.ticket-header {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.ticket-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.ticket-paper {
+    width: 300px;
+    background: white;
+    padding: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.2;
+    color: black;
+    margin: 0 auto;
+}
+
+/* Header del ticket */
+.ticket-header-section {
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+.ticket-number {
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.customer-name {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.delivery-address-bold {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 3px;
+}
+
+.delivery-address-detail {
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.phone-number {
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+/* Líneas separadoras punteadas */
+.ticket-separator {
+    border-top: 1px dotted #000;
+    margin: 8px 0;
+}
+
+/* Encabezados de la tabla */
+.ticket-table-header {
+    display: flex;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.ticket-col-cant {
+    width: 40px;
+    text-align: left;
+}
+
+.ticket-col-desc {
+    flex: 1;
+    text-align: left;
+    margin-left: 10px;
+}
+
+.ticket-col-subtotal {
+    width: 80px;
+    text-align: right;
+}
+
+/* Items del pedido */
+.ticket-items {
+    margin-bottom: 10px;
+}
+
+.ticket-item {
+    display: flex;
+    margin-bottom: 3px;
+}
+
+/* Observaciones */
+.ticket-observations {
+    text-align: left;
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+/* Resumen y pago */
+.ticket-summary {
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+.delivery-info {
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.total-amount {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.payment-method {
+    font-size: 12px;
+}
+
+/* Footer del ticket */
+.ticket-footer {
+    text-align: center;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.logo-circle {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    background: #000;
+}
+
+.logo-burger {
+    font-size: 20px;
+    color: white;
+}
+
+.business-name {
+    text-align: left;
+}
+
+.business-name-main {
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.business-name-sub {
+    font-size: 10px;
+    font-weight: normal;
+    line-height: 1;
+}
+
+.thank-you {
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+/* Estilos para impresión */
+@media print {
+    /* Ocultar todo el contenido de la página excepto el ticket */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* Mostrar solo el ticket */
+    .ticket-paper,
+    .ticket-paper * {
+        visibility: visible;
+    }
+    
+    /* Posicionar el ticket en la esquina superior izquierda */
+    .ticket-paper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        font-size: 12px;
+        background: white;
+    }
+    
+    /* Ocultar el overlay y header del modal */
+    .ticket-overlay,
+    .ticket-container,
+    .ticket-header {
+        display: none !important;
+    }
+    
+    /* Configuración de página para impresoras térmicas */
+    @page {
+        margin: 0;
+        size: 80mm auto;
+    }
+    
+    /* Asegurar que no haya márgenes adicionales */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+}

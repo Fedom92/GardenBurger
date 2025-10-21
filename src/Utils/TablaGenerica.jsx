@@ -77,20 +77,20 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
     return (
         <div>
             <div className="col d-flex justify-content-between align-items-center">
-                {campoSelector && (
+                {campoSelector ? (
                     <select
                         value={filtroSelector}
                         onChange={(e) => setFiltroSelector(e.target.value)}
                         className="form-control mb-3 w-auto p-2"
                     >
-                        <option value="">-- Filtrar por {campoSelector} --</option>
+                        <option value="">-- Filtrar por {campoSelector.charAt(0).toUpperCase() + campoSelector.slice(1)} --</option>
                         {opcionesSelector.map((opcion) => (
                             <option key={opcion} value={opcion}>
                                 {opcion}
                             </option>
                         ))}
                     </select>
-                )}
+                ) : (<div></div>)}
 
                 {camposBusqueda.length > 0 && (
                     <input
@@ -132,15 +132,28 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
                     ))}
                 </thead>
                 <tbody>
-                    {table.getRowModel().rows.map((row) => (
-                        <tr className={!row.original.visible ? 'fila-no-visible' : ''} key={row.id}>
-                            {row.getVisibleCells().map((cell) => (
-                                <td key={cell.id}>
-                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
+                    {table.getRowModel().rows.map((row) => {
+                        let rowClassName = '';
+                        
+                        // Solo aplicar fila-no-visible si usarVisibilidad es true
+                        if (row.original.visible === false) {
+                            rowClassName = 'fila-no-visible';
+                        } else if (row.original.estadoDelivery === 'SALIO') {
+                            rowClassName = 'bg-warning';
+                        } else if (row.original.estadoDelivery === 'VOLVIO') {
+                            rowClassName = 'bg-success';
+                        }
+                        
+                        return (
+                            <tr className={rowClassName} key={row.id}>
+                                {row.getVisibleCells().map((cell) => (
+                                    <td key={cell.id}>
+                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    </td>
+                                ))}
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
 

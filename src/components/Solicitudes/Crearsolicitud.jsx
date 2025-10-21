@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from '../../context/CartContext.jsx'
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { useNavigate } from 'react-router-dom';
 import 'moment/locale/es';
@@ -9,17 +9,6 @@ import logo from '../../img/logo_negro3.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 
-/* 
-email mal
-
-AGREGAR OPCION PARA MODIFICAR EN CASO DE QUE SE CONTACTE AL CLIENTE Y PIDAN DATO FALTANTE
-
-AGREGAR METODO DE PAGO EN FORMULARIO... EFECTIVO O TRANSFERENCIA Y ADVERTIR TRANSFERENCIA RECARGO
-
-(Advertencia: HASTA QUE NO INGRESE SU TRANSFERENCIA NO SE TOMARÁ SU PEDIDO)
-
-WP ME MANDA CELU WALTER- DETALLE MAL
-*/
 const CrearSolicitud = () => {
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -29,7 +18,7 @@ const CrearSolicitud = () => {
   //registro
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const opcionSeleccionada = watch("opcion");
-  const pagoSeleccionado = watch("pago");
+  const pagoSeleccionado = watch("metodoPago");
 
   let [docId, setDocId] = useState("");
   const navigate = useNavigate();
@@ -41,7 +30,7 @@ const CrearSolicitud = () => {
       cliente: data,
       productos: carrito,
       total: totalCarrito(),
-      estado: "generada"
+      estado: "PENDIENTE"
     }
 
     const solicitudesRef = collection(db, "solicitudes")
@@ -53,7 +42,7 @@ const CrearSolicitud = () => {
     - Teléfono: ${data.telefono}
     - Opción: ${data.opcion === "delivery" ? "Delivery" : "Retiro en local"}
     ${data.opcion === "delivery" ? `- Dirección: ${data.direccion}` : ""}
-    - Metodo de pago: ${data.pago === "efectivo" ? "Efectivo" : "Transferencia"}
+    - Metodo de pago: ${data.metodoPago}
     - Detalle: http://192.168.0.11:3000/crear-solicitud/${doc.id}`;
 
         const mensajeCodificado = encodeURIComponent(mensaje);
@@ -86,7 +75,8 @@ const CrearSolicitud = () => {
 
         // Obtener productos
         const productosRef = collection(db, "productos");
-        const productosSnapshot = await getDocs(productosRef);
+        const q = query(productosRef, where("visible", "==", true));
+        const productosSnapshot = await getDocs(q);
         const productosData = productosSnapshot.docs.map(doc => ({
           ...doc.data(),
           id: doc.id
@@ -279,7 +269,7 @@ const CrearSolicitud = () => {
                         <input
                           style={{ margin: "0px" }}
                           type="radio"
-                          value="retiro"
+                          value="Retira"
                           {...register("opcion", { required: "Debes seleccionar una opción" })}
                         />
                         Lo retiro
@@ -316,8 +306,8 @@ const CrearSolicitud = () => {
                         <input
                           style={{ margin: "0px" }}
                           type="radio"
-                          value="efectivo"
-                          {...register("pago", { required: "Debes seleccionar una opción" })}
+                          value="EFECTIVO"
+                          {...register("metodoPago", { required: "Debes seleccionar una opción" })}
                         />
                         Efectivo
                       </label>
@@ -327,15 +317,15 @@ const CrearSolicitud = () => {
                         <input
                           style={{ margin: "0px" }}
                           type="radio"
-                          value="transferencia"
-                          {...register("pago", { required: "Debes seleccionar una opción" })}
+                          value="MP"
+                          {...register("metodoPago", { required: "Debes seleccionar una opción" })}
                         />
-                        Transferencia
+                        MercadoPago
                       </label>
                     </div>
                   </div>
-                  {errors.pago && <p style={{ color: 'red' }}>{errors.pago.message}</p>}
-                  {pagoSeleccionado === "transferencia" && (
+                  {errors.metodoPago && <p style={{ color: 'red' }}>{errors.metodoPago.message}</p>}
+                  {pagoSeleccionado === "MP" && (
                     <>
                       <p style={{ color: 'red' }}>{'La transferencia tiene un recargo de $'}{process.env.REACT_APP_recargoMP}</p>
                       <p style={{ color: 'red' }}>{'Advertencia: HASTA QUE NO INGRESE LA TRANSFERENCIA NO SE TOMARÁ SU PEDIDO'}</p>

@@ -1,5 +1,5 @@
 import Nav from "./NavIcons/Nav";
-import { FaAngleLeft, FaUsers , FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus  } from 'react-icons/fa';
+import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaPeopleCarry, FaHistory } from 'react-icons/fa';
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -14,7 +14,8 @@ const Navigation = () => {
     const [isActive, setIsActive] = useState(false);
     const [tipoUsuario, setTipoUsuario] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [open, setOpen] = useState(false);
+    const [openConfig, setOpenConfig] = useState(false);
+    const [openDeliverys, setOpenDeliverys] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { logout } = useAuth();
@@ -54,7 +55,10 @@ const Navigation = () => {
         setIsLoading(true)
 
         const rutasQueAbrenSubmenu = ["/miPerfil", "/admin"];
-        setOpen(rutasQueAbrenSubmenu.includes(location.pathname));
+        setOpenConfig(rutasQueAbrenSubmenu.includes(location.pathname));
+        
+        const rutasQueAbrenSubmenuDeliverys = ["/gestion-deliverys", "/delivery-pedidos"];
+        setOpenDeliverys(rutasQueAbrenSubmenuDeliverys.includes(location.pathname));
     }, [location.pathname]);
 
     return (
@@ -77,22 +81,38 @@ const Navigation = () => {
                         <Link to="/gestion-cocina" className="text-decoration-none link-light"><Nav title="Cocina" Icon={FaHamburger} isActive={isActive} /></Link>
                     </div>
 
-                    <div className="sidebar-title">
-                        <Link to="/gestion-deliverys" className="text-decoration-none link-light"><Nav title="Deliverys" Icon={FaMotorcycle} isActive={isActive} /></Link>
+                    <div className="sidebar">
+                        <div className={openDeliverys ? "sidebar-item open" : "sidebar-item"}>
+                            <div className="sidebar-title link-light" onClick={() => setOpenDeliverys(prev => !prev)}>
+                                <Nav title="Deliverys" Icon={FaMotorcycle} isActive={isActive} />
+                            </div>
+                            <div className="sidebar-content">
+                                <Link to="/gestion-deliverys" className="text-decoration-none link-light"><Nav title="Gestion Personal" Icon={FaUsers} isActive={isActive} /></Link>
+                                <Link to="/delivery-pedidos" className="text-decoration-none link-light"><Nav title="Entregas" Icon={FaPeopleCarry} isActive={isActive} /></Link>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="sidebar-title">
                         <Link to="/pedidos-caja" className="text-decoration-none link-light"><Nav title="Caja" Icon={FaCashRegister} isActive={isActive} /></Link>
                     </div>
 
+                    <div className="sidebar-title">
+                        <Link to="/historial-pedidos" className="text-decoration-none link-light"><Nav title="Historial Pedidos" Icon={FaHistory} isActive={isActive} /></Link>
+                    </div>
+
+                    <div className="sidebar-title">
+                        <Link to="/clientes" className="text-decoration-none link-light"><Nav title="Clientes" Icon={FaUsers} isActive={isActive} /></Link>
+                    </div>
+
                     <div className="sidebar">
-                        <div className={open ? "sidebar-item open" : "sidebar-item"}>
-                            <div className="sidebar-title link-light" onClick={() => setOpen(prev => !prev)}>
+                        <div className={openConfig ? "sidebar-item open" : "sidebar-item"}>
+                            <div className="sidebar-title link-light" onClick={() => setOpenConfig(prev => !prev)}>
                                 <Nav title="Configuracion" Icon={FaTools} isActive={isActive} />
                             </div>
                             <div className="sidebar-content">
                                 {tipoUsuario === process.env.REACT_APP_admin ? (
-                                    <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUsers } isActive={isActive} /></Link>) : null}
+                                    <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUsers} isActive={isActive} /></Link>) : null}
                                 <Link to="/miPerfil" className="text-decoration-none link-light"><Nav title="Mi Perfil" Icon={FaUser} isActive={isActive} /></Link>
                             </div>
                         </div>

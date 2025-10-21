@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import '../../style/Main.css';
+import TicketImpresion from './TicketImpresion';
 
 const PedidosCocinando = ({ selectedPedidos, pedidos, onVolver }) => {
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
+    const [ticketVisible, setTicketVisible] = useState(false);
+    const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
 
     useEffect(() => {
         // Filtrar pedidos seleccionados
@@ -13,15 +16,8 @@ const PedidosCocinando = ({ selectedPedidos, pedidos, onVolver }) => {
     }, [selectedPedidos, pedidos]);
 
     const imprimirPedido = (pedido) => {
-        // Lógica de impresión
-        console.log("Imprimir:", pedido);
-    };
-
-    const imprimirTodos = () => {
-        // Lógica para imprimir todos los pedidos
-        pedidosCocinando.forEach(pedido => {
-            console.log("Imprimir:", pedido);
-        });
+        setPedidoParaImprimir(pedido);
+        setTicketVisible(true);
     };
 
     const marcarTodosComoCocinado = async () => {
@@ -45,8 +41,20 @@ const PedidosCocinando = ({ selectedPedidos, pedidos, onVolver }) => {
         }
     };
 
+    const cerrarTicket = () => {
+        setTicketVisible(false);
+        setPedidoParaImprimir(null);
+    };
+
     return (
-        <section className="card p-3" id="cocinando">
+        <>
+            {ticketVisible && (
+                <TicketImpresion 
+                    pedido={pedidoParaImprimir} 
+                    onClose={cerrarTicket} 
+                />
+            )}
+            <section className="card p-3" id="cocinando">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h4>Pedidos en Cocina ({pedidosCocinando.length})</h4>
                 
@@ -115,6 +123,7 @@ const PedidosCocinando = ({ selectedPedidos, pedidos, onVolver }) => {
                 </div>
             )}
         </section>
+        </>
     );
 };
 

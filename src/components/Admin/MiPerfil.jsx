@@ -62,8 +62,6 @@ const MiPerfil = () => {
       e.preventDefault();
       const user = auth.currentUser;
 
-      await updateEmail(user, correo);
-
       const userDocRef = doc(db, "usuarios", id);
       await updateDoc(userDocRef, {
         nombreCompleto,
@@ -124,7 +122,7 @@ const MiPerfil = () => {
                         <div className="col-md-6">
                           <label className="small mb-1">Correo Electronico</label>
                           <input className="form-control" id="inputEmailAddress" type="email" placeholder="Ingresa tu Correo Electronico" value={correo}
-                            onChange={(e) => setCorreo(e.target.value.toLowerCase())} disabled={!editable} style={{ textAlign: "center" }} autoComplete="off" />
+                            onChange={(e) => setCorreo(e.target.value.toLowerCase())} disabled style={{ textAlign: "center" }} autoComplete="off" />
                         </div>
                         <div className="col-md-6">
                           <label className="small mb-1">Telefono</label>

@@ -11,11 +11,14 @@ import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import Menu from "./components/Solicitudes/Menu.jsx";
 import CryptoJS from 'crypto-js';
 import Caja from "./components/POS/Caja";
-import { CartProvider  } from './context/CartContext';
+import { CartProvider } from './context/CartContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Delivery from "./components/Delivery/Delivery";
+import Deliverys from "./components/Delivery/Deliverys";
+import PersonalDeliverys from "./components/Delivery/PersonalDeliverys";
+import Clientes from "./components/Clientes/Clientes";
 import Cocina from "./components/Cocina/Cocina";
+import HistorialPedidos from "./components/Pedidos/HistorialPedidos";
 import { useAuth } from "./context/AuthContext";
 import { PaginaDetalle } from './components/Solicitudes/PaginaDetalle.jsx';
 
@@ -59,36 +62,39 @@ function App() {
 
   return (
     <div className="App mainpage">
-          <CartProvider>
-      <BrowserRouter>
-      <ToastContainer 
-        autoClose={3000}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss={false}
-      />
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
-          <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
-          <Route path="/pedidos-caja" element={<RequireAuth><RequireAdmin><Caja /></RequireAdmin></RequireAuth>} />
-          <Route path="/gestion-deliverys" element={<RequireAuth><RequireAdmin><Delivery /></RequireAdmin></RequireAuth>} />
-          <Route path="/gestion-cocina" element={<RequireAuth><RequireAdmin><Cocina /></RequireAdmin></RequireAuth>} />
-          <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
-          <Route path="/crear-solicitud" element={<CrearSolicitud />} />
-          <Route path="/menu" element={<Menu />} />
-          <Route path="/ver-pedido/:id" element={<PaginaDetalle/>} />
+      <CartProvider>
+        <BrowserRouter>
+          <ToastContainer
+            autoClose={3000}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+          />
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
+            <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
+            <Route path="/pedidos-caja" element={<RequireAuth><RequireAdmin><Caja /></RequireAdmin></RequireAuth>} />
+            <Route path="/gestion-deliverys" element={<RequireAuth><RequireAdmin><PersonalDeliverys /></RequireAdmin></RequireAuth>} />
+            <Route path="/delivery-pedidos" element={<RequireAuth><RequireAdmin><Deliverys /></RequireAdmin></RequireAuth>} />
+            <Route path="/gestion-cocina" element={<RequireAuth><RequireAdmin><Cocina /></RequireAdmin></RequireAuth>} />
+            <Route path="/historial-pedidos" element={<RequireAuth><RequireAdmin><HistorialPedidos /></RequireAdmin></RequireAuth>} />
+            <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />
+            <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
+            <Route path="/crear-solicitud" element={<CrearSolicitud />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/ver-pedido/:id" element={<PaginaDetalle />} />
 
-          {/*Para limitar Links por Rol
+            {/*Para limitar Links por Rol
           tipoUsuario !== process.env.REACT_APP_rolStaff && tipoUsuario !== process.env.REACT_APP_rolEjecutor && tipoUsuario !== process.env.REACT_APP_rolOperaciones ? (
             <>
               <Route path="/gastos" element={<RequireAuth><Gastos /></RequireAuth>} />
             </>
           ) : (null)*/}
-        </Routes>
-         <ToastContainer />
-      </BrowserRouter>
+          </Routes>
+          <ToastContainer />
+        </BrowserRouter>
       </CartProvider>
 
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, deleteDoc, doc, query, orderBy, getDocs, where } from "firebase/firestore";
+import { collection, updateDoc, deleteDoc, doc, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CrearProducto from "./CrearProducto";
 import EditProducto from "./EditProducto";
@@ -14,14 +14,14 @@ const Productos = () => {
   const [productos, setProductos] = useState([]);
   const [modalShowProducto, setModalShowProducto] = useState(false);
   const [modalShowEditProducto, setModalShowEditProducto] = useState(false);
-  const [producto, setProducto] = useState([]);
+  const [productoSeleccionado, setProductoSeleccionado] = useState([]);
   const [categoriasOptions, setCategoriasOptions] = useState([]);
   const [modalShowCategorias, setModalShowCategorias] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
 
   const productosCollectiona = collection(db, "productos");
-  const productosCollection = useRef(query(productosCollectiona, where("visible", "==", true)));
+  const productosCollection = useRef(query(productosCollectiona, orderBy("descripcion", "desc")));
 
   const categoriasCollectiona = collection(db, "categorias");
   const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));
@@ -207,7 +207,7 @@ const Productos = () => {
               title="EDITAR"
               onClick={() => {
                 setModalShowEditProducto(true);
-                setProducto(producto);
+                setProductoSeleccionado(producto);
               }}
             >
               <i className="fa-solid fa-edit"></i>
@@ -298,17 +298,17 @@ const Productos = () => {
         agregar_producto={agregarProducto}
         onHide={() => setModalShowProducto(false)}
       />
-      <EditProducto
-        producto={producto}
+      {productoSeleccionado && (<EditProducto
+        producto={productoSeleccionado}
         categorias_options={categoriasOptions}
         editar_producto={editarProducto}
         show={modalShowEditProducto}
         onHide={() => setModalShowEditProducto(false)}
-      />
-      <Categorias
+      />)}
+      {mostrarAjustes && (<Categorias
         show={modalShowCategorias}
         onHide={() => setModalShowCategorias(false)}
-      />
+      />)}
     </>
   );
 }
