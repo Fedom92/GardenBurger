@@ -45,13 +45,14 @@ export const CartProvider = ({ children }) => {
     if (productoExistente > -1) {
 
       carrito[productoExistente].amountInCart++;
-
+      carrito[productoExistente].subtotal=carrito[productoExistente].amountInCart*carrito[productoExistente].precio;
 
       setCarrito([...carrito]);
 
     } else {
 
       producto.amountInCart = 1;
+      producto.subtotal=producto.precio;
       setCarrito([...carrito, producto]);
     }
 
@@ -62,7 +63,7 @@ export const CartProvider = ({ children }) => {
     carrito.map((prod) => {
       total = total + prod.amountInCart * prod.precio;
     })
-    return total.toFixed(2);
+    return parseFloat(total.toFixed(2));
   }
 
   const vaciarCarrito = () => {

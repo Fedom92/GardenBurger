@@ -68,7 +68,7 @@ export const PaginaDetalle = () => {
               <em> {pedido.cliente.direccion}</em>
               </div> }
               <div className='d-flex m-2 gap-2'><p>Método de pago:</p>
-               <em> {pedido.cliente.pago}</em>
+               <em> {pedido.cliente.metodoPago}</em>
               </div>
               <div className='d-flex m-2 gap-2'><p>Celular:</p>
                <em> {pedido.cliente.telefono}</em>
@@ -96,7 +96,7 @@ export const PaginaDetalle = () => {
 
 
             <div className='d-flex m-2 gap-2 precioVP'>Total:
-              <div>{pedido.total}</div>
+              <div>${pedido.total}</div>
             </div>
             </div>
           </>

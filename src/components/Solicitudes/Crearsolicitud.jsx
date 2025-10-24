@@ -5,9 +5,13 @@ import { db } from "../../firebaseConfig/firebase";
 import { useNavigate } from 'react-router-dom';
 import 'moment/locale/es';
 import { Card } from "./Card.jsx"
+import { CardCarousel } from "./CardCarrousel.jsx"
 import logo from '../../img/logo_negro3.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
 
 const CrearSolicitud = () => {
   const [categorias, setCategorias] = useState([]);
@@ -29,8 +33,9 @@ const CrearSolicitud = () => {
     const solicitud = {
       cliente: data,
       productos: carrito,
-      total: totalCarrito(),
-      estado: "PENDIENTE"
+      total: pagoSeleccionado === "MP" ? totalCarrito() + parseFloat(process.env.REACT_APP_recargoMP) : totalCarrito(),
+      estado: "PENDIENTE",
+      fecha: new Date()
     }
 
     const solicitudesRef = collection(db, "solicitudes")
@@ -125,6 +130,32 @@ const CrearSolicitud = () => {
           </div>
         </section>
 
+        {productos.some(prod => prod.oferta === true) && (
+          <div id="carouselExampleAutoplaying" className="carousel slide" data-bs-ride="carousel">
+            <div className="carousel-inner">
+
+              {productos.map((producto, index) => (
+                producto.oferta === true &&
+                <>
+                  <div
+                    key={producto.id}
+                    className={`carousel-item ${index === 0 ? 'active' : ''}`}
+                  >
+                    <CardCarousel producto={producto} />
+                  </div>
+                </>
+              ))}
+            </div>
+            <button className="carousel-control-prev" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="prev">
+              <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span className="visually-hidden">Previous</span>
+            </button>
+            <button className="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="next">
+              <span className="carousel-control-next-icon" aria-hidden="true"></span>
+              <span className="visually-hidden">Next</span>
+            </button>
+          </div>
+        )}
 
         <div className="iconosCS d-flex justify-content-center">
           <div className="row ">
@@ -256,7 +287,7 @@ const CrearSolicitud = () => {
             })}
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
-                <div className="m-2 fw-bold">Total: ${totalCarrito()}</div>
+                <div className="m-2 fw-bold">Total: ${pagoSeleccionado === "MP" ? totalCarrito() + parseFloat(process.env.REACT_APP_recargoMP) : totalCarrito()}</div>
                 {cantidadBebidas() === 0 &&
                   <a className="m-2" href="#BEBIDAS">No te olvides de agregar tu bebida! Hacé click aquí</a>}
 

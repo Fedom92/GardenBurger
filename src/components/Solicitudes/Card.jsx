@@ -10,7 +10,7 @@ export const Card = ({ producto }) => {
   return (
     <div className='cardCS'>
       <div className="cardColumnCS m-3">
-        <Link to={`/item/${producto.id}`}><p className='titulo'>{producto.descripcion}</p></Link>
+        <Link to={`/item/${producto.id}`} className='text-decoration-none'><p className='titulo'>{producto.descripcion}</p></Link>
         <p className="ingredientes">{(producto.ingredientes)}</p>
         <div className="cardRowCS">
           <div className="imagenCS">
