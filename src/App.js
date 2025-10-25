@@ -21,6 +21,9 @@ import Cocina from "./components/Cocina/Cocina";
 import HistorialPedidos from "./components/Pedidos/HistorialPedidos";
 import { useAuth } from "./context/AuthContext";
 import { PaginaDetalle } from './components/Solicitudes/PaginaDetalle.jsx';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
 
 function App() {
   const { currentUser } = useAuth()

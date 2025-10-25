@@ -1730,8 +1730,8 @@ input::placeholder {
 
 .ribbon span {
   position: absolute;
-  top: 1.5rem;      /* ajusta según el tamaño de la card */
-  left: -4rem;       /* empieza más a la izquierda para cruzar toda la card */
+  top: 2.5rem;      /* ajusta según el tamaño de la card */
+  left: -5rem;       /* empieza más a la izquierda para cruzar toda la card */
   width: 18rem;      /* ancho de la cinta */
   height: 2.5rem;    /* altura de la cinta */
   background: linear-gradient(45deg, #ff512f, #dd2476);

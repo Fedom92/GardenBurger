@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import 'moment/locale/es';
 import { Card } from "./Card.jsx"
 import { CardCarousel } from "./CardCarrousel.jsx"
-import logo from '../../img/logo_negro3.png';
+import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -64,6 +64,28 @@ const CrearSolicitud = () => {
   }
   //fin registro
 
+   
+
+useEffect(() => {
+  const bootstrap = require('bootstrap');
+
+  // Espera al próximo ciclo del render para asegurarte de que el carrusel exista en el DOM
+  const timeout = setTimeout(() => {
+    const myCarousel = document.getElementById('carouselExampleAutoplaying');
+    if (myCarousel) {
+      const carousel = bootstrap.Carousel.getOrCreateInstance(myCarousel, {
+        interval: 3000, // 3 segundos
+        ride: 'carousel', // arranca automáticamente
+        pause: false // sigue aunque el mouse esté encima
+      });
+      carousel.cycle(); // Fuerza el autoplay
+    }
+  }, 100); // 100ms es suficiente para esperar el render
+
+  return () => clearTimeout(timeout); // limpia el timeout si el componente se desmonta
+}, [productos]);
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -104,6 +126,8 @@ const CrearSolicitud = () => {
     return <p>Cargando...</p>;
   }
 
+ 
+
 
   return (
     <div>
@@ -112,25 +136,31 @@ const CrearSolicitud = () => {
         <img className='mobile-img logoCS' src={logoMobile} alt="logoGardenMobile" />
       </header>
       <main>
-        <section className="m-1">
-          <div className="d-flex justify-content-center">
-            <i className="fa fa-map-marker m-1" aria-hidden="true"></i>
-            <h5>Leonardo Da Vinci 4225 - Gregorio de Laferrere</h5>
-          </div>
-          <h6>La Matanza, La Matanza (Buenos Aires)</h6>
-          {carrito.length > 0 &&
-            <div className="position-fixed bottom-0 end-0 z-2 m-3">
-              <a href='/crear-solicitud#finalizarCompra' className="btnVerde p-3">Ver pedido
-                <i className="fa fa-arrow-down ms-2 animated-arrow" aria-hidden="true"></i>
-              </a>
-            </div>}
-          <div className="d-flex justify-content-center">
-            <i className="fa fa-motorcycle m-1" aria-hidden="true"></i>
-            <h5>Envios a domicilio</h5>
-          </div>
-        </section>
 
-        {productos.some(prod => prod.oferta === true) && (
+<section className="m-1">
+  <div className="d-flex flex-wrap justify-content-center align-items-center">
+
+    <div className="d-flex align-items-center ms-2 me-2">
+      <i className="fa fa-map-marker m-1" aria-hidden="true"></i>
+      <h5 className="mb-0">Leonardo Da Vinci 4225 - Gregorio de Laferrere, La Matanza (Buenos Aires)</h5>
+    </div>
+
+    <div className="d-flex align-items-center ms-2 me-2">
+      <i className="fa fa-motorcycle m-1" aria-hidden="true"></i>
+      <h5 className="mb-0">Envíos a domicilio</h5>
+    </div>
+
+  </div>
+</section>
+
+        {carrito.length > 0 &&
+          <div className="position-fixed bottom-0 end-0 z-2 m-3">
+            <a href='/crear-solicitud#finalizarCompra' className="btnVerde p-3">Ver pedido
+              <i className="fa fa-arrow-down ms-2 animated-arrow" aria-hidden="true"></i>
+            </a>
+          </div>}
+
+        {/* {productos.some(prod => prod.oferta === true) && (
           <div id="carouselExampleAutoplaying" className="carousel slide" data-bs-ride="carousel">
             <div className="carousel-inner">
 
@@ -155,7 +185,50 @@ const CrearSolicitud = () => {
               <span className="visually-hidden">Next</span>
             </button>
           </div>
-        )}
+        )} */}
+      {productos.some(prod => prod.oferta === true) && (
+        <div
+          id="carouselExampleAutoplaying"
+          className="carousel slide"
+          data-bs-ride="carousel"
+          data-bs-interval="3000"
+        >
+          <div className="carousel-inner">
+            {productos
+              .filter(prod => prod.oferta === true)
+              .map((producto, index) => (
+                <div
+                  key={producto.id}
+                  className={`carousel-item ${index === 0 ? 'active' : ''}`}
+                >
+                  <CardCarousel producto={producto} />
+                </div>
+              ))}
+          </div>
+
+          <button
+            className="carousel-control-prev"
+            type="button"
+            data-bs-target="#carouselExampleAutoplaying"
+            data-bs-slide="prev"
+          >
+            <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span className="visually-hidden">Previous</span>
+          </button>
+          <button
+            className="carousel-control-next"
+            type="button"
+            data-bs-target="#carouselExampleAutoplaying"
+            data-bs-slide="next"
+          >
+            <span className="carousel-control-next-icon" aria-hidden="true"></span>
+            <span className="visually-hidden">Next</span>
+          </button>
+        </div>
+      )}
+
+
+
 
         <div className="iconosCS d-flex justify-content-center">
           <div className="row ">
