@@ -71,19 +71,6 @@ const Cocina = () => {
         }, 0);
     }, [selectedPedidos, pedidos]);
 
-    /*
-    PONER EN LA CAJA DEFINIR HORARIO ESPECIAL
-    (vER TEMA HORARIOS DESPLEGABLES)
-    ORDENAR LA COCINA PENDIENTES POR HORARIO
-    
-    EN PANTALLA 15 PEDIDOS
-
-    EL IMPRIMIR TODOS SE HACE INTERNAMENTE AL PASAR A COCINA
-
-
-    
-    */
-
     return (
         <>
             {isLoading ? (

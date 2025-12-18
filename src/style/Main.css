@@ -176,6 +176,19 @@ tbody tr.hide td p {
   margin-left: 5px;
 }
 
+.etiqueta-oferta {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background-color: red;
+  color: white;
+  padding: 1px 5px;
+  font-size: 10px;
+  border-radius: 3px;
+  font-weight: bold;
+  z-index: 3;
+}
+
 /*<!------------Termina estilos tablas---------------->*/
 
 
@@ -422,13 +435,19 @@ tbody tr.hide td p {
   margin-right: 1rem;
 }
 
-/*<!------------Termina Estilo PanelAdmin---------------->*/
+/*<!------------Termina Estilo MiPerfil---------------->*/
 
 
 
 /*<!------------Estilo Formulario---------------->*/
 input[type="file"]::before {
   content: none !important;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 input,
@@ -604,32 +623,34 @@ select {
 
 /*<!--------------Termina Estilo Caja---------------->*/
 
-/*<!------------Estilo ESTADOS---------------->*/
-.color-input-container {
-  display: flex;
-  align-items: center;
+/*<!------------Estilo Botón Parpadeante---------------->*/
+@keyframes blink {
+
+  0%,
+  50%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  25%,
+  75% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
 }
 
-.color-input {
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  margin-right: 10px;
-  cursor: pointer;
+.btn-blink {
+  animation: blink 1.5s infinite;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
 }
 
-.color-preview {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1px solid #ccc;
-  margin-left: 4px;
+.btn-blink:hover {
+  animation: none;
+  box-shadow: 0 0 15px rgba(255, 193, 7, 0.8);
 }
 
-/*<!------------Termina Estilo ESTADOS---------------->*/
-
+/*<!------------Termina Estilo Botón Parpadeante---------------->*/
 
 
 /*<!------------Estilo Navigation---------------->*/
@@ -808,428 +829,6 @@ select {
 }
 
 /*<!------------Termina Estilo Navigation---------------->*/
-
-
-
-/*<!------------Estilo Libreria Calendar---------------->*/
-.react-calendar {
-  width: 350px;
-  max-width: 100%;
-  background: white;
-  border: 1px solid #a0a096;
-  font-family: Arial, Helvetica, sans-serif;
-  line-height: 1.125em;
-}
-
-.react-calendar--doubleView {
-  width: 700px;
-}
-
-.react-calendar--doubleView .react-calendar__viewContainer {
-  display: flex;
-  margin: -0.5em;
-}
-
-.react-calendar--doubleView .react-calendar__viewContainer>* {
-  width: 50%;
-  margin: 0.5em;
-}
-
-.react-calendar,
-.react-calendar *,
-.react-calendar *:before,
-.react-calendar *:after {
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
-.react-calendar button {
-  margin: 0;
-  border: 0;
-  outline: none;
-}
-
-.react-calendar button:enabled:hover {
-  cursor: pointer;
-}
-
-.react-calendar__navigation {
-  text-align: center;
-  text-transform: uppercase;
-  font-weight: bold;
-  height: 44px;
-  margin-bottom: 1em;
-}
-
-.react-calendar__navigation span {
-  text-transform: uppercase;
-  font-weight: bold;
-}
-
-.react-calendar__navigation button {
-  font-weight: bold;
-  min-width: 44px;
-  background: none;
-  font-size: large;
-}
-
-.react-calendar__navigation button:enabled:hover,
-.react-calendar__navigation button:enabled:focus {
-  background-color: #e6e6e6;
-}
-
-.react-calendar__navigation button[disabled] {
-  background-color: #f0f0f0;
-}
-
-.react-calendar__month-view__weekdays {
-  text-align: center;
-  text-transform: uppercase;
-  font-weight: bold;
-  font-size: 0.75em;
-}
-
-.react-calendar__month-view__weekdays__weekday {
-  padding: 0.5em;
-}
-
-.react-calendar__month-view__weekNumbers {
-  font-weight: bold;
-}
-
-.react-calendar__month-view__weekNumbers .react-calendar__tile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75em;
-  padding: calc(0.75em / 0.75) calc(0.5em / 0.75);
-}
-
-.react-calendar__month-view__days__day--weekend {
-  color: red;
-}
-
-.react-calendar__month-view__days__day--neighboringMonth {
-  color: #757575;
-}
-
-.react-calendar__year-view .react-calendar__tile,
-.react-calendar__decade-view .react-calendar__tile,
-.react-calendar__century-view .react-calendar__tile {
-  padding: 2em 0.5em;
-}
-
-.react-calendar__tile {
-  max-width: 100%;
-  text-align: center;
-  padding: 0.75em 0.5em;
-  background: none;
-}
-
-.react-calendar__tile:disabled {
-  background-color: #f0f0f0;
-}
-
-.react-calendar__tile:enabled:hover {
-  background: #a9d4ff;
-}
-
-.react-calendar__tile:enabled:focus {
-  background-color: #1087ff;
-}
-
-.react-calendar__tile--now {
-  background: #ffff76;
-}
-
-.react-calendar__tile--now:enabled:hover,
-.react-calendar__tile--now:enabled:focus {
-  background: #ffffa9;
-}
-
-.react-calendar__tile--hasActive {
-  background: #76baff;
-}
-
-.react-calendar__tile--hasActive:enabled:hover,
-.react-calendar__tile--hasActive:enabled:focus {
-  background: #a9d4ff;
-}
-
-.react-calendar--selectRange .react-calendar__tile--hover {
-  background-color: #e6e6e6;
-}
-
-/*<!------------Termina Estilo Calendar---------------->*/
-
-
-
-/*<!------------Estilo Plantilla PDF---------------->*/
-/* TODO ACTUALIZAR SEGUN TICKET DE CAJA*/
-/*#table-xls-button {
-  background-color: white;
-  padding: 20px;
-  border: solid green 2px;
-  border-radius: 10px;
-  height: 46px;
-  background-image: url('../img/excel.png');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 26px;
-}
-  #botonDescargaPDF {
-  background-color: transparent;
-  color: rgb(33, 37, 41);
-  font: weight 400px;
-  margin-left: 4px;
-  border: 0;
-}
-
-#botonDescargaPDF:hover {
-  background-color: #f8f9fa;
-}
-*/
-.plantilla-pdf {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto;
-  gap: 0;
-  grid-auto-flow: row;
-  margin: 20px 40px;
-}
-
-.Logo-e-info {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  grid-template-rows: 1fr;
-  gap: 0;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". .";
-  grid-area: 1 / 1 / 1 / 2;
-  padding-top: 20px;
-}
-
-.contrato {
-  grid-area: 2 / 1 / 2 / 2;
-  padding: 0;
-}
-
-.ArrendatarioYTelefono {
-  display: grid;
-  grid-template-columns: 0.5fr 1fr 0.5fr 1fr;
-  grid-template-rows: 1fr;
-  gap: 0px 0px;
-  grid-template-areas:
-    ". . . .";
-  grid-area: 3 / 1 / 3 / 2;
-}
-
-.RecibeEquipo {
-  display: grid;
-  grid-template-columns: 0.2fr 1fr;
-  grid-template-rows: 1fr;
-  gap: 0;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". .";
-  grid-area: 4 / 1 / 4 / 2;
-}
-
-.LugarEvento {
-  display: grid;
-  grid-template-columns: 0.2fr 1fr;
-  grid-template-rows: 1fr;
-  gap: 0px 0px;
-  grid-template-areas:
-    ". . . .";
-  grid-area: 5 / 1 / 5 / 2;
-}
-
-.FechaEvento-Horario {
-  display: grid;
-  grid-template-columns: 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr;
-  grid-template-rows: 1fr;
-  gap: 0px 0px;
-  grid-template-areas:
-    ". . . .";
-  grid-area: 6 / 1 / 6 / 2;
-}
-
-.HorarioMontajeYDesmontaje {
-  display: grid;
-  grid-template-columns: 0.5fr 0.5fr 0.5fr 0.5fr;
-  grid-template-rows: 1fr;
-  gap: 0px 0px;
-  grid-template-areas:
-    ". . . . .";
-  grid-area: 7 / 1 / 7 / 2;
-}
-
-.Celebracion-Delegacion {
-  display: grid;
-  grid-template-columns: 0.5fr 1fr 0.5fr 1fr;
-  grid-template-rows: 1fr;
-  gap: 0;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". . .";
-  grid-area: 8 / 1 / 8 / 2;
-}
-
-.Anticipo-MontoRestante {
-  display: grid;
-  grid-template-columns: 0.5fr 1fr 0.5fr 1fr 0.5fr 1fr;
-  grid-template-rows: 1fr;
-  gap: 0;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". . . . . .";
-  grid-area: 9 / 1 / 9 / 2;
-}
-
-.NroPersonas-PisosExtra {
-  display: grid;
-  grid-template-columns: 0.7fr 0.5fr 0.4fr 1fr 0.5fr 0.5fr;
-  grid-template-rows: 1fr;
-  gap: 0;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". . . . . .";
-  grid-area: 10 / 1 / 10 / 2;
-}
-
-.Paquete {
-  display: grid;
-  grid-template-columns: 0.25fr 1fr 1fr;
-  grid-template-rows: 1fr;
-  gap: 0;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". .";
-  grid-area: 11 / 1 / 11 / 2;
-}
-
-.Observaciones {
-  display: grid;
-  grid-template-columns: 0.2fr 1fr;
-  grid-template-rows: 0.1fr;
-  gap: 0;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". .";
-  grid-area: 12 / 1 / 12 / 2;
-}
-
-.plantilla-pdf>* {
-  border: 1px solid black;
-  padding: 0px 5px;
-}
-
-.plantilla-pdf>*:not(:last-child) {
-  border-bottom: none;
-}
-
-.ArrendatarioYTelefono>div:not(:last-child),
-.RecibeEquipo>div:not(:last-child),
-.LugarEvento>div:not(:last-child),
-.FechaEvento-Horario>div:not(:last-child),
-.HorarioMontajeYDesmontaje>div:not(:last-child),
-.Celebracion-Delegacion>div:not(:last-child),
-.Anticipo-MontoRestante>div:not(:last-child),
-.NroPersonas-PisosExtra>div:not(:last-child),
-.Paquete>div:not(:last-child),
-.Observaciones>div:not(:last-child) {
-  border-right: 1px solid black;
-  padding: 5px;
-  font-size: 12px;
-  text-align: center;
-}
-
-.ArrendatarioYTelefono>div:last-child,
-.RecibeEquipo>div:last-child,
-.LugarEvento>div:last-child,
-.FechaEvento-Horario>div:last-child,
-.HorarioMontajeYDesmontaje>div:last-child,
-.Celebracion-Delegacion>div:last-child,
-.Anticipo-MontoRestante>div:last-child,
-.NroPersonas-PisosExtra>div:last-child,
-.Paquete>div:last-child,
-.Observaciones>div:last-child {
-  border-right: none;
-  padding: 5px;
-  font-size: 12px;
-  text-align: center;
-}
-
-.plantilla-pdf p {
-  color: #000 !important;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.terminos p,
-.terminos2 p,
-.terminos3 p,
-.terminos4 p,
-.terminos5 p,
-.terminos6 p,
-.terminos7 p {
-  color: #000 !important;
-  font-size: 14px;
-  font-weight: normal;
-  text-align: justify;
-}
-
-.terminos2,
-.terminos3,
-.terminos4,
-.terminos5,
-.terminos6,
-.terminos7 {
-  border: 1px solid black;
-  margin-top: 79px;
-  margin-left: 40px;
-  padding: 22px;
-}
-
-/*ESPECIFICACIONES ESPECIFICAS PARA CADA TERMINO*/
-
-.terminos6 {
-  margin-top: 20px;
-}
-
-/*-------------------------------------------------*/
-
-.variables-contrato {
-  font-size: 12px;
-  font-weight: normal;
-}
-
-.terminos {
-  padding: 22px;
-}
-
-.info-contrato {
-  font-size: 12px;
-  font-weight: bold;
-  padding-top: 8px;
-}
-
-@media print {
-  body {
-    margin: 0;
-    padding: 0;
-  }
-
-  .plantilla-pdf {
-    page-break-inside: avoid;
-  }
-}
-
-/*<!------------Termina Estilo Plantilla PDF---------------->*/
-
 
 /*<!------------ empieza Wally css---------------->*/
 /*<!------------crear solicitud---------------->*/
@@ -1730,10 +1329,14 @@ input::placeholder {
 
 .ribbon span {
   position: absolute;
-  top: 2.5rem;      /* ajusta según el tamaño de la card */
-  left: -5rem;       /* empieza más a la izquierda para cruzar toda la card */
-  width: 18rem;      /* ancho de la cinta */
-  height: 2.5rem;    /* altura de la cinta */
+  top: 2.5rem;
+  /* ajusta según el tamaño de la card */
+  left: -5rem;
+  /* empieza más a la izquierda para cruzar toda la card */
+  width: 18rem;
+  /* ancho de la cinta */
+  height: 2.5rem;
+  /* altura de la cinta */
   background: linear-gradient(45deg, #ff512f, #dd2476);
   color: #fff;
   font-weight: 700;
@@ -1744,10 +1347,25 @@ input::placeholder {
   transform: rotate(-45deg);
   box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.4);
 
-  display: flex;           /* usamos flex para centrar */
-  align-items: center;     /* centrado vertical */
-  justify-content: center; /* centrado horizontal */
+  display: flex;
+  /* usamos flex para centrar */
+  align-items: center;
+  /* centrado vertical */
+  justify-content: center;
+  /* centrado horizontal */
 }
 
+.checkbox-oferta {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
 
-
+.checkbox-oferta:checked {
+  background-color: #198754 !important;
+  border-color: #198754 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 70% !important;
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, query, where, updateDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
+import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
 import 'moment/locale/es';
@@ -9,32 +10,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
     const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Función para cargar solicitudes pendientes
-    const cargarSolicitudesPendientes = async () => {
-        setIsLoading(true);
-        try {
-            const solicitudesCollection = collection(db, "solicitudes");
-            const q = query(solicitudesCollection, where("estado", "==", "PENDIENTE"));
-            const querySnapshot = await getDocs(q);
-            
-            const solicitudes = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-
-            setSolicitudesPendientes(solicitudes);
-        } catch (error) {
-            console.error('Error cargando solicitudes pendientes:', error);
-            Swal.fire({
-                title: 'Error',
-                text: 'Error al cargar solicitudes pendientes',
-                icon: 'error',
-                confirmButtonColor: '#dc3545',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
+   
 
     // Función para aprobar solicitud
     const aprobarSolicitud = async (solicitudId) => {
@@ -89,11 +65,6 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                     estado: "RECHAZADO"
                 });
 
-                // Actualizar la lista local
-                setSolicitudesPendientes(prev => 
-                    prev.filter(solicitud => solicitud.id !== solicitudId)
-                );
-
                 Swal.fire({
                     title: '¡Rechazado!',
                     text: 'La solicitud ha sido rechazada',
@@ -114,40 +85,59 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
 
     // Cargar solicitudes cuando se abre el modal
     useEffect(() => {
-        if (isOpen) {
-            cargarSolicitudesPendientes();
-        }
+        if (!isOpen) return;
+
+        setIsLoading(true);
+        const solicitudesCollection = collection(db, "solicitudes");
+        const q = query(solicitudesCollection, where("estado", "==", "PENDIENTE"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const solicitudes = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            setSolicitudesPendientes(solicitudes);
+            setIsLoading(false);
+        }, (error) => {
+            console.error('Error escuchando solicitudes pendientes:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al escuchar solicitudes pendientes',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+            });
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [isOpen]);
 
-    if (!isOpen) return null;
-
     return (
-        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-xl modal-dialog-scrollable">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title text-center justify-content-center">Solicitudes Pendientes</h5>
-                        <button
-                            type="button"
-                            className="btn-close"
-                            onClick={onClose}
-                        ></button>
+        <Modal 
+            show={isOpen} 
+            onHide={onClose} 
+            size="xl" 
+            scrollable
+            centered
+        >
+            <Modal.Header closeButton>
+                <Modal.Title className="text-center w-100">Solicitudes Pendientes</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                {isLoading ? (
+                    <div className="text-center">
+                        <span className="loader"></span>
+                        <p>Cargando solicitudes...</p>
                     </div>
-                    <div className="modal-body">
-                        {isLoading ? (
-                            <div className="text-center">
-                                <span className="loader"></span>
-                                <p>Cargando solicitudes...</p>
-                            </div>
-                        ) : solicitudesPendientes.length === 0 ? (
-                            <div className="text-center text-muted">
-                                <i className="fa fa-check-circle fa-3x mb-3"></i>
-                                <h5>No hay solicitudes pendientes</h5>
-                                <p>Todas las solicitudes están procesadas</p>
-                            </div>
-                        ) : (
-                            <div className="row">
-                                {solicitudesPendientes.map((solicitud) => (
+                ) : solicitudesPendientes.length === 0 ? (
+                    <div className="text-center text-muted">
+                        <i className="fa fa-check-circle fa-3x mb-3"></i>
+                        <h5>No hay solicitudes pendientes</h5>
+                        <p>Todas las solicitudes están procesadas</p>
+                    </div>
+                ) : (
+                    <div className="row">
+                        {solicitudesPendientes.map((solicitud) => (
                                     <div key={solicitud.id} className="col-md-6">
                                         <div className="card mb-1">
                                             <div className="card-header d-flex justify-content-between align-items-center">
@@ -232,30 +222,20 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                                             </div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                        ))}
                     </div>
-                    <div className="modal-footer">
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={onClose}
-                        >
-                            Cerrar
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={cargarSolicitudesPendientes}
-                            disabled={isLoading}
-                        >
-                            <i className="fa fa-refresh"></i> Actualizar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                )}
+            </Modal.Body>
+            <Modal.Footer>
+                <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={onClose}
+                >
+                    Cerrar
+                </button>
+            </Modal.Footer>
+        </Modal>
     );
 };
 

@@ -114,13 +114,14 @@ const Deliverys = () => {
     const columnasPedidos = [
         { columnasBasicas: ["codigo", "direccion", "hora", "total"] },
         {
-            accessorKey: "envio.costo_envio",
-            header: "Costo Envío",
-        },
-        {
             accessorKey: "envio.zona_envio",
             header: "Zona Envío",
         },
+        {
+            accessorKey: "envio.costo_envio",
+            header: "Costo Envío",
+        },
+
         {
             accessorKey: "metodoPago",
             header: "Paga Con",

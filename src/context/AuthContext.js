@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useReducer } from "react";
+import { createContext, useContext, useEffect, useReducer, useCallback, useMemo } from "react";
 import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
 import { setPersistence, browserLocalPersistence } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -81,7 +81,7 @@ export function AuthContextProvider({ children }) {
     };
   }, []);
 
-  async function login(email, password) {
+  const login = useCallback(async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       await setPersistence(auth, browserLocalPersistence);
@@ -98,9 +98,9 @@ export function AuthContextProvider({ children }) {
       console.error("Login" + error)
       window.alert("Error al Logearse, Verifique su conexión!")
     }
-  }
+  }, []);
 
-  async function logout() {
+  const logout = useCallback(async () => {
     try {
       await signOut(auth);
       localStorage.setItem("rol", JSON.stringify(null));
@@ -109,7 +109,15 @@ export function AuthContextProvider({ children }) {
       console.error("Logout" + error)
       window.alert("Error al Cerrar sesión, Verifique su conexión!")
     }
-  }
+  }, []);
+
+  // Memoizar el valor del contexto para evitar re-renderizados innecesarios
+  const contextValue = useMemo(() => ({
+    currentUser: state.currentUser, 
+    inicialesUsuario: state.inicialesUsuario,
+    login, 
+    logout 
+  }), [state.currentUser, state.inicialesUsuario, login, logout]);
 
   if (state.loading) {
     return <div className="w-100">
@@ -118,12 +126,7 @@ export function AuthContextProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ 
-      currentUser: state.currentUser, 
-      inicialesUsuario: state.inicialesUsuario,
-      login, 
-      logout 
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

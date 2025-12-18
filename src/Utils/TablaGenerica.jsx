@@ -61,6 +61,7 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
+        autoResetPageIndex: false,
     });
 
     const opcionesSelector = useMemo(() => {
@@ -134,7 +135,7 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
                 <tbody>
                     {table.getRowModel().rows.map((row) => {
                         let rowClassName = '';
-                        
+
                         // Solo aplicar fila-no-visible si usarVisibilidad es true
                         if (row.original.visible === false) {
                             rowClassName = 'fila-no-visible';
@@ -143,7 +144,7 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
                         } else if (row.original.estadoDelivery === 'VOLVIO') {
                             rowClassName = 'bg-success';
                         }
-                        
+
                         return (
                             <tr className={rowClassName} key={row.id}>
                                 {row.getVisibleCells().map((cell) => (

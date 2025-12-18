@@ -6,7 +6,8 @@ import { useForm } from "react-hook-form";
 
 const EditProducto = (props) => {
   const { editar_producto, categorias_options, producto, ...propsModal } = props;
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, watch } = useForm();
+  const categoriaSeleccionada = watch("categoria");
 
   useEffect(() => {
     reset({
@@ -14,7 +15,9 @@ const EditProducto = (props) => {
       descripcion: producto.descripcion || "",
       precio: Number(producto.precio) || "",
       imagen: producto.imagen || "",
-      ingredientes: producto.ingredientes || ""
+      ingredientes: producto.ingredientes || "",
+      oferta: producto.oferta || false,
+      tipoExtra: producto.tipoExtra || ""
     });
   }, [producto, reset]);
 
@@ -29,6 +32,8 @@ const EditProducto = (props) => {
       precio: Number(data.precio) || Number(productoData.precio),
       imagen: data.imagen || productoData.imagen,
       ingredientes: data.ingredientes || productoData.ingredientes,
+      oferta: data.oferta || false,
+      tipoExtra: data.categoria === "EXTRA" ? (data.tipoExtra || productoData.tipoExtra) : "",
     };
 
     await updateDoc(productoRef, newData);
@@ -54,19 +59,19 @@ const EditProducto = (props) => {
           <div className="col">
             <form name="editarProducto" onSubmit={handleSubmit(update)}>
               <div className="row">
-                <div className="col-8">
+                <div className="col-9">
                   <label className="form-label">Descripción*</label>
                   <input type="text" className="form-control" autoComplete="off" required {...register("descripcion")} />
                 </div>
 
-                <div className="col-4">
+                <div className="col-3">
                   <label className="form-label">Precio*</label>
-                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} />
+                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} onInput={e => e.target.value = e.target.value.slice(0, 6)} />
                 </div>
               </div>
 
-              <div className="row">
-                <div className="col-6">
+              <div className="row mt-1">
+                <div className="col-7">
                   <label className="form-label">Categoria*</label>
                   <select className="form-control" multiple={false} required {...register("categoria")}>
                     <option value="">Selecciona acá...</option>
@@ -74,9 +79,35 @@ const EditProducto = (props) => {
                   </select>
                 </div>
 
-                <div className="col-6">
+                {categoriaSeleccionada === "EXTRA" && (
+                  <div className="col-5">
+                    <label className="form-label">Tipo de Extra*</label>
+                    <select className="form-control" required {...register("tipoExtra")}>
+                      <option value="">Seleccione....</option>
+                      <option value="GENERAL">GENERAL</option>
+                      <option value="HAMBURGUESA">HAMBURGUESA</option>
+                      <option value="PAPAS">PAPAS</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="row mt-2">
+                <div className="col-9">
                   <label className="form-label">Link Imagen*</label>
                   <input type="text" className="form-control" autoComplete="off" required {...register("imagen")} />
+                </div>
+
+                <div className="col-3 text-center mt-1">
+                  <label className="form-label align-middle" htmlFor="oferta">¿Oferta?</label>
+                  <div className="form-check ">
+                    <input
+                      className="form-check-input m-auto p-3"
+                      type="checkbox"
+                      id="oferta"
+                      {...register("oferta")}
+                    />
+                  </div>
                 </div>
               </div>
 

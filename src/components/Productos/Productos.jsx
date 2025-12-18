@@ -173,16 +173,24 @@ const Productos = () => {
       cell: ({ getValue, row }) => {
         const url = getValue();
         return url ? (
-          <a title="VER IMG" href={url} target="_blank" rel="noopener noreferrer">
-            <img
-              src={url}
-              alt={`${row.original.descripcion ?? "producto"}`}
-              height={60}
-              loading="lazy"
-              className="text-primary text-decoration-underline"
-              style={{ cursor: "pointer", objectFit: "cover", borderRadius: 4 }}
-            />
-          </a>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            {row.original.oferta && (
+              <span className="etiqueta-oferta">
+                OFERTA
+              </span>
+            )}
+
+            <a title="VER IMG" href={url} target="_blank" rel="noopener noreferrer">
+              <img
+                src={url}
+                alt={`${row.original.descripcion ?? "producto"}`}
+                height={60}
+                loading="lazy"
+                className="text-primary text-decoration-underline"
+                style={{ cursor: "pointer", objectFit: "cover", borderRadius: 4 }}
+              />
+            </a>
+          </div>
         ) : (
           <span className="text-muted">No Img</span>
         );

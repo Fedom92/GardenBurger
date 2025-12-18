@@ -1,18 +1,24 @@
-import { createContext, useEffect, useState } from 'react'
+import { createContext, useEffect, useState, useCallback, useMemo } from 'react'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export const CartContext = createContext();
 
-let carritoInicial = JSON.parse(localStorage.getItem("carrito")) || [];
-
+// Inicializar carrito fuera del componente para evitar re-inicializaciones
+const getCarritoInicial = () => {
+  try {
+    return JSON.parse(localStorage.getItem("carrito")) || [];
+  } catch {
+    return [];
+  }
+};
 
 export const CartProvider = ({ children }) => {
 
-  const [carrito, setCarrito] = useState(carritoInicial);
+  const [carrito, setCarrito] = useState(getCarritoInicial);
 
 
-  const agregarAlCarrito = (producto) => {
+  const agregarAlCarrito = useCallback((producto) => {
     if (producto.categoria === 'SIMPLE' || producto.categoria === 'DOBLE' || producto.categoria === 'TRIPLE' || producto.categoria === 'CAJA PAPAS' || producto.categoria === 'POLLO CRISPY') {
       toast.success(
         <div onClick={() => { window.location.href = "#EXTRA"; toast.dismiss() }}>
@@ -25,124 +31,107 @@ export const CartProvider = ({ children }) => {
         }
       )
     } else {
-            toast.success(        
-        <div onClick={() => {toast.dismiss()}}>
+      toast.success(
+        <div onClick={() => { toast.dismiss() }}>
           Producto agregado!
         </div>, {
         position: "top-right",
         autoClose: 3000,
         className: 'compact-toast',
       })
-      
     }
 
-    let productoExistente = carrito.findIndex((prod) => {
-      return prod.id === producto.id
-    }
-    )
+    setCarrito(prevCarrito => {
+      const productoExistente = prevCarrito.findIndex((prod) => prod.id === producto.id);
 
+      if (productoExistente > -1) {
+        const nuevoCarrito = [...prevCarrito];
+        nuevoCarrito[productoExistente] = {
+          ...nuevoCarrito[productoExistente],
+          amountInCart: nuevoCarrito[productoExistente].amountInCart + 1,
+          subtotal: (nuevoCarrito[productoExistente].amountInCart + 1) * nuevoCarrito[productoExistente].precio
+        };
+        return nuevoCarrito;
+      } else {
+        return [...prevCarrito, {
+          ...producto,
+          amountInCart: 1,
+          subtotal: producto.precio
+        }];
+      }
+    });
+  }, []);
 
-    if (productoExistente > -1) {
+  const totalCarrito = useCallback(() => {
+    return parseFloat(carrito.reduce((total, prod) => total + (prod.amountInCart * prod.precio), 0).toFixed(2));
+  }, [carrito]);
 
-      carrito[productoExistente].amountInCart++;
-      carrito[productoExistente].subtotal=carrito[productoExistente].amountInCart*carrito[productoExistente].precio;
-
-      setCarrito([...carrito]);
-
-    } else {
-
-      producto.amountInCart = 1;
-      producto.subtotal=producto.precio;
-      setCarrito([...carrito, producto]);
-    }
-
-  }
-
-  const totalCarrito = () => {
-    let total = 0;
-    carrito.map((prod) => {
-      total = total + prod.amountInCart * prod.precio;
-    })
-    return parseFloat(total.toFixed(2));
-  }
-
-  const vaciarCarrito = () => {
+  const vaciarCarrito = useCallback(() => {
     setCarrito([]);
-  }
+  }, []);
 
-  const cantidadCarrito = () => {
-    let acumulador = 0;
-    console.log(carrito);
-    carrito.map((prod) => {
-      acumulador = acumulador + prod.amountInCart;
-    })
-    return acumulador;
-  }
+  const cantidadCarrito = useCallback(() => {
+    return carrito.reduce((acumulador, prod) => acumulador + prod.amountInCart, 0);
+  }, [carrito]);
 
-  const cantidadHambPapas = () => {
-    let acumulador = 0;
-    carrito.map((prod) => {
-      if (prod.categoria === 'SIMPLE' || prod.categoria === 'DOBLE' || prod.categoria === 'TRIPLE' || prod.categoria === 'CAJA PAPAS' || prod.categoria === 'POLLO CRISPY')
-        acumulador = acumulador + prod.amountInCart;
-    })
-    return acumulador;
-  }
+  const cantidadHambPapas = useCallback(() => {
+    const categoriasHambPapas = ['SIMPLE', 'DOBLE', 'TRIPLE', 'CAJA PAPAS', 'POLLO CRISPY'];
+    return carrito
+      .filter(prod => categoriasHambPapas.includes(prod.categoria))
+      .reduce((acumulador, prod) => acumulador + prod.amountInCart, 0);
+  }, [carrito]);
 
-    const cantidadBebidas = () => {
-    let acumulador = 0;
-    carrito.map((prod) => {
-      if (prod.categoria === 'BEBIDAS')
-        acumulador = acumulador + prod.amountInCart;
-    })
-    return acumulador;
-  }
+  const cantidadBebidas = useCallback(() => {
+    return carrito
+      .filter(prod => prod.categoria === 'BEBIDAS')
+      .reduce((acumulador, prod) => acumulador + prod.amountInCart, 0);
+  }, [carrito]);
 
-  const aumentar = (producto) => {
+  const aumentar = useCallback((producto) => {
+    setCarrito(prevCarrito =>
+      prevCarrito.map((prod) =>
+        prod.id === producto.id
+          ? { ...prod, amountInCart: prod.amountInCart + 1 }
+          : prod
+      )
+    );
+  }, []);
 
-    let carritoNuevo = carrito.map((prod) => {
-      if (prod.id === producto.id) {
-        prod.amountInCart++;
-      }
-      return (prod)
-    })
-    setCarrito(carritoNuevo);
+  const disminuir = useCallback((producto) => {
+    setCarrito(prevCarrito =>
+      prevCarrito.map((prod) =>
+        prod.id === producto.id && prod.amountInCart > 1
+          ? { ...prod, amountInCart: prod.amountInCart - 1 }
+          : prod
+      )
+    );
+  }, []);
 
-  }
-
-  const disminuir = (producto) => {
-
-    let carritoNuevo = carrito.map((prod) => {
-      if (prod.id === producto.id) {
-        prod.amountInCart > 1 && prod.amountInCart--;
-      }
-      return (prod)
-    })
-
-
-    setCarrito(carritoNuevo);
-
-  }
-
-  const eliminar = (producto) => {
-
-    let carritoNuevo = [...carrito]
-
-    let index = carritoNuevo.findIndex((prod) => {
-      return prod.id === producto.id
-    })
-
-    carritoNuevo.splice(index, 1)
-    setCarrito(carritoNuevo);
-  }
+  const eliminar = useCallback((producto) => {
+    setCarrito(prevCarrito => prevCarrito.filter((prod) => prod.id !== producto.id));
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem("carrito", JSON.stringify(carrito))
-  }, [carrito])
+    localStorage.setItem("carrito", JSON.stringify(carrito));
+  }, [carrito]);
 
-
+  // Memoizar el valor del contexto para evitar re-renderizados innecesarios
+  const contextValue = useMemo(() => ({
+    carrito,
+    setCarrito,
+    agregarAlCarrito,
+    vaciarCarrito,
+    cantidadCarrito,
+    disminuir,
+    aumentar,
+    eliminar,
+    totalCarrito,
+    cantidadHambPapas,
+    cantidadBebidas
+  }), [carrito, agregarAlCarrito, vaciarCarrito, cantidadCarrito, disminuir, aumentar, eliminar, totalCarrito, cantidadHambPapas, cantidadBebidas]);
 
   return (
-    <CartContext.Provider value={{ carrito, setCarrito, agregarAlCarrito, vaciarCarrito, cantidadCarrito, disminuir, aumentar, eliminar, totalCarrito, cantidadHambPapas,cantidadBebidas }}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   )

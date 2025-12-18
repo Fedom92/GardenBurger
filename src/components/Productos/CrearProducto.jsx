@@ -5,9 +5,10 @@ import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 
 const CrearProducto = (props) => {
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, watch } = useForm();
   const { agregar_producto, categorias_options, ...propsModal } = props;
   const [error, setError] = useState("");
+  const categoriaSeleccionada = watch("categoria");
 
   const productosCollection = collection(db, "productos");
 
@@ -19,6 +20,8 @@ const CrearProducto = (props) => {
       imagen: data.imagen,
       ingredientes: data.ingredientes,
       visible: true,
+      oferta: data.oferta || false,
+      tipoExtra: data.categoria === "EXTRA" ? data.tipoExtra : "",
     };
 
     try {
@@ -48,19 +51,19 @@ const CrearProducto = (props) => {
           <div className="col">
             <form name="crearProducto" onSubmit={handleSubmit(guardarBD)}>
               <div className="row">
-                <div className="col-8">
+                <div className="col-9">
                   <label className="form-label">Descripción*</label>
                   <input type="text" className="form-control" autoComplete="off" required {...register("descripcion")} />
                 </div>
 
-                <div className="col-4">
+                <div className="col-3">
                   <label className="form-label">Precio*</label>
-                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} />
+                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} onInput={e => e.target.value = e.target.value.slice(0, 6)} />
                 </div>
               </div>
 
-              <div className="row">
-                <div className="col-6">
+              <div className="row mt-1">
+                <div className="col-7">
                   <label className="form-label">Categoria*</label>
                   <select className="form-control" multiple={false} required {...register("categoria")}>
                     <option value="">Selecciona acá....</option>
@@ -68,9 +71,35 @@ const CrearProducto = (props) => {
                   </select>
                 </div>
 
-                <div className="col-6 ">
+                {categoriaSeleccionada === "EXTRA" && (
+                  <div className="col-5">
+                    <label className="form-label">Tipo de Extra*</label>
+                    <select className="form-control" required {...register("tipoExtra")}>
+                      <option value="">Selecciona acá....</option>
+                      <option value="GENERAL">GENERAL</option>
+                      <option value="HAMBURGUESA">HAMBURGUESA</option>
+                      <option value="PAPAS">PAPAS</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="row mt-2">
+                <div className="col-9">
                   <label className="form-label">Link Imagen*</label>
                   <input type="text" className="form-control" autoComplete="off" required {...register("imagen")} />
+                </div>
+
+                <div className="col-3 text-center mt-1">
+                  <label className="form-label align-middle" htmlFor="oferta">¿Oferta?</label>
+                  <div className="form-check ">
+                    <input
+                      className="form-check-input m-auto p-3"
+                      type="checkbox"
+                      id="oferta"
+                      {...register("oferta")}
+                    />
+                  </div>
                 </div>
               </div>
 

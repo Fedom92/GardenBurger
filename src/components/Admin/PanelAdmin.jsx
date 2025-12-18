@@ -81,11 +81,11 @@ const PanelAdmin = () => {
     filteredResults = usuarios;
   } else {
     filteredResults = usuarios.filter((dato) => {
-      const apellidoConNombreSinAcentos = quitarAcentos(dato.apellidoConNombre);
+      const nombreCompletoSinAcentos = quitarAcentos(dato.nombreCompleto);
       const searchSinAcentos = quitarAcentos(search);
       return (
-        apellidoConNombreSinAcentos.includes(searchSinAcentos) ||
-        dato.codigo.toString().includes(searchSinAcentos)
+        nombreCompletoSinAcentos.includes(searchSinAcentos) ||
+        dato.telefono.toString().includes(searchSinAcentos)
       );
     });
   }
@@ -131,7 +131,7 @@ const PanelAdmin = () => {
   const agregarUsuario = (nuevaUsuario) => {
     const nuevosUsuarios = [...usuarios, nuevaUsuario];
 
-    nuevosUsuarios.sort((a, b) => a.codigo - b.codigo);
+    nuevosUsuarios.sort((a, b) => a.rol - b.rol);
 
     setUsuarios(nuevosUsuarios);
   };

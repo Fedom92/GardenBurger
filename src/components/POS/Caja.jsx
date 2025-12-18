@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { collection, addDoc, query, orderBy, getDocs, where, limit, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, getDocs, where, limit, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
+import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
-import 'moment/locale/es';
 import '../../style/Main.css';
 import PendientesMP from './PendientesMP';
 import PendientesSolicitudes from './PendientesSolicitudes';
+import EliminarTickets from './EliminarTickets';
 import logoMP from '../../img/mercado-pago.webp';
 
 
 const Caja = () => {
-    const { register, handleSubmit, reset, watch, setValue } = useForm();
+    const { register, handleSubmit, reset, watch, setValue, resetField } = useForm();
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
@@ -21,17 +22,25 @@ const Caja = () => {
     const [search, setSearch] = useState("");
     const [productos, setProductos] = useState([]);
     const [carrito, setCarrito] = useState([]);
-    const [envio_options, setEnvio_options] = useState([]);
+    const [envios, setEnvios] = useState([]);
 
     const [categorias, setCategorias] = useState([]);
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
     const [recargo] = useState(Number(process.env.REACT_APP_recargoMP) || "");
     const [isLoading, setIsLoading] = useState(true);
-    const [showModalDividido, setShowModalDividido] = useState(false);
     const [montoEfectivo, setMontoEfectivo] = useState(0);
+
     const [showPendientesMP, setShowPendientesMP] = useState(false);
     const [showPendientesSolicitudes, setShowPendientesSolicitudes] = useState(false);
+    const [showModalDividido, setShowModalDividido] = useState(false);
+    const [showEliminarTickets, setShowEliminarTickets] = useState(false);
+    const [horarioEspecialActivo, setHorarioEspecialActivo] = useState(false);
+    const [horaEspecial, setHoraEspecial] = useState("20");
+    const [minutosEspecial, setMinutosEspecial] = useState("00");
+
+    const [tieneSolicitudesPendientes, setTieneSolicitudesPendientes] = useState(false);
+    const [tienePendientesMP, setTienePendientesMP] = useState(false);
 
     const getResumen = useMemo(() => {
         const subtotal = carrito.reduce((acum, producto) => acum + producto.subtotal, 0);
@@ -43,7 +52,7 @@ const Caja = () => {
             if (metodoPago === "MP") return base * (recargo / 100);
             if (metodoPago === "%") return (base - montoEfectivo) * (recargo / 100);
             return 0;
-          })();
+        })();
 
         // Total final
         const total = base + recargoCalculado;
@@ -58,7 +67,7 @@ const Caja = () => {
             total,
             restoMP,
             montoMPConRecargo
-          };
+        };
     }, [carrito, envioSeleccionado, metodoPago, recargo, montoEfectivo]);
 
     const { totalBase, total: totalFinal, montoMPConRecargo } = getResumen;
@@ -74,70 +83,80 @@ const Caja = () => {
 
     const pedidosCollection = collection(db, "pedidos");
 
-    const getProductos = useCallback((snapshot) => {
-        const productosArray = snapshot.docs
-            .map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }))
-            .sort((a, b) => a.descripcion.localeCompare(b.descripcion));
-        setProductos(productosArray);
-
-        setIsLoading(false);
-    }, []);
-
-    const getCategorias = useCallback((snapshot) => {
-        const categoriasArray = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
-        categoriasArray.push({ id: "todas", nombre: "" });
-        setCategorias(categoriasArray);
-    }, []);
-
-    const getEnvios = useCallback((snapshot) => {
-        const enviosObj = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data() }));
-
-        const opciones = enviosObj.map((envio) => (
-            <option key={envio.id}
-                value={JSON.stringify({ zona_envio: envio.zona_envio, costo_envio: envio.costo_envio })}>
-                {envio.zona_envio}
-            </option>
-        ));
-
-        setEnvio_options(opciones);
-    }, []);
-
     useEffect(() => {
+        let isMounted = true;
+
+        const parseDocs = (snapshot) =>
+            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
         const fetchData = async () => {
             try {
-                const productosSnapshot = await getDocs(productosCollection.current);
-                await getProductos(productosSnapshot);
+                const [prodSnap, catSnap, envSnap] = await Promise.all([
+                    getDocs(productosCollection.current),
+                    getDocs(categoriasCollection.current),
+                    getDocs(enviosCollection.current)
+                ]);
 
-                const categoriasSnapshot = await getDocs(categoriasCollection.current);
-                await getCategorias(categoriasSnapshot);
+                if (!isMounted) return;
 
-                const enviosSnapshot = await getDocs(enviosCollection.current);
-                await getEnvios(enviosSnapshot);
+                // Productos
+                const productos = parseDocs(prodSnap).sort((a, b) =>
+                    a.descripcion.localeCompare(b.descripcion)
+                );
+                setProductos(productos);
+
+                // Categorías
+                const categorias = [...parseDocs(catSnap), { id: "todas", nombre: "" }];
+                setCategorias(categorias);
+
+                // Envíos
+                const envios = parseDocs(envSnap);
+                setEnvios(envios);
+
+                setIsLoading(false);
 
             } catch (error) {
-                console.error('Error fetching data Caja:', error);
+                console.error("Error fetching data Caja:", error);
+                if (isMounted) setIsLoading(false);
             }
         };
 
         fetchData();
 
-    }, [getProductos, getCategorias, getEnvios]);
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        const unsubSolicitudes = onSnapshot(
+            query(collection(db, "solicitudes"), where("estado", "==", "PENDIENTE"), limit(1)),
+            (snap) => setTieneSolicitudesPendientes(!snap.empty),
+            (err) => console.error("Error solicitudes:", err)
+        );
+
+        const unsubPedidos = onSnapshot(
+            query(collection(db, "pedidos"), where("estado", "==", "PENDIENTEMP"), limit(1)),
+            (snap) => setTienePendientesMP(!snap.empty),
+            (err) => console.error("Error Pendientes MP:", err)
+        );
+
+        // Cleanup
+        return () => {
+            unsubSolicitudes();
+            unsubPedidos();
+        };
+    }, []);
 
     // Función para buscar cliente por teléfono
     const buscarClientePorTelefono = useCallback(async (telefono) => {
         if (!telefono || telefono.length < 10) return null;
-        
+
         try {
             const clientesCollection = collection(db, "clientes");
             const q = query(clientesCollection, where("telefono", "==", telefono), limit(1));
             const querySnapshot = await getDocs(q);
-            
+
             if (!querySnapshot.empty) {
                 const clienteDoc = querySnapshot.docs[0];
                 return { id: clienteDoc.id, ...clienteDoc.data() };
@@ -154,9 +173,9 @@ const Caja = () => {
     useEffect(() => {
         const autocompletarCliente = async () => {
             if (!telefonoIngresado || telefonoIngresado.length < 10) return;
-            
+
             const cliente = await buscarClientePorTelefono(telefonoIngresado);
-            
+
             if (cliente) {
                 setValue("nombre", cliente.nombre || "");
                 setValue("direccion", cliente.direccion || "");
@@ -215,8 +234,6 @@ const Caja = () => {
     };
 
     const guardarBD = async (data) => {
-        moment.locale('es')
-        
         // Validar datos usando la función modularizada
         if (!validarDatos(data)) {
             return;
@@ -246,7 +263,7 @@ const Caja = () => {
             }
 
             const nuevoPedido = {
-                codigo: `${nuevoCodigo} - ${inicialesUsuario}`,
+                codigo: `${nuevoCodigo}-${inicialesUsuario}`,
                 nombre: data.nombre,
                 direccion: data.direccion,
                 entreCalles: data.entreCalles || "",
@@ -260,7 +277,7 @@ const Caja = () => {
                 carrito: carrito,
                 estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "PENDIENTE",
                 fecha: fecha,
-                hora: hora,
+                hora: data.horarioEspecial ?? hora,
                 timestamp: serverTimestamp()
             };
 
@@ -298,15 +315,46 @@ const Caja = () => {
         }
     };
 
+    const limpiarCamposMetodoPago = useCallback(() => {
+        resetField("pagaCon");
+        setMontoEfectivo(0);
+    }, [resetField, setMontoEfectivo]);
+
+    const toggleHorarioEspecial = useCallback(() => {
+        setHorarioEspecialActivo((prev) => {
+            const next = !prev;
+            if (!next) {
+                setValue("horarioEspecial", "");
+                setHoraEspecial("20");
+                setMinutosEspecial("00");
+            } else {
+                // Inicializar con valores por defecto cuando se activa
+                const horarioInicial = "20:00";
+                setValue("horarioEspecial", horarioInicial);
+            }
+            return next;
+        });
+    }, [setValue]);
+
+    const handleHoraEspecialChange = (e) => {
+        const nuevaHora = e.target.value;
+        setHoraEspecial(nuevaHora);
+        const horarioCompleto = `${nuevaHora}:${minutosEspecial}`;
+        setValue("horarioEspecial", horarioCompleto);
+    };
+
+    const handleMinutosEspecialChange = (e) => {
+        const nuevosMinutos = e.target.value;
+        setMinutosEspecial(nuevosMinutos);
+        const horarioCompleto = `${horaEspecial}:${nuevosMinutos}`;
+        setValue("horarioEspecial", horarioCompleto);
+    };
+
     const handleMetodoPagoChange = (e) => {
         const nuevoMetodo = e.target.value;
+        limpiarCamposMetodoPago();
         setValue("metodoPago", nuevoMetodo);
-        
-        if (nuevoMetodo === "%") {
-            setShowModalDividido(true);
-        } else {
-            setMontoEfectivo(0);
-        }
+        setShowModalDividido(nuevoMetodo === "%");
     };
 
     const handleConfirmarDividido = () => {
@@ -410,6 +458,9 @@ const Caja = () => {
         reset();
         setCarrito([]);
         setMontoEfectivo(0);
+        setHorarioEspecialActivo(false);
+        setHoraEspecial("20");
+        setMinutosEspecial("00");
     };
 
     // Función para manejar la aprobación de solicitudes
@@ -474,16 +525,22 @@ const Caja = () => {
                             className="d-flex justify-content-start align-items-center">
                             <h3>Sistema Caja</h3>
                             <button
-                                className="btn btn-info mx-2 btn-sm text-white fw-bold mb-1"
+                                className={`btn btn-info mx-2 btn-sm text-white fw-bold mb-1 ${tienePendientesMP && !showPendientesMP ? 'btn-blink' : ''}`}
                                 onClick={() => setShowPendientesMP(true)}
                             >
-                                <img src={logoMP} alt="MP" className="img-fluid" style={{height:"3vh"}}></img> Pendientes MP
+                                <img src={logoMP} alt="MP" className="img-fluid" style={{ height: "3vh" }}></img> Pendientes MP
                             </button>
                             <button
-                                className="btn btn-warning mx-2 text-white fw-bold mb-1"
+                                className={`btn btn-warning mx-2 text-white fw-bold mb-1 ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-blink' : ''}`}
                                 onClick={() => setShowPendientesSolicitudes(true)}
                             >
                                 <i className="fa fa-list-check"></i> Ver Solicitudes
+                            </button>
+                            <button
+                                className="btn btn-danger mx-2 fw-bold mb-1"
+                                onClick={() => setShowEliminarTickets(true)}
+                            >
+                                <i className="fa fa-trash"></i> Eliminar Ticket
                             </button>
                         </div>
 
@@ -491,12 +548,14 @@ const Caja = () => {
                             <div className="row">
                                 <section className="col-4 p-0" id="ticket">
                                     <div className="card mb-1" id="datos_clientes">
+                                        <input type="text" maxLength={10} className="form-control fs-6 p-1 mb-1" placeholder="Teléfono (sin 0 y sin 15)..." autoComplete="off" required {...register("telefono")}
+                                            onInput={(e) => {
+                                                e.target.value = e.target.value.replace(/\D/g, '');
+                                            }}
+                                        />
                                         <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Nombre..." autoComplete="off" required {...register("nombre")} />
                                         <input type="text" className="form-control fw-bold fs-6 p-1 mb-1" placeholder="Dirección..." autoComplete="off" required {...register("direccion")} />
                                         <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
-                                        <input type="text" maxLength={10} onInput={(e) => {
-                                            e.target.value = e.target.value.replace(/\D/g, '');
-                                        }} className="form-control fs-6 p-1 mb-1" placeholder="Teléfono (sin 0 y sin 15)..." autoComplete="off" required {...register("telefono")} />
                                         <textarea className="form-control" rows="2" placeholder="Observaciones..." autoComplete="off" {...register("observaciones")}></textarea>
                                     </div>
 
@@ -556,7 +615,11 @@ const Caja = () => {
 
                                                 <select className="form-control border-0 text-center" multiple={false} required {...register("envio")}>
                                                     <option value="">....</option>
-                                                    {envio_options}
+                                                    {envios.map(env => (
+                                                        <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
+                                                            {env.zona_envio}
+                                                        </option>
+                                                    ))}
                                                 </select>
                                                 :
                                             </div>
@@ -662,7 +725,7 @@ const Caja = () => {
                                         </div>
 
                                         <div className="row" id="acciones">
-                                            <div className="d-flex justify-content-center align-items-center gap-2">
+                                            <div className="d-flex justify-content-center align-items-center gap-2 flex-wrap mb-1">
                                                 <button
                                                     className="btn btn-danger"
                                                     type="reset"
@@ -676,6 +739,49 @@ const Caja = () => {
                                                     onClick={() => handleSubmit(guardarBD)()}>
                                                     Crear Pedido <i className="fas fa-burger"></i>
                                                 </button>
+                                            </div>
+
+                                            <div className="row">
+                                                <div className="d-flex justify-content-center align-items-center gap-2 mt-2">
+                                                    <button
+                                                        className={'btn btn-secondary'}
+                                                        type="button"
+                                                        onClick={toggleHorarioEspecial}
+                                                    >
+                                                        Horario Especial <i className="fa fa-clock"></i>
+                                                    </button>
+                                                    {horarioEspecialActivo && (
+                                                        <>
+                                                            <select
+                                                                className="form-control text-center"
+                                                                style={{ width: "80px" }}
+                                                                value={horaEspecial}
+                                                                onChange={handleHoraEspecialChange}
+                                                            >
+                                                                <option value="20">20</option>
+                                                                <option value="21">21</option>
+                                                                <option value="22">22</option>
+                                                                <option value="23">23</option>
+                                                            </select>
+                                                            <span className="fw-bold">:</span>
+                                                            <select
+                                                                className="form-control text-center"
+                                                                style={{ width: "80px" }}
+                                                                value={minutosEspecial}
+                                                                onChange={handleMinutosEspecialChange}
+                                                            >
+                                                                <option value="00">00</option>
+                                                                <option value="15">15</option>
+                                                                <option value="30">30</option>
+                                                                <option value="45">45</option>
+                                                            </select>
+                                                        </>
+                                                    )}
+                                                    <input
+                                                        type="hidden"
+                                                        {...register("horarioEspecial")}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -740,75 +846,77 @@ const Caja = () => {
             )}
 
             {/* Modal para método de pago dividido */}
-            {showModalDividido && (
-                <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Pago Dividido</h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={() => {
-                                        setShowModalDividido(false);
-                                        setValue("metodoPago", "");
-                                        setMontoEfectivo(0);
-                                    }}
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="mb-3">
-                                    <label className="form-label">Monto en efectivo:</label>
-                                    <div className="input-group">
-                                        <span className="input-group-text">$</span>
-                                        <input
-                                            type="number"
-                                            className="form-control"
-                                            value={montoEfectivo}
-                                            onChange={(e) => setMontoEfectivo(Number(e.target.value))}
-                                            min="0"
-                                            step="1000"
-                                            placeholder="Ingrese el monto en efectivo"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => {
-                                        setShowModalDividido(false);
-                                        setValue("metodoPago", "");
-                                        setMontoEfectivo(0);
-                                    }}
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={handleConfirmarDividido}
-                                >
-                                    Confirmar
-                                </button>
-                            </div>
+            <Modal
+                show={showModalDividido}
+                onHide={() => {
+                    setShowModalDividido(false);
+                    setValue("metodoPago", "");
+                    setMontoEfectivo(0);
+                }}
+                centered
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Pago Dividido</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="mb-3">
+                        <label className="form-label">Monto en efectivo:</label>
+                        <div className="input-group">
+                            <span className="input-group-text">$</span>
+                            <input
+                                type="number"
+                                className="form-control"
+                                value={montoEfectivo}
+                                onChange={(e) => setMontoEfectivo(Number(e.target.value))}
+                                min="0"
+                                step="1000"
+                                placeholder="Ingrese el monto en efectivo"
+                            />
                         </div>
                     </div>
-                </div>
-            )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                            setShowModalDividido(false);
+                            setValue("metodoPago", "");
+                            setMontoEfectivo(0);
+                        }}
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleConfirmarDividido}
+                    >
+                        Confirmar
+                    </button>
+                </Modal.Footer>
+            </Modal>
 
             {/* Modal de Pendientes MP */}
-            <PendientesMP 
-                isOpen={showPendientesMP} 
-                onClose={() => setShowPendientesMP(false)} 
+            <PendientesMP
+                isOpen={showPendientesMP}
+                onClose={() => setShowPendientesMP(false)}
             />
 
             {/* Modal de Pendientes Solicitudes */}
-            <PendientesSolicitudes 
-                isOpen={showPendientesSolicitudes} 
-                onClose={() => setShowPendientesSolicitudes(false)}
+            <PendientesSolicitudes
+                isOpen={showPendientesSolicitudes}
+                onClose={() => {
+                    setShowPendientesSolicitudes(false);
+                    // No forzamos false aquí, el onSnapshot actualizará automáticamente si hay solicitudes
+                }}
                 onAprobarSolicitud={handleAprobarSolicitud}
+            />
+
+            {/* Modal de Eliminar Tickets */}
+            <EliminarTickets
+                isOpen={showEliminarTickets}
+                onClose={() => setShowEliminarTickets(false)}
             />
         </>
     );

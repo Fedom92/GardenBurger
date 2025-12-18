@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager} from "firebase/firestore";
 import { getAuth, EmailAuthProvider } from "firebase/auth";
 
 
@@ -14,7 +14,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
 export const auth = getAuth();
-export const db = getFirestore(app)
+
 export const verifCredenciales = EmailAuthProvider.credential;
 export { signOut, reauthenticateWithCredential, updatePassword, updateProfile, updateEmail, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";

@@ -9,8 +9,6 @@ import { CardCarousel } from "./CardCarrousel.jsx"
 import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 
 const CrearSolicitud = () => {
