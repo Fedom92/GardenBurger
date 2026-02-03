@@ -47,7 +47,7 @@ const CrearSolicitud = () => {
       fecha: new Date()
     }
 
-    const solicitudesRef = collection(db, "solicitudes")
+    const solicitudesRef = collection(db, "pedidos")
 
     addDoc(solicitudesRef, solicitud)
       .then((doc) => {
@@ -392,7 +392,7 @@ const CrearSolicitud = () => {
 
                 return (
                   <div className="w-100 d-flex flex-column align-items-center" key={categoria.id}>
-                    {categoria.nombre !== 'EXTRA' ? (
+                    {(categoria.nombre != 'EXTRA' && categoria.nombre != 'BEBIDAS') ? (
                       <>
                         <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
                         <div>
@@ -411,25 +411,7 @@ const CrearSolicitud = () => {
 )}
                         </div>
                       </>
-                    ) : (
-                      <div className="w-100 d-flex flex-column align-items-center" style={{ display: cantidadHambPapas() > 0 ? 'block' : 'none' }}>
-                        <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
-                        <div>
-                          {productosEnCategoria.length > 0 ? (
-                            productosEnCategoria.map(producto => (
-                              <Card 
-                                key={producto.id} 
-                                producto={producto}
-                                onMostrarModalHamburguesa={handleMostrarModalHamburguesa}
-                                onSeleccionarVariante={handleSeleccionarVariante}
-                              />
-                            ))
-                          ) : (
-                            <p>No hay productos en esta categoría</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -461,8 +443,7 @@ const CrearSolicitud = () => {
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
                 <div className="m-2 fw-bold">Total: ${pagoSeleccionado === "MP" ? totalCarrito() + parseFloat(process.env.REACT_APP_recargoMP) : totalCarrito()}</div>
-                {cantidadBebidas() === 0 &&
-                  <a className="m-2" href="#BEBIDAS">No te olvides de agregar tu bebida! Hacé click aquí</a>}
+
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
@@ -502,6 +483,14 @@ const CrearSolicitud = () => {
                         })}
                       />
                       {errors.direccion && <p style={{ color: 'red' }}>{errors.direccion.message}</p>}
+                                            <input
+                        type="text"
+                        placeholder="Entre calles"
+                        {...register("entreCalles", {
+                          required: opcionSeleccionada === "delivery" ? "Las calles son obligatorias" : false,
+                        })}
+                      />
+                      {errors.entreCalles && <p style={{ color: 'red' }}>{errors.entreCalles.message}</p>}
                     </>
                   )}
                   <div className="d-flex justify-content-around">
