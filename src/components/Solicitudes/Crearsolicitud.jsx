@@ -47,7 +47,7 @@ const CrearSolicitud = () => {
       fecha: new Date()
     }
 
-    const solicitudesRef = collection(db, "pedidos")
+    const solicitudesRef = collection(db, "solicitudes")
 
     addDoc(solicitudesRef, solicitud)
       .then((doc) => {

@@ -35,9 +35,8 @@ const Caja = () => {
     const [showPendientesSolicitudes, setShowPendientesSolicitudes] = useState(false);
     const [showModalDividido, setShowModalDividido] = useState(false);
     const [showEliminarTickets, setShowEliminarTickets] = useState(false);
-    const [horarioEspecialActivo, setHorarioEspecialActivo] = useState(false);
-    const [horaEspecial, setHoraEspecial] = useState("20");
-    const [minutosEspecial, setMinutosEspecial] = useState("00");
+    const [showHorarioEspecial, setShowHorarioEspecial] = useState(false);
+    const horarioEspecial = watch("horarioEspecial");
 
     const [tieneSolicitudesPendientes, setTieneSolicitudesPendientes] = useState(false);
     const [tienePendientesMP, setTienePendientesMP] = useState(false);
@@ -192,13 +191,35 @@ const Caja = () => {
     }, [telefonoIngresado, buscarClientePorTelefono, setValue]);
 
     const handleAgregarAlCarrito = (producto) => {
-        setCarrito((prevCarrito) => {
-            const productoExistente = prevCarrito.find((item) => item.id === producto.id);
+        // Validación para extras de tipo HAMBURGUESA
+        if (producto.categoria === "EXTRA" && producto.tipoExtra === "HAMBURGUESA") {
+            const categoriasHamburguesa = ["SIMPLE", "DOBLE", "TRIPLE"];
+            const ultimoProducto = carrito[carrito.length - 1];
+            
+            const esValido = ultimoProducto && (
+                categoriasHamburguesa.includes(ultimoProducto.categoria) ||
+                (ultimoProducto.categoria === "EXTRA" && ultimoProducto.tipoExtra === "HAMBURGUESA")
+            );
+            
+            if (!esValido) {
+                Swal.fire({
+                    title: 'Advertencia',
+                    text: 'Solo puedes agregar un extra de Hamburguesa después de una Hamburguesa',
+                    icon: 'warning',
+                    confirmButtonColor: '#ffc107',
+                });
+                return;
+            }
+        }
 
-            if (productoExistente) {
-                // Si ya existe, aumenta la cantidad y actualiza el subtotal
-                return prevCarrito.map((item) =>
-                    item.id === producto.id
+        setCarrito((prevCarrito) => {
+            // Obtener último elemento del carrito
+            const ultimoProducto = prevCarrito.length > 0 ? prevCarrito[prevCarrito.length - 1] : null;
+
+            if (ultimoProducto && ultimoProducto.id === producto.id) {
+                // Si tiene el mismo ID, suma la cantidad 
+                return prevCarrito.map((item, index) =>
+                    index === prevCarrito.length - 1 && item.id === producto.id
                         ? {
                             ...item,
                             cantidad: item.cantidad + 1,
@@ -207,11 +228,11 @@ const Caja = () => {
                         : item
                 );
             } else {
-                // Si no existe, lo agrega con cantidad 1 y subtotal inicial
+                // Si no es último o no existe, agrega como nuevo
                 return [...prevCarrito, {
                     ...producto,
                     cantidad: 1,
-                    subtotal: producto.precio // 1 * precio
+                    subtotal: producto.precio
                 }];
             }
         });
@@ -277,7 +298,7 @@ const Caja = () => {
                 carrito: carrito,
                 estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "PENDIENTE",
                 fecha: fecha,
-                hora: data.horarioEspecial ?? hora,
+                hora: data.horarioEspecial || hora,
                 timestamp: serverTimestamp()
             };
 
@@ -320,17 +341,17 @@ const Caja = () => {
         setMontoEfectivo(0);
     }, [resetField, setMontoEfectivo]);
 
+    // Extraer hora y minutos del horario especial del formulario
+    const horaEspecial = horarioEspecial ? horarioEspecial.split(':')[0] : "20";
+    const minutosEspecial = horarioEspecial ? horarioEspecial.split(':')[1] : "00";
+
     const toggleHorarioEspecial = useCallback(() => {
-        setHorarioEspecialActivo((prev) => {
+        setShowHorarioEspecial((prev) => {
             const next = !prev;
             if (!next) {
                 setValue("horarioEspecial", "");
-                setHoraEspecial("20");
-                setMinutosEspecial("00");
             } else {
-                // Inicializar con valores por defecto cuando se activa
-                const horarioInicial = "20:00";
-                setValue("horarioEspecial", horarioInicial);
+                setValue("horarioEspecial", "20:00");
             }
             return next;
         });
@@ -338,14 +359,12 @@ const Caja = () => {
 
     const handleHoraEspecialChange = (e) => {
         const nuevaHora = e.target.value;
-        setHoraEspecial(nuevaHora);
         const horarioCompleto = `${nuevaHora}:${minutosEspecial}`;
         setValue("horarioEspecial", horarioCompleto);
     };
 
     const handleMinutosEspecialChange = (e) => {
         const nuevosMinutos = e.target.value;
-        setMinutosEspecial(nuevosMinutos);
         const horarioCompleto = `${horaEspecial}:${nuevosMinutos}`;
         setValue("horarioEspecial", horarioCompleto);
     };
@@ -458,12 +477,9 @@ const Caja = () => {
         reset();
         setCarrito([]);
         setMontoEfectivo(0);
-        setHorarioEspecialActivo(false);
-        setHoraEspecial("20");
-        setMinutosEspecial("00");
+        setShowHorarioEspecial(false);
     };
-
-    // Función para manejar la aprobación de solicitudes
+    
     const handleAprobarSolicitud = (solicitud) => {
         try {
             // Llenar los campos del formulario con los datos de la solicitud
@@ -583,7 +599,10 @@ const Caja = () => {
                                                         <tr key={producto.id}>
                                                             <td className="text-center">{producto.cantidad}</td>
                                                             <td className="text-start">
-                                                                <p className="title text-truncate mb-0">{producto.descripcion}</p>
+                                                                <p 
+                                                                    className={`title text-truncate mb-0 ${producto.categoria === "EXTRA" ? "fst-italic ps-2" : ""}`}>
+                                                                      {producto.categoria === "EXTRA" && "-"}{producto.descripcion}
+                                                                </p>
                                                             </td>
                                                             <td className="text-center">
                                                                 <div className="price-wrap">
@@ -750,7 +769,7 @@ const Caja = () => {
                                                     >
                                                         Horario Especial <i className="fa fa-clock"></i>
                                                     </button>
-                                                    {horarioEspecialActivo && (
+                                                    {showHorarioEspecial && (
                                                         <>
                                                             <select
                                                                 className="form-control text-center"

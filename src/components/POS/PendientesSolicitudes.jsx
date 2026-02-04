@@ -132,8 +132,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                 ) : solicitudesPendientes.length === 0 ? (
                     <div className="text-center text-muted">
                         <i className="fa fa-check-circle fa-3x mb-3"></i>
-                        <h5>No hay solicitudes pendientes</h5>
-                        <p>Todas las solicitudes están procesadas</p>
+                        <h4>No hay solicitudes pendientes</h4>
                     </div>
                 ) : (
                     <div className="row">

@@ -1,19 +1,61 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { collection, query, where, onSnapshot, orderBy, writeBatch, doc } from "firebase/firestore";
+import { db } from "../../firebaseConfig/firebase";
+import Swal from "sweetalert2";
 import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
 
-const PedidosCocinando = ({ selectedPedidos, pedidos, onVolver }) => {
+const PedidosCocinando = ({ cocineroUid, onCountChange, onVolverAEspera }) => {
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
     const [ticketVisible, setTicketVisible] = useState(false);
     const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const pedidosCollectiona = collection(db, "pedidos");
+    const pedidosCollection = useRef(query(pedidosCollectiona,
+        where("estado", "==", "COCINA"),
+        where("cocinero", "==", cocineroUid),
+        orderBy("codigo", "asc")
+    ));
+
+    const getPedidos = useCallback((snapshot) => {
+        const pedidosArray = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+        setPedidosCocinando(pedidosArray);
+        setIsLoading(false);
+    }, []);
+
+    const actualizarContador = useCallback((cantidad) => {
+        onCountChange?.(cantidad);
+    }, [onCountChange]);
 
     useEffect(() => {
-        // Filtrar pedidos seleccionados
-        const pedidosSeleccionados = pedidos.filter(pedido => 
-            selectedPedidos.includes(pedido.id)
-        );
-        setPedidosCocinando(pedidosSeleccionados);
-    }, [selectedPedidos, pedidos]);
+        const fetchData = async () => {
+            if (!cocineroUid || !pedidosCollection.current) {
+                setIsLoading(false);
+                setPedidosCocinando([]);
+                actualizarContador(0);
+                return;
+            }
+
+            try {
+                const unsub = onSnapshot(
+                    pedidosCollection.current,
+                    (snapshot) => {
+                        getPedidos(snapshot);                 // 👈 lógica separada
+                        actualizarContador(snapshot.size);
+                    } catch (error) {
+                        console.error('Error fetching data PedidosCocinando:', error);
+                        setIsLoading(false);
+                        setPedidosCocinando([]);
+                        actualizarContador(0);
+                    }
+            };
+
+            fetchData();
+        }, [getPedidos, cocineroUid, actualizarContador]);
 
     const imprimirPedido = (pedido) => {
         setPedidoParaImprimir(pedido);
@@ -21,23 +63,53 @@ const PedidosCocinando = ({ selectedPedidos, pedidos, onVolver }) => {
     };
 
     const marcarTodosComoCocinado = async () => {
+        if (pedidosCocinando.length === 0) return;
+
+        const result = await Swal.fire({
+            title: '¿Estás seguro de marcar Todos como cocinados?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, marcar como cocinado',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!result.isConfirmed) return;
+
         try {
-            // Lógica para actualizar estado a "COCINADO" de todos los pedidos
-            console.log("Marcar TODOS como cocinado:", pedidosCocinando.map(p => p.id));
-            
-            // Ejemplo de cómo sería con Firebase:
-            // const batch = writeBatch(db);
-            // pedidosCocinando.forEach(pedido => {
-            //     const pedidoRef = doc(db, "pedidos", pedido.id);
-            //     batch.update(pedidoRef, { estado: "COCINADO" });
-            // });
-            // await batch.commit();
-            
-            // Aquí podrías también limpiar los selectedPedidos o redirigir
-            alert(`${pedidosCocinando.length} pedidos marcados como COCINADO`);
-            
+            const batch = writeBatch(db);
+
+            pedidosCocinando.forEach(pedido => {
+                const pedidoRef = doc(db, "pedidos", pedido.id);
+                batch.update(pedidoRef, { estado: "COCINADO" });
+            });
+
+            await batch.commit();
+
+            Swal.fire({
+                title: '¡Éxito!',
+                icon: 'success',
+                confirmButtonColor: '#198754',
+            });
+
+            // Actualizar contador a 0 y volver a la tab de espera
+            if (onCountChange) {
+                onCountChange(0);
+            }
+
+            if (onVolverAEspera) {
+                onVolverAEspera();
+            }
+
         } catch (error) {
             console.error("Error al marcar como cocinado:", error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al marcar pedidos como cocinado',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+            });
         }
     };
 
@@ -49,80 +121,82 @@ const PedidosCocinando = ({ selectedPedidos, pedidos, onVolver }) => {
     return (
         <>
             {ticketVisible && (
-                <TicketImpresion 
-                    pedido={pedidoParaImprimir} 
-                    onClose={cerrarTicket} 
+                <TicketImpresion
+                    pedido={pedidoParaImprimir}
+                    onClose={cerrarTicket}
                 />
             )}
             <section className="card p-3" id="cocinando">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h4>Pedidos en Cocina ({pedidosCocinando.length})</h4>
-                
-                <div className="d-flex gap-2">
-                    {/*<button 
-                        className="btn btn-outline-primary"
-                        onClick={imprimirTodos}
-                        disabled={pedidosCocinando.length === 0}
-                    >
-                        Imprimir Todos
-                    </button>*/}
-                    
-                    <button 
-                        className="btn btn-success"
-                        onClick={marcarTodosComoCocinado}
-                        disabled={pedidosCocinando.length === 0}
-                    >
-                        Marcar Todos como COCINADO
-                    </button>
-                    
-                    <button className="btn btn-secondary" onClick={onVolver}>
-                        Volver a Espera
-                    </button>
-                </div>
-            </div>
+                {isLoading ? (
+                    <div className="text-center">
+                        <span className="loader"></span>
+                    </div>
+                ) : (
+                    <>
+                        <div className="d-flex justify-content-end align-items-center mb-3">
 
-            <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2">
-                {pedidosCocinando.map(pedido => (
-                    <div className="col" key={pedido.id}>
-                        <div className="card border border-warning">
-                            <div className="card-header bg-warning bg-opacity-25">
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <strong>N° {pedido.codigo} - {pedido.hora}</strong>
-                                    <span className="badge bg-warning">EN COCINA</span>
-                                </div>
-                                <h6 className="mb-0">{pedido.nombre}</h6>
-                            </div>
-                            
-                            <div className="card-body d-flex flex-column">
-                                <div className="m-auto">
-                                {pedido.carrito.map((item, i) => (
-                                    <div key={i} className="d-flex justify-content-between small mt-2">
-                                        <span>{item.cantidad}x {item.descripcion}</span>
-                                        <span className="text-muted">{item.categoria}</span>
-                                    </div>
-                                ))}
-                                </div>
-                            </div>
-                            
-                            <div className="card-footer">
-                                <button 
-                                    className="btn btn-outline-primary btn-sm w-100"
-                                    onClick={() => imprimirPedido(pedido)}
+                            <div className="d-flex gap-2">
+                                {<button
+                                    className="btn btn-outline-primary"
+                                    //onClick={imprimirTodos}
+                                    disabled={pedidosCocinando.length === 0}
                                 >
-                                    Imprimir Individual
+                                    Imprimir Todos
+                                </button>}
+                                <button
+                                    className="btn btn-success"
+                                    onClick={marcarTodosComoCocinado}
+                                    disabled={pedidosCocinando.length === 0}
+                                >
+                                    Cocinados TODOS
                                 </button>
                             </div>
                         </div>
-                    </div>
-                ))}
-            </div>
 
-            {pedidosCocinando.length === 0 && (
-                <div className="text-center mt-5">
-                    <div className="alert alert-warning">No hay pedidos en cocina</div>
-                </div>
-            )}
-        </section>
+                        <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2">
+                            {pedidosCocinando.map(pedido => (
+                                <div className="col" key={pedido.id}>
+                                    <div className="card border border-warning">
+                                        <div className="card-header bg-warning bg-opacity-25">
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <strong>N° {pedido.codigo} - {pedido.hora}</strong>
+                                                <span className="badge bg-warning">EN COCINA</span>
+                                            </div>
+                                            <h6 className="mb-0">{pedido.nombre}</h6>
+                                        </div>
+
+                                        <div className="card-body d-flex flex-column">
+                                            <div className="m-auto">
+                                                {pedido.carrito.map((item, i) => (
+                                                    <div key={i} className="d-flex justify-content-between small mt-2">
+                                                        <span>{item.cantidad}x {item.descripcion}</span>
+                                                        <span className="text-muted">{item.categoria}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="card-footer">
+                                            <button
+                                                className="btn btn-outline-primary btn-sm w-100"
+                                                onClick={() => imprimirPedido(pedido)}
+                                            >
+                                                Imprimir Individual
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {pedidosCocinando.length === 0 && (
+                            <div className="text-center mt-5">
+                                <div className="alert alert-warning">No hay pedidos en cocina</div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </section>
         </>
     );
 };

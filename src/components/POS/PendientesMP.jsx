@@ -119,7 +119,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
             centered
         >
             <Modal.Header closeButton>
-                <Modal.Title className="text-center w-100">Pendientes MercadoPago</Modal.Title>
+                <Modal.Title className="text-center w-100">MercadoPago Pendientes</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 {isLoading ? (
