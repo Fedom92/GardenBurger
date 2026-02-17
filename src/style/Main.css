@@ -896,6 +896,24 @@ select {
   align-items: center;
   border: solid 1px;
   display: none;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+
+.carousel-inner,
+.carousel-item {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.carousel-item img {
+  max-width: 100%;
+  height: auto;
+}
+
+.container, .container-fluid {
+  overflow-x: hidden;
 }
 
 .cardCS {

@@ -44,18 +44,28 @@ const PedidosCocinando = ({ cocineroUid, onCountChange, onVolverAEspera }) => {
                 const unsub = onSnapshot(
                     pedidosCollection.current,
                     (snapshot) => {
-                        getPedidos(snapshot);                 // 👈 lógica separada
+                        getPedidos(snapshot);
                         actualizarContador(snapshot.size);
-                    } catch (error) {
+                    },
+                    (error) => {
                         console.error('Error fetching data PedidosCocinando:', error);
                         setIsLoading(false);
                         setPedidosCocinando([]);
                         actualizarContador(0);
                     }
-            };
+                );
 
-            fetchData();
-        }, [getPedidos, cocineroUid, actualizarContador]);
+                return () => unsub();
+            } catch (error) {
+                console.error('Error setting up listener:', error);
+                setIsLoading(false);
+                setPedidosCocinando([]);
+                actualizarContador(0);
+            }
+        };
+
+        fetchData();
+    }, [getPedidos, cocineroUid, actualizarContador]);
 
     const imprimirPedido = (pedido) => {
         setPedidoParaImprimir(pedido);
