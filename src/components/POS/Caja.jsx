@@ -10,11 +10,14 @@ import '../../style/Main.css';
 import PendientesMP from './PendientesMP';
 import PendientesSolicitudes from './PendientesSolicitudes';
 import EliminarTickets from './EliminarTickets';
+import AddressAutocomplete from '../shared/AddressAutocomplete';
 import logoMP from '../../img/mercado-pago.webp';
 
 
 const Caja = () => {
-    const { register, handleSubmit, reset, watch, setValue, resetField } = useForm();
+    const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
+        defaultValues: { direccion: "", latitud: "", longitud: "" }
+    });
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
@@ -178,11 +181,15 @@ const Caja = () => {
             if (cliente) {
                 setValue("nombre", cliente.nombre || "");
                 setValue("direccion", cliente.direccion || "");
+                setValue("latitud", cliente.latitud || "");
+                setValue("longitud", cliente.longitud || "");
                 setValue("entreCalles", cliente.entreCalles || "");
             } else {
                 // Limpiar campos si no se encuentra el cliente
                 setValue("nombre", "");
                 setValue("direccion", "");
+                setValue("latitud", "");
+                setValue("longitud", "");
                 setValue("entreCalles", "");
             }
         };
@@ -287,6 +294,8 @@ const Caja = () => {
                 codigo: `${nuevoCodigo}-${inicialesUsuario}`,
                 nombre: data.nombre,
                 direccion: data.direccion,
+                latitud: data.latitud || "",
+                longitud: data.longitud || "",
                 entreCalles: data.entreCalles || "",
                 telefono: data.telefono,
                 observaciones: data.observaciones || "",
@@ -313,8 +322,8 @@ const Caja = () => {
                     direccion: data.direccion || "",
                     entreCalles: data.entreCalles || "",
                     telefono: data.telefono,
-                    latitud: "",
-                    longitud: "",
+                    latitud: data.latitud || "",
+                    longitud: data.longitud || "",
                 });
             }
             Swal.fire({
@@ -402,11 +411,20 @@ const Caja = () => {
 
     // Función para validar los datos antes de guardar
     const validarDatos = (data) => {
-        // Validar dirección
+        // Validar dirección (debe seleccionarse del listado de Google Maps)
         if (!data.direccion || data.direccion.trim() === '') {
             Swal.fire({
                 title: 'Advertencia',
-                text: 'No está la dirección del cliente',
+                text: 'Selecciona una dirección del listado desplegable',
+                icon: 'warning',
+                confirmButtonColor: '#ffc107',
+            });
+            return false;
+        }
+        if (!data.latitud || !data.longitud) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'Debes seleccionar la dirección del listado (no escribir a mano)',
                 icon: 'warning',
                 confirmButtonColor: '#ffc107',
             });
@@ -486,6 +504,8 @@ const Caja = () => {
             setValue("nombre", solicitud.cliente?.nombre || "");
             setValue("telefono", solicitud.cliente?.telefono || "");
             setValue("direccion", solicitud.cliente?.direccion || "");
+            setValue("latitud", solicitud.cliente?.latitud || "");
+            setValue("longitud", solicitud.cliente?.longitud || "");
             setValue("metodoPago", solicitud.cliente?.metodoPago || "");
             setValue("observaciones", `Solicitud ${solicitud.cliente?.opcion || " "}`);
 
@@ -570,7 +590,18 @@ const Caja = () => {
                                             }}
                                         />
                                         <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Nombre..." autoComplete="off" required {...register("nombre")} />
-                                        <input type="text" className="form-control fw-bold fs-6 p-1 mb-1" placeholder="Dirección..." autoComplete="off" required {...register("direccion")} />
+                                        <AddressAutocomplete
+                                            value={watch("direccion")}
+                                            onChange={({ direccion, latitud, longitud }) => {
+                                                setValue("direccion", direccion || "");
+                                                setValue("latitud", latitud ?? "");
+                                                setValue("longitud", longitud ?? "");
+                                            }}
+                                            placeholder="Dirección (selecciona del listado)..."
+                                            required
+                                        />
+                                        <input type="hidden" {...register("latitud")} />
+                                        <input type="hidden" {...register("longitud")} />
                                         <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
                                         <textarea className="form-control" rows="2" placeholder="Observaciones..." autoComplete="off" {...register("observaciones")}></textarea>
                                     </div>

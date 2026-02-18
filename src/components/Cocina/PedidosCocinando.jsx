@@ -1,61 +1,58 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { collection, query, where, onSnapshot, orderBy, writeBatch, doc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
 
-const PedidosCocinando = ({ cocineroUid, onCountChange, onVolverAEspera }) => {
-    const [pedidosCocinando, setPedidosCocinando] = useState([]);
+const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
+    const { currentUser } = useAuth();
     const [ticketVisible, setTicketVisible] = useState(false);
     const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [pedidosCocinando, setPedidosCocinando] = useState([]);
 
     const pedidosCollectiona = collection(db, "pedidos");
     const pedidosCollection = useRef(query(pedidosCollectiona,
         where("estado", "==", "COCINA"),
-        where("cocinero", "==", cocineroUid),
+        where("cocinero", "==", currentUser.uid),
         orderBy("codigo", "asc")
     ));
-
-    const getPedidos = useCallback((snapshot) => {
-        const pedidosArray = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
-        setPedidosCocinando(pedidosArray);
-        setIsLoading(false);
-    }, []);
 
     const actualizarContador = useCallback((cantidad) => {
         onCountChange?.(cantidad);
     }, [onCountChange]);
 
+    const manejarError = useCallback((error) => {
+        console.error('Error en listener de Pedidos Cocinando:', error);
+        setPedidosCocinando([]);
+        actualizarContador(0);
+        setIsLoading(false);
+    }, [actualizarContador]);
+
+    const getPedidosCocinando = useCallback((snapshot) => {
+        const pedidosArray = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    
+        setPedidosCocinando(pedidosArray);
+        setIsLoading(false);
+    }, []);
+
     useEffect(() => {
-        const fetchData = async () => {
-            if (!cocineroUid || !pedidosCollection.current) {
-                setIsLoading(false);
-                setPedidosCocinando([]);
-                actualizarContador(0);
-                return;
-            }
-
-            try {
-                const unsub = onSnapshot(
-                    pedidosCollection.current,
-                    (snapshot) => {
-                        getPedidos(snapshot);                 // 👈 lógica separada
-                        actualizarContador(snapshot.size);
-                    } catch (error) {
-                        console.error('Error fetching data PedidosCocinando:', error);
-                        setIsLoading(false);
-                        setPedidosCocinando([]);
-                        actualizarContador(0);
-                    }
-            };
-
-            fetchData();
-        }, [getPedidos, cocineroUid, actualizarContador]);
+        const unsubscribe = onSnapshot(
+            pedidosCollection.current,
+            (snapshot) => {
+                getPedidosCocinando(snapshot);
+                actualizarContador(snapshot.size);
+            },
+            manejarError
+        );
+    
+        return unsubscribe;
+    }, [getPedidosCocinando, actualizarContador, manejarError]);
 
     const imprimirPedido = (pedido) => {
         setPedidoParaImprimir(pedido);
@@ -170,7 +167,6 @@ const PedidosCocinando = ({ cocineroUid, onCountChange, onVolverAEspera }) => {
                                                 {pedido.carrito.map((item, i) => (
                                                     <div key={i} className="d-flex justify-content-between small mt-2">
                                                         <span>{item.cantidad}x {item.descripcion}</span>
-                                                        <span className="text-muted">{item.categoria}</span>
                                                     </div>
                                                 ))}
                                             </div>

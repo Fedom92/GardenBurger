@@ -6,7 +6,6 @@ import '../../style/Main.css';
 
 
 const Cocina = () => {
-    const { currentUser } = useAuth();
     const [activeTab, setActiveTab] = useState('espera');
     const [pedidosEsperaCount, setPedidosEsperaCount] = useState(0);
     const [pedidosCocinandoCount, setPedidosCocinandoCount] = useState(0);
@@ -46,7 +45,6 @@ const Cocina = () => {
                             {activeTab === 'espera' && (
                                 <div className="tab-pane fade show active" role="tabpanel">
                                     <PedidosEspera
-                                        cocineroUid={currentUser?.uid}
                                         onCountChange={setPedidosEsperaCount}
                                         onMandarACocinar={() => { setActiveTab('cocinando') }}
                                     />
@@ -56,7 +54,6 @@ const Cocina = () => {
                             {activeTab === 'cocinando' && (
                                 <div className="tab-pane fade show active" role="tabpanel">
                                     <PedidosCocinando
-                                        cocineroUid={currentUser?.uid}
                                         onCountChange={setPedidosCocinandoCount}
                                         onVolverAEspera={() => setActiveTab('espera')}
                                     />

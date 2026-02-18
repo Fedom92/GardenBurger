@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { collection, where, query, onSnapshot, orderBy, doc, writeBatch } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
 
-const PedidosEspera = ({ onMandarACocinar, cocineroUid, onCountChange }) => {
+const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
+    const { currentUser } = useAuth();
     const [selectedPedidos, setSelectedPedidos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [pedidos, setPedidos] = useState([]);
+    const [pedidosEspera, setPedidosEspera] = useState([]);
 
     const pedidosCollectiona = collection(db, "pedidos");
     const pedidosCollection = useRef(query(
@@ -16,30 +18,42 @@ const PedidosEspera = ({ onMandarACocinar, cocineroUid, onCountChange }) => {
         orderBy("timestamp", "asc")
     ));
 
-    const notificarContador = useCallback((cantidad) => {
-        if (onCountChange) {
-            onCountChange(cantidad);
-        }
+    const actualizarContador = useCallback((cantidad) => {
+        onCountChange?.(cantidad);
     }, [onCountChange]);
 
-    const getPedidos = useCallback((snapshot) => {
-        const pedidosArray = snapshot.docs
+    const manejarError = useCallback((error) => {
+        console.error('Error en listener de Pedidos Espera:', error);
+        setPedidosEspera([]);
+        actualizarContador(0);
+        setIsLoading(false);
+    }, [actualizarContador]);
+
+    const getPedidosEspera = useCallback((snapshot) => {
+        const pedidosEsperaArray = snapshot.docs
             .map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
             }));
-        setPedidos(pedidosArray);
+        setPedidosEspera(pedidosEsperaArray);
         setIsLoading(false);
     }, []);
 
     useEffect(() => {
-        const unsubscribePedidosEspera = onSnapshot(pedidosCollection.current, (snapshot) => { getPedidos(snapshot); notificarContador(snapshot.size) });
-
-        return () => { unsubscribePedidosEspera() };
-    }, [getPedidos, notificarContador]);
+        const unsubscribe = onSnapshot(
+            pedidosCollection.current,
+            (snapshot) => {
+                getPedidosEspera(snapshot);
+                actualizarContador(snapshot.size);
+            },
+            manejarError
+        );
+    
+        return unsubscribe;
+    }, [getPedidosEspera, actualizarContador, manejarError]);
 
     const calcularCarnes = (pedidosIds) => {
-        const pedidosSeleccionados = pedidos.filter(p => pedidosIds.includes(p.id));
+        const pedidosSeleccionados = pedidosEspera.filter(p => pedidosIds.includes(p.id));
         const todosLosItems = pedidosSeleccionados.flatMap(pedido => pedido.carrito);
 
         return todosLosItems.reduce((total, item) => {
@@ -60,7 +74,7 @@ const PedidosEspera = ({ onMandarACocinar, cocineroUid, onCountChange }) => {
     };
 
     const mandarACocinar = async () => {
-        if (selectedPedidos.length === 0 || !cocineroUid) {
+        if (selectedPedidos.length === 0) {
             Swal.fire({
                 title: 'Advertencia',
                 text: 'No hay pedidos seleccionados',
@@ -77,7 +91,7 @@ const PedidosEspera = ({ onMandarACocinar, cocineroUid, onCountChange }) => {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 batch.update(pedidoRef, {
                     estado: "COCINA",
-                    cocinero: cocineroUid
+                    cocinero: currentUser.uid
                 });
             });
 
@@ -106,7 +120,7 @@ const PedidosEspera = ({ onMandarACocinar, cocineroUid, onCountChange }) => {
     const carnesSeleccionadas = calcularCarnes(selectedPedidos);
 
     return (
-        <section className="card p-3" id="pedidos">
+        <section className="card p-3" id="pedidosEspera">
             {isLoading ? (
                 <div className="text-center">
                     <span className="loader"></span>
@@ -122,14 +136,14 @@ const PedidosEspera = ({ onMandarACocinar, cocineroUid, onCountChange }) => {
                         <button
                             className="btn btn-success"
                             onClick={mandarACocinar}
-                            disabled={selectedPedidos.length === 0 || !cocineroUid}
+                            disabled={selectedPedidos.length === 0}
                         >
                             Empezar a Cocinar
                         </button>
                     </div>
 
                     <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2">
-                        {pedidos.map(pedido => (
+                        {pedidosEspera.map(pedido => (
                             <div className="col" key={pedido.id}>
                                 <div
                                     className={`card border ${selectedPedidos.includes(pedido.id)
@@ -157,7 +171,7 @@ const PedidosEspera = ({ onMandarACocinar, cocineroUid, onCountChange }) => {
                         ))}
                     </div>
 
-                    {pedidos.length === 0 && (
+                    {pedidosEspera.length === 0 && (
                         <div className="text-center mt-5">
                             <div className="alert alert-info">No hay pedidos en espera</div>
                         </div>

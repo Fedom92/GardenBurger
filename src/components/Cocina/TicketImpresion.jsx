@@ -1,5 +1,6 @@
 import React from 'react';
 import './TicketImpresion.css';
+import icono from "../../img/logo_blanco_corto.webp";
 
 const TicketImpresion = ({ pedido, onClose }) => {
     if (!pedido) return null;
@@ -28,185 +29,27 @@ const TicketImpresion = ({ pedido, onClose }) => {
     const handleImprimir = () => {
         // Crear una nueva ventana para imprimir solo el ticket
         const ventanaImpresion = window.open('', '_blank', 'width=400,height=600');
-        
+
         // Obtener el contenido del ticket
         const contenidoTicket = document.getElementById('ticket-content');
-        
+
         // Crear el HTML completo para la ventana de impresión
         const htmlCompleto = `
             <!DOCTYPE html>
             <html>
             <head>
                 <title>Ticket - ${pedido.codigo}</title>
-                <style>
-                    body {
-                        margin: 0;
-                        padding: 20px;
-                        font-family: 'Courier New', monospace;
-                        font-size: 12px;
-                        line-height: 1.2;
-                        color: black;
-                        background: white;
-                    }
-                    
-                    .ticket-header-section {
-                        text-align: left;
-                        margin-bottom: 10px;
-                    }
-                    
-                    .ticket-number {
-                        font-size: 12px;
-                        margin-bottom: 5px;
-                    }
-                    
-                    .customer-name {
-                        font-size: 14px;
-                        margin-bottom: 5px;
-                    }
-                    
-                    .delivery-address-bold {
-                        font-weight: bold;
-                        font-size: 16px;
-                        margin-bottom: 3px;
-                    }
-                    
-                    .delivery-address-detail {
-                        font-size: 12px;
-                        margin-bottom: 3px;
-                    }
-                    
-                    .phone-number {
-                        font-size: 12px;
-                        margin-bottom: 10px;
-                    }
-                    
-                    .ticket-separator {
-                        border-top: 1px dotted #000;
-                        margin: 8px 0;
-                    }
-                    
-                    .ticket-table-header {
-                        display: flex;
-                        font-weight: bold;
-                        margin-bottom: 5px;
-                    }
-                    
-                    .ticket-col-cant {
-                        width: 40px;
-                        text-align: left;
-                    }
-                    
-                    .ticket-col-desc {
-                        flex: 1;
-                        text-align: left;
-                        margin-left: 10px;
-                    }
-                    
-                    .ticket-col-subtotal {
-                        width: 80px;
-                        text-align: right;
-                    }
-                    
-                    .ticket-items {
-                        margin-bottom: 10px;
-                    }
-                    
-                    .ticket-item {
-                        display: flex;
-                        margin-bottom: 3px;
-                    }
-                    
-                    .ticket-observations {
-                        text-align: left;
-                        font-size: 12px;
-                        margin-bottom: 10px;
-                    }
-                    
-                    .ticket-summary {
-                        text-align: right;
-                        margin-bottom: 10px;
-                    }
-                    
-                    .delivery-info {
-                        font-size: 12px;
-                        margin-bottom: 5px;
-                    }
-                    
-                    .total-amount {
-                        font-weight: bold;
-                        font-size: 16px;
-                        margin-bottom: 5px;
-                    }
-                    
-                    .payment-method {
-                        font-size: 12px;
-                    }
-                    
-                    .ticket-footer {
-                        text-align: center;
-                    }
-                    
-                    .logo-section {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-bottom: 10px;
-                    }
-                    
-                    .logo-circle {
-                        width: 40px;
-                        height: 40px;
-                        border: 2px solid #000;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-right: 10px;
-                        background: #000;
-                    }
-                    
-                    .logo-burger {
-                        font-size: 20px;
-                        color: white;
-                    }
-                    
-                    .business-name {
-                        text-align: left;
-                    }
-                    
-                    .business-name-main {
-                        font-weight: bold;
-                        font-size: 14px;
-                        line-height: 1;
-                    }
-                    
-                    .business-name-sub {
-                        font-size: 10px;
-                        font-weight: normal;
-                        line-height: 1;
-                    }
-                    
-                    .thank-you {
-                        font-size: 12px;
-                        margin-top: 10px;
-                    }
-                    
-                    @page {
-                        margin: 0;
-                        size: 80mm auto;
-                    }
-                </style>
             </head>
             <body>
                 ${contenidoTicket.innerHTML}
             </body>
             </html>
         `;
-        
+
         // Escribir el contenido en la nueva ventana
         ventanaImpresion.document.write(htmlCompleto);
         ventanaImpresion.document.close();
-        
+
         // Esperar a que se cargue el contenido y luego imprimir
         ventanaImpresion.onload = () => {
             ventanaImpresion.print();
@@ -218,7 +61,7 @@ const TicketImpresion = ({ pedido, onClose }) => {
         <div className="ticket-overlay">
             <div className="ticket-container">
                 <div className="ticket-header">
-                    <h4>Vista Previa del Ticket</h4>
+                    <h4 className='me-5'>Vista Previa</h4>
                     <div className="ticket-actions">
                         <button className="btn btn-primary" onClick={handleImprimir}>
                             <i className="fas fa-print"></i> Imprimir
@@ -233,7 +76,7 @@ const TicketImpresion = ({ pedido, onClose }) => {
                     {/* Header del Ticket */}
                     <div className="ticket-header-section">
                         <div className="ticket-number">
-                            Ticket# {pedido.codigo} FM- {pedido.fecha} {pedido.hora}
+                            Ticket# {pedido.codigo} - {pedido.fecha} {pedido.hora}
                         </div>
                         <div className="customer-name">{pedido.nombre}</div>
                         <div className="delivery-address-bold">{pedido.direccion}</div>
@@ -267,7 +110,7 @@ const TicketImpresion = ({ pedido, onClose }) => {
 
                     {/* Observaciones */}
                     {pedido.observaciones && (
-                        <div className="ticket-observations">
+                        <div className="ticket-observations mt-3">
                             {pedido.observaciones}
                         </div>
                     )}
@@ -295,7 +138,7 @@ const TicketImpresion = ({ pedido, onClose }) => {
                     <div className="ticket-footer">
                         <div className="logo-section">
                             <div className="logo-circle">
-                                <div className="logo-burger">🍔</div>
+                                <img src={icono} alt="logo" className="logo-burger" />
                             </div>
                             <div className="business-name">
                                 <div className="business-name-main">GARDEN BURGER</div>

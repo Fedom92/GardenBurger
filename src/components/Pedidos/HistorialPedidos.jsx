@@ -51,7 +51,6 @@ const HistorialPedidos = () => {
       ...doc.data(),
     }));
     setPedidos(pedidosArray);
-console.log(pedidosArray)
     setIsLoading(false);
   }, []);
 
