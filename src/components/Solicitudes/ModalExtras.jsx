@@ -26,14 +26,14 @@ export const ModalExtras = () => {
         aria-modal="true"
       >
         <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
               <h5 className="modal-title">
-                {varianteElegida.descripcion} - Agregar extras
+                {varianteElegida.descripcion} - Agregar extras (opcional)
               </h5>
               <button 
                 type="button" 
-                className="btn-close" 
+                className="btn-close btn-close-white" 
                 onClick={cancelar}
                 aria-label="Close"
               ></button>
@@ -52,13 +52,11 @@ export const ModalExtras = () => {
                   style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
                 /> */}
                 <h6 className="mt-2">{varianteElegida.descripcion}</h6>
-                <p className="text-muted">${varianteElegida.precio.toFixed(2)}</p>
+                <p className="text-white">${varianteElegida.precio}</p>
               </div>
               
               {extrasHamburguesas.length > 0 ? (
-                <>
-                  <h6 className="mb-3">Selecciona extras (opcional):</h6>
-                  
+                <>                  
                   <div className="row">
                     {extrasHamburguesas.map((extra) => {
                       const estaSeleccionado = extrasSeleccionados.find(e => e.id === extra.id);
@@ -66,7 +64,7 @@ export const ModalExtras = () => {
                       return (
                         <div key={extra.id} className="col-12 col-md-6 mb-3">
                           <div 
-                            className={`p-3 border rounded ${estaSeleccionado ? 'border-success' : ''}`}
+                            className={`bg-dark p-3 border rounded ${estaSeleccionado ? 'border-success' : ''}`}
                             style={{ 
                               backgroundColor: estaSeleccionado ? '#f8fff9' : 'white',
                               transition: 'all 0.2s',
@@ -78,7 +76,7 @@ export const ModalExtras = () => {
                                 <input 
                                   type="checkbox" 
                                   id={`extra-${extra.id}`}
-                                  checked={estaSeleccionado}
+                                  checked={!!estaSeleccionado}
                                   onChange={() => toggleExtra(extra)}
                                   style={{ 
                                     cursor: 'pointer',
@@ -92,7 +90,7 @@ export const ModalExtras = () => {
                                   htmlFor={`extra-${extra.id}`}
                                   style={{ cursor: 'pointer', margin: 0, width: '100%' }}
                                 >
-                                  <div className="d-flex justify-content-between align-items-center">
+                                  <div className="d-flex justify-content-between align-items-center bg-dark text-white">
                                     <div>
                                       <strong>{extra.descripcion}</strong>
                                       {extra.ingredientes && (
@@ -101,8 +99,8 @@ export const ModalExtras = () => {
                                         </div>
                                       )}
                                     </div>
-                                    <div className="text-success fw-bold">
-                                      ${extra.precio.toFixed(2)}
+                                    <div className="text-white fw-bold">
+                                      ${extra.precio}
                                     </div>
                                   </div>
                                 </label>
@@ -122,41 +120,41 @@ export const ModalExtras = () => {
             </div>
 
             {/* Área FIJA - Resumen y botones */}
-            <div className="modal-footer d-block border-top-0" style={{
+            <div className="modal-footer d-block border-top-0 bg-secondary" style={{
               borderTop: '1px solid #dee2e6',
               backgroundColor: 'white',
               padding: '1rem',
               flexShrink: 0
             }}>
               {/* Resumen del pedido */}
-              <div className="p-3 bg-light rounded mb-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
+              <div className="p-3 bg-secondary rounded mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-2 bg-secondary text-white">
                   <div>
                     <strong>{varianteElegida.descripcion}</strong>
-                    <div className="text-muted small">Precio base</div>
+                    <div className="text-white small">Precio base</div>
                   </div>
-                  <div className="text-primary fw-bold">
-                    ${varianteElegida.precio.toFixed(2)}
+                  <div className="text-white fw-bold">
+                    ${varianteElegida.precio}
                   </div>
                 </div>
                 
                 {extrasSeleccionados.length > 0 && (
                   <>
-                    <hr className="my-2" />
+                    <hr className="my-2"/>
                     {extrasSeleccionados.map((extra) => (
                       <div key={extra.id} className="d-flex justify-content-between align-items-center small">
                         <span>+ {extra.descripcion}</span>
-                        <span className="text-success">+${extra.precio.toFixed(2)}</span>
+                        <span className="text-white">+${extra.precio}</span>
                       </div>
                     ))}
                   </>
                 )}
                 
                 <hr className="my-2" />
-                <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex justify-content-between align-items-center bg-secondary text-dark">
                   <strong>Total:</strong>
-                  <strong className="text-success fs-5">
-                    ${(varianteElegida.precio + extrasSeleccionados.reduce((sum, extra) => sum + extra.precio, 0)).toFixed(2)}
+                  <strong className="text-dark fs-5">
+                    ${(varianteElegida.precio + extrasSeleccionados.reduce((sum, extra) => sum + extra.precio, 0))}
                   </strong>
                 </div>
               </div>
@@ -165,17 +163,17 @@ export const ModalExtras = () => {
               <div className="d-flex justify-content-between gap-2">
                 <button 
                   type="button" 
-                  className="btn btn-secondary" 
+                  className="btn btn-danger" 
                   onClick={volverAVariante}
                 >
                   Volver
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-primary" 
+                  className="btn btn-success" 
                   onClick={finalizarHamburguesa}
                 >
-                  Continuar
+                  Agregar
                 </button>
               </div>
             </div>

@@ -25,12 +25,12 @@ export const ModalHamburguesa = () => {
         aria-modal="true"
       >
         <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
               <h5 className="modal-title">{hamburguesaSeleccionada.nombreBase}</h5>
               <button 
                 type="button" 
-                className="btn-close" 
+                className="btn-close btn-close-white" 
                 onClick={cancelar}
                 aria-label="Close"
               ></button>
@@ -61,7 +61,7 @@ export const ModalHamburguesa = () => {
                   return (
                     <div 
                       key={variante.id}
-                      className={`p-3 border rounded ${varianteElegida?.id === variante.id ? 'border-primary' : ''}`}
+                      className={`bg-dark p-3 border rounded ${varianteElegida?.id === variante.id ? 'border-primary' : ''}`}
                       style={{ 
                         cursor: 'pointer', 
                         backgroundColor: varianteElegida?.id === variante.id ? '#f8f9fa' : 'white',
@@ -69,15 +69,12 @@ export const ModalHamburguesa = () => {
                       }}
                       onClick={() => setVarianteElegida(variante)}
                     >
-                      <div className="d-flex justify-content-between align-items-center">
+                      <div className="d-flex justify-content-between align-items-center bg-dark text-white">
                         <div>
                           <strong>{tipo}</strong>
-                          <div className="text-muted small">
-                            {variante.descripcion}
-                          </div>
                         </div>
-                        <div className="text-primary fw-bold">
-                          ${variante.precio.toFixed(2)}
+                        <div className="text-white fw-bold">
+                          ${variante.precio}
                         </div>
                       </div>
                     </div>
@@ -87,24 +84,23 @@ export const ModalHamburguesa = () => {
             </div>
 
             {/* Área FIJA - Resumen y botones */}
-            <div className="modal-footer d-block border-top-0" style={{
+            <div className="modal-footer d-block border-top-0 bg-secondary text-white" style={{
               borderTop: '1px solid #dee2e6',
-              backgroundColor: 'white',
               padding: '1rem',
               flexShrink: 0
             }}>
               {/* Resumen de selección */}
               {varianteElegida && (
-                <div className="p-2 bg-light rounded mb-3">
-                  <div className="d-flex justify-content-between align-items-center">
+                <div className="p-2 bg-secondary rounded mb-3">
+                  <div className="d-flex justify-content-between align-items-center bg-secondary text-white">
                     <div>
                       <strong>Seleccionado:</strong>
-                      <div className="text-muted small">
+                      <div className="text-white small">
                         {varianteElegida.descripcion}
                       </div>
                     </div>
-                    <div className="text-primary fw-bold">
-                      ${varianteElegida.precio.toFixed(2)}
+                    <div className="text-white fw-bold">
+                      ${varianteElegida.precio}
                     </div>
                   </div>
                 </div>
@@ -114,7 +110,7 @@ export const ModalHamburguesa = () => {
               <div className="d-flex justify-content-between gap-2">
                 <button 
                   type="button" 
-                  className="btn btn-secondary" 
+                  className="btn btn-danger" 
                   onClick={cancelar}
                 >
                   Cancelar
@@ -125,7 +121,7 @@ export const ModalHamburguesa = () => {
                   onClick={() => seleccionarVariante(varianteElegida)}
                   disabled={!varianteElegida}
                 >
-                  Continuar {varianteElegida ? `($${varianteElegida.precio.toFixed(2)})` : ''}
+                  Continuar
                 </button>
               </div>
             </div>

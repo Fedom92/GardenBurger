@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import logo from '../../img/logo_negro3.png';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
-
+import whatsapp from "../../img/whatsapp.webp";
 
 
 
@@ -74,7 +74,7 @@ export const PaginaDetalle = () => {
                <em> {pedido.cliente.telefono}</em>
               </div>
               <div className='d-flex m-2 gap-2'><p>Estado del pedido:</p>
-              <em>  {pedido.estado}</em>
+              <em className='fw-bold'>  {pedido.estado}</em>
               </div>
 
             {pedido.productos.map((producto) => {
@@ -99,6 +99,18 @@ export const PaginaDetalle = () => {
               <div>${pedido.total}</div>
             </div>
             </div>
+
+            {/*<button 
+              type="button"
+              className="btn btn-success mt-3 mb-3 fw-bold">
+              <img 
+                className='mx-2 img-fluid'
+                src={whatsapp} 
+                width="25rem"
+                alt="Logo Wsp" 
+              /> 
+              Enviar Whatsapp 
+              </button>*/}
           </>
         ) : (
 

@@ -25,14 +25,14 @@ export const ModalExtrasGenericos = () => {
         aria-modal="true"
       >
         <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
               <h5 className="modal-title">
-                {productoEnProceso.descripcion} - Agregar extras
+                {productoEnProceso.descripcion} - Agregar extras (opcional)
               </h5>
               <button 
                 type="button" 
-                className="btn-close" 
+                className="btn-close btn-close-white" 
                 onClick={cancelar}
                 aria-label="Close"
               ></button>
@@ -51,13 +51,11 @@ export const ModalExtrasGenericos = () => {
                   style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
                 /> */}
                 <h6 className="mt-2">{productoEnProceso.descripcion}</h6>
-                <p className="text-muted">${productoEnProceso.precio.toFixed(2)}</p>
+                <p className="text-white">${productoEnProceso.precio}</p>
               </div>
               
               {extrasGenericos.length > 0 ? (
-                <>
-                  <h6 className="mb-3">Selecciona extras (opcional):</h6>
-                  
+                <>                  
                   <div className="row">
                     {extrasGenericos.map((extra) => {
                       const estaSeleccionado = extrasGenericosSeleccionados.find(e => e.id === extra.id);
@@ -70,7 +68,7 @@ export const ModalExtrasGenericos = () => {
                           style={{ cursor: 'pointer' }}
                         >
                           <div 
-                            className={`p-3 border rounded ${estaSeleccionado ? 'border-success' : ''}`}
+                            className={`bg-dark p-3 border rounded ${estaSeleccionado ? 'border-success' : ''}`}
                             style={{ 
                               backgroundColor: estaSeleccionado ? '#f8fff9' : 'white',
                               transition: 'all 0.2s',
@@ -105,8 +103,8 @@ export const ModalExtrasGenericos = () => {
                                       </div>
                                     )}
                                   </div>
-                                  <div className="text-success fw-bold">
-                                    ${extra.precio.toFixed(2)}
+                                  <div className="text-white fw-bold">
+                                    ${extra.precio}
                                   </div>
                                 </div>
                               </div>
@@ -125,21 +123,21 @@ export const ModalExtrasGenericos = () => {
             </div>
 
             {/* Área FIJA - Resumen y botones */}
-            <div className="modal-footer d-block border-top-0" style={{
+            <div className="bg-secondary modal-footer d-block border-top-0" style={{
               borderTop: '1px solid #dee2e6',
               backgroundColor: 'white',
               padding: '1rem',
               flexShrink: 0
             }}>
               {/* Resumen del pedido */}
-              <div className="p-3 bg-light rounded mb-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
+              <div className="p-3 bg-secondary rounded mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-2 bg-secondary">
                   <div>
                     <strong>{productoEnProceso.descripcion}</strong>
-                    <div className="text-muted small">Precio base</div>
+                    <div className="text-white small">Precio base</div>
                   </div>
-                  <div className="text-primary fw-bold">
-                    ${productoEnProceso.precio.toFixed(2)}
+                  <div className="text-white fw-bold">
+                    ${productoEnProceso.precio}
                   </div>
                 </div>
                 
@@ -147,19 +145,19 @@ export const ModalExtrasGenericos = () => {
                   <>
                     <hr className="my-2" />
                     {extrasGenericosSeleccionados.map((extra) => (
-                      <div key={extra.id} className="d-flex justify-content-between align-items-center small">
+                      <div key={extra.id} className="d-flex justify-content-between align-items-center small bg-secondary">
                         <span>+ {extra.descripcion}</span>
-                        <span className="text-success">+${extra.precio.toFixed(2)}</span>
+                        <span className="text-white">+${extra.precio}</span>
                       </div>
                     ))}
                   </>
                 )}
                 
                 <hr className="my-2" />
-                <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex justify-content-between align-items-center bg-secondary text-dark">
                   <strong>Total:</strong>
-                  <strong className="text-success fs-5">
-                    ${(productoEnProceso.precio + extrasGenericosSeleccionados.reduce((sum, extra) => sum + extra.precio, 0)).toFixed(2)}
+                  <strong className="text-dark fs-5">
+                    ${(productoEnProceso.precio + extrasGenericosSeleccionados.reduce((sum, extra) => sum + extra.precio, 0))}
                   </strong>
                 </div>
               </div>
@@ -168,17 +166,17 @@ export const ModalExtrasGenericos = () => {
               <div className="d-flex justify-content-end gap-2">
                 <button 
                   type="button" 
-                  className="btn btn-secondary" 
+                  className="btn btn-danger" 
                   onClick={cancelar}
                 >
                   Cancelar
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-primary" 
+                  className="btn btn-success" 
                   onClick={finalizarProductoConExtras}
                 >
-                  Continuar
+                  Agregar
                 </button>
               </div>
             </div>

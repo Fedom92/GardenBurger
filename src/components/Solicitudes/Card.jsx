@@ -9,6 +9,7 @@ export const Card = ({ producto }) => {
     categoriasHamburguesas,
     limpiarNombreHamburguesa,
     aumentarCombo,
+    agregarAlCarrito,
   } = useContext(CartContext);
 
   // Determinar si es una hamburguesa
@@ -23,6 +24,9 @@ export const Card = ({ producto }) => {
     aumentarCombo();
     if (esHamburguesa && producto.variantes) {
       iniciarSeleccionHamburguesa(producto);
+    } else if (producto.categoria === 'BEBIDAS') {
+      // Las bebidas se agregan directamente sin modales
+      agregarAlCarrito(producto);
     } else {
       agregarProductoNormal(producto);
     }
@@ -41,7 +45,7 @@ export const Card = ({ producto }) => {
           </div>
           <div className="cardColumnCS m-3">
             <p className="precio">${(producto.precio).toFixed(2)}</p>
-            <button className='btnVerde' onClick={handleAgregar}>
+            <button type='button' className='btn btn-success' onClick={handleAgregar}>
               Agregar al pedido
             </button>
           </div>

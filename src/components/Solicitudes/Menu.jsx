@@ -87,8 +87,8 @@ const Menu = () => {
           <>
             {/* Hamburguesas */}
             <div className="w-100 d-flex flex-column align-items-center">
-              <h2 id="hamburguesas" className="w-75 tituloCategoria">HAMBURGUESAS</h2>
-              <div className="items">
+              <h2 id="hamburguesas" className="w-75 tituloCategoria_menu">HAMBURGUESAS</h2>
+              <div className="items_menu">
                 {hamburguesas.map((data, index) => (
                   <div className="item_menu" key={index}>
                     <h3>{data.descripcion}</h3>
@@ -115,7 +115,7 @@ const Menu = () => {
 
               return (
                 <div className="w-100 d-flex flex-column align-items-center" key={categoria.id}>
-                  <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
+                  <h2 id={categoria.nombre} className="w-75 tituloCategoria_menu">{categoria.nombre}</h2>
                   <div>
                     {productosEnCategoria.length > 0 ? (
                       productosEnCategoria.map(prod => (

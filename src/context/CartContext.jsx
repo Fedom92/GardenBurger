@@ -38,7 +38,6 @@ export const CartProvider = ({ children }) => {
   // Estados para modales y selecciones
   const [showModalVariante, setShowModalVariante] = useState(false);
   const [showModalExtras, setShowModalExtras] = useState(false);
-  const [showModalBebidas, setShowModalBebidas] = useState(false);
   const [showModalExtrasGenericos, setShowModalExtrasGenericos] = useState(false);
   
   const [hamburguesaSeleccionada, setHamburguesaSeleccionada] = useState(null);
@@ -46,7 +45,6 @@ export const CartProvider = ({ children }) => {
   const [varianteElegida, setVarianteElegida] = useState(null);
   const [extrasSeleccionados, setExtrasSeleccionados] = useState([]);
   const [extrasGenericosSeleccionados, setExtrasGenericosSeleccionados] = useState([]);
-  const [bebidaElegida, setBebidaElegida] = useState(null);
   const [hamburguesaEnProceso, setHamburguesaEnProceso] = useState(null);
   const [productoEnProceso, setProductoEnProceso] = useState(null);
   
@@ -138,7 +136,7 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const eliminar = useCallback((producto) => {
-    setCarrito(prevCarrito => prevCarrito.filter((prod) => !(prod.id == producto.id && prod.combo == producto.combo)));
+    setCarrito(prevCarrito => prevCarrito.filter((prod) => !(prod.id === producto.id && prod.combo === producto.combo)));
   }, []);
 
   const totalCarrito = useCallback(() => {
@@ -259,7 +257,6 @@ export const CartProvider = ({ children }) => {
       setVariantesHamburguesa(hamburguesa.variantes);
       setVarianteElegida(hamburguesa.variantes[0]);
       setExtrasSeleccionados([]);
-      setBebidaElegida(null);
       setHamburguesaEnProceso(null);
       setProductoEnProceso(null);
       setShowModalVariante(true);
@@ -314,11 +311,6 @@ export const CartProvider = ({ children }) => {
     });
   }, [productoEnProceso]);
 
-  // Función para seleccionar bebida
-  const seleccionarBebida = useCallback((bebida) => {
-    setBebidaElegida(bebida);
-  }, []);
-
   // Función para volver al modal de variante
   const volverAVariante = useCallback(() => {
     setShowModalExtras(false);
@@ -326,55 +318,61 @@ export const CartProvider = ({ children }) => {
     setExtrasSeleccionados([]);
   }, []);
 
-  // Función para volver al modal de extras
-  const volverAExtras = useCallback(() => {
-    setShowModalBebidas(false);
-    setShowModalExtras(true);
-    setBebidaElegida(null);
-  }, []);
-
-    const volverAExtrasGenerico = useCallback(() => {
-    setShowModalBebidas(false);
-    setShowModalExtrasGenericos(true);
-    setBebidaElegida(null);
-  }, []);
-
   // Función para finalizar hamburguesa
   const finalizarHamburguesa = useCallback(() => {
-    if (varianteElegida) {
-      if (hamburguesaEnProceso && hamburguesaYaEnCarrito(hamburguesaEnProceso.id)) {
-        eliminar(hamburguesaEnProceso);
-      }
-      
-      eliminarExtrasAnteriores();
-      setHamburguesaEnProceso(varianteElegida);
-      
-      setShowModalExtras(false);
-      setShowModalBebidas(true);
+    if (!varianteElegida) return;
+
+    // Si estaba editando una hamburguesa existente, eliminarla primero
+    if (hamburguesaEnProceso && hamburguesaYaEnCarrito(hamburguesaEnProceso.id)) {
+      eliminar(hamburguesaEnProceso);
     }
-  }, [varianteElegida, hamburguesaEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasAnteriores]);
+      
+    // Eliminar extras anteriores si existían
+    eliminarExtrasAnteriores();
+
+    agregarAlCarrito(varianteElegida);
+    extrasSeleccionados.forEach(extra => {
+      agregarAlCarrito({
+        ...extra,
+        tipoExtra: "HAMBURGUESA"
+      });
+    });
+      
+    setShowModalExtras(false);
+    
+  }, [varianteElegida, hamburguesaEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasAnteriores, extrasSeleccionados, agregarAlCarrito]);
 
   // Función para finalizar producto con extras genéricos
   const finalizarProductoConExtras = useCallback(() => {
-    if (productoEnProceso) {
-      // Si el producto ya está en el carrito, eliminarlo primero
-      if (hamburguesaYaEnCarrito(productoEnProceso.id)) {
-        eliminar(productoEnProceso);
-      }
+    if (!productoEnProceso) return;
+
+    // Si el producto ya está en el carrito, eliminarlo primero
+    if (hamburguesaYaEnCarrito(productoEnProceso.id)) {
+      eliminar(productoEnProceso);
+    }
       
-      // Eliminar extras genéricos anteriores
-      eliminarExtrasGenericosAnteriores();
-      setProductoEnProceso(productoEnProceso);
+    // Eliminar extras genéricos anteriores
+    eliminarExtrasGenericosAnteriores();
+    
+    //Agregar
+    agregarAlCarrito(productoEnProceso);
+    extrasGenericosSeleccionados.forEach(extra => {
+      agregarAlCarrito({
+        ...extra,
+        tipoExtra: "GENERAL",
+        productoAsociado: productoEnProceso.id
+      });
+    });
       
-      
-      // Cerrar modal de extras genéricos
-      setShowModalExtrasGenericos(false);
-      setShowModalBebidas(true);
+    // Cerrar
+    setProductoEnProceso(null);
+    setExtrasGenericosSeleccionados([]);
+    setShowModalExtrasGenericos(false);
       //document.body.style.overflow = 'auto';
       // setExtrasGenericosSeleccionados([]);
       // setProductoEnProceso(null);
-    }
-  }, [productoEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasGenericosAnteriores]);
+    
+  }, [productoEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasGenericosAnteriores,extrasGenericosSeleccionados,agregarAlCarrito]);
 
   // Función para agregar producto normal
   const agregarProductoNormal = useCallback((producto) => {
@@ -383,61 +381,10 @@ export const CartProvider = ({ children }) => {
       iniciarSeleccionExtrasGenericos(producto);
     } else {
       agregarAlCarrito(producto);
-      
-      const categoriasQueRequierenBebida = ['SIMPLE', 'DOBLE', 'TRIPLE', 'CAJA PAPAS', 'POLLO CRISPY', 'NUGGETS'];
-      if (categoriasQueRequierenBebida.includes(producto.categoria) && cantidadBebidas() === 0) {
-        setShowModalBebidas(true);
-        document.body.style.overflow = 'hidden';
-      }
     }
-  }, [extrasGenericos, agregarAlCarrito, cantidadBebidas, iniciarSeleccionExtrasGenericos]);
+  }, [extrasGenericos, agregarAlCarrito, iniciarSeleccionExtrasGenericos]);
 
-  // Función para agregar bebida y finalizar
-  const agregarBebidaYFinalizar = useCallback(() => {
-    agregarAlCarrito(varianteElegida);
-    
-    extrasSeleccionados.forEach(extra => {
-      agregarAlCarrito(extra);
-    });
-    
-    if (bebidaElegida) {
-      agregarAlCarrito(bebidaElegida);
-    }
-    
-    cerrarModales();
-  }, [varianteElegida, extrasSeleccionados, bebidaElegida, agregarAlCarrito]);
-
-    const agregarBebidaYFinalizarConExtrasGenericos = useCallback(() => {
-    agregarAlCarrito(productoEnProceso);
-    
-    extrasGenericosSeleccionados.forEach(extra => {
-      agregarAlCarrito(extra);
-    });
-    
-    if (bebidaElegida) {
-      agregarAlCarrito(bebidaElegida);
-    }
-    
-    cerrarModales();
-  }, [productoEnProceso, extrasGenericosSeleccionados, bebidaElegida, agregarAlCarrito]);
-
-  // Función para saltar bebida
-  const saltarBebida = useCallback(() => {
-    hamburguesaSeleccionada?agregarAlCarrito(varianteElegida):agregarAlCarrito(productoEnProceso);
-    
-    hamburguesaSeleccionada?
-    extrasSeleccionados.forEach(extra => {
-      agregarAlCarrito(extra);
-    })
-    : extrasGenericosSeleccionados.forEach(extra => {
-      agregarAlCarrito(extra);
-    });
-    
-    
-    cerrarModales();
-  }, [varianteElegida,productoEnProceso, extrasSeleccionados,extrasGenericosSeleccionados, agregarAlCarrito]);
-
-    const cancelar = useCallback(() => {
+  const cancelar = useCallback(() => {
     disminuirCombo();
     cerrarModales();
   }, []);
@@ -446,13 +393,11 @@ export const CartProvider = ({ children }) => {
   const cerrarModales = useCallback(() => {
     setShowModalVariante(false);
     setShowModalExtras(false);
-    setShowModalBebidas(false);
     setShowModalExtrasGenericos(false);
     setHamburguesaSeleccionada(null);
     setVarianteElegida(null);
     setExtrasSeleccionados([]);
     setExtrasGenericosSeleccionados([]);
-    setBebidaElegida(null);
     setHamburguesaEnProceso(null);
     setProductoEnProceso(null);
     document.body.style.overflow = 'auto';
@@ -520,7 +465,7 @@ export const CartProvider = ({ children }) => {
   }, [cargarExtrasYBebidas]);
 
   useEffect(() => {
-    if (showModalVariante || showModalExtras || showModalBebidas || showModalExtrasGenericos) {
+    if (showModalVariante || showModalExtras || showModalExtrasGenericos) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
@@ -529,7 +474,7 @@ export const CartProvider = ({ children }) => {
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, [showModalVariante, showModalExtras, showModalBebidas, showModalExtrasGenericos]);
+  }, [showModalVariante, showModalExtras, showModalExtrasGenericos]);
 
   useEffect(() => {
     localStorage.setItem("carrito", JSON.stringify(carrito));
@@ -562,14 +507,12 @@ export const CartProvider = ({ children }) => {
     // Estados para modales
     showModalVariante,
     showModalExtras,
-    showModalBebidas,
     showModalExtrasGenericos,
     hamburguesaSeleccionada,
     variantesHamburguesa,
     varianteElegida,
     extrasSeleccionados,
     extrasGenericosSeleccionados,
-    bebidaElegida,
     hamburguesaEnProceso,
     productoEnProceso,
     extrasHamburguesas,
@@ -579,12 +522,10 @@ export const CartProvider = ({ children }) => {
     
     // Setters para actualizar desde componentes
     setVarianteElegida,
-    setBebidaElegida,
     setExtrasSeleccionados,
     setExtrasGenericosSeleccionados,
     setShowModalVariante,
     setShowModalExtras,
-    setShowModalBebidas,
     setShowModalExtrasGenericos,
     
     // Funciones de selección
@@ -594,15 +535,9 @@ export const CartProvider = ({ children }) => {
     seleccionarVariante,
     toggleExtra,
     toggleExtraGenerico,
-    seleccionarBebida,
     volverAVariante,
-    volverAExtras,
-    volverAExtrasGenerico,
     finalizarHamburguesa,
     finalizarProductoConExtras,
-    agregarBebidaYFinalizar,
-    agregarBebidaYFinalizarConExtrasGenericos,
-    saltarBebida,
     cerrarModales,
     cancelar,
     agregarProductoNormal,
@@ -629,14 +564,12 @@ export const CartProvider = ({ children }) => {
     cantidadBebidas,
     showModalVariante,
     showModalExtras,
-    showModalBebidas,
     showModalExtrasGenericos,
     hamburguesaSeleccionada,
     variantesHamburguesa,
     varianteElegida,
     extrasSeleccionados,
     extrasGenericosSeleccionados,
-    bebidaElegida,
     hamburguesaEnProceso,
     productoEnProceso,
     extrasHamburguesas,
@@ -644,12 +577,10 @@ export const CartProvider = ({ children }) => {
     bebidasDisponibles,
     categoriasHamburguesas,
     setVarianteElegida,
-    setBebidaElegida,
     setExtrasSeleccionados,
     setExtrasGenericosSeleccionados,
     setShowModalVariante,
     setShowModalExtras,
-    setShowModalBebidas,
     setShowModalExtrasGenericos,
     obtenerHamburguesasConVariantes,
     iniciarSeleccionHamburguesa,
@@ -657,15 +588,9 @@ export const CartProvider = ({ children }) => {
     seleccionarVariante,
     toggleExtra,
     toggleExtraGenerico,
-    seleccionarBebida,
     volverAVariante,
-    volverAExtras,
-    volverAExtrasGenerico,
     finalizarHamburguesa,
     finalizarProductoConExtras,
-    agregarBebidaYFinalizar,
-    agregarBebidaYFinalizarConExtrasGenericos,
-    saltarBebida,
     cerrarModales,
     cancelar,
     agregarProductoNormal,

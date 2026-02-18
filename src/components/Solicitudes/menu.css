@@ -10,7 +10,7 @@
   color: darkgrey;
 }
 
-.titulo_menu, .subtitulo_menu, .tituloCategoria{
+.titulo_menu, .subtitulo_menu, .tituloCategoria_menu{
   font-family: "Bebas Neue", sans-serif;
   font-weight: 400;
   font-style: normal;
@@ -18,7 +18,7 @@
   color: white;
 }
 
-.items {
+.items_menu {
   margin-top: -20px;
 }
 

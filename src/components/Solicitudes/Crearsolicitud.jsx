@@ -9,10 +9,10 @@ import { CardCarousel } from "./CardCarrousel.jsx";
 import { ModalHamburguesa } from "./ModalHamburguesa.jsx";
 import { ModalExtras } from "./ModalExtras.jsx";
 import { ModalExtrasGenericos } from "./ModalExtrasGenericos.jsx";
-import { ModalBebidas } from "./ModalBebidas.jsx";
 import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
+import '../../style/Main.css';
 
 const CrearSolicitud = () => {
   const [categorias, setCategorias] = useState([]);
@@ -57,7 +57,7 @@ const CrearSolicitud = () => {
     - Opción: ${data.opcion === "delivery" ? "Delivery" : "Retiro en local"}
     ${data.opcion === "delivery" ? `- Dirección: ${data.direccion}` : ""}
     - Metodo de pago: ${data.metodoPago}
-    - Detalle: http://192.168.0.11:3000/crear-solicitud/${doc.id}`;
+    - Detalle: gardenburger.com.ar/crear-solicitud/${doc.id}`;
 
         const mensajeCodificado = encodeURIComponent(mensaje);
 
@@ -145,6 +145,8 @@ const CrearSolicitud = () => {
     return <p>Cargando...</p>;
   }
 
+  const hamburguesas = obtenerHamburguesasConVariantes(productos);
+
   return (
     <div>
       <header>
@@ -217,55 +219,85 @@ const CrearSolicitud = () => {
 
         {/* fin carrousel */}
 
-
-        <div className='mainpageCS itemListConteiner'>
-          {categorias.length > 0 && productos.length > 0 ? (
-            <>
-              {/* SECCIÓN DE HAMBURGUESAS (con variantes) */}
-              {obtenerHamburguesasConVariantes(productos).length > 0 && (
-                <div className="w-100 d-flex flex-column align-items-center">
-                  <h2 id="HAMBURGUESAS" className="w-75 tituloCategoria">HAMBURGUESAS</h2>
-                  <div>
-                    {obtenerHamburguesasConVariantes(productos).map(producto => (
-                      <Card key={producto.id} producto={producto} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* OTRAS CATEGORÍAS (excepto las de hamburguesas) */}
-              {categorias.map(categoria => {
-                if (categoriasHamburguesas.includes(categoria.nombre)) {
-                  return null;
-                }
-
-                const productosEnCategoria = productos.filter(
-                  producto => producto.categoria === categoria.nombre
-                );
-
-                return (
-                  <div className="w-100 d-flex flex-column align-items-center" key={categoria.id}>
-                    {(categoria.nombre !== 'EXTRA' && categoria.nombre !== 'BEBIDAS') ? (
-                      <>
-                        <h2 id={categoria.nombre} className="w-75 tituloCategoria">{categoria.nombre}</h2>
-                        <div>
-                          {productosEnCategoria.length > 0 ? (
-                            productosEnCategoria.map(producto => (
-                              <Card key={producto.id} producto={producto} />
-                            ))
-                          ) : (
-                            <p>No hay productos en esta categoría</p>
-                          )}
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </>
-          ) : (
-            <p>No hay categorías o productos disponibles</p>
-          )}
+        {/* Sección de categorías con accordions */}
+        <div className='mainpageCS itemListConteiner accordionSectionCS'>
+           {categorias.length === 0 || productos.length === 0 ? (
+             <div className="text-white fw-bold text-center py-5">
+               No hay categorías o productos disponibles
+             </div>
+           ) : (
+             <div className="accordion accordionCS mt-3" id="accordionCategorias">
+       
+               {/* HAMBURGUESAS */}
+               {hamburguesas.length > 0 && (
+                 <div className="accordion-item accordionItemCS">
+                   <h2 className="accordion-header" id="headingHAMBURGUESAS">
+                     <button
+                       className="accordion-button accordionButtonCS"
+                       type="button"
+                       data-bs-toggle="collapse"
+                       data-bs-target="#collapseHAMBURGUESAS"
+                       aria-expanded="true"
+                       aria-controls="collapseHAMBURGUESAS"
+                     >
+                       HAMBURGUESAS
+                     </button>
+                   </h2>
+       
+                   <div
+                     id="collapseHAMBURGUESAS"
+                     className="accordion-collapse collapse"
+                     data-bs-parent="#accordionCategorias"
+                   >
+                     <div className="accordion-body text-center">
+                       {hamburguesas.map(p => (
+                         <Card key={p.id} producto={p} />
+                       ))}
+                     </div>
+                   </div>
+                 </div>
+               )}
+       
+               {/* RESTO CATEGORÍAS */}
+               {categorias
+                 .filter(cat => !categoriasHamburguesas.includes(cat.nombre) && cat.nombre !== "EXTRA")
+                 .map((categoria, index) => {
+                   const productosCat = productos.filter(p => p.categoria === categoria.nombre);
+                   if (!productosCat.length) return null;
+       
+                   const safeName = categoria.nombre.replace(/\s+/g, "");
+                   const isFirst = index === 0 && hamburguesas.length === 0;
+       
+                   return (
+                     <div key={categoria.id} className="accordion-item accordionItemCS">
+                       <h2 className="accordion-header" id={`heading${safeName}`}>
+                         <button
+                           className={"accordion-button accordionButtonCS"}
+                           type="button"
+                           data-bs-toggle="collapse"
+                           data-bs-target={`#collapse${safeName}`}
+                         >
+                           {categoria.nombre}
+                         </button>
+                       </h2>
+       
+                       <div
+                         id={`collapse${safeName}`}
+                         className="accordion-collapse collapse"
+                         data-bs-parent="#accordionCategorias"
+                       >
+                         <div className="accordion-body text-center">
+                           {productosCat.map(p => (
+                             <Card key={p.id} producto={p} />
+                           ))}
+                         </div>
+                       </div>
+                     </div>
+                   );
+                 })}
+       
+             </div>
+           )}
 
           <h2 id='finalizarCompra' className="w-75 tituloCategoria">Finalizar Compra</h2>
           <div className='itemsConteiner position-relative z-3'>
@@ -283,14 +315,14 @@ const CrearSolicitud = () => {
                     <button className='aumentar' onClick={() => aumentar(producto)}>+</button> */}
                   </div>
                   <div className="precioVP">${(producto.precio * producto.amountInCart).toFixed(2)}</div>
-                  {<button className='eliminar' onClick={() => eliminar(producto)}>❌</button>}
+                  {<button type="button" className="btn btn-danger" onClick={() => eliminar(producto)}>❌</button>}
                 </div>
               )
             })}
 
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
-                <button className='eliminar' onClick={() => vaciarCarrito()}>Vaciar carrito</button>
+                <button type="button" className="btn btn-danger" onClick={() => vaciarCarrito()}>Vaciar carrito</button>
                 <div className="m-2 fw-bold">Total: ${pagoSeleccionado === "MP" ? totalCarrito() + parseFloat(process.env.REACT_APP_recargoMP) : totalCarrito()}</div>
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
@@ -365,14 +397,14 @@ const CrearSolicitud = () => {
                       </label>
                     </div>
                   </div>
-                  {errors.metodoPago && <p style={{ color: 'red' }}>{errors.metodoPago.message}</p>}
+                  {errors.metodoPago && <p className="text-danger">{errors.metodoPago.message}</p>}
                   {pagoSeleccionado === "MP" && (
                     <>
-                      <p style={{ color: 'red' }}>{'La transferencia tiene un recargo de $'}{process.env.REACT_APP_recargoMP}</p>
-                      <p style={{ color: 'red' }}>{'Advertencia: HASTA QUE NO INGRESE LA TRANSFERENCIA NO SE TOMARÁ SU PEDIDO'}</p>
+                      <p className="text-danger">{'La transferencia tiene un recargo de '}{process.env.REACT_APP_recargoMP}</p>
+                      <p className="text-danger fw-bold">{'Advertencia: HASTA QUE NO INGRESE LA TRANSFERENCIA NO SE TOMARÁ SU PEDIDO'}</p>
                     </>
                   )}
-                  <button className='btnVerde' type="submit">Comprar</button>
+                  <button className="btn btn-success" type="submit">Comprar</button>
                 </form>
               </div>
               : <><p className='error'>Sin productos seleccionados.</p><a href='/crear-solicitud#HAMBURGUESAS'><p className='fw-bold'>Ir a inicio ↑↑↑</p></a></>}
@@ -383,7 +415,6 @@ const CrearSolicitud = () => {
       {/* Importar todos los modales */}
       <ModalHamburguesa />
       <ModalExtras />
-      <ModalBebidas />
       <ModalExtrasGenericos />
 
       <footer className="bg-dark text-white py-4  position-relative z-3 ">
