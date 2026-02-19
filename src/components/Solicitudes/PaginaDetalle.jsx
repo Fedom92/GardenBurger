@@ -6,6 +6,8 @@ import { db } from "../../firebaseConfig/firebase";
 import whatsapp from "../../img/whatsapp.webp";
 import  { useContext } from "react";
 import { CartContext } from '../../context/CartContext.jsx'
+import { FaCartPlus } from 'react-icons/fa';
+import { Link } from "react-router-dom";
 
 
 
@@ -35,9 +37,10 @@ export const PaginaDetalle = () => {
     fetchPedido();
   }, [id]);
 
-  const enviarMensajeWSP = (()=>{
-    window.open(`https://wa.me/${process.env.REACT_APP_celular}?text=${mensajeWSP}`, "_blank")
+  const enviarMensajeWSP = (()=>{   
+    window.open(`https://api.whatsapp.com/send?phone=${process.env.REACT_APP_celular}&text=${mensajeWSP}`, "_blank")
   })
+
 
 
   return (
@@ -108,18 +111,29 @@ export const PaginaDetalle = () => {
             </div>
             </div>
 
-            <button 
-              type="button"
-              className="btn btn-success mt-3 mb-3 fw-bold"
-              onClick={enviarMensajeWSP}>
-              <img 
-                className='mx-2 img-fluid'
-                src={whatsapp} 
-                width="25rem"
-                alt="Logo Wsp" 
-              /> 
-              Enviar Whatsapp 
+            <div className='d-flex flex-column align-items-center text-center mt-3 mb-3 w-50 mx-auto'>
+              <button
+                type="button"
+                className="btn btn-success fw-bold d-flex align-items-center justify-content-center gap-2"
+                onClick={enviarMensajeWSP}
+              >
+                <img 
+                  src={whatsapp} 
+                  width="20"
+                  alt="Logo Wsp"
+                /> 
+                Enviar Whatsapp 
               </button>
+
+              <Link 
+                to="/crear-solicitud"
+                className="btn btn-primary fw-bold mt-3 d-flex align-items-center justify-content-center gap-2"
+              >
+                <FaCartPlus />
+                Hacer Otro Pedido
+              </Link>
+
+              </div>
           </>
         ) : (
 

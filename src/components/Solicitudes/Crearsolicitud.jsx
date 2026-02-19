@@ -51,22 +51,30 @@ const CrearSolicitud = () => {
     const solicitudesRef = collection(db, "solicitudes")
 
     addDoc(solicitudesRef, solicitud)
-      .then((doc) => {
-        const mensaje = `¡Hola! Quiero hacer una compra:
-    - Nombre: ${data.nombre}
-    - Teléfono: ${data.telefono}
-    - Opción: ${data.opcion === "delivery" ? "Delivery" : "Retiro en local"}
-    ${data.opcion === "delivery" ? `- Dirección: ${data.direccion}` : ""}
-    - Metodo de pago: ${data.metodoPago}
-    - Detalle: gardenburger.com.ar/crear-solicitud/${doc.id}`;
+    .then((doc) => {
+  
+    const mensaje = `
+      🍔 *NUEVO PEDIDO WEB*
+      
+      👤 Nombre: ${data.nombre}
+      📞 Teléfono: ${data.telefono}
+      💳 Método de pago: ${data.metodoPago}
+      ${data.opcion === "delivery"? ` 🛵 Delivery
+      📍 Dirección: ${data.direccion}`
+        : `🏪 Retiro en local`}
+      
+      🔎 *Ver detalle pedido*
+      https://gardenburger.com.ar/ver-pedido/${doc.id}
+      `;
+      
+      const mensajeCodificado = encodeURIComponent(mensaje.trim());
 
-         actualizarMensajeWSP( mensaje);
+      actualizarMensajeWSP(mensajeCodificado);
 
+      setDocId(doc.id)
+      vaciarCarrito();
 
-        setDocId(doc.id)
-        vaciarCarrito();
-
-        navigate(`/ver-pedido/${doc.id}`);
+      navigate(`/ver-pedido/${doc.id}`);
       })
   }
 
