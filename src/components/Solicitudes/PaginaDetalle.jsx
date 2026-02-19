@@ -4,12 +4,16 @@ import logo from '../../img/logo_negro3.png';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import whatsapp from "../../img/whatsapp.webp";
+import  { useContext } from "react";
+import { CartContext } from '../../context/CartContext.jsx'
 
 
 
 export const PaginaDetalle = () => {
   const { id } = useParams(); // ID de la URL
   const [pedido, setPedido] = useState(null);
+
+    const {mensajeWSP} = useContext(CartContext);
 
   useEffect(() => {
     const fetchPedido = async () => {
@@ -30,6 +34,10 @@ export const PaginaDetalle = () => {
 
     fetchPedido();
   }, [id]);
+
+  const enviarMensajeWSP = (()=>{
+    window.open(`https://wa.me/${process.env.REACT_APP_celular}?text=${mensajeWSP}`, "_blank")
+  })
 
 
   return (
@@ -53,7 +61,7 @@ export const PaginaDetalle = () => {
       </main>
 
       <div>
-        <h1>Detalle del pedido</h1>
+        <h1>Gracias por tu compra!</h1>
         {pedido ? (
           <>
             <div className='itemsConteiner'>
@@ -100,9 +108,10 @@ export const PaginaDetalle = () => {
             </div>
             </div>
 
-            {/*<button 
+            <button 
               type="button"
-              className="btn btn-success mt-3 mb-3 fw-bold">
+              className="btn btn-success mt-3 mb-3 fw-bold"
+              onClick={enviarMensajeWSP}>
               <img 
                 className='mx-2 img-fluid'
                 src={whatsapp} 
@@ -110,7 +119,7 @@ export const PaginaDetalle = () => {
                 alt="Logo Wsp" 
               /> 
               Enviar Whatsapp 
-              </button>*/}
+              </button>
           </>
         ) : (
 

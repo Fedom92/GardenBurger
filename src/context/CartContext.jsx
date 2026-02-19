@@ -35,6 +35,8 @@ const limpiarNombreHamburguesa = (nombre) => {
 export const CartProvider = ({ children }) => {
   const [carrito, setCarrito] = useState(getCarritoInicial);
   const [combo, setCombo] = useState(getComboInicial);
+
+  const [mensajeWSP, setMensajeWSP] = useState('');
   // Estados para modales y selecciones
   const [showModalVariante, setShowModalVariante] = useState(false);
   const [showModalExtras, setShowModalExtras] = useState(false);
@@ -98,6 +100,11 @@ export const CartProvider = ({ children }) => {
       //}
     });
   }, [combo]);
+
+
+    const actualizarMensajeWSP = useCallback((nuevoMensaje) => {
+      setMensajeWSP(nuevoMensaje);
+  }, []);
   
   const aumentarCombo = useCallback(() => {
     setCombo(prevCombo => {
@@ -490,6 +497,8 @@ export const CartProvider = ({ children }) => {
     // Estado del carrito
     carrito,
     setCarrito,
+    mensajeWSP,
+    actualizarMensajeWSP,
     
     // Funciones básicas del carrito
     agregarAlCarrito,
@@ -576,6 +585,7 @@ export const CartProvider = ({ children }) => {
     extrasGenericos,
     bebidasDisponibles,
     categoriasHamburguesas,
+    mensajeWSP,
     setVarianteElegida,
     setExtrasSeleccionados,
     setExtrasGenericosSeleccionados,
@@ -596,7 +606,8 @@ export const CartProvider = ({ children }) => {
     agregarProductoNormal,
     limpiarNombreHamburguesa,
     hamburguesaYaEnCarrito,
-    cargarExtrasYBebidas
+    cargarExtrasYBebidas,
+    actualizarMensajeWSP
   ]);
 
   return (

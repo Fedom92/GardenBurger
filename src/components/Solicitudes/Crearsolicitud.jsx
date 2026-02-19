@@ -27,7 +27,8 @@ const CrearSolicitud = () => {
     totalCarrito,
     vaciarCarrito,
     obtenerHamburguesasConVariantes,
-    categoriasHamburguesas
+    categoriasHamburguesas,
+    actualizarMensajeWSP
   } = useContext(CartContext);
 
   //registro
@@ -42,7 +43,7 @@ const CrearSolicitud = () => {
     const solicitud = {
       cliente: data,
       productos: carrito,
-      total: pagoSeleccionado === "MP" ? totalCarrito() + parseFloat(process.env.REACT_APP_recargoMP) : totalCarrito(),
+      total: pagoSeleccionado === "MP" ? totalCarrito() + totalCarrito() * parseFloat(process.env.REACT_APP_recargoMP)/100 : totalCarrito(),
       estado: "PENDIENTE",
       fecha: new Date()
     }
@@ -59,9 +60,9 @@ const CrearSolicitud = () => {
     - Metodo de pago: ${data.metodoPago}
     - Detalle: gardenburger.com.ar/crear-solicitud/${doc.id}`;
 
-        const mensajeCodificado = encodeURIComponent(mensaje);
+         actualizarMensajeWSP( mensaje);
 
-        window.open(`https://wa.me/${process.env.REACT_APP_celular}?text=${mensajeCodificado}`, "_blank");
+
         setDocId(doc.id)
         vaciarCarrito();
 
@@ -323,7 +324,7 @@ const CrearSolicitud = () => {
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
                 <button type="button" className="btn btn-danger" onClick={() => vaciarCarrito()}>Vaciar carrito</button>
-                <div className="m-2 fw-bold">Total: ${pagoSeleccionado === "MP" ? totalCarrito() + parseFloat(process.env.REACT_APP_recargoMP) : totalCarrito()}</div>
+                <div className="m-2 fw-bold">Total: ${ pagoSeleccionado === "MP" ? totalCarrito() + totalCarrito() * parseFloat(process.env.REACT_APP_recargoMP)/100 : totalCarrito()}</div>
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
@@ -400,7 +401,7 @@ const CrearSolicitud = () => {
                   {errors.metodoPago && <p className="text-danger">{errors.metodoPago.message}</p>}
                   {pagoSeleccionado === "MP" && (
                     <>
-                      <p className="text-danger">{'La transferencia tiene un recargo de '}{process.env.REACT_APP_recargoMP}</p>
+                      <p className="text-danger">{'La transferencia tiene un recargo de '}{process.env.REACT_APP_recargoMP}%</p>
                       <p className="text-danger fw-bold">{'Advertencia: HASTA QUE NO INGRESE LA TRANSFERENCIA NO SE TOMARÁ SU PEDIDO'}</p>
                     </>
                   )}
