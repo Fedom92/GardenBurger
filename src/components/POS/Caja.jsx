@@ -10,7 +10,7 @@ import '../../style/Main.css';
 import PendientesMP from './PendientesMP';
 import PendientesSolicitudes from './PendientesSolicitudes';
 import EliminarTickets from './EliminarTickets';
-import AddressAutocomplete from '../shared/AddressAutocomplete';
+import AutocompleteGoogle from '../../Utils/AutocompleteGoogle';
 import logoMP from '../../img/mercado-pago.webp';
 
 
@@ -590,7 +590,7 @@ const Caja = () => {
                                             }}
                                         />
                                         <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Nombre..." autoComplete="off" required {...register("nombre")} />
-                                        <AddressAutocomplete
+                                        <AutocompleteGoogle
                                             value={watch("direccion")}
                                             onChange={({ direccion, latitud, longitud }) => {
                                                 setValue("direccion", direccion || "");
