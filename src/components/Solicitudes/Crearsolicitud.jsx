@@ -155,7 +155,18 @@ const CrearSolicitud = () => {
   }
 
   const hamburguesas = obtenerHamburguesasConVariantes(productos);
+  
+  const obtenerHamburguesasDePollo = () => {
+    // Buscar la categoría 'POLLO CRISPY'
+    const categoriaPollo = categorias.find(cat => cat.nombre === 'POLLO CRISPY');
+    
+    if (!categoriaPollo) return [];
+    
+    // Filtrar productos que pertenecen a la categoría POLLO CRISPY
+    return productos.filter(p => p.categoria === categoriaPollo.nombre);
+  };
 
+  const hamburguesasPollo = obtenerHamburguesasDePollo();
   return (
     <div>
       <header>
@@ -163,7 +174,7 @@ const CrearSolicitud = () => {
         <img className='mobile-img logoCS' src={logoMobile} alt="logoGardenMobile" />
       </header>
       <main>
-        <section className="m-1">
+        {/* <section className="m-1">
           <div className="d-flex flex-wrap justify-content-center align-items-center">
 
             <div className="d-flex align-items-center ms-2 me-2">
@@ -177,7 +188,7 @@ const CrearSolicitud = () => {
             </div>
 
           </div>
-        </section>
+        </section> */}
         {carrito.length > 0 &&
           <div className="position-fixed bottom-0 end-0 z-2 m-3">
             <a href='/crear-solicitud#finalizarCompra' className="btnVerde p-3">Ver pedido
@@ -185,7 +196,7 @@ const CrearSolicitud = () => {
             </a>
           </div>}
         {/* inicio carrousel */}
-        {productos.some(prod => prod.oferta === true) && (
+        {/* {productos.some(prod => prod.oferta === true) && (
           <div
             id="carouselExampleAutoplaying"
             className="carousel slide"
@@ -224,7 +235,7 @@ const CrearSolicitud = () => {
               <span className="visually-hidden">Next</span>
             </button>
           </div>
-        )}
+        )} */}
 
         {/* fin carrousel */}
 
@@ -261,15 +272,22 @@ const CrearSolicitud = () => {
                      <div className="accordion-body text-center">
                        {hamburguesas.map(p => (
                          <Card key={p.id} producto={p} />
-                       ))}
+                       ))
+                       }
+                       {hamburguesasPollo.map(p => (
+                         <Card key={p.id} producto={p} />
+                       ))
+                       }
                      </div>
                    </div>
                  </div>
                )}
+
+               
        
                {/* RESTO CATEGORÍAS */}
                {categorias
-                 .filter(cat => !categoriasHamburguesas.includes(cat.nombre) && cat.nombre !== "EXTRA")
+                 .filter(cat => !categoriasHamburguesas.includes(cat.nombre) && cat.nombre !== "EXTRA" && cat.nombre !== 'POLLO CRISPY')
                  .map((categoria, index) => {
                    const productosCat = productos.filter(p => p.categoria === categoria.nombre);
                    if (!productosCat.length) return null;

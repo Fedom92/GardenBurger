@@ -888,7 +888,7 @@ select {
 
 /* Sección de accordions - después del carrusel, antes de Finalizar Compra */
 .accordionSectionCS {
-  padding: 0 1rem 1rem;
+  padding: 0 0 0;
 }
 
 .accordionCS {
@@ -927,7 +927,7 @@ select {
 .accordionCS .accordion-body {
   background-color: #000;
   color: white;
-  padding: 1rem;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;

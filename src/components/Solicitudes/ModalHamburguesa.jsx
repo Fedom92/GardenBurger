@@ -6,8 +6,6 @@ export const ModalHamburguesa = () => {
     showModalVariante,
     hamburguesaSeleccionada,
     variantesHamburguesa,
-    varianteElegida,
-    setVarianteElegida,
     seleccionarVariante,
     cancelar
   } = useContext(CartContext);
@@ -40,88 +38,55 @@ export const ModalHamburguesa = () => {
             <div className="modal-body" style={{ 
               overflowY: 'auto',
               flex: '1 1 auto',
-              maxHeight: 'calc(90vh - 130px)' // Ajustado para este modal
+              maxHeight: 'calc(90vh - 130px)'
             }}>
               <div className="text-center mb-3">
                 <img 
-                  src={varianteElegida?.imagen || hamburguesaSeleccionada.imagen} 
+                  src={hamburguesaSeleccionada.imagen} 
                   alt={hamburguesaSeleccionada.nombreBase}
                   style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
                 />
               </div>
               
-              <h6 className="text-center mb-3">Selecciona una opción:</h6>
+              <h6 className="text-center mb-4">Elige tu opción:</h6>
               
-              <div className="d-flex flex-column gap-2">
+              <div className="d-flex flex-column gap-3">
                 {variantesHamburguesa.map((variante) => {
                   let tipo = "SIMPLE";
                   if (variante.descripcion.toUpperCase().includes("DOBLE")) tipo = "DOBLE";
                   if (variante.descripcion.toUpperCase().includes("TRIPLE")) tipo = "TRIPLE";
                   
                   return (
-                    <div 
+                    <button 
                       key={variante.id}
-                      className={`bg-dark p-3 border rounded ${varianteElegida?.id === variante.id ? 'border-primary' : ''}`}
-                      style={{ 
-                        cursor: 'pointer', 
-                        backgroundColor: varianteElegida?.id === variante.id ? '#f8f9fa' : 'white',
-                        transition: 'all 0.2s'
-                      }}
-                      onClick={() => setVarianteElegida(variante)}
+                      type="button" 
+                      className="btn btn-primary btn-lg w-100"
+                      onClick={() => seleccionarVariante(variante)}
+                      style={{ padding: '1rem' }}
                     >
-                      <div className="d-flex justify-content-between align-items-center bg-dark text-white">
-                        <div>
-                          <strong>{tipo}</strong>
-                        </div>
-                        <div className="text-white fw-bold">
-                          ${variante.precio}
-                        </div>
+                      <div className="d-flex justify-content-between align-items-center w-100">
+                        <span className="fw-bold fs-5">{tipo}</span>
+                        <span className="fw-bold fs-5">${variante.precio}</span>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Área FIJA - Resumen y botones */}
-            <div className="modal-footer d-block border-top-0 bg-secondary text-white" style={{
+            {/* Área FIJA - Solo botón cancelar */}
+            <div className="modal-footer d-block border-top-0" style={{
               borderTop: '1px solid #dee2e6',
               padding: '1rem',
               flexShrink: 0
             }}>
-              {/* Resumen de selección */}
-              {varianteElegida && (
-                <div className="p-2 bg-secondary rounded mb-3">
-                  <div className="d-flex justify-content-between align-items-center bg-secondary text-white">
-                    <div>
-                      <strong>Seleccionado:</strong>
-                      <div className="text-white small">
-                        {varianteElegida.descripcion}
-                      </div>
-                    </div>
-                    <div className="text-white fw-bold">
-                      ${varianteElegida.precio}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Botones de acción */}
-              <div className="d-flex justify-content-between gap-2">
+              <div className="d-grid d-flex justify-content-between gap-2">
                 <button 
                   type="button" 
-                  className="btn btn-danger" 
+                  className="btn btn-danger btn-lg" 
                   onClick={cancelar}
                 >
                   Cancelar
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-primary" 
-                  onClick={() => seleccionarVariante(varianteElegida)}
-                  disabled={!varianteElegida}
-                >
-                  Continuar
                 </button>
               </div>
             </div>
