@@ -21,13 +21,14 @@ export const Card = ({ producto }) => {
     producto.descripcion;
 
   const handleAgregar = () => {
-    aumentarCombo();
     if (esHamburguesa && producto.variantes) {
+      aumentarCombo();
       iniciarSeleccionHamburguesa(producto);
     } else if (producto.categoria === 'BEBIDAS') {
-      // Las bebidas se agregan directamente sin modales
+      // Las bebidas se agregan directamente (se consolidan si ya están en carrito)
       agregarAlCarrito(producto);
     } else {
+      aumentarCombo();
       agregarProductoNormal(producto);
     }
   };
@@ -35,13 +36,13 @@ export const Card = ({ producto }) => {
   return (
     <div className='cardCS'>
       <div className="cardColumnCS m-3">
-        <Link to={`/item/${producto.id}`} className='text-decoration-none'>
+        <Link to={`/item/${producto.id}`} className='text-decoration-none pe-none'>
           <p className='titulo'>{nombreMostrar}</p>
         </Link>
         <p className="ingredientes">{producto.ingredientes}</p>
         <div className="cardRowCS">
-          <div className="imagenCS">
-            <img src={producto.imagen} alt={nombreMostrar} loading="lazy" />
+          <div className="imagenCS btn">
+            <img src={producto.imagen} alt={nombreMostrar} loading="lazy" onClick={handleAgregar}/>
           </div>
           <div className="cardColumnCS m-3">
             <p className="precio">${(producto.precio).toFixed(2)}</p>

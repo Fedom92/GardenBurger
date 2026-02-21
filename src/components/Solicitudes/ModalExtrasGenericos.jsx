@@ -25,14 +25,14 @@ export const ModalExtrasGenericos = () => {
         aria-modal="true"
       >
         <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }} data-bs-theme="dark">
             <div className="modal-header">
               <h5 className="modal-title">
                 {productoEnProceso.descripcion} - Agregar extras (opcional)
               </h5>
               <button 
                 type="button" 
-                className="btn-close btn-close-white" 
+                className="btn-close" 
                 onClick={cancelar}
                 aria-label="Close"
               ></button>
@@ -98,7 +98,7 @@ export const ModalExtrasGenericos = () => {
                                   <div>
                                     <strong>{extra.descripcion}</strong>
                                     {extra.ingredientes && (
-                                      <div className="text-muted small mt-1">
+                                      <div className="text-body-secondary small mt-1">
                                         {extra.ingredientes}
                                       </div>
                                     )}
@@ -117,7 +117,7 @@ export const ModalExtrasGenericos = () => {
                 </>
               ) : (
                 <div className="text-center p-4">
-                  <p className="text-muted">No hay extras disponibles en este momento</p>
+                  <p className="text-body-secondary">No hay extras disponibles en este momento</p>
                 </div>
               )}
             </div>

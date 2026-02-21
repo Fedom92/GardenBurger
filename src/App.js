@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import './App.css';
+import 'react-toastify/dist/ReactToastify.css';
+
 import Login from './Login_Navs/Login';
 import Productos from "./components/Productos/Productos";
 import PanelAdmin from "./components/Admin/PanelAdmin";
@@ -11,14 +13,14 @@ import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import Menu from "./components/Solicitudes/Menu.jsx";
 import CryptoJS from 'crypto-js';
 import Caja from "./components/POS/Caja";
-import { CartProvider } from './context/CartContext';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import Deliverys from "./components/Delivery/Deliverys";
 import PersonalDeliverys from "./components/Delivery/PersonalDeliverys";
 import Clientes from "./components/Clientes/Clientes";
 import Cocina from "./components/Cocina/Cocina";
 import HistorialPedidos from "./components/Pedidos/HistorialPedidos";
+
+import { CartProvider } from './context/CartContext';
+import { ToastContainer } from 'react-toastify';
 import { useAuth } from "./context/AuthContext";
 import { PaginaDetalle } from './components/Solicitudes/PaginaDetalle.jsx';
 

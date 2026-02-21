@@ -155,7 +155,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                                     <div className="card-body p-2 d-flex flex-column">
                                         <div className="d-flex justify-content-between align-items-start mb-1">
                                             <span className="badge bg-dark">N° {pedido.codigo}</span>
-                                            <small className="text-muted">{pedido.fecha} - {pedido.hora}</small>
+                                            <small className="text-body-secondary">{pedido.fecha} - {pedido.hora}</small>
                                         </div>
                                         <h6 className="mb-2 text-truncate">{pedido.nombre}</h6>
                                         <div className="m-auto">

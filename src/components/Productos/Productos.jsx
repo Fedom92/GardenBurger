@@ -192,7 +192,7 @@ const Productos = () => {
             </a>
           </div>
         ) : (
-          <span className="text-muted">No Img</span>
+          <span className="text-body-secondary">No Img</span>
         );
       },
     },

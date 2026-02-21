@@ -21,7 +21,7 @@ const Nav = ({ Icon, title, isActive }) => {
     ) : (
       Icon && <Icon className="icon" />
     )}
-    {isActive ? null : <h2>{title}</h2>}
+    {isActive ? null : <h6 className="fw-normal">{title}</h6>}
     </div>
   );
 };

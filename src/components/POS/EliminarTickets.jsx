@@ -202,7 +202,7 @@ const EliminarTickets = ({ isOpen, onClose }) => {
                                 <p className="mt-3">Buscando pedido...</p>
                             </div>
                         ) : errorBusqueda ? (
-                            <div className="text-center text-muted py-5">
+                            <div className="text-center text-body-secondary py-5">
                                 <i className="fa fa-exclamation-triangle fa-4x mb-3 text-warning"></i>
                                 <h5>SIN RESULTADOS</h5>
                                 <p>{errorBusqueda}</p>
@@ -214,7 +214,7 @@ const EliminarTickets = ({ isOpen, onClose }) => {
                                         <strong>Pedido #{pedido.codigo}</strong>
                                     </h6>
                                     <div className="d-flex align-items-center gap-2">
-                                        <small className="text-muted">
+                                        <small className="text-body-secondary">
                                             {pedido.fecha} - {pedido.hora}
                                         </small>
                                     </div>
@@ -260,7 +260,7 @@ const EliminarTickets = ({ isOpen, onClose }) => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-center text-muted py-5">
+                            <div className="text-center text-body-secondary py-5">
                                 <i className="fa fa-search fa-4x mb-3"></i>
                                 <h5>Buscar Ticket</h5>
                                 <p>Ingresa un número de ticket para buscar y eliminar un pedido</p>

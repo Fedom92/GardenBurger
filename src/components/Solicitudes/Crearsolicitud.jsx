@@ -5,7 +5,6 @@ import { db } from "../../firebaseConfig/firebase";
 import { useNavigate } from 'react-router-dom';
 import 'moment/locale/es';
 import { Card } from "./Card.jsx";
-import { CardCarousel } from "./CardCarrousel.jsx";
 import { ModalHamburguesa } from "./ModalHamburguesa.jsx";
 import { ModalExtras } from "./ModalExtras.jsx";
 import { ModalExtrasGenericos } from "./ModalExtrasGenericos.jsx";
@@ -79,43 +78,6 @@ const CrearSolicitud = () => {
   }
 
   useEffect(() => {
-    const bootstrap = require('bootstrap');
-
-    // Espera al próximo ciclo del render para asegurarte de que el carrusel exista en el DOM
-    const timeout = setTimeout(() => {
-      const myCarousel = document.getElementById('carouselExampleAutoplaying');
-      if (myCarousel) {
-        const carousel = bootstrap.Carousel.getOrCreateInstance(myCarousel, {
-          interval: 3000, // 3 segundos
-          ride: 'carousel', // arranca automáticamente
-          pause: false // sigue aunque el mouse esté encima
-        });
-        carousel.cycle(); // Fuerza el autoplay
-      }
-    }, 100); // 100ms es suficiente para esperar el render
-
-    return () => clearTimeout(timeout); // limpia el timeout si el componente se desmonta
-  }, [productos]);
-
-  useEffect(() => {
-    const bootstrap = require('bootstrap');
-
-    const timeout = setTimeout(() => {
-      const myCarousel = document.getElementById('carouselExampleAutoplaying');
-      if (myCarousel) {
-        const carousel = bootstrap.Carousel.getOrCreateInstance(myCarousel, {
-          interval: 3000,
-          ride: 'carousel',
-          pause: false
-        });
-        carousel.cycle();
-      }
-    }, 100);
-
-    return () => clearTimeout(timeout);
-  }, [productos]);
-
-  useEffect(() => {
     const fetchData = async () => {
       try {
         // Obtener categorías
@@ -167,6 +129,9 @@ const CrearSolicitud = () => {
   };
 
   const hamburguesasPollo = obtenerHamburguesasDePollo();
+
+  const productosOferta = productos.filter(p => p.oferta === true);
+
   return (
     <div>
       <header>
@@ -174,96 +139,68 @@ const CrearSolicitud = () => {
         <img className='mobile-img logoCS' src={logoMobile} alt="logoGardenMobile" />
       </header>
       <main>
-        {/* <section className="m-1">
-          <div className="d-flex flex-wrap justify-content-center align-items-center">
 
-            <div className="d-flex align-items-center ms-2 me-2">
-              <i className="fa fa-map-marker m-1" aria-hidden="true"></i>
-              <h5 className="mb-0">Leonardo Da Vinci 4225 - Gregorio de Laferrere, La Matanza (Buenos Aires)</h5>
-            </div>
-
-            <div className="d-flex align-items-center ms-2 me-2">
-              <i className="fa fa-motorcycle m-1" aria-hidden="true"></i>
-              <h5 className="mb-0">Envíos a domicilio</h5>
-            </div>
-
-          </div>
-        </section> */}
         {carrito.length > 0 &&
           <div className="position-fixed bottom-0 end-0 z-2 m-3">
-            <a href='/crear-solicitud#finalizarCompra' className="btnVerde p-3">Ver pedido
+            <a href='/crear-solicitud#finalizarCompra' className="text-white p-3">Ver pedido
               <i className="fa fa-arrow-down ms-2 animated-arrow" aria-hidden="true"></i>
             </a>
           </div>}
-        {/* inicio carrousel */}
-        {/* {productos.some(prod => prod.oferta === true) && (
-          <div
-            id="carouselExampleAutoplaying"
-            className="carousel slide"
-            data-bs-ride="carousel"
-            data-bs-interval="3000"
-          >
-            <div className="carousel-inner">
-              {productos
-                .filter(prod => prod.oferta === true)
-                .map((producto, index) => (
-                  <div
-                    key={producto.id}
-                    className={`carousel-item ${index === 0 ? 'active' : ''}`}
-                  >
-                    <CardCarousel producto={producto} />
-                  </div>
-                ))}
-            </div>
-
-            <button
-              className="carousel-control-prev"
-              type="button"
-              data-bs-target="#carouselExampleAutoplaying"
-              data-bs-slide="prev"
-            >
-              <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span className="visually-hidden">Previous</span>
-            </button>
-            <button
-              className="carousel-control-next"
-              type="button"
-              data-bs-target="#carouselExampleAutoplaying"
-              data-bs-slide="next"
-            >
-              <span className="carousel-control-next-icon" aria-hidden="true"></span>
-              <span className="visually-hidden">Next</span>
-            </button>
-          </div>
-        )} */}
-
-        {/* fin carrousel */}
 
         {/* Sección de categorías con accordions */}
-        <div className='mainpageCS itemListConteiner accordionSectionCS'>
+        <div className='mainpageCS itemListConteiner'>
            {categorias.length === 0 || productos.length === 0 ? (
              <div className="text-white fw-bold text-center py-5">
                No hay categorías o productos disponibles
              </div>
            ) : (
-             <div className="accordion accordionCS mt-3" id="accordionCategorias">
+             <div className="accordion accordionCS mt-3" id="accordionCategorias" key={`accordion-${carrito.reduce((sum, p) => sum + (p.amountInCart || 1), 0)}`}>
        
+               {/* OFERTAS */}
+               {productosOferta.length > 0 && (
+                 <div className="accordion-item">
+                   <h2 className="accordion-header" id="headingOFERTAS">
+                     <button
+                       className="accordion-button accordionButtonCS collapsed"
+                       type="button"
+                       data-bs-toggle="collapse"
+                       data-bs-target="#collapseOFERTAS"
+                       aria-expanded="false"
+                       aria-controls="collapseOFERTAS"
+                     >
+                       🏷️ OFERTAS
+                     </button>
+                   </h2>
+                   <div
+                     id="collapseOFERTAS"
+                     className="accordion-collapse collapse"
+                     data-bs-parent="#accordionCategorias"
+                   >
+                     <div className="accordion-body text-center">
+                       {productosOferta.map(p => (
+                         <Card key={p.id} producto={p} />
+                       ))}
+                     </div>
+                   </div>
+                 </div>
+               )}
+
                {/* HAMBURGUESAS */}
                {hamburguesas.length > 0 && (
-                 <div className="accordion-item accordionItemCS">
+                 <div className="accordion-item">
                    <h2 className="accordion-header" id="headingHAMBURGUESAS">
                      <button
-                       className="accordion-button accordionButtonCS"
+                       className="accordion-button accordionButtonCS collapsed"
                        type="button"
                        data-bs-toggle="collapse"
                        data-bs-target="#collapseHAMBURGUESAS"
-                       aria-expanded="true"
+                       aria-expanded="false"
                        aria-controls="collapseHAMBURGUESAS"
                      >
                        HAMBURGUESAS
                      </button>
                    </h2>
-       
+         
                    <div
                      id="collapseHAMBURGUESAS"
                      className="accordion-collapse collapse"
@@ -293,16 +230,17 @@ const CrearSolicitud = () => {
                    if (!productosCat.length) return null;
        
                    const safeName = categoria.nombre.replace(/\s+/g, "");
-                   const isFirst = index === 0 && hamburguesas.length === 0;
        
                    return (
-                     <div key={categoria.id} className="accordion-item accordionItemCS">
+                     <div key={categoria.id} className="accordion-item">
                        <h2 className="accordion-header" id={`heading${safeName}`}>
                          <button
-                           className={"accordion-button accordionButtonCS"}
+                           className="accordion-button accordionButtonCS collapsed"
                            type="button"
                            data-bs-toggle="collapse"
                            data-bs-target={`#collapse${safeName}`}
+                           aria-expanded="false"
+                           aria-controls={`collapse${safeName}`}
                          >
                            {categoria.nombre}
                          </button>
@@ -335,14 +273,23 @@ const CrearSolicitud = () => {
                   <div className="imagen">
                     <img src={producto.imagen} alt="imagen" />
                   </div>
-                  <div className='tituloVP'>{producto.descripcion}</div>
-                  <div className='cantidad'>
-                    {/* <button className='disminuir' onClick={() => disminuir(producto)}>-</button>
-                    <h4 className='numeroCantidad'>x{producto.amountInCart}</h4>
-                    <button className='aumentar' onClick={() => aumentar(producto)}>+</button> */}
+                  <div className='tituloVP'>
+                    {producto.descripcion}
+                    {producto.observaciones && (
+                      <small className="d-block text-body-secondary" style={{ fontSize: '0.8rem' }}>{producto.observaciones}</small>
+                    )}
                   </div>
-                  <div className="precioVP">${(producto.precio * producto.amountInCart).toFixed(2)}</div>
-                  {<button type="button" className="btn btn-danger" onClick={() => eliminar(producto)}>❌</button>}
+                  <div className='cantidad'>
+                    {producto.categoria === 'BEBIDAS' && (
+                      <>
+                        <button type="button" className="disminuir text-danger" onClick={() => disminuir(producto)}>-</button>
+                        <span className="numeroCantidad mx-2 fw-bold">{producto.amountInCart}</span>
+                        <button type="button" className="aumentar text-success" onClick={() => aumentar(producto)}>+</button>
+                      </>
+                    )}
+                  </div>
+                  <div className="precioVP">${(producto.precio * producto.amountInCart)}</div>
+                  <button type="button" className="btn btn-danger" onClick={() => eliminar(producto)}>❌</button>
                 </div>
               )
             })}
@@ -444,8 +391,8 @@ const CrearSolicitud = () => {
       <ModalExtras />
       <ModalExtrasGenericos />
 
-      <footer className="bg-dark text-white py-4  position-relative z-3 ">
-        <div className="container ">
+      <footer className="m-auto bg-dark text-white py-4 position-relative z-3">
+        <div className="container">
           <div className="row">
             {/* Columna 1 - Información del local */}
             <div className="col-12 col-md-4 mb-4 mb-md-0 text-center text-md-start  ">

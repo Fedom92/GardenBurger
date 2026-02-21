@@ -10,8 +10,16 @@ export const ModalExtras = () => {
     toggleExtra,
     volverAVariante,
     finalizarHamburguesa,
-    cancelar
+    cancelar,
+    hamburguesaSeleccionada,
+    setVarianteElegida
   } = useContext(CartContext);
+
+  const esPolloCrispy = !hamburguesaSeleccionada && varianteElegida?.categoria === 'POLLO CRISPY';
+
+  const actualizarObservaciones = (valor) => {
+    setVarianteElegida(prev => prev ? { ...prev, observaciones: valor } : prev);
+  };
 
   if (!showModalExtras || !varianteElegida) return null;
 
@@ -26,14 +34,14 @@ export const ModalExtras = () => {
         aria-modal="true"
       >
         <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }} data-bs-theme="dark">
             <div className="modal-header">
               <h5 className="modal-title">
                 {varianteElegida.descripcion} - Agregar extras (opcional)
               </h5>
               <button 
                 type="button" 
-                className="btn-close btn-close-white" 
+                className="btn-close" 
                 onClick={cancelar}
                 aria-label="Close"
               ></button>
@@ -45,15 +53,6 @@ export const ModalExtras = () => {
               flex: '1 1 auto',
               maxHeight: 'calc(90vh - 180px)' // Ajustado para este modal
             }}>
-              <div className="text-center mb-3">
-                {/* <img 
-                  src={varianteElegida.imagen} 
-                  alt={varianteElegida.descripcion}
-                  style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
-                /> */}
-                <h6 className="mt-2">{varianteElegida.descripcion}</h6>
-                <p className="text-white">${varianteElegida.precio}</p>
-              </div>
               
               {extrasHamburguesas.length > 0 ? (
                 <>                  
@@ -94,7 +93,7 @@ export const ModalExtras = () => {
                                     <div>
                                       <strong>{extra.descripcion}</strong>
                                       {extra.ingredientes && (
-                                        <div className="text-muted small mt-1">
+                                        <div className="text-body-secondary small mt-1">
                                           {extra.ingredientes}
                                         </div>
                                       )}
@@ -114,7 +113,7 @@ export const ModalExtras = () => {
                 </>
               ) : (
                 <div className="text-center p-4">
-                  <p className="text-muted">No hay extras disponibles en este momento</p>
+                  <p className="text-body-secondary">No hay extras disponibles en este momento</p>
                 </div>
               )}
             </div>
@@ -161,19 +160,21 @@ export const ModalExtras = () => {
 
               {/* Botones de acción */}
               <div className="d-flex justify-content-between gap-2">
+                {!esPolloCrispy && (
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    onClick={volverAVariante}
+                  >
+                    Volver
+                  </button>
+                )}
                 <button 
                   type="button" 
-                  className="btn btn-danger" 
-                  onClick={volverAVariante}
-                >
-                  Volver
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-success" 
+                  className={`btn ${esPolloCrispy ? 'btn-success' : 'btn-primary'} ms-auto`}
                   onClick={finalizarHamburguesa}
                 >
-                  Agregar
+                  {esPolloCrispy ? 'Agregar' : 'Siguiente'}
                 </button>
               </div>
             </div>

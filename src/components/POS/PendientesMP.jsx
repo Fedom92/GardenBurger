@@ -128,7 +128,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                         <p>Cargando pedidos...</p>
                     </div>
                 ) : pedidosPendientes.length === 0 ? (
-                    <div className="text-center text-muted">
+                    <div className="text-center text-body-secondary">
                         <i className="fa fa-check-circle fa-3x mb-3"></i>
                         <h4>No hay pedidos pendientes</h4>
                     </div>
@@ -141,7 +141,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                         <h6 className="mb-0">
                                             <strong>Pedido #{pedido.codigo}</strong>
                                         </h6>
-                                        <small className="text-muted">
+                                        <small className="text-body-secondary">
                                             {pedido.fecha} - {pedido.hora}
                                         </small>
                                     </div>

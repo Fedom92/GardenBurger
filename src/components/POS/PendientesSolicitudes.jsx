@@ -130,7 +130,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                         <p>Cargando solicitudes...</p>
                     </div>
                 ) : solicitudesPendientes.length === 0 ? (
-                    <div className="text-center text-muted">
+                    <div className="text-center text-body-secondary">
                         <i className="fa fa-check-circle fa-3x mb-3"></i>
                         <h4>No hay solicitudes pendientes</h4>
                     </div>
@@ -143,7 +143,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                                                 <h6 className="mb-0">
                                                     <strong>Solicitud #{solicitud.id.slice(-8)}</strong>
                                                 </h6>
-                                                <small className="text-muted">
+                                                <small className="text-body-secondary">
                                                     {solicitud.timestamp ? 
                                                         moment(solicitud.timestamp.toDate()).format("DD/MM/YYYY HH:mm") : 
                                                         "Sin fecha"
@@ -193,7 +193,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                                                         <div className="row">
                                                             {solicitud.productos.map((producto, index) => (
                                                                 <div key={index} className="col-12">
-                                                                    <small className="text-muted">
+                                                                    <small className="text-body-secondary">
                                                                         {producto.cantidad}x {producto.descripcion} - ${producto.precio}
                                                                     </small>
                                                                 </div>

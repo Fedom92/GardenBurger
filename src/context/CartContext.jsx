@@ -69,35 +69,25 @@ export const CartProvider = ({ children }) => {
     });
 
     setCarrito(prevCarrito => {
-      //const productoExistente = prevCarrito.findIndex((prod) => prod.id === producto.id);
+      // Bebidas: suma cantidad
+      if (producto.categoria === 'BEBIDAS') {
+        const idxBebida = prevCarrito.findIndex(p => p.id === producto.id && p.categoria === 'BEBIDAS');
+        if (idxBebida > -1) {
+          const nuevoCarrito = [...prevCarrito];
+          nuevoCarrito[idxBebida] = {
+            ...nuevoCarrito[idxBebida],
+            amountInCart: nuevoCarrito[idxBebida].amountInCart + 1
+          };
+          return nuevoCarrito;
+        }
+      }
 
-      // if (productoExistente > -1) {
-
-      //   const nuevoCarrito = [...prevCarrito];
-      //   nuevoCarrito[productoExistente] = {
-      //     ...nuevoCarrito[productoExistente],
-      //     amountInCart: nuevoCarrito[productoExistente].amountInCart + 1,
-      //     subtotal: (nuevoCarrito[productoExistente].amountInCart + 1) * nuevoCarrito[productoExistente].precio
-      //   };
-      //   return nuevoCarrito;
-      // } else {
-      //  if (carrito) {
-      //   return [...prevCarrito, {
-      //     ...producto,
-      //     combo:prevCarrito.combo+1,
-      //     amountInCart: 1,
-      //     subtotal: producto.precio
-      //   }];
-
-      //  } else {
-   
-        return [...prevCarrito, {
-          ...producto,
-          combo:combo,
-          amountInCart: 1,
-          subtotal: producto.precio
-        }];
-      //}
+      return [...prevCarrito, {
+        ...producto,
+        combo:combo,
+        amountInCart: 1,
+        subtotal: producto.precio
+      }];
     });
   }, [combo]);
 
@@ -125,7 +115,7 @@ export const CartProvider = ({ children }) => {
   const aumentar = useCallback((producto) => {
     setCarrito(prevCarrito =>
       prevCarrito.map((prod) =>
-        prod.id === producto.id
+        (prod.id === producto.id && (prod.combo === producto.combo || producto.categoria === 'BEBIDAS'))
           ? { ...prod, amountInCart: prod.amountInCart + 1 }
           : prod
       )
@@ -135,7 +125,7 @@ export const CartProvider = ({ children }) => {
   const disminuir = useCallback((producto) => {
     setCarrito(prevCarrito =>
       prevCarrito.map((prod) =>
-        prod.id === producto.id && prod.amountInCart > 1
+        (prod.id === producto.id && (prod.combo === producto.combo || producto.categoria === 'BEBIDAS') && prod.amountInCart > 1)
           ? { ...prod, amountInCart: prod.amountInCart - 1 }
           : prod
       )
@@ -143,7 +133,12 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const eliminar = useCallback((producto) => {
-    setCarrito(prevCarrito => prevCarrito.filter((prod) => !(prod.id === producto.id && prod.combo === producto.combo)));
+    setCarrito(prevCarrito => prevCarrito.filter((prod) => {
+      if (producto.categoria === 'BEBIDAS') {
+        return !(prod.id === producto.id && prod.categoria === 'BEBIDAS');
+      }
+      return !(prod.id === producto.id && prod.combo === producto.combo);
+    }));
   }, []);
 
   const totalCarrito = useCallback(() => {
@@ -273,6 +268,17 @@ export const CartProvider = ({ children }) => {
     return false;
   }, []);
 
+    // Función para Pollo Crispy
+    const iniciarSeleccionPolloExtrasHamburguesa = useCallback((producto) => {
+      setVarianteElegida({ ...producto, observaciones: '' });
+      setExtrasSeleccionados([]);
+      setHamburguesaSeleccionada(null);
+      setVariantesHamburguesa([]);
+      setShowModalVariante(false);
+      setShowModalExtras(true);
+      document.body.style.overflow = 'hidden';
+    }, []);
+
   // Función para iniciar selección de extras genéricos
   const iniciarSeleccionExtrasGenericos = useCallback((producto) => {
     setProductoEnProceso(producto);
@@ -383,13 +389,18 @@ export const CartProvider = ({ children }) => {
 
   // Función para agregar producto normal
   const agregarProductoNormal = useCallback((producto) => {
-    // Verificar si tiene extras genéricos
+    // Pollo Crispy: usar extras de hamburguesa
+    if (producto.categoria === 'POLLO CRISPY' && extrasHamburguesas.length > 0) {
+      iniciarSeleccionPolloExtrasHamburguesa(producto);
+      return;
+    }
+    // Otros productos: verificar si tiene extras genéricos
     if (extrasGenericos.length > 0) {
       iniciarSeleccionExtrasGenericos(producto);
     } else {
       agregarAlCarrito(producto);
     }
-  }, [extrasGenericos, agregarAlCarrito, iniciarSeleccionExtrasGenericos]);
+  }, [extrasGenericos, extrasHamburguesas, agregarAlCarrito, iniciarSeleccionExtrasGenericos, iniciarSeleccionPolloExtrasHamburguesa]);
 
   const cancelar = useCallback(() => {
     disminuirCombo();
@@ -541,6 +552,7 @@ export const CartProvider = ({ children }) => {
     obtenerHamburguesasConVariantes,
     iniciarSeleccionHamburguesa,
     iniciarSeleccionExtrasGenericos,
+    iniciarSeleccionPolloExtrasHamburguesa,
     seleccionarVariante,
     toggleExtra,
     toggleExtraGenerico,
@@ -595,6 +607,7 @@ export const CartProvider = ({ children }) => {
     obtenerHamburguesasConVariantes,
     iniciarSeleccionHamburguesa,
     iniciarSeleccionExtrasGenericos,
+    iniciarSeleccionPolloExtrasHamburguesa,
     seleccionarVariante,
     toggleExtra,
     toggleExtraGenerico,

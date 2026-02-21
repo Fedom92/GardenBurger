@@ -146,7 +146,7 @@ const Envios = ({ show, onHide }) => {
               <div className="border p-1 d-flex justify-content-between align-items-center">
                 <div>
                   <div className="fw-bold">{envio.zona_envio}</div>
-                  <div className="text-muted">${envio.costo_envio}</div>
+                  <div className="text-body-secondary">${envio.costo_envio}</div>
                 </div>
                 <div className="d-flex gap-1">
                   <button

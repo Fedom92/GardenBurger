@@ -621,7 +621,7 @@ const Caja = () => {
                                             <tbody>
                                                 {carrito.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan="4" className="text-center text-muted">
+                                                        <td colSpan="4" className="text-center text-body-secondary">
                                                             No hay productos
                                                         </td>
                                                     </tr>

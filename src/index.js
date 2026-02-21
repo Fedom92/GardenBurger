@@ -5,6 +5,8 @@ import { AuthContextProvider } from "./context/AuthContext";
 import { GoogleMapsProvider } from "./context/GoogleMapsContext";
 import moment from 'moment';
 import 'moment/locale/es';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 moment.locale('es');
 

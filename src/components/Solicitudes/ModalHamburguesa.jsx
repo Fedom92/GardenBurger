@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { CartContext } from '../../context/CartContext';
 
 export const ModalHamburguesa = () => {
@@ -9,6 +9,7 @@ export const ModalHamburguesa = () => {
     seleccionarVariante,
     cancelar
   } = useContext(CartContext);
+  const [observacionesLocales, setObservacionesLocales] = useState("");
 
   if (!showModalVariante || !hamburguesaSeleccionada) return null;
 
@@ -23,12 +24,12 @@ export const ModalHamburguesa = () => {
         aria-modal="true"
       >
         <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content bg-dark text-white" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }} data-bs-theme="dark">
             <div className="modal-header">
-              <h5 className="modal-title">{hamburguesaSeleccionada.nombreBase}</h5>
+              <h5 className="modal-title">{hamburguesaSeleccionada.nombreBase} - Elige tu opción:</h5>
               <button 
                 type="button" 
-                className="btn-close btn-close-white" 
+                className="btn-close" 
                 onClick={cancelar}
                 aria-label="Close"
               ></button>
@@ -47,8 +48,17 @@ export const ModalHamburguesa = () => {
                   style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
                 />
               </div>
-              
-              <h6 className="text-center mb-4">Elige tu opción:</h6>
+
+              <div className="mb-4">
+                <label className="form-label text-white-50">Observaciones (opcional)</label>
+                <input
+                  type="text"
+                  className="form-control bg-dark text-white border-secondary"
+                  placeholder="Ej: sin cebolla, bien cocida..."
+                  value={observacionesLocales}
+                  onChange={(e) => setObservacionesLocales(e.target.value)}
+                />
+              </div>
               
               <div className="d-flex flex-column gap-3">
                 {variantesHamburguesa.map((variante) => {
@@ -60,8 +70,8 @@ export const ModalHamburguesa = () => {
                     <button 
                       key={variante.id}
                       type="button" 
-                      className="btn btn-primary btn-lg w-100"
-                      onClick={() => seleccionarVariante(variante)}
+                      className="btn btn-secondary btn-lg w-100"
+                      onClick={() => seleccionarVariante(variante, observacionesLocales)}
                       style={{ padding: '1rem' }}
                     >
                       <div className="d-flex justify-content-between align-items-center w-100">
