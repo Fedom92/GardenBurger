@@ -925,7 +925,7 @@ select {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 0.7rem;
+  gap: 1rem;
 }
 
 .itemContactBar h6 {
@@ -989,7 +989,7 @@ select {
   object-fit: cover;
   /* Cubre todo el espacio manteniendo proporciones */
   object-position: center;
-  max-width: 10rem;
+  max-width: 8rem;
   aspect-ratio: 1/1;
   /* Opcional: fuerza relación cuadrada (elimina si no la necesitas) */
   border-radius: 1rem;

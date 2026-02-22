@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { CartContext } from '../../context/CartContext';
+import { set } from 'react-hook-form';
 
 export const ModalHamburguesa = () => {
   const {
@@ -71,7 +72,7 @@ export const ModalHamburguesa = () => {
                       key={variante.id}
                       type="button" 
                       className="btn btn-secondary btn-lg w-100"
-                      onClick={() => seleccionarVariante(variante, observacionesLocales)}
+                      onClick={() => {seleccionarVariante(variante, observacionesLocales);setObservacionesLocales('')}}
                       style={{ padding: '1rem' }}
                     >
                       <div className="d-flex justify-content-between align-items-center w-100">

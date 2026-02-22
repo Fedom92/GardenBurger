@@ -35,6 +35,8 @@ const limpiarNombreHamburguesa = (nombre) => {
 export const CartProvider = ({ children }) => {
   const [carrito, setCarrito] = useState(getCarritoInicial);
   const [combo, setCombo] = useState(getComboInicial);
+  const [categorias, setCategorias] = useState([]);
+  const [productos, setProductos] = useState([]);
 
   const [mensajeWSP, setMensajeWSP] = useState('');
   // Estados para modales y selecciones
@@ -56,6 +58,31 @@ export const CartProvider = ({ children }) => {
   const [bebidasDisponibles, setBebidasDisponibles] = useState([]);
   const [categoriasHamburguesas] = useState(["SIMPLE", "DOBLE", "TRIPLE"]);
 
+
+  const obtenerCategorias= useCallback(async()=>{
+    const categoriasRef = collection(db, "categorias");
+            const categoriasSnapshot = await getDocs(categoriasRef);
+            const categoriasDataOrdenada = categoriasSnapshot.docs
+              .map(doc => ({
+                ...doc.data(),
+                id: doc.id
+              }))
+              .sort((a, b) => a.nroOrden - b.nroOrden);
+              setCategorias(categoriasDataOrdenada);
+      return categoriasDataOrdenada;
+  })
+
+  const obtenerProductos= useCallback(async()=>{
+  const productosRef = collection(db, "productos");
+          const q = query(productosRef, where("visible", "==", true));
+          const productosSnapshot = await getDocs(q);
+          const productosData = productosSnapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id
+          }));
+          setProductos(productosData);
+   return productosData;
+  })
   // ========== FUNCIONES BÁSICAS DEL CARRITO (DEFINIR PRIMERO) ==========
 
   const agregarAlCarrito = useCallback((producto) => {
@@ -89,6 +116,7 @@ export const CartProvider = ({ children }) => {
         subtotal: producto.precio
       }];
     });
+    
   }, [combo]);
 
 
@@ -99,7 +127,7 @@ export const CartProvider = ({ children }) => {
   const aumentarCombo = useCallback(() => {
     setCombo(prevCombo => {
     const nuevoCombo = prevCombo + 1;
-    console.log("Nuevo combo (dentro del setState):", nuevoCombo); // ✅ 1, 2, 3...
+
     return nuevoCombo;
   });
   }, []);
@@ -107,7 +135,7 @@ export const CartProvider = ({ children }) => {
   const disminuirCombo = useCallback(()=>{
     setCombo(prevCombo => {
     const nuevoCombo = prevCombo - 1;
-    console.log("Nuevo combo (dentro del setState):", nuevoCombo); // ✅ 1, 2, 3...
+
     return nuevoCombo;
   });
   }, []);
@@ -288,8 +316,8 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   // Función para seleccionar variante
-  const seleccionarVariante = useCallback((variante) => {
-    setVarianteElegida(variante);
+  const seleccionarVariante = useCallback((variante,observaciones) => {
+    setVarianteElegida({...variante,observaciones});
     setShowModalVariante(false);
     setShowModalExtras(true);
     setExtrasSeleccionados([]);
@@ -424,57 +452,61 @@ export const CartProvider = ({ children }) => {
   // ========== FUNCIONES DE CARGA DE DATOS ==========
 
   // Cargar extras y bebidas
-  const cargarExtrasYBebidas = useCallback(async () => {
+  const cargarExtrasYBebidas = useCallback( () => {
     try {
-      const productosRef = collection(db, "productos");
+      // const productosRef = collection(db, "productos");
       
       // Obtener extras para hamburguesas
-      const extrasQuery = query(
-        productosRef, 
-        where("categoria", "==", "EXTRA"),
-        where("tipoExtra", "==", "HAMBURGUESA"),
-        where("visible", "==", true)
-      );
-      const extrasSnapshot = await getDocs(extrasQuery);
-      const extrasData = extrasSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      }));
+      // const extrasQuery = query(
+      //   productosRef, 
+      //   where("categoria", "==", "EXTRA"),
+      //   where("tipoExtra", "==", "HAMBURGUESA"),
+      //   where("visible", "==", true)
+      // );
+      console.log("productos");
+      console.log(productos);
+      const extrasSnapshot = productos.filter(prod => prod.categoria=='EXTRA'&&prod.tipoExtra=='HAMBURGUESA'&&prod.visible==true);
+      // const extrasData = extrasSnapshot.map(doc => ({
+      //   ...doc.data(),
+      //   id: doc.id
+      // }));
       
-      setExtrasHamburguesas(extrasData);
+      setExtrasHamburguesas(extrasSnapshot);
       
       // Obtener extras genéricos
-      const extrasGenericosQuery = query(
-        productosRef, 
-        where("categoria", "==", "EXTRA"),
-        where("tipoExtra", "==", "GENERAL"),
-        where("visible", "==", true)
-      );
-      const extrasGenericosSnapshot = await getDocs(extrasGenericosQuery);
-      const extrasGenericosData = extrasGenericosSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      }));
+      // const extrasGenericosQuery = query(
+      //   productosRef, 
+      //   where("categoria", "==", "EXTRA"),
+      //   where("tipoExtra", "==", "GENERAL"),
+      //   where("visible", "==", true)
+      // );
+      const extrasGenericosSnapshot = productos.filter(prod => prod.categoria=='EXTRA'&&prod.tipoExtra=='GENERAL'&&prod.visible==true);
+      // const extrasGenericosData = extrasGenericosSnapshot.map(doc => ({
+      //   ...doc.data(),
+      //   id: doc.id
+      // }));
       
-      setExtrasGenericos(extrasGenericosData);
+      setExtrasGenericos(extrasGenericosSnapshot);
       
       // Obtener bebidas
-      const bebidasQuery = query(
-        productosRef, 
-        where("categoria", "==", "BEBIDAS"),
-        where("visible", "==", true)
-      );
-      const bebidasSnapshot = await getDocs(bebidasQuery);
-      const bebidasData = bebidasSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      }));
+      // const bebidasQuery = query(
+      //   productosRef, 
+      //   where("categoria", "==", "BEBIDAS"),
+      //   where("visible", "==", true)
+      // );
+      const bebidasSnapshot = productos.filter(prod => prod.categoria=='BEBIDAS'&&prod.visible==true);
+      console.log('bebidasnapshot')
+      console.log(bebidasSnapshot);
+      // const bebidasData = bebidasSnapshot.map(doc => ({
+      //   ...doc.data(),
+      //   id: doc.id
+      // }));
       
-      setBebidasDisponibles(bebidasData);
+      setBebidasDisponibles(bebidasSnapshot);
     } catch (error) {
       console.error("Error cargando extras y bebidas:", error);
     }
-  }, []);
+  }, [productos]);
 
   // ========== EFECTOS ==========
 
@@ -523,6 +555,12 @@ export const CartProvider = ({ children }) => {
     totalCarrito,
     cantidadHambPapas,
     cantidadBebidas,
+    obtenerCategorias,
+    obtenerProductos,
+    productos,
+    setProductos,
+    categorias,
+    setCategorias,
     
     // Estados para modales
     showModalVariante,
@@ -620,7 +658,13 @@ export const CartProvider = ({ children }) => {
     limpiarNombreHamburguesa,
     hamburguesaYaEnCarrito,
     cargarExtrasYBebidas,
-    actualizarMensajeWSP
+    actualizarMensajeWSP,
+    obtenerCategorias,
+    obtenerProductos,
+    productos,
+    setProductos,
+    categorias,
+    setCategorias
   ]);
 
   return (

@@ -14,8 +14,8 @@ import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
 
 const CrearSolicitud = () => {
-  const [categorias, setCategorias] = useState([]);
-  const [productos, setProductos] = useState([]);
+  //const [categorias, setCategorias] = useState([]);
+  //const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const {
@@ -27,7 +27,13 @@ const CrearSolicitud = () => {
     vaciarCarrito,
     obtenerHamburguesasConVariantes,
     categoriasHamburguesas,
-    actualizarMensajeWSP
+    actualizarMensajeWSP,
+    obtenerCategorias,
+    obtenerProductos,
+    productos,
+    setProductos,
+    categorias,
+    setCategorias,
   } = useContext(CartContext);
 
   //registro
@@ -81,23 +87,12 @@ const CrearSolicitud = () => {
     const fetchData = async () => {
       try {
         // Obtener categorías
-        const categoriasRef = collection(db, "categorias");
-        const categoriasSnapshot = await getDocs(categoriasRef);
-        const categoriasDataOrdenada = categoriasSnapshot.docs
-          .map(doc => ({
-            ...doc.data(),
-            id: doc.id
-          }))
-          .sort((a, b) => a.nroOrden - b.nroOrden);
+ 
+        const categoriasDataOrdenada = await obtenerCategorias();
 
         // Obtener productos
-        const productosRef = collection(db, "productos");
-        const q = query(productosRef, where("visible", "==", true));
-        const productosSnapshot = await getDocs(q);
-        const productosData = productosSnapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id
-        }));
+
+        const productosData = await obtenerProductos();
 
         setCategorias(categoriasDataOrdenada);
         setProductos(productosData);
@@ -293,7 +288,7 @@ const CrearSolicitud = () => {
                 </div>
               )
             })}
-
+      
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
                 <button type="button" className="btn btn-danger" onClick={() => vaciarCarrito()}>Vaciar carrito</button>
