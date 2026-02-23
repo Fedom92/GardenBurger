@@ -119,7 +119,7 @@ const CrearSolicitud = () => {
 
   const hamburguesasPollo = obtenerHamburguesasDePollo();
 
-  const productosOferta = productos.filter(p => p.oferta === true);
+  const productosOferta = productos.filter(p => p.oferta);
 
   return (
     <div>

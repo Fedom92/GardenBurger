@@ -120,53 +120,42 @@ export const CartProvider = ({ children }) => {
   }, [combo]);
 
 
-    const actualizarMensajeWSP = useCallback((nuevoMensaje) => {
+  const actualizarMensajeWSP = useCallback((nuevoMensaje) => {
       setMensajeWSP(nuevoMensaje);
   }, []);
   
-  const aumentarCombo = useCallback(() => {
-    setCombo(prevCombo => {
-    const nuevoCombo = prevCombo + 1;
+  const aumentarCombo = useCallback(() => setCombo(prev => prev + 1), []);
 
-    return nuevoCombo;
-  });
-  }, []);
+  const disminuirCombo = useCallback(() => setCombo(prev => prev - 1), []);
 
-  const disminuirCombo = useCallback(()=>{
-    setCombo(prevCombo => {
-    const nuevoCombo = prevCombo - 1;
+  const esMismoProducto = (prod, producto) => {
+    return prod.id === producto.id && prod.combo === producto.combo;
+  };
 
-    return nuevoCombo;
-  });
-  }, []);
-
-  const aumentar = useCallback((producto) => {
+  const aumentar = useCallback((productoParam) => {
     setCarrito(prevCarrito =>
       prevCarrito.map((prod) =>
-        (prod.id === producto.id && (prod.combo === producto.combo || producto.categoria === 'BEBIDAS'))
+        esMismoProducto(prod, productoParam)
           ? { ...prod, amountInCart: prod.amountInCart + 1 }
           : prod
       )
     );
   }, []);
 
-  const disminuir = useCallback((producto) => {
+  const disminuir = useCallback((productoParam) => {
     setCarrito(prevCarrito =>
       prevCarrito.map((prod) =>
-        (prod.id === producto.id && (prod.combo === producto.combo || producto.categoria === 'BEBIDAS') && prod.amountInCart > 1)
+        esMismoProducto(prod, productoParam) && prod.amountInCart > 1
           ? { ...prod, amountInCart: prod.amountInCart - 1 }
           : prod
       )
     );
   }, []);
 
-  const eliminar = useCallback((producto) => {
-    setCarrito(prevCarrito => prevCarrito.filter((prod) => {
-      if (producto.categoria === 'BEBIDAS') {
-        return !(prod.id === producto.id && prod.categoria === 'BEBIDAS');
-      }
-      return !(prod.id === producto.id && prod.combo === producto.combo);
-    }));
+  const eliminar = useCallback((productoParam) => {
+    setCarrito(prevCarrito =>
+      prevCarrito.filter(prod => !esMismoProducto(prod, productoParam))
+    );
   }, []);
 
   const totalCarrito = useCallback(() => {
@@ -199,50 +188,51 @@ export const CartProvider = ({ children }) => {
 
   // Función para obtener hamburguesas con variantes
   const obtenerHamburguesasConVariantes = useCallback((productos) => {
-    const hamburguesas = productos.filter(producto => 
+    const obtenerOrden = (desc) => {
+      const index = categoriasHamburguesas.findIndex(tipo => desc.includes(tipo));
+
+      return index === -1 ? 0 : index;
+    };
+
+    // Filtrar hamburguesas
+    const hamburguesas = productos.filter(producto =>
       categoriasHamburguesas.includes(producto.categoria)
     );
-    
-    const hamburguesasMap = new Map();
-    
-    hamburguesas.forEach(producto => {
+
+    // Agrupar por nombre base
+    const agrupadas = hamburguesas.reduce((acc, producto) => {
       const nombreBase = limpiarNombreHamburguesa(producto.descripcion);
-      
-      if (!hamburguesasMap.has(nombreBase)) {
-        hamburguesasMap.set(nombreBase, {
-          variantes: []
-        });
+
+      if (!acc[nombreBase]) {
+        acc[nombreBase] = [];
       }
-      
-      hamburguesasMap.get(nombreBase).variantes.push(producto);
-    });
-    
-    const hamburguesasUnicas = [];
-    
-    hamburguesasMap.forEach((grupo, nombreBase) => {
-      const variantesOrdenadas = grupo.variantes.sort((a, b) => {
-        const orden = { "SIMPLE": 1, "DOBLE": 2, "TRIPLE": 3 };
-        const tipoA = a.descripcion.toUpperCase().includes("DOBLE") ? "DOBLE" : 
-                     a.descripcion.toUpperCase().includes("TRIPLE") ? "TRIPLE" : "SIMPLE";
-        const tipoB = b.descripcion.toUpperCase().includes("DOBLE") ? "DOBLE" : 
-                     b.descripcion.toUpperCase().includes("TRIPLE") ? "TRIPLE" : "SIMPLE";
-        return orden[tipoA] - orden[tipoB];
-      });
-      
-      const productoParaMostrar = variantesOrdenadas.find(v => 
-        v.descripcion.toUpperCase().includes("SIMPLE")
-      ) || variantesOrdenadas[0];
-      
-      hamburguesasUnicas.push({
-        ...productoParaMostrar,
+
+      acc[nombreBase].push(producto);
+
+      return acc;
+    }, {});
+
+    // Transformar en array final
+    return Object.entries(agrupadas).map(([nombreBase, variantes]) => {
+
+      const variantesOrdenadas = variantes.sort(
+        (a, b) =>
+          obtenerOrden(a.descripcion) -
+          obtenerOrden(b.descripcion)
+      );
+
+      const productoBase =
+        variantesOrdenadas.find(
+          v => obtenerOrden(v.descripcion) === 0) || variantesOrdenadas[0];
+
+      return {
+        ...productoBase,
         descripcion: nombreBase,
-        nombreBase: nombreBase,
+        nombreBase,
         variantes: variantesOrdenadas,
-        descripcionOriginal: productoParaMostrar.descripcion
-      });
+        descripcionOriginal: productoBase.descripcion
+      };
     });
-    
-    return hamburguesasUnicas;
   }, [categoriasHamburguesas]);
 
   // Función para verificar si una hamburguesa ya está en el carrito

@@ -11,15 +11,10 @@ export const ModalExtras = () => {
     volverAVariante,
     finalizarHamburguesa,
     cancelar,
-    hamburguesaSeleccionada,
-    setVarianteElegida
+    hamburguesaSeleccionada
   } = useContext(CartContext);
 
   const esPolloCrispy = !hamburguesaSeleccionada && varianteElegida?.categoria === 'POLLO CRISPY';
-
-  const actualizarObservaciones = (valor) => {
-    setVarianteElegida(prev => prev ? { ...prev, observaciones: valor } : prev);
-  };
 
   if (!showModalExtras || !varianteElegida) return null;
 
