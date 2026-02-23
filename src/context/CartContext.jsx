@@ -454,62 +454,21 @@ export const CartProvider = ({ children }) => {
   // Cargar extras y bebidas
   const cargarExtrasYBebidas = useCallback( () => {
     try {
-      // const productosRef = collection(db, "productos");
-      
-      // Obtener extras para hamburguesas
-      // const extrasQuery = query(
-      //   productosRef, 
-      //   where("categoria", "==", "EXTRA"),
-      //   where("tipoExtra", "==", "HAMBURGUESA"),
-      //   where("visible", "==", true)
-      // );
-      console.log("productos");
-      console.log(productos);
-      const extrasSnapshot = productos.filter(prod => prod.categoria=='EXTRA'&&prod.tipoExtra=='HAMBURGUESA'&&prod.visible==true);
-      // const extrasData = extrasSnapshot.map(doc => ({
-      //   ...doc.data(),
-      //   id: doc.id
-      // }));
-      
+      const extrasSnapshot = productos.filter(prod => prod.categoria === 'EXTRA' && prod.tipoExtra === 'HAMBURGUESA' && prod.visible);
       setExtrasHamburguesas(extrasSnapshot);
       
-      // Obtener extras genéricos
-      // const extrasGenericosQuery = query(
-      //   productosRef, 
-      //   where("categoria", "==", "EXTRA"),
-      //   where("tipoExtra", "==", "GENERAL"),
-      //   where("visible", "==", true)
-      // );
-      const extrasGenericosSnapshot = productos.filter(prod => prod.categoria=='EXTRA'&&prod.tipoExtra=='GENERAL'&&prod.visible==true);
-      // const extrasGenericosData = extrasGenericosSnapshot.map(doc => ({
-      //   ...doc.data(),
-      //   id: doc.id
-      // }));
-      
+      const extrasGenericosSnapshot = productos.filter(prod => prod.categoria === 'EXTRA' && prod.tipoExtra === 'GENERAL' && prod.visible);
       setExtrasGenericos(extrasGenericosSnapshot);
       
-      // Obtener bebidas
-      // const bebidasQuery = query(
-      //   productosRef, 
-      //   where("categoria", "==", "BEBIDAS"),
-      //   where("visible", "==", true)
-      // );
-      const bebidasSnapshot = productos.filter(prod => prod.categoria=='BEBIDAS'&&prod.visible==true);
-      console.log('bebidasnapshot')
-      console.log(bebidasSnapshot);
-      // const bebidasData = bebidasSnapshot.map(doc => ({
-      //   ...doc.data(),
-      //   id: doc.id
-      // }));
-      
+      const bebidasSnapshot = productos.filter(prod => prod.categoria === 'BEBIDAS' && prod.visible);
       setBebidasDisponibles(bebidasSnapshot);
+
     } catch (error) {
       console.error("Error cargando extras y bebidas:", error);
     }
   }, [productos]);
 
   // ========== EFECTOS ==========
-
   useEffect(() => {
     cargarExtrasYBebidas();
   }, [cargarExtrasYBebidas]);

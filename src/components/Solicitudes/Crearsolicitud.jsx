@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from '../../context/CartContext.jsx'
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { useNavigate } from 'react-router-dom';
 import 'moment/locale/es';
@@ -14,8 +14,6 @@ import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
 
 const CrearSolicitud = () => {
-  //const [categorias, setCategorias] = useState([]);
-  //const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const {
@@ -41,7 +39,6 @@ const CrearSolicitud = () => {
   const opcionSeleccionada = watch("opcion");
   const pagoSeleccionado = watch("metodoPago");
 
-  let [docId, setDocId] = useState("");
   const navigate = useNavigate();
 
   const comprar = (data) => {
@@ -76,7 +73,6 @@ const CrearSolicitud = () => {
 
       actualizarMensajeWSP(mensajeCodificado);
 
-      setDocId(doc.id)
       vaciarCarrito();
 
       navigate(`/ver-pedido/${doc.id}`);
@@ -87,11 +83,9 @@ const CrearSolicitud = () => {
     const fetchData = async () => {
       try {
         // Obtener categorías
- 
         const categoriasDataOrdenada = await obtenerCategorias();
 
         // Obtener productos
-
         const productosData = await obtenerProductos();
 
         setCategorias(categoriasDataOrdenada);

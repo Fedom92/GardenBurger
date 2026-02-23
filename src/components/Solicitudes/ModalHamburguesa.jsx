@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react';
 import { CartContext } from '../../context/CartContext';
-import { set } from 'react-hook-form';
 
 export const ModalHamburguesa = () => {
   const {
