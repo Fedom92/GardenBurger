@@ -45,7 +45,7 @@ const CrearSolicitud = () => {
     const solicitud = {
       cliente: data,
       productos: carrito,
-      total: pagoSeleccionado === "MP" ? totalCarrito() + totalCarrito() * parseFloat(process.env.REACT_APP_recargoMP)/100 : totalCarrito(),
+      total: pagoSeleccionado === "MP" ? totalCarrito() + totalCarrito() * parseFloat(process.env.REACT_APP_recargoMP) / 100 : totalCarrito(),
       estado: "PENDIENTE",
       fecha: new Date()
     }
@@ -290,8 +290,17 @@ const CrearSolicitud = () => {
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
-                  <input type="tel" id="telefono" placeholder='Ingrese su número de teléfono' {...register("telefono", { required: true })} required />
-                  <div className="d-flex justify-content-around">
+                  <input type="text" id="telefono" maxLength={10} placeholder='Teléfono (sin 0 y sin 15)...' {...register("telefono", {
+                    required: "El teléfono es obligatorio",
+                    validate: value => value.startsWith('11') || value.startsWith('23') || "El teléfono debe comenzar con 11 o 23"
+                  })} required
+                    onInput={(e) => {
+                      e.target.value = e.target.value.replace(/\D/g, '');
+                    }}
+                  />
+                  {errors.telefono && <p style={{ color: 'red', margin: '0', textAlign: 'center' }}>{errors.telefono.message}</p>}
+
+                  <div className="d-flex justify-content-around mt-2">
                     <div style={{ minWidth: "110px" }}>
                       <label>
                         <input

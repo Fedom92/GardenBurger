@@ -169,14 +169,14 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                                 </p>
                                                 {pedido.metodoPago === "%" && (
                                                     <p className="mb-1">
-                                                        <strong>Efectivo:</strong> ${pedido.montoEfectivo?.toFixed(2) || 0}
+                                                        <strong>Efectivo:</strong> ${pedido.montoEfectivo || 0}
                                                     </p>
                                                 )}
                                                 <p className="mb-1">
                                                     <strong>Envío:</strong> {pedido.envio?.zona_envio} - ${pedido.envio?.costo_envio}
                                                 </p>
                                                 <p className="mb-1">
-                                                    <strong>Total:</strong> ${pedido.total?.toFixed(2)}
+                                                    <strong>Total:</strong> ${pedido.total}
                                                 </p>
                                             </div>
                                         </div>

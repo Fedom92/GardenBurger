@@ -10,6 +10,7 @@ import '../../style/Main.css';
 import PendientesMP from './PendientesMP';
 import PendientesSolicitudes from './PendientesSolicitudes';
 import EliminarTickets from './EliminarTickets';
+import BuscarSolicitud from './BuscarSolicitud';
 import AutocompleteGoogle from '../../Utils/AutocompleteGoogle';
 import logoMP from '../../img/mercado-pago.webp';
 
@@ -38,6 +39,7 @@ const Caja = () => {
     const [showPendientesSolicitudes, setShowPendientesSolicitudes] = useState(false);
     const [showModalDividido, setShowModalDividido] = useState(false);
     const [showEliminarTickets, setShowEliminarTickets] = useState(false);
+    const [showBuscarSolicitud, setShowBuscarSolicitud] = useState(false);
     const [showHorarioEspecial, setShowHorarioEspecial] = useState(false);
     const horarioEspecial = watch("horarioEspecial");
 
@@ -202,12 +204,12 @@ const Caja = () => {
         if (producto.categoria === "EXTRA" && producto.tipoExtra === "HAMBURGUESA") {
             const categoriasHamburguesa = ["SIMPLE", "DOBLE", "TRIPLE"];
             const ultimoProducto = carrito[carrito.length - 1];
-            
+
             const esValido = ultimoProducto && (
                 categoriasHamburguesa.includes(ultimoProducto.categoria) ||
                 (ultimoProducto.categoria === "EXTRA" && ultimoProducto.tipoExtra === "HAMBURGUESA")
             );
-            
+
             if (!esValido) {
                 Swal.fire({
                     title: 'Advertencia',
@@ -302,8 +304,8 @@ const Caja = () => {
                 envio: envioSeleccionado,
                 metodoPago: data.metodoPago,
                 pagaCon: data.pagaCon || 0,
-                montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo.toFixed(2)) : 0,
-                total: Number(totalFinal.toFixed(2)),
+                montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
+                total: Number(totalFinal),
                 carrito: carrito,
                 estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "PENDIENTE",
                 fecha: fecha,
@@ -421,6 +423,7 @@ const Caja = () => {
             });
             return false;
         }
+
         if (!data.latitud || !data.longitud) {
             Swal.fire({
                 title: 'Advertencia',
@@ -432,10 +435,10 @@ const Caja = () => {
         }
 
         // Validar teléfono
-        if (!data.telefono.startsWith('11')) {
+        if (!data.telefono.startsWith('11') || !data.telefono.startsWith('23')) {
             Swal.fire({
                 title: 'Advertencia',
-                text: 'El teléfono debe comenzar con 11',
+                text: 'El teléfono debe comenzar con 11 o 23',
                 icon: 'warning',
                 confirmButtonColor: '#ffc107',
             });
@@ -480,7 +483,7 @@ const Caja = () => {
             if (!data.pagaCon || data.pagaCon < totalFinal) {
                 Swal.fire({
                     title: 'Advertencia',
-                    text: `El monto "Paga Con" debe ser igual o mayor al total ($${totalFinal.toFixed(2)})`,
+                    text: `El monto "Paga Con" debe ser igual o mayor al total ($${totalFinal})`,
                     icon: 'warning',
                     confirmButtonColor: '#ffc107',
                 });
@@ -497,7 +500,7 @@ const Caja = () => {
         setMontoEfectivo(0);
         setShowHorarioEspecial(false);
     };
-    
+
     const handleAprobarSolicitud = (solicitud) => {
         try {
             // Llenar los campos del formulario con los datos de la solicitud
@@ -561,23 +564,31 @@ const Caja = () => {
                             className="d-flex justify-content-start align-items-center">
                             <h3>Sistema Caja</h3>
                             <button
-                                className={`btn btn-info mx-2 btn-sm text-white fw-bold mb-1 ${tienePendientesMP && !showPendientesMP ? 'btn-blink' : ''}`}
-                                onClick={() => setShowPendientesMP(true)}
-                            >
-                                <img src={logoMP} alt="MP" className="img-fluid" style={{ height: "3vh" }}></img> Pendientes MP
-                            </button>
-                            <button
                                 className={`btn btn-warning mx-2 text-white fw-bold mb-1 ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-blink' : ''}`}
                                 onClick={() => setShowPendientesSolicitudes(true)}
                             >
                                 <i className="fa fa-list-check"></i> Ver Solicitudes
                             </button>
                             <button
-                                className="btn btn-danger mx-2 fw-bold mb-1"
-                                onClick={() => setShowEliminarTickets(true)}
+                                className={`btn btn-info mx-2 btn-sm text-white fw-bold mb-1 ${tienePendientesMP && !showPendientesMP ? 'btn-blink' : ''}`}
+                                onClick={() => setShowPendientesMP(true)}
                             >
-                                <i className="fa fa-trash"></i> Eliminar Ticket
+                                <img src={logoMP} alt="MP" className="img-fluid" style={{ height: "3vh" }}></img> Pendientes MP
                             </button>
+                            <div className="ms-auto d-flex">
+                                <button
+                                    className="btn btn-primary mx-2 fw-bold mb-1"
+                                    onClick={() => setShowBuscarSolicitud(true)}
+                                >
+                                    <i className="fa fa-search"></i> Buscar Solicitud
+                                </button>
+                                <button
+                                    className="btn btn-danger mx-2 fw-bold mb-1"
+                                    onClick={() => setShowEliminarTickets(true)}
+                                >
+                                    <i className="fa fa-trash"></i> Eliminar Ticket
+                                </button>
+                            </div>
                         </div>
 
                         <main className="container-fluid">
@@ -630,9 +641,9 @@ const Caja = () => {
                                                         <tr key={producto.id}>
                                                             <td className="text-center">{producto.cantidad}</td>
                                                             <td className="text-start">
-                                                                <p 
+                                                                <p
                                                                     className={`title text-truncate mb-0 ${producto.categoria === "EXTRA" ? "fst-italic ps-2" : ""}`}>
-                                                                      {producto.categoria === "EXTRA" && "-"}{producto.descripcion}
+                                                                    {producto.categoria === "EXTRA" && "-"}{producto.descripcion}
                                                                 </p>
                                                             </td>
                                                             <td className="text-center">
@@ -734,7 +745,7 @@ const Caja = () => {
                                                         autoComplete="off"
                                                         min={0}
                                                         disabled
-                                                        value={montoEfectivo.toFixed(2)}
+                                                        value={montoEfectivo}
                                                     />
                                                 </div>
                                                 <div className="col-2"></div>
@@ -756,7 +767,7 @@ const Caja = () => {
                                                         step={1000}
                                                         min={0}
                                                         disabled
-                                                        value={montoMPConRecargo.toFixed(2)}
+                                                        value={montoMPConRecargo}
                                                     />
                                                 </div>
                                                 <div className="col-2"></div>
@@ -770,7 +781,7 @@ const Caja = () => {
                                             </div>
                                             <div className="col-5 d-flex align-items-center">
                                                 <span className="p-0">$</span>
-                                                <input type="number" className="form-control border-0 bg-transparent" autoComplete="off" min={0} disabled value={totalFinal.toFixed(2) || 0} />
+                                                <input type="number" className="form-control border-0 bg-transparent" autoComplete="off" min={0} disabled value={totalFinal || 0} />
                                             </div>
                                         </div>
 
@@ -967,6 +978,12 @@ const Caja = () => {
             <EliminarTickets
                 isOpen={showEliminarTickets}
                 onClose={() => setShowEliminarTickets(false)}
+            />
+
+            {/* Modal de Buscar Solicitudes */}
+            <BuscarSolicitud
+                isOpen={showBuscarSolicitud}
+                onClose={() => setShowBuscarSolicitud(false)}
             />
         </>
     );

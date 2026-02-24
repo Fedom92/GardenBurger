@@ -38,7 +38,7 @@ export const PaginaDetalle = () => {
   }, [id]);
 
   const enviarMensajeWSP = (()=>{   
-    window.open(`https://api.whatsapp.com/send?phone=${process.env.REACT_APP_celular}&text=${mensajeWSP}`, "_blank")
+    window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${mensajeWSP}`, "_blank")
   })
 
 
@@ -97,7 +97,7 @@ export const PaginaDetalle = () => {
                   </div>
                   <div className='tituloVP'>{producto.descripcion} x{producto.amountInCart}</div>
 
-                  <div className="precioVP">${(producto.precio * producto.amountInCart).toFixed(2)}</div>
+                  <div className="precioVP">${(producto.precio * producto.amountInCart)}</div>
 
                 </div>
 

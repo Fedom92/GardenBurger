@@ -45,7 +45,7 @@ export const Card = ({ producto }) => {
             <img src={producto.imagen} alt={nombreMostrar} loading="lazy" onClick={handleAgregar}/>
           </div>
           <div className="cardColumnCS m-3">
-            <p className="precio">${(producto.precio).toFixed(2)}</p>
+            <p className="precio">${(producto.precio)}</p>
             <button type='button' className='btn btn-success' onClick={handleAgregar}>
               Agregar al pedido
             </button>

@@ -159,7 +159,7 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const totalCarrito = useCallback(() => {
-    return parseFloat(carrito.reduce((total, prod) => total + (prod.amountInCart * prod.precio), 0).toFixed(2));
+    return parseFloat(carrito.reduce((total, prod) => total + (prod.amountInCart * prod.precio), 0));
   }, [carrito]);
 
   const vaciarCarrito = useCallback(() => {

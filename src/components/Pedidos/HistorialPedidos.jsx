@@ -116,7 +116,7 @@ const HistorialPedidos = () => {
           return (
             <div>
               <div>${pagaCon}</div>
-              {vuelto > 0 && <small className="text-success">Vuelto: ${vuelto.toFixed(2)}</small>}
+              {vuelto > 0 && <small className="text-success">Vuelto: ${vuelto}</small>}
             </div>
           );
         }

@@ -44,6 +44,7 @@ const AutocompleteGoogle = ({
     () => ({
       bounds,
       strictBounds: true,
+      types: ['address'], // Restringe para buscar solo direcciones exactas
       componentRestrictions: { country: "ar" },
       fields: ["address_components", "geometry"],
     }),
@@ -57,6 +58,12 @@ const AutocompleteGoogle = ({
 
     if (!place?.geometry?.location) {
       setError("Selecciona una dirección válida del listado");
+      setInputValue("");
+      onChange?.({
+        direccion: "",
+        latitud: null,
+        longitud: null,
+      });
       return;
     }
 
@@ -68,6 +75,17 @@ const AutocompleteGoogle = ({
     const number = components.find(c => c.types.includes("street_number"))?.long_name;
     const neighborhood = components.find(c => c.types.includes("sublocality"))?.long_name;
     const city = components.find(c => c.types.includes("locality"))?.long_name;
+
+    if (!number) {
+      setError("Por favor ingresa una dirección exacta con altura/número");
+      setInputValue(place.name || "");
+      onChange?.({
+        direccion: "",
+        latitud: null,
+        longitud: null,
+      });
+      return;
+    }
 
     const direccion = [street + " " + number, neighborhood, city].filter(Boolean).join(", ");
 
@@ -85,8 +103,12 @@ const AutocompleteGoogle = ({
     const newValue = e.target.value;
     setInputValue(newValue);
 
-    if (newValue === "") {
+    // Limpiar el error apenas el usuario empiece a escribir de nuevo
+    if (error) {
       setError("");
+    }
+
+    if (newValue === "") {
       onChange?.({
         direccion: "",
         latitud: null,
