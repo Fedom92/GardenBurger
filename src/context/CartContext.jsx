@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebaseConfig/firebase";
+import { CATEGORIAS_HAMBURGUESA } from "../Utils/Constantes";
 
 export const CartContext = createContext();
 
@@ -25,11 +26,12 @@ const getComboInicial = () => {
 
 // Helper para limpiar nombre de hamburguesa
 const limpiarNombreHamburguesa = (nombre) => {
-  return nombre
-    .replace(/\s+SIMPLE$/i, '')
-    .replace(/\s+DOBLE$/i, '')
-    .replace(/\s+TRIPLE$/i, '')
-    .trim();
+  const regex = new RegExp(
+    `\\s+(${CATEGORIAS_HAMBURGUESA.join("|")})$`,
+    "i"
+  );
+
+  return nombre.replace(regex, "").trim();
 };
 
 export const CartProvider = ({ children }) => {
@@ -43,7 +45,7 @@ export const CartProvider = ({ children }) => {
   const [showModalVariante, setShowModalVariante] = useState(false);
   const [showModalExtras, setShowModalExtras] = useState(false);
   const [showModalExtrasGenericos, setShowModalExtrasGenericos] = useState(false);
-  
+
   const [hamburguesaSeleccionada, setHamburguesaSeleccionada] = useState(null);
   const [variantesHamburguesa, setVariantesHamburguesa] = useState([]);
   const [varianteElegida, setVarianteElegida] = useState(null);
@@ -51,40 +53,38 @@ export const CartProvider = ({ children }) => {
   const [extrasGenericosSeleccionados, setExtrasGenericosSeleccionados] = useState([]);
   const [hamburguesaEnProceso, setHamburguesaEnProceso] = useState(null);
   const [productoEnProceso, setProductoEnProceso] = useState(null);
-  
+
   // Estados para datos del menú
   const [extrasHamburguesas, setExtrasHamburguesas] = useState([]);
   const [extrasGenericos, setExtrasGenericos] = useState([]);
   const [bebidasDisponibles, setBebidasDisponibles] = useState([]);
-  const [categoriasHamburguesas] = useState(["SIMPLE", "DOBLE", "TRIPLE"]);
 
-
-  const obtenerCategorias= useCallback(async()=>{
+  const obtenerCategorias = useCallback(async () => {
     const categoriasRef = collection(db, "categorias");
-            const categoriasSnapshot = await getDocs(categoriasRef);
-            const categoriasDataOrdenada = categoriasSnapshot.docs
-              .map(doc => ({
-                ...doc.data(),
-                id: doc.id
-              }))
-              .sort((a, b) => a.nroOrden - b.nroOrden);
-              setCategorias(categoriasDataOrdenada);
-      return categoriasDataOrdenada;
+    const categoriasSnapshot = await getDocs(categoriasRef);
+    const categoriasDataOrdenada = categoriasSnapshot.docs
+      .map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      }))
+      .sort((a, b) => a.nroOrden - b.nroOrden);
+    setCategorias(categoriasDataOrdenada);
+    return categoriasDataOrdenada;
   })
 
-  const obtenerProductos= useCallback(async()=>{
-  const productosRef = collection(db, "productos");
-          const q = query(productosRef, where("visible", "==", true));
-          const productosSnapshot = await getDocs(q);
-          const productosData = productosSnapshot.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id
-          }));
-          setProductos(productosData);
-   return productosData;
+  const obtenerProductos = useCallback(async () => {
+    const productosRef = collection(db, "productos");
+    const q = query(productosRef, where("visible", "==", true));
+    const productosSnapshot = await getDocs(q);
+    const productosData = productosSnapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id
+    }));
+    setProductos(productosData);
+    return productosData;
   })
+
   // ========== FUNCIONES BÁSICAS DEL CARRITO (DEFINIR PRIMERO) ==========
-
   const agregarAlCarrito = useCallback((producto) => {
     toast.success(
       <div onClick={() => { toast.dismiss() }}>
@@ -111,19 +111,19 @@ export const CartProvider = ({ children }) => {
 
       return [...prevCarrito, {
         ...producto,
-        combo:combo,
+        combo: combo,
         amountInCart: 1,
         subtotal: producto.precio
       }];
     });
-    
+
   }, [combo]);
 
 
   const actualizarMensajeWSP = useCallback((nuevoMensaje) => {
-      setMensajeWSP(nuevoMensaje);
+    setMensajeWSP(nuevoMensaje);
   }, []);
-  
+
   const aumentarCombo = useCallback(() => setCombo(prev => prev + 1), []);
 
   const disminuirCombo = useCallback(() => setCombo(prev => prev - 1), []);
@@ -167,36 +167,19 @@ export const CartProvider = ({ children }) => {
     setCombo(0);
   }, []);
 
-  const cantidadCarrito = useCallback(() => {
-    return carrito.reduce((acumulador, prod) => acumulador + prod.amountInCart, 0);
-  }, [carrito]);
-
-  const cantidadHambPapas = useCallback(() => {
-    const categoriasHambPapas = ['SIMPLE', 'DOBLE', 'TRIPLE', 'CAJA PAPAS', 'POLLO CRISPY'];
-    return carrito
-      .filter(prod => categoriasHambPapas.includes(prod.categoria))
-      .reduce((acumulador, prod) => acumulador + prod.amountInCart, 0);
-  }, [carrito]);
-
-  const cantidadBebidas = useCallback(() => {
-    return carrito
-      .filter(prod => prod.categoria === 'BEBIDAS')
-      .reduce((acumulador, prod) => acumulador + prod.amountInCart, 0);
-  }, [carrito]);
-
   // ========== FUNCIONES AUXILIARES ==========
 
   // Función para obtener hamburguesas con variantes
   const obtenerHamburguesasConVariantes = useCallback((productos) => {
     const obtenerOrden = (desc) => {
-      const index = categoriasHamburguesas.findIndex(tipo => desc.includes(tipo));
+      const index = CATEGORIAS_HAMBURGUESA.findIndex(tipo => desc.includes(tipo));
 
       return index === -1 ? 0 : index;
     };
 
     // Filtrar hamburguesas
     const hamburguesas = productos.filter(producto =>
-      categoriasHamburguesas.includes(producto.categoria)
+      CATEGORIAS_HAMBURGUESA.includes(producto.categoria)
     );
 
     // Agrupar por nombre base
@@ -233,7 +216,7 @@ export const CartProvider = ({ children }) => {
         descripcionOriginal: productoBase.descripcion
       };
     });
-  }, [categoriasHamburguesas]);
+  }, []);
 
   // Función para verificar si una hamburguesa ya está en el carrito
   const hamburguesaYaEnCarrito = useCallback((hamburguesaId) => {
@@ -243,10 +226,10 @@ export const CartProvider = ({ children }) => {
   // Función para eliminar extras anteriores de hamburguesas
   const eliminarExtrasAnteriores = useCallback(() => {
     if (hamburguesaEnProceso) {
-      const extrasAEliminar = carrito.filter(item => 
+      const extrasAEliminar = carrito.filter(item =>
         item.categoria === "EXTRA" && item.tipoExtra === "HAMBURGUESA"
       );
-      
+
       extrasAEliminar.forEach(extra => {
         eliminar(extra);
       });
@@ -256,12 +239,12 @@ export const CartProvider = ({ children }) => {
   // Función para eliminar extras genéricos anteriores de un producto
   const eliminarExtrasGenericosAnteriores = useCallback(() => {
     if (productoEnProceso) {
-      const extrasAEliminar = carrito.filter(item => 
-        item.categoria === "EXTRA" && 
-        item.tipoExtra === "GENERAL" && 
+      const extrasAEliminar = carrito.filter(item =>
+        item.categoria === "EXTRA" &&
+        item.tipoExtra === "GENERAL" &&
         item.productoAsociado === productoEnProceso.id
       );
-      
+
       extrasAEliminar.forEach(extra => {
         eliminar(extra);
       });
@@ -286,16 +269,16 @@ export const CartProvider = ({ children }) => {
     return false;
   }, []);
 
-    // Función para Pollo Crispy
-    const iniciarSeleccionPolloExtrasHamburguesa = useCallback((producto) => {
-      setVarianteElegida({ ...producto, observaciones: '' });
-      setExtrasSeleccionados([]);
-      setHamburguesaSeleccionada(null);
-      setVariantesHamburguesa([]);
-      setShowModalVariante(false);
-      setShowModalExtras(true);
-      document.body.style.overflow = 'hidden';
-    }, []);
+  // Función para Pollo Crispy
+  const iniciarSeleccionPolloExtrasHamburguesa = useCallback((producto) => {
+    setVarianteElegida({ ...producto, observaciones: '' });
+    setExtrasSeleccionados([]);
+    setHamburguesaSeleccionada(null);
+    setVariantesHamburguesa([]);
+    setShowModalVariante(false);
+    setShowModalExtras(true);
+    document.body.style.overflow = 'hidden';
+  }, []);
 
   // Función para iniciar selección de extras genéricos
   const iniciarSeleccionExtrasGenericos = useCallback((producto) => {
@@ -306,8 +289,8 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   // Función para seleccionar variante
-  const seleccionarVariante = useCallback((variante,observaciones) => {
-    setVarianteElegida({...variante,observaciones});
+  const seleccionarVariante = useCallback((variante, observaciones) => {
+    setVarianteElegida({ ...variante, observaciones });
     setShowModalVariante(false);
     setShowModalExtras(true);
     setExtrasSeleccionados([]);
@@ -357,7 +340,7 @@ export const CartProvider = ({ children }) => {
     if (hamburguesaEnProceso && hamburguesaYaEnCarrito(hamburguesaEnProceso.id)) {
       eliminar(hamburguesaEnProceso);
     }
-      
+
     // Eliminar extras anteriores si existían
     eliminarExtrasAnteriores();
 
@@ -368,9 +351,9 @@ export const CartProvider = ({ children }) => {
         tipoExtra: "HAMBURGUESA"
       });
     });
-      
+
     setShowModalExtras(false);
-    
+
   }, [varianteElegida, hamburguesaEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasAnteriores, extrasSeleccionados, agregarAlCarrito]);
 
   // Función para finalizar producto con extras genéricos
@@ -381,10 +364,10 @@ export const CartProvider = ({ children }) => {
     if (hamburguesaYaEnCarrito(productoEnProceso.id)) {
       eliminar(productoEnProceso);
     }
-      
+
     // Eliminar extras genéricos anteriores
     eliminarExtrasGenericosAnteriores();
-    
+
     //Agregar
     agregarAlCarrito(productoEnProceso);
     extrasGenericosSeleccionados.forEach(extra => {
@@ -394,16 +377,16 @@ export const CartProvider = ({ children }) => {
         productoAsociado: productoEnProceso.id
       });
     });
-      
+
     // Cerrar
     setProductoEnProceso(null);
     setExtrasGenericosSeleccionados([]);
     setShowModalExtrasGenericos(false);
-      //document.body.style.overflow = 'auto';
-      // setExtrasGenericosSeleccionados([]);
-      // setProductoEnProceso(null);
-    
-  }, [productoEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasGenericosAnteriores,extrasGenericosSeleccionados,agregarAlCarrito]);
+    //document.body.style.overflow = 'auto';
+    // setExtrasGenericosSeleccionados([]);
+    // setProductoEnProceso(null);
+
+  }, [productoEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasGenericosAnteriores, extrasGenericosSeleccionados, agregarAlCarrito]);
 
   // Función para agregar producto normal
   const agregarProductoNormal = useCallback((producto) => {
@@ -442,14 +425,14 @@ export const CartProvider = ({ children }) => {
   // ========== FUNCIONES DE CARGA DE DATOS ==========
 
   // Cargar extras y bebidas
-  const cargarExtrasYBebidas = useCallback( () => {
+  const cargarExtrasYBebidas = useCallback(() => {
     try {
       const extrasSnapshot = productos.filter(prod => prod.categoria === 'EXTRA' && prod.tipoExtra === 'HAMBURGUESA' && prod.visible);
       setExtrasHamburguesas(extrasSnapshot);
-      
+
       const extrasGenericosSnapshot = productos.filter(prod => prod.categoria === 'EXTRA' && prod.tipoExtra === 'GENERAL' && prod.visible);
       setExtrasGenericos(extrasGenericosSnapshot);
-      
+
       const bebidasSnapshot = productos.filter(prod => prod.categoria === 'BEBIDAS' && prod.visible);
       setBebidasDisponibles(bebidasSnapshot);
 
@@ -479,7 +462,7 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem("carrito", JSON.stringify(carrito));
   }, [carrito]);
 
-    useEffect(() => {
+  useEffect(() => {
     localStorage.setItem("combo", JSON.stringify(combo));
   }, [combo]);
 
@@ -491,26 +474,23 @@ export const CartProvider = ({ children }) => {
     setCarrito,
     mensajeWSP,
     actualizarMensajeWSP,
-    
+
     // Funciones básicas del carrito
     agregarAlCarrito,
     vaciarCarrito,
-    cantidadCarrito,
     disminuir,
     aumentar,
     aumentarCombo,
     disminuirCombo,
     eliminar,
     totalCarrito,
-    cantidadHambPapas,
-    cantidadBebidas,
     obtenerCategorias,
     obtenerProductos,
     productos,
     setProductos,
     categorias,
     setCategorias,
-    
+
     // Estados para modales
     showModalVariante,
     showModalExtras,
@@ -525,8 +505,7 @@ export const CartProvider = ({ children }) => {
     extrasHamburguesas,
     extrasGenericos,
     bebidasDisponibles,
-    categoriasHamburguesas,
-    
+
     // Setters para actualizar desde componentes
     setVarianteElegida,
     setExtrasSeleccionados,
@@ -534,7 +513,7 @@ export const CartProvider = ({ children }) => {
     setShowModalVariante,
     setShowModalExtras,
     setShowModalExtrasGenericos,
-    
+
     // Funciones de selección
     obtenerHamburguesasConVariantes,
     iniciarSeleccionHamburguesa,
@@ -549,27 +528,24 @@ export const CartProvider = ({ children }) => {
     cerrarModales,
     cancelar,
     agregarProductoNormal,
-    
+
     // Funciones auxiliares
     limpiarNombreHamburguesa,
     hamburguesaYaEnCarrito,
-    
+
     // Función para cargar datos
     cargarExtrasYBebidas
-    
+
   }), [
     carrito,
     agregarAlCarrito,
     vaciarCarrito,
-    cantidadCarrito,
     disminuir,
     aumentar,
     aumentarCombo,
     disminuirCombo,
     eliminar,
     totalCarrito,
-    cantidadHambPapas,
-    cantidadBebidas,
     showModalVariante,
     showModalExtras,
     showModalExtrasGenericos,
@@ -583,7 +559,6 @@ export const CartProvider = ({ children }) => {
     extrasHamburguesas,
     extrasGenericos,
     bebidasDisponibles,
-    categoriasHamburguesas,
     mensajeWSP,
     setVarianteElegida,
     setExtrasSeleccionados,

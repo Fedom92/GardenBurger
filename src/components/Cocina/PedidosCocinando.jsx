@@ -156,14 +156,14 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                                     <div className="card border border-warning">
                                         <div className="card-header bg-warning bg-opacity-25">
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <strong>N° {pedido.codigo} - {pedido.hora}</strong>
-                                                <span className="badge bg-warning">EN COCINA</span>
+                                                <strong>{pedido.hora}</strong>
+                                                <span className="badge bg-dark">{pedido.codigo}</span>
                                             </div>
                                             <h6 className="mb-0">{pedido.nombre}</h6>
                                         </div>
 
                                         <div className="card-body d-flex flex-column">
-                                            <div className="m-auto">
+                                            <div>
                                                 {pedido.carrito.map((item, i) => (
                                                     <div key={i} className="d-flex justify-content-between small mt-2">
                                                         <span>{item.cantidad}x {item.descripcion}</span>

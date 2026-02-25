@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { collection, query, where, updateDoc, doc, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';

@@ -4,6 +4,7 @@ import { collection, where, query, onSnapshot, orderBy, doc, writeBatch } from "
 import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
+import { CANTIDAD_CARNES } from "../../Utils/Constantes";
 
 const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     const { currentUser } = useAuth();
@@ -48,21 +49,26 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
             },
             manejarError
         );
-    
+
         return unsubscribe;
     }, [getPedidosEspera, actualizarContador, manejarError]);
 
     const calcularCarnes = (pedidosIds) => {
-        const pedidosSeleccionados = pedidosEspera.filter(p => pedidosIds.includes(p.id));
-        const todosLosItems = pedidosSeleccionados.flatMap(pedido => pedido.carrito);
+        return pedidosEspera
+            .filter(p => pedidosIds.includes(p.id))
+            .flatMap(p => p.carrito)
+            .reduce((total, { categoria, descripcion, cantidad = 1 }) => {
 
-        return todosLosItems.reduce((total, item) => {
-            if (!item.categoria) return total;
-            const factor = item.categoria === 'TRIPLE' ? 3 :
-                item.categoria === 'DOBLE' ? 2 :
-                    item.categoria === 'SIMPLE' ? 1 : 0;
-            return total + factor;
-        }, 0);
+                const clave =
+                    categoria === "EXTRA"
+                        ? descripcion
+                        : categoria;
+
+                const factor = CANTIDAD_CARNES[clave] || 0;
+
+                return total + factor * cantidad;
+
+            }, 0);
     };
 
     const togglePedidoSelection = (pedidoId) => {
@@ -154,7 +160,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                                 >
                                     <div className="card-body p-2 d-flex flex-column">
                                         <div className="d-flex justify-content-between align-items-start mb-1">
-                                            <span className="badge bg-dark">N° {pedido.codigo}</span>
+                                            <span className="badge bg-dark">{pedido.codigo}</span>
                                             <small className="text-body-secondary">{pedido.fecha} - {pedido.hora}</small>
                                         </div>
                                         <h6 className="mb-2 text-truncate">{pedido.nombre}</h6>

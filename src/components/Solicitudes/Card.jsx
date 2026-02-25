@@ -1,19 +1,19 @@
 import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { CartContext } from '../../context/CartContext'
+import { CATEGORIAS_HAMBURGUESA } from '../../Utils/Constantes'
 
 export const Card = ({ producto }) => {
   const { 
     agregarProductoNormal,
     iniciarSeleccionHamburguesa,
-    categoriasHamburguesas,
     limpiarNombreHamburguesa,
     aumentarCombo,
     agregarAlCarrito,
   } = useContext(CartContext);
 
   // Determinar si es una hamburguesa
-  const esHamburguesa = categoriasHamburguesas.includes(producto.categoria);
+  const esHamburguesa = CATEGORIAS_HAMBURGUESA.includes(producto.categoria);
   
   // Obtener nombre para mostrar en la card
   const nombreMostrar = esHamburguesa ? 

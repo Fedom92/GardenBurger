@@ -11,7 +11,7 @@ const Nav = ({ Icon, title, isActive }) => {
   );
 
   return (
-    <div className="nav">
+    <div className="nav mb-1">
     {isActive ? (
       <OverlayTrigger trigger={["hover", "focus"]} placement="right" overlay={popover}>
         <Button variant="link" style={{color: '#fff', padding:0}}>
@@ -21,7 +21,7 @@ const Nav = ({ Icon, title, isActive }) => {
     ) : (
       Icon && <Icon className="icon" />
     )}
-    {isActive ? null : <h6 className="fw-normal">{title}</h6>}
+    {isActive ? null : <h6 className="fw-normal mb-0">{title}</h6>}
     </div>
   );
 };

@@ -12,6 +12,7 @@ import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
+import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
 
 const CrearSolicitud = () => {
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,6 @@ const CrearSolicitud = () => {
     totalCarrito,
     vaciarCarrito,
     obtenerHamburguesasConVariantes,
-    categoriasHamburguesas,
     actualizarMensajeWSP,
     obtenerCategorias,
     obtenerProductos,
@@ -213,7 +213,7 @@ const CrearSolicitud = () => {
        
                {/* RESTO CATEGORÍAS */}
                {categorias
-                 .filter(cat => !categoriasHamburguesas.includes(cat.nombre) && cat.nombre !== "EXTRA" && cat.nombre !== 'POLLO CRISPY')
+                 .filter(cat => !CATEGORIAS_HAMBURGUESA.includes(cat.nombre) && cat.nombre !== "EXTRA" && cat.nombre !== 'POLLO CRISPY')
                  .map((categoria, index) => {
                    const productosCat = productos.filter(p => p.categoria === categoria.nombre);
                    if (!productosCat.length) return null;
