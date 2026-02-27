@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { collection, deleteDoc, doc, query, orderBy, getDocs, addDoc, setDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
-import CryptoJS from 'crypto-js';
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";

@@ -66,7 +66,7 @@ const Deliverys = () => {
                 .reduce((sum, p) => sum + p.total, 0);
             const totalEnvios = pedidosDelivery
                 .reduce((sum, p) => sum + (p.envio?.costo_envio || 0), 0);
-            
+
             metricas[delivery.id] = {
                 nombre: delivery.nombre,
                 totalEfectivo,
@@ -81,12 +81,12 @@ const Deliverys = () => {
         try {
             const pedidoDoc = doc(db, 'pedidos', pedidoId);
             const deliverySel = deliverys.find(d => d.id === deliveryId) || "";
-            await updateDoc(pedidoDoc, {deliveryAsignado: deliverySel ? deliverySel.nombre : ""});
-            
+            await updateDoc(pedidoDoc, { deliveryAsignado: deliverySel ? deliverySel.nombre : "" });
+
             setPedidos(prevPedidos =>
                 prevPedidos.map(pedido =>
-                    pedido.id === pedidoId 
-                        ? {...pedido, deliveryAsignado: deliverySel ? deliverySel.nombre : ""} 
+                    pedido.id === pedidoId
+                        ? { ...pedido, deliveryAsignado: deliverySel ? deliverySel.nombre : "" }
                         : pedido
                 )
             );
@@ -100,7 +100,7 @@ const Deliverys = () => {
         try {
             const pedidoDoc = doc(db, 'pedidos', pedidoId);
             await updateDoc(pedidoDoc, { estadoDelivery: nuevoEstado });
-            
+
             setPedidos(prevPedidos =>
                 prevPedidos.map(pedido => pedido.id === pedidoId ? { ...pedido, estadoDelivery: nuevoEstado } : pedido)
             );
@@ -155,7 +155,7 @@ const Deliverys = () => {
                 const pedido = row.original;
                 const estadoDelivery = pedido.estadoDelivery || "PENDIENTE";
                 const tieneAsignado = Boolean(pedido.deliveryAsignado);
-                
+
                 return (
                     <>
                         <button
@@ -216,7 +216,7 @@ const Deliverys = () => {
                                     sortBy="codigo"
                                     ordenDescendente={false}
                                     camposBusqueda={["codigo", "direccion", "nombre"]}
-                                    campoSelector="deliveryAsignado"
+                                    camposFiltros={["deliveryAsignado"]}
                                 />
                             </div>
                         </div>
@@ -254,7 +254,7 @@ const Deliverys = () => {
                                                         <td className="text-end">${m.totalEfectivo}</td>
                                                         <td className="text-end">${m.totalEnvios}</td>
                                                     </tr>
-                                            ))}
+                                                ))}
                                         </tbody>
                                     </table>
                                 </div>

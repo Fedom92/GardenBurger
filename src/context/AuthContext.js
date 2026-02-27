@@ -1,27 +1,7 @@
-import { createContext, useContext, useEffect, useReducer, useCallback, useMemo } from "react";
-import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
-import { setPersistence, browserLocalPersistence } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebaseConfig/firebase";
-
-const auth = getAuth();
-
-const authReducer = (state, action) => {
-  switch (action.type) {
-    case "LOGIN":
-      return { ...state, currentUser: action.payload.user, inicialesUsuario: action.payload.iniciales, loading: false };
-    case "LOGOUT":
-      return { ...state, currentUser: null, inicialesUsuario: "", loading: false };
-    default:
-      return state;
-  }
-};
-
-const initialState = {
-  currentUser: null,
-  inicialesUsuario: "",
-  loading: true,
-};
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
+import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebaseConfig/firebase";
 
 const AuthContext = createContext();
 
@@ -30,99 +10,107 @@ export function useAuth() {
 }
 
 export function AuthContextProvider({ children }) {
-  const [state, dispatch] = useReducer(authReducer, initialState);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Función para obtener las iniciales del usuario
-  const obtenerInicialesUsuario = async (user) => {
-    if (!user) return "";
-    
+  const getIniciales = (nombreCompleto) => {
+    if (!nombreCompleto) return "";
+    const palabras = nombreCompleto.trim().split(" ");
+    return palabras
+      .filter(palabra => palabra.length > 0)
+      .map(palabra => palabra.charAt(0).toUpperCase())
+      .join("");
+  };
+
+  const fetchUserData = useCallback(async (user) => {
     try {
-      const userQuery = query(collection(db, "usuarios"), where("correo", "==", user.email));
-      const userDocsSnapshot = await getDocs(userQuery);
-      
-      if (!userDocsSnapshot.empty) {
-        const userData = userDocsSnapshot.docs[0].data();
-        const nombreCompleto = userData.nombreCompleto || "";
-        
-        // Extraer las iniciales de cada palabra
-        const palabras = nombreCompleto.trim().split(" ");
-        const iniciales = palabras
-          .filter(palabra => palabra.length > 0)
-          .map(palabra => palabra.charAt(0).toUpperCase())
-          .join("");
-        
-        return iniciales;
+      const userDocRef = doc(db, "usuarios", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      if (userDocSnap.exists()) {
+        const data = userDocSnap.data();
+        /*if (data.rol === process.env.REACT_APP_rolBloq) {
+          await signOut(auth);
+          return null;
+        }*/
+        return data;
       }
     } catch (error) {
-      console.error("Error al obtener iniciales del usuario:", error);
+      console.error("Error al obtener datos del usuario:", error);
     }
-    
-    return "";
-  };
+    return null;
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const iniciales = await obtenerInicialesUsuario(user);
-        dispatch({ 
-          type: "LOGIN", 
-          payload: { 
-            user, 
-            iniciales 
-          } 
-        });
+        const data = await fetchUserData(user);
+        if (data) {
+          setCurrentUser(user);
+          setUserData({
+            ...data,
+            inicialesUsuario: getIniciales(data.nombreCompleto)
+          });
+        } else {
+          setCurrentUser(null);
+          setUserData(null);
+        }
       } else {
-        dispatch({ type: "LOGOUT" });
+        setCurrentUser(null);
+        setUserData(null);
       }
+      setLoading(false);
     });
 
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+    return () => unsubscribe();
+  }, [fetchUserData]);
 
   const login = useCallback(async (email, password) => {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      await setPersistence(auth, browserLocalPersistence);
-      
-      const iniciales = await obtenerInicialesUsuario(userCredential.user);
-      dispatch({ 
-        type: "LOGIN", 
-        payload: { 
-          user: userCredential.user, 
-          iniciales 
-        } 
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      // Validamos y obtenemos datos antes de retornar para evitar navegación prematura
+      const data = await fetchUserData(credential.user);
+      if (!data) {
+        throw new Error("Usuario bloqueado o sin permisos");
+      }
+      setCurrentUser(credential.user);
+      setUserData({
+        ...data,
+        inicialesUsuario: getIniciales(data.nombreCompleto)
       });
+      return data;
     } catch (error) {
-      console.error("Login" + error)
-      window.alert("Error al Logearse, Verifique su conexión!")
+      console.error("Error en login:", error);
+      throw error;
     }
-  }, []);
+  }, [fetchUserData]);
 
   const logout = useCallback(async () => {
     try {
       await signOut(auth);
-      localStorage.setItem("rol", JSON.stringify(null));
-      dispatch({ type: "LOGOUT" });
+      // Limpiamos los estados de manera reactiva, eliminamos localstorage handling
+      setCurrentUser(null);
+      setUserData(null);
     } catch (error) {
-      console.error("Logout" + error)
-      window.alert("Error al Cerrar sesión, Verifique su conexión!")
+      console.error("Error en logout:", error);
+      window.alert("Error al Cerrar sesión, Verifique su conexión!");
     }
   }, []);
 
-  // Memoizar el valor del contexto para evitar re-renderizados innecesarios
   const contextValue = useMemo(() => ({
-    currentUser: state.currentUser, 
-    inicialesUsuario: state.inicialesUsuario,
-    login, 
-    logout 
-  }), [state.currentUser, state.inicialesUsuario, login, logout]);
+    currentUser,
+    userData,
+    inicialesUsuario: userData?.inicialesUsuario || "",
+    login,
+    logout
+  }), [currentUser, userData, login, logout]);
 
-  if (state.loading) {
-    return <div className="w-100">
-      <span className="loader position-absolute start-50 top-50 mt-3"></span>
-    </div>;
+  if (loading) {
+    return (
+      <div className="w-100 vh-100 d-flex justify-content-center align-items-center">
+        <span className="loader position-absolute start-50 top-50 mt-3"></span>
+      </div>
+    );
   }
 
   return (

@@ -10,3 +10,10 @@ export const CANTIDAD_CARNES = {
     SIMPLE: 1,
     "CARNE EXTRA": 1,
 };
+
+export const ESTADOS_SOLICITUDES = [
+  { key: "PENDIENTE", label: "Pendiente" },
+  { key: "CONFIRMADO", label: "Confirmado" },
+  { key: "COCINA", label: "Cocina" },
+  { key: "DELIVERY", label: "Delivery" },
+];

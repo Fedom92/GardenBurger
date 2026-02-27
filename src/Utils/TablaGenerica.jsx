@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, getPaginationRowModel, flexRender } from "@tanstack/react-table";
 
 function quitarAcentos(str) {
+    if (!str) return "";
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
@@ -17,37 +18,35 @@ function generarColumnas(columnas) {
     });
 }
 
-const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqueda = [], campoSelector = null }) => {
+const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, camposBusqueda = [], camposFiltros = [] }) => {
     const columnasProcesadas = useMemo(() => generarColumnas(columnas), [columnas]);
     const [search, setSearch] = useState("");
-    const [filtroSelector, setFiltroSelector] = useState("");
-    const [pagination, setPagination] = useState({
-        pageIndex: 0,
-        pageSize: 25,
-    });
+    const [filtrosActivos, setFiltrosActivos] = useState({});
+
+    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 25 });
     const [sorting, setSorting] = useState(sortBy ? [{ id: sortBy, desc: ordenDescendente }] : []);
 
+    const handleFiltroChange = (campo, valor) => {
+        setFiltrosActivos(prev => ({ ...prev, [campo]: valor }));
+    };
+
     const datosFiltrados = useMemo(() => {
-        let resultado = data;
+        const busquedaNormalizada = search ? quitarAcentos(search) : "";
+        const selectoresActivos = Object.entries(filtrosActivos).filter(([_, val]) => val !== "");
 
-        if (camposBusqueda.length > 0 && search) {
-            const normalizado = quitarAcentos(search);
-            resultado = resultado.filter((item) =>
-                camposBusqueda.some((campo) => {
-                    const valor = quitarAcentos(String(item[campo] ?? ""));
-                    return valor.includes(normalizado);
-                })
+        return data.filter(item => {
+            if (busquedaNormalizada && !camposBusqueda.some(campo =>
+                quitarAcentos(String(item[campo] ?? "")).includes(busquedaNormalizada)
+            )) {
+                return false;
+            }
+
+            //Filtrado Múltiple (Debe satisfacer TODOS los filtros activos)
+            return selectoresActivos.every(([campo, valorEsperado]) =>
+                String(item[campo]) === valorEsperado
             );
-        }
-
-        if (campoSelector && filtroSelector) {
-            resultado = resultado.filter(
-                (item) => String(item[campoSelector]) === filtroSelector
-            );
-        }
-
-        return resultado;
-    }, [data, search, camposBusqueda, campoSelector, filtroSelector]);
+        });
+    }, [data, search, camposBusqueda, filtrosActivos]);
 
     const table = useReactTable({
         data: datosFiltrados,
@@ -64,45 +63,53 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
         autoResetPageIndex: false,
     });
 
-    const opcionesSelector = useMemo(() => {
-        if (!campoSelector) return [];
-        const setUnico = new Set();
-        data.forEach((item) => {
-            if (item[campoSelector] != null) {
-                setUnico.add(item[campoSelector]);
-            }
-        });
-        return Array.from(setUnico).sort();
-    }, [data, campoSelector]);
+    // Agrupa y extrae opciones únicas de la data en un solo recorrido de la matriz utilizando reduce
+    const opcionesPorSelector = useMemo(() =>
+        camposFiltros.reduce((acc, campo) => {
+            acc[campo] = [...new Set(
+                data.map(item => item[campo])
+                    .filter(val => val != null && String(val).trim() !== "")
+            )].sort();
+            return acc;
+        }, {}),
+        [data, camposFiltros]);
 
     return (
         <div>
-            <div className="col d-flex justify-content-between align-items-center">
-                {campoSelector ? (
-                    <select
-                        value={filtroSelector}
-                        onChange={(e) => setFiltroSelector(e.target.value)}
-                        className="form-control mb-3 w-auto p-2"
-                    >
-                        <option value="">-- Filtrar por {campoSelector.charAt(0).toUpperCase() + campoSelector.slice(1)} --</option>
-                        {opcionesSelector.map((opcion) => (
-                            <option key={opcion} value={opcion}>
-                                {opcion}
-                            </option>
+            <div className="col d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                {/* Contenedor de selects múltiples */}
+                {camposFiltros.length > 0 && (
+                    <div className="d-flex gap-2 flex-wrap">
+                        {camposFiltros.map(campo => (
+                            <select
+                                key={campo}
+                                value={filtrosActivos[campo] || ""}
+                                onChange={(e) => handleFiltroChange(campo, e.target.value)}
+                                className="form-control w-auto p-2"
+                            >
+                                <option value="">-- Filtrar por {campo.charAt(0).toUpperCase() + campo.slice(1)} --</option>
+                                {opcionesPorSelector[campo]?.map((opcion) => (
+                                    <option key={opcion} value={opcion}>
+                                        {opcion}
+                                    </option>
+                                ))}
+                            </select>
                         ))}
-                    </select>
-                ) : (<div></div>)}
+                    </div>
+                )}
 
+                {/* Buscador general por texto */}
                 {camposBusqueda.length > 0 && (
                     <input
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Buscar..."
-                        className="form-control mb-3 w-auto p-2"
+                        className="form-control w-auto p-2"
                     />
                 )}
             </div>
+
             <table className="table__body">
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -133,28 +140,22 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
                     ))}
                 </thead>
                 <tbody>
-                    {table.getRowModel().rows.map((row) => {
-                        let rowClassName = '';
-
-                        // Solo aplicar fila-no-visible si usarVisibilidad es true
-                        if (row.original.visible === false) {
-                            rowClassName = 'fila-no-visible';
-                        } else if (row.original.estadoDelivery === 'SALIO') {
-                            rowClassName = 'bg-warning';
-                        } else if (row.original.estadoDelivery === 'VOLVIO') {
-                            rowClassName = 'bg-success';
-                        }
-
-                        return (
-                            <tr className={rowClassName} key={row.id}>
-                                {row.getVisibleCells().map((cell) => (
-                                    <td key={cell.id}>
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </td>
-                                ))}
-                            </tr>
-                        );
-                    })}
+                    {table.getRowModel().rows.map((row) => (
+                        <tr
+                            className={`
+                                ${row.original.visible === false ? 'fila-no-visible' : ''} 
+                                ${row.original.estadoDelivery === 'SALIO' ? 'bg-warning' : ''} 
+                                ${row.original.estadoDelivery === 'VOLVIO' ? 'bg-success' : ''}
+                            `.trim()}
+                            key={row.id}
+                        >
+                            {row.getVisibleCells().map((cell) => (
+                                <td key={cell.id}>
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
                 </tbody>
             </table>
 
@@ -193,4 +194,5 @@ const TablaGenerica = ({ data, columnas, sortBy, ordenDescendente, camposBusqued
         </div>
     );
 }
+
 export default TablaGenerica;

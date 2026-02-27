@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, query, orderBy, getDocs, where, or } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import "../../style/Main.css"
-import CryptoJS from 'crypto-js';
 import TablaGenerica from "../../Utils/TablaGenerica";
-import moment from 'moment';
+import { useAuth } from "../../context/AuthContext";
 import { Modal } from 'react-bootstrap';
 
 const HistorialPedidos = () => {
-  const [rol, setRol] = useState("");
+  const { userData } = useAuth();
+  const [, setRol] = useState("");
   const [pedidos, setPedidos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modalShowVerNotas, setModalShowVerNotas] = useState([false, ""]);
   const { inicio, fin } = getRangoJornada(new Date());
-  
+
   function getRangoJornada(now = new Date()) {
     const startHour = 19; // 19:00
     const endHour = 2;    // 02:00 del día siguiente
@@ -68,11 +68,8 @@ const HistorialPedidos = () => {
   }, [getPedidos]);
 
   useEffect(() => {
-    const rolEncriptado = localStorage.getItem("rol");
-    let bytesDesencriptado = CryptoJS.AES.decrypt(rolEncriptado, process.env.REACT_APP_cryptoKey);
-    let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
-    setRol(rolDesencriptado);
-  }, []);
+    setRol(userData?.rol || "");
+  }, [userData]);
 
   const columnasPedidos = [
     { columnasBasicas: ["codigo", "nombre", "direccion", "telefono", "total", "fecha", "hora"] },
@@ -168,7 +165,7 @@ const HistorialPedidos = () => {
                   sortBy="timestamp"
                   ordenDescendente={true}
                   camposBusqueda={["codigo", "nombre", "direccion", "telefono"]}
-                  campoSelector="metodoPago"
+                  camposFiltros={["metodoPago"]}
                 />
               </div>
             </div>

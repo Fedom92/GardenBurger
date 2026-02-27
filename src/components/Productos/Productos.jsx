@@ -6,10 +6,11 @@ import EditProducto from "./EditProducto";
 import Categorias from "./Parametros/Categorias";
 import "../../style/Main.css"
 import Swal from "sweetalert2";
-import CryptoJS from 'crypto-js';
 import TablaGenerica from "../../Utils/TablaGenerica";
+import { useAuth } from "../../context/AuthContext";
 
 const Productos = () => {
+  const { userData } = useAuth();
   const [rol, setRol] = useState("");
   const [productos, setProductos] = useState([]);
   const [modalShowProducto, setModalShowProducto] = useState(false);
@@ -70,12 +71,8 @@ const Productos = () => {
   }, [getProductos, getCategorias]);
 
   useEffect(() => {
-    const rolEncriptado = localStorage.getItem("rol");
-    let bytesDesencriptado = CryptoJS.AES.decrypt(rolEncriptado, process.env.REACT_APP_cryptoKey);
-    let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
-    setRol(rolDesencriptado);
-
-  }, []);
+    setRol(userData?.rol || "");
+  }, [userData]);
 
 
   //Agrega y Edita en vista Local
@@ -291,7 +288,7 @@ const Productos = () => {
                   sortBy="descripcion"
                   ordenDescendente={false}
                   camposBusqueda={["descripcion", "categoria"]}
-                  campoSelector="categoria"
+                  camposFiltros={["categoria","tipoExtra"]}
                 />
               </div>
             </div>

@@ -1,15 +1,13 @@
 import { useState } from "react";
 import logo from "../img/logo_blanco.webp";
-import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebaseConfig/firebase";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebaseConfig/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { Modal } from "react-bootstrap";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
 import "../style/Main.css";
-import CryptoJS from 'crypto-js';
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -17,8 +15,9 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [mostrarModal, setMostrarModal] = useState(false)
+  const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth(); // Import centralize login
 
   const togglePasswordVisibility = (e) => {
     e.preventDefault();
@@ -28,32 +27,15 @@ const Login = () => {
   const submit = async (e) => {
     e.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-      const userDocRef = doc(db, "usuarios", userCredential.user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        const valorEncriptado = CryptoJS.AES.encrypt(userData.rol, process.env.REACT_APP_cryptoKey).toString();
-        localStorage.setItem('rol', valorEncriptado);
-
-        if (userData.rol === process.env.REACT_APP_rolBloq) {
-          await signOut(auth);
-          localStorage.setItem("rol", JSON.stringify(null));
-        } else {
-          navigate('/productos');
-        }
-
-      } else {
-        console.error("No documents");
-        window.alert("Error al Logearse, Verifique su conexión!")
+      const data = await login(email, password);
+      if (data) {
+        navigate('/productos');
       }
     } catch (error) {
-      console.error("Submit Login.jsx " + error)
+      console.error("Submit Login.jsx " + error);
       setError(true);
       setTimeout(clearError, 3000);
-    };
+    }
   };
 
 

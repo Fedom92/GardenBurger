@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -11,7 +11,6 @@ import Navigation from "./Login_Navs/Navigation"
 import UpNav from "./Login_Navs/UpNav"
 import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import Menu from "./components/Solicitudes/Menu.jsx";
-import CryptoJS from 'crypto-js';
 import Caja from "./components/POS/Caja";
 import Deliverys from "./components/Delivery/Deliverys";
 import PersonalDeliverys from "./components/Delivery/PersonalDeliverys";
@@ -26,18 +25,7 @@ import { PaginaDetalle } from './components/Solicitudes/PaginaDetalle.jsx';
 
 
 function App() {
-  const { currentUser } = useAuth()
-  const [, setTipoUsuario] = useState("");
-
-  useEffect(() => {
-    const rolEncriptado = localStorage.getItem("rol");
-    if (rolEncriptado) {
-      let bytesDesencriptado = CryptoJS.AES.decrypt(rolEncriptado, process.env.REACT_APP_cryptoKey);
-      let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
-      setTipoUsuario(rolDesencriptado);
-    }
-  }, []);
-
+  const { currentUser, userData } = useAuth();
 
   const RequireAuth = ({ children }) => {
     return currentUser ? (
@@ -52,16 +40,42 @@ function App() {
   };
 
   const RequireAdmin = ({ children }) => {
-    let rolEncriptado = localStorage.getItem('rol');
-    let bytesDesencriptado = CryptoJS.AES.decrypt(rolEncriptado, process.env.REACT_APP_cryptoKey);
-    let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
-
-    if (currentUser && rolDesencriptado === process.env.REACT_APP_admin) {
+    if (currentUser && userData?.rol === process.env.REACT_APP_admin) {
       return children;
     } else {
       return <Navigate to="/miPerfil" />;
     }
   };
+
+  /* Filtrar por rol específico
+   const RequireCocina = ({ children }) => {
+     Reemplaza "COCINA" por el rol exacto de variables de entorno
+     if (currentUser && userData?.rol === "COCINA") {
+       return children;
+     } else {
+       Si no tiene el rol, lo redirigimos a otra pantalla
+       return <Navigate to="/miPerfil" />; 
+     }
+   };
+  Ejemplo: <Route path="/gestion-cocina" element={<RequireAuth><RequireCocina><Cocina /></RequireCocina></RequireAuth>} />*/
+
+  /* Filtrar por MULTIPLES roles
+   const RequireRole = ({ children, allowedRoles }) => {
+     if (currentUser && allowedRoles.includes(userData?.rol)) {
+       return children;
+     } else {
+       return <Navigate to="/miPerfil" />;
+     }
+   };
+   
+   Ejemplo: 
+   <Route path="/gastos" element={
+     <RequireAuth>
+       <RequireRole allowedRoles={[process.env.REACT_APP_admin, process.env.REACT_APP_rolCaja]}>
+         <Gastos />
+       </RequireRole>
+     </RequireAuth>
+   } />*/
 
   return (
     <div className="App mainpage">
@@ -88,13 +102,6 @@ function App() {
             <Route path="/crear-solicitud" element={<CrearSolicitud />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/ver-pedido/:id" element={<PaginaDetalle />} />
-
-            {/*Para limitar Links por Rol
-          tipoUsuario !== process.env.REACT_APP_rolStaff && tipoUsuario !== process.env.REACT_APP_rolEjecutor && tipoUsuario !== process.env.REACT_APP_rolOperaciones ? (
-            <>
-              <Route path="/gastos" element={<RequireAuth><Gastos /></RequireAuth>} />
-            </>
-          ) : (null)*/}
           </Routes>
         </BrowserRouter>
       </CartProvider>

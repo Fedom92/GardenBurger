@@ -6,7 +6,6 @@ import { useLocation } from "react-router-dom";
 import icono from "../../src/img/logo_negro_corto.webp";
 import "../style/Main.css";
 import Swal from "sweetalert2";
-import CryptoJS from 'crypto-js';
 import { useAuth } from "../context/AuthContext";
 
 
@@ -18,7 +17,7 @@ const Navigation = () => {
     const [openDeliverys, setOpenDeliverys] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
-    const { logout } = useAuth();
+    const { logout, userData } = useAuth();
 
     const handleLogout = async () => {
         try {
@@ -47,19 +46,15 @@ const Navigation = () => {
     };
 
     useEffect(() => {
-        let rolEncriptado = localStorage.getItem("rol");
-        let bytesDesencriptado = CryptoJS.AES.decrypt(rolEncriptado, process.env.REACT_APP_cryptoKey);
-        let rolDesencriptado = bytesDesencriptado.toString(CryptoJS.enc.Utf8);
-
-        setTipoUsuario(rolDesencriptado);
-        setIsLoading(true)
+        setTipoUsuario(userData?.rol || "");
+        setIsLoading(true);
 
         const rutasQueAbrenSubmenu = ["/miPerfil", "/admin"];
         setOpenConfig(rutasQueAbrenSubmenu.includes(location.pathname));
-        
+
         const rutasQueAbrenSubmenuDeliverys = ["/gestion-deliverys", "/delivery-pedidos"];
         setOpenDeliverys(rutasQueAbrenSubmenuDeliverys.includes(location.pathname));
-    }, [location.pathname]);
+    }, [userData.rol, location.pathname]);
 
     return (
         <div className={`navigation ${isActive && "active"} text-start`}>
