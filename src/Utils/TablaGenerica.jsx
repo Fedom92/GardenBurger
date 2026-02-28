@@ -6,6 +6,11 @@ function quitarAcentos(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+function formatearEtiqueta(valor) {
+    if (typeof valor === "boolean") return valor ? "Sí" : "No";
+    return String(valor);
+}
+
 function generarColumnas(columnas) {
     return columnas.flatMap((col) => {
         if (col.columnasBasicas && Array.isArray(col.columnasBasicas)) {
@@ -69,7 +74,8 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
             acc[campo] = [...new Set(
                 data.map(item => item[campo])
                     .filter(val => val != null && String(val).trim() !== "")
-            )].sort();
+            )].sort((a, b) => String(a).localeCompare(String(b)))
+                .map(v => ({ valor: String(v), etiqueta: formatearEtiqueta(v) }));
             return acc;
         }, {}),
         [data, camposFiltros]);
@@ -89,8 +95,8 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
                             >
                                 <option value="">-- Filtrar por {campo.charAt(0).toUpperCase() + campo.slice(1)} --</option>
                                 {opcionesPorSelector[campo]?.map((opcion) => (
-                                    <option key={opcion} value={opcion}>
-                                        {opcion}
+                                    <option key={opcion.valor} value={opcion.valor}>
+                                        {opcion.etiqueta}
                                     </option>
                                 ))}
                             </select>

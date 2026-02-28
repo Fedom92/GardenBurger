@@ -22,7 +22,7 @@ const Caja = () => {
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
-    const { inicialesUsuario } = useAuth();
+    const { userData } = useAuth();
     const [search, setSearch] = useState("");
     const [productos, setProductos] = useState([]);
     const [carrito, setCarrito] = useState([]);
@@ -33,6 +33,7 @@ const Caja = () => {
 
     const [recargo] = useState(Number(process.env.REACT_APP_recargoMP) || "");
     const [isLoading, setIsLoading] = useState(true);
+    const [procesando, setProcesando] = useState(false);
     const [montoEfectivo, setMontoEfectivo] = useState(0);
 
     const [showPendientesMP, setShowPendientesMP] = useState(false);
@@ -269,6 +270,8 @@ const Caja = () => {
             return;
         }
 
+        setProcesando(true);
+
         // Crear timestamp en GMT-3 (Argentina)
         const ahora = moment();
         const fecha = ahora.format("DD/MM/YYYY");
@@ -293,7 +296,9 @@ const Caja = () => {
             }
 
             const nuevoPedido = {
-                codigo: `${nuevoCodigo}-${inicialesUsuario}`,
+                codigo: `${nuevoCodigo}-${userData.iniciales}`,
+                cajeroID: userData.id,
+                cajero: userData.nombreCompleto,
                 nombre: data.nombre,
                 direccion: data.direccion,
                 latitud: data.latitud || "",
@@ -303,7 +308,7 @@ const Caja = () => {
                 observaciones: data.observaciones || "",
                 envio: envioSeleccionado,
                 metodoPago: data.metodoPago,
-                pagaCon: data.pagaCon || 0,
+                pagaCon: Number(data.pagaCon) || 0,
                 montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
                 total: Number(totalFinal),
                 carrito: carrito,
@@ -344,6 +349,8 @@ const Caja = () => {
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });
+        } finally {
+            setProcesando(false);
         }
     };
 
@@ -797,8 +804,9 @@ const Caja = () => {
                                                 <button
                                                     className="btn btn-success"
                                                     type="submit"
+                                                    disabled={procesando}
                                                     onClick={() => handleSubmit(guardarBD)()}>
-                                                    Crear Pedido <i className="fas fa-burger"></i>
+                                                    {procesando ? "Cargando..." : "Crear Pedido"} <i className="fas fa-burger"></i>
                                                 </button>
                                             </div>
 

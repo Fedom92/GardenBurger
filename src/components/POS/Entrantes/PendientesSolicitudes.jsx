@@ -5,19 +5,21 @@ import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
 import 'moment/locale/es';
+import { useAuth } from "../../../context/AuthContext";
 
 const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
     const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-
-   
+    const { userData } = useAuth();
 
     // Función para aprobar solicitud
     const aprobarSolicitud = async (solicitudId) => {
         try {
             const solicitudRef = doc(db, "solicitudes", solicitudId);
             await updateDoc(solicitudRef, {
-                estado: "APROBADO"
+                estado: "APROBADO",
+                cajeroID: userData.id,
+                cajero: userData.nombreCompleto,
             });
 
             // Obtener los datos de la solicitud para pasarlos al formulario
@@ -62,7 +64,9 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
             try {
                 const solicitudRef = doc(db, "solicitudes", solicitudId);
                 await updateDoc(solicitudRef, {
-                    estado: "RECHAZADO"
+                    estado: "CANCELADO",
+                    cajeroID: userData.id,
+                    cajero: userData.nombreCompleto,
                 });
 
                 Swal.fire({
@@ -113,10 +117,10 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
     }, [isOpen]);
 
     return (
-        <Modal 
-            show={isOpen} 
-            onHide={onClose} 
-            size="xl" 
+        <Modal
+            show={isOpen}
+            onHide={onClose}
+            size="xl"
             scrollable
             centered
         >
@@ -137,90 +141,90 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                 ) : (
                     <div className="row">
                         {solicitudesPendientes.map((solicitud) => (
-                                    <div key={solicitud.id} className="col-md-6">
-                                        <div className="card mb-1">
-                                            <div className="card-header d-flex justify-content-between align-items-center">
-                                                <h6 className="mb-0">
-                                                    <strong>Solicitud #{solicitud.id.slice(-8)}</strong>
-                                                </h6>
-                                                <small className="text-body-secondary">
-                                                    {solicitud.timestamp ? 
-                                                        moment(solicitud.timestamp.toDate()).format("DD/MM/YYYY HH:mm") : 
-                                                        "Sin fecha"
-                                                    }
-                                                </small>
-                                            </div>
-                                            <div className="card-body h-auto">
-                                                <div className="row">
-                                                    <div className="col-6">
-                                                        <p className="mb-1">
-                                                            <strong>Cliente:</strong> {solicitud.cliente?.nombre || "Sin nombre"}
-                                                        </p>
-                                                        <p className="mb-1">
-                                                            <strong>Teléfono:</strong> {solicitud.cliente?.telefono || "Sin teléfono"}
-                                                        </p>
-                                                        <p className="mb-1">
-                                                            <strong>Opción:</strong> {solicitud.cliente?.opcion === "delivery" ? "Delivery" : "Retiro"}
-                                                        </p>
-                                                        {solicitud.cliente?.opcion === "delivery" && solicitud.cliente?.direccion && (
-                                                            <p className="mb-1">
-                                                                <strong>Dirección:</strong> {solicitud.cliente.direccion}
-                                                            </p>
-                                                        )}
-                                                        {solicitud.cliente?.entreCalles && (
-                                                            <p className="mb-1">
-                                                                <strong>Entre calles:</strong> {solicitud.cliente.entreCalles}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    <div className="col-6">
-                                                        <p className="mb-1">
-                                                            <strong>Método de pago:</strong> {solicitud.cliente?.pago || "No especificado"}
-                                                        </p>
-                                                        <p className="mb-1">
-                                                            <strong>Total:</strong> ${solicitud.total || 0}
-                                                        </p>
-                                                        <p className="mb-1">
-                                                            <strong>Productos:</strong> {solicitud.productos?.length || 0} items
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                
-                                                {/* Mostrar productos de la solicitud */}
-                                                {solicitud.productos && solicitud.productos.length > 0 && (
-                                                    <div className="mt-2">
-                                                        <h6>Productos:</h6>
-                                                        <div className="row">
-                                                            {solicitud.productos.map((producto, index) => (
-                                                                <div key={index} className="col-12">
-                                                                    <small className="text-body-secondary">
-                                                                        {producto.cantidad}x {producto.descripcion} - ${producto.precio}
-                                                                    </small>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
+                            <div key={solicitud.id} className="col-md-6">
+                                <div className="card mb-1">
+                                    <div className="card-header d-flex justify-content-between align-items-center">
+                                        <h6 className="mb-0">
+                                            <strong>Solicitud #{solicitud.id.slice(-8)}</strong>
+                                        </h6>
+                                        <small className="text-body-secondary">
+                                            {solicitud.timestamp ?
+                                                moment(solicitud.timestamp.toDate()).format("DD/MM/YYYY HH:mm") :
+                                                "Sin fecha"
+                                            }
+                                        </small>
+                                    </div>
+                                    <div className="card-body h-auto">
+                                        <div className="row">
+                                            <div className="col-6">
+                                                <p className="mb-1">
+                                                    <strong>Cliente:</strong> {solicitud.cliente?.nombre || "Sin nombre"}
+                                                </p>
+                                                <p className="mb-1">
+                                                    <strong>Teléfono:</strong> {solicitud.cliente?.telefono || "Sin teléfono"}
+                                                </p>
+                                                <p className="mb-1">
+                                                    <strong>Opción:</strong> {solicitud.cliente?.opcion === "delivery" ? "Delivery" : "Retiro"}
+                                                </p>
+                                                {solicitud.cliente?.opcion === "delivery" && solicitud.cliente?.direccion && (
+                                                    <p className="mb-1">
+                                                        <strong>Dirección:</strong> {solicitud.cliente.direccion}
+                                                    </p>
+                                                )}
+                                                {solicitud.cliente?.entreCalles && (
+                                                    <p className="mb-1">
+                                                        <strong>Entre calles:</strong> {solicitud.cliente.entreCalles}
+                                                    </p>
                                                 )}
                                             </div>
-
-                                            <div className="card-footer">
-                                                <div className="d-flex gap-2">
-                                                    <button
-                                                        className="btn btn-success btn-sm flex-fill"
-                                                        onClick={() => aprobarSolicitud(solicitud.id)}
-                                                    >
-                                                        <i className="fa fa-check"></i> Aprobar
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-danger btn-sm flex-fill"
-                                                        onClick={() => rechazarSolicitud(solicitud.id)}
-                                                    >
-                                                        <i className="fa fa-times"></i> Rechazar
-                                                    </button>
-                                                </div>
+                                            <div className="col-6">
+                                                <p className="mb-1">
+                                                    <strong>Método de pago:</strong> {solicitud.cliente?.pago || "No especificado"}
+                                                </p>
+                                                <p className="mb-1">
+                                                    <strong>Total:</strong> ${solicitud.total || 0}
+                                                </p>
+                                                <p className="mb-1">
+                                                    <strong>Productos:</strong> {solicitud.productos?.length || 0} items
+                                                </p>
                                             </div>
                                         </div>
+
+                                        {/* Mostrar productos de la solicitud */}
+                                        {solicitud.productos && solicitud.productos.length > 0 && (
+                                            <div className="mt-2">
+                                                <h6>Productos:</h6>
+                                                <div className="row">
+                                                    {solicitud.productos.map((producto, index) => (
+                                                        <div key={index} className="col-12">
+                                                            <small className="text-body-secondary">
+                                                                {producto.cantidad}x {producto.descripcion} - ${producto.precio}
+                                                            </small>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+
+                                    <div className="card-footer">
+                                        <div className="d-flex gap-2">
+                                            <button
+                                                className="btn btn-success btn-sm flex-fill"
+                                                onClick={() => aprobarSolicitud(solicitud.id)}
+                                            >
+                                                <i className="fa fa-check"></i> Aprobar
+                                            </button>
+                                            <button
+                                                className="btn btn-danger btn-sm flex-fill"
+                                                onClick={() => rechazarSolicitud(solicitud.id)}
+                                            >
+                                                <i className="fa fa-times"></i> Rechazar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}

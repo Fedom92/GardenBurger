@@ -7,9 +7,10 @@ import '../../style/Main.css';
 import { CANTIDAD_CARNES } from "../../Utils/Constantes";
 
 const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
-    const { currentUser } = useAuth();
+    const { userData } = useAuth();
     const [selectedPedidos, setSelectedPedidos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [procesando, setProcesando] = useState(false);
     const [pedidosEspera, setPedidosEspera] = useState([]);
 
     const pedidosCollectiona = collection(db, "pedidos");
@@ -91,13 +92,15 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
         }
 
         try {
+            setProcesando(true);
             const batch = writeBatch(db);
 
             selectedPedidos.forEach(pedidoId => {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 batch.update(pedidoRef, {
                     estado: "COCINA",
-                    cocinero: currentUser.uid
+                    cocineroID: userData.id,
+                    cocinero: userData.nombreCompleto
                 });
             });
 
@@ -120,6 +123,8 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });
+        } finally {
+            setProcesando(false);
         }
     };
 
@@ -142,9 +147,9 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                         <button
                             className="btn btn-success"
                             onClick={mandarACocinar}
-                            disabled={selectedPedidos.length === 0}
+                            disabled={selectedPedidos.length === 0 || procesando}
                         >
-                            Empezar a Cocinar
+                            {procesando ? "Cargando..." : "Empezar a Cocinar"}
                         </button>
                     </div>
 

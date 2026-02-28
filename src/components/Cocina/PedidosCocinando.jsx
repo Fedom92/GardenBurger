@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { collection, query, where, onSnapshot, orderBy, writeBatch, doc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, writeBatch, doc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
 
 const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
-    const { currentUser } = useAuth();
+    const { userData } = useAuth();
     const [ticketVisible, setTicketVisible] = useState(false);
     const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [procesando, setProcesando] = useState(false);
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
 
     const pedidosCollectiona = collection(db, "pedidos");
     const pedidosCollection = useRef(query(pedidosCollectiona,
         where("estado", "==", "COCINA"),
-        where("cocinero", "==", currentUser.uid),
-        orderBy("codigo", "asc")
+        where("cocineroID", "==", userData.id)
     ));
 
     const actualizarContador = useCallback((cantidad) => {
@@ -35,8 +35,8 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
         const pedidosArray = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-        }));
-    
+        }))
+            .sort((a, b) => a.codigo - b.codigo);
         setPedidosCocinando(pedidosArray);
         setIsLoading(false);
     }, []);
@@ -50,7 +50,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
             },
             manejarError
         );
-    
+
         return unsubscribe;
     }, [getPedidosCocinando, actualizarContador, manejarError]);
 
@@ -75,11 +75,12 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
         if (!result.isConfirmed) return;
 
         try {
+            setProcesando(true);
             const batch = writeBatch(db);
 
             pedidosCocinando.forEach(pedido => {
                 const pedidoRef = doc(db, "pedidos", pedido.id);
-                batch.update(pedidoRef, { estado: "COCINADO" });
+                batch.update(pedidoRef, { estado: "DELIVERY" });
             });
 
             await batch.commit();
@@ -107,6 +108,8 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });
+        } finally {
+            setProcesando(false);
         }
     };
 
@@ -143,9 +146,9 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                                 <button
                                     className="btn btn-success"
                                     onClick={marcarTodosComoCocinado}
-                                    disabled={pedidosCocinando.length === 0}
+                                    disabled={pedidosCocinando.length === 0 || procesando}
                                 >
-                                    Cocinados TODOS
+                                    {procesando ? "Cargando..." : "Cocinados TODOS"}
                                 </button>
                             </div>
                         </div>

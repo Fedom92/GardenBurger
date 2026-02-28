@@ -10,7 +10,7 @@ export function useAuth() {
 }
 
 export function AuthContextProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,10 +29,10 @@ export function AuthContextProvider({ children }) {
       const userDocSnap = await getDoc(userDocRef);
       if (userDocSnap.exists()) {
         const data = userDocSnap.data();
-        /*if (data.rol === process.env.REACT_APP_rolBloq) {
+        if (data.rol === process.env.REACT_APP_rolBloq) {
           await signOut(auth);
           return null;
-        }*/
+        }
         return data;
       }
     } catch (error) {
@@ -46,17 +46,15 @@ export function AuthContextProvider({ children }) {
       if (user) {
         const data = await fetchUserData(user);
         if (data) {
-          setCurrentUser(user);
           setUserData({
             ...data,
-            inicialesUsuario: getIniciales(data.nombreCompleto)
+            id: user.uid,
+            iniciales: getIniciales(data.nombreCompleto)
           });
         } else {
-          setCurrentUser(null);
           setUserData(null);
         }
       } else {
-        setCurrentUser(null);
         setUserData(null);
       }
       setLoading(false);
@@ -73,10 +71,10 @@ export function AuthContextProvider({ children }) {
       if (!data) {
         throw new Error("Usuario bloqueado o sin permisos");
       }
-      setCurrentUser(credential.user);
       setUserData({
         ...data,
-        inicialesUsuario: getIniciales(data.nombreCompleto)
+        id: credential.user.uid,
+        iniciales: getIniciales(data.nombreCompleto)
       });
       return data;
     } catch (error) {
@@ -88,8 +86,6 @@ export function AuthContextProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await signOut(auth);
-      // Limpiamos los estados de manera reactiva, eliminamos localstorage handling
-      setCurrentUser(null);
       setUserData(null);
     } catch (error) {
       console.error("Error en logout:", error);
@@ -98,12 +94,10 @@ export function AuthContextProvider({ children }) {
   }, []);
 
   const contextValue = useMemo(() => ({
-    currentUser,
     userData,
-    inicialesUsuario: userData?.inicialesUsuario || "",
     login,
     logout
-  }), [currentUser, userData, login, logout]);
+  }), [userData, login, logout]);
 
   if (loading) {
     return (

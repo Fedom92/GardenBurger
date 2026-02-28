@@ -288,7 +288,7 @@ const Productos = () => {
                   sortBy="descripcion"
                   ordenDescendente={false}
                   camposBusqueda={["descripcion", "categoria"]}
-                  camposFiltros={["categoria","tipoExtra"]}
+                  camposFiltros={["categoria", "tipoExtra", "oferta"]}
                 />
               </div>
             </div>

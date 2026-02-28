@@ -36,10 +36,14 @@ const EditProducto = (props) => {
       tipoExtra: data.categoria === "EXTRA" ? (data.tipoExtra || productoData.tipoExtra) : "",
     };
 
-    await updateDoc(productoRef, newData);
-    editar_producto({ id: producto.id, ...newData });
+    try {
+      await updateDoc(productoRef, newData);
+      editar_producto({ id: producto.id, ...newData });
 
-    clearForm();
+      clearForm();
+    } catch (error) {
+      console.error("Error al editar producto: ", error);
+    }
   };
 
   const clearForm = () => {

@@ -13,7 +13,7 @@ import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import Menu from "./components/Solicitudes/Menu.jsx";
 import Caja from "./components/POS/Caja";
 import Deliverys from "./components/Delivery/Deliverys";
-import PersonalDeliverys from "./components/Delivery/PersonalDeliverys";
+import PersonalDeliverys from "./components/Delivery/GestionPersonal/PersonalDeliverys";
 import Clientes from "./components/Clientes/Clientes";
 import Cocina from "./components/Cocina/Cocina";
 import HistorialPedidos from "./components/Pedidos/HistorialPedidos";
@@ -25,10 +25,10 @@ import { PaginaDetalle } from './components/Solicitudes/PaginaDetalle.jsx';
 
 
 function App() {
-  const { currentUser, userData } = useAuth();
+  const { userData } = useAuth();
 
   const RequireAuth = ({ children }) => {
-    return currentUser ? (
+    return userData ? (
       <>
         <Navigation />
         <UpNav />
@@ -40,7 +40,7 @@ function App() {
   };
 
   const RequireAdmin = ({ children }) => {
-    if (currentUser && userData?.rol === process.env.REACT_APP_admin) {
+    if (userData?.rol === process.env.REACT_APP_admin) {
       return children;
     } else {
       return <Navigate to="/miPerfil" />;
@@ -50,7 +50,7 @@ function App() {
   /* Filtrar por rol específico
    const RequireCocina = ({ children }) => {
      Reemplaza "COCINA" por el rol exacto de variables de entorno
-     if (currentUser && userData?.rol === "COCINA") {
+     if (userData?.rol === "COCINA") {
        return children;
      } else {
        Si no tiene el rol, lo redirigimos a otra pantalla
@@ -61,7 +61,7 @@ function App() {
 
   /* Filtrar por MULTIPLES roles
    const RequireRole = ({ children, allowedRoles }) => {
-     if (currentUser && allowedRoles.includes(userData?.rol)) {
+     if (allowedRoles.includes(userData?.rol)) {
        return children;
      } else {
        return <Navigate to="/miPerfil" />;

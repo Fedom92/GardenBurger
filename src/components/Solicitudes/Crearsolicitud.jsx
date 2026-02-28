@@ -13,9 +13,11 @@ import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
 import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
+import Footer from "./Footer";
 
 const CrearSolicitud = () => {
   const [loading, setLoading] = useState(true);
+  const [procesando, setProcesando] = useState(false);
 
   const {
     carrito,
@@ -50,32 +52,40 @@ const CrearSolicitud = () => {
       fecha: new Date()
     }
 
+    setProcesando(true);
+
     const solicitudesRef = collection(db, "solicitudes")
 
     addDoc(solicitudesRef, solicitud)
-    .then((doc) => {
-  
-    const mensaje = `
+      .then((doc) => {
+
+        const mensaje = `
       🍔 *NUEVO PEDIDO WEB*
       
       👤 Nombre: ${data.nombre}
       📞 Teléfono: ${data.telefono}
       💳 Método de pago: ${data.metodoPago}
-      ${data.opcion === "delivery"? ` 🛵 Delivery
+      ${data.opcion === "delivery" ? ` 🛵 Delivery
       📍 Dirección: ${data.direccion}`
-        : `🏪 Retiro en local`}
+            : `🏪 Retiro en local`}
       
       🔎 *Ver detalle pedido*
       https://gardenburger.com.ar/ver-pedido/${doc.id}
       `;
-      
-      const mensajeCodificado = encodeURIComponent(mensaje.trim());
 
-      actualizarMensajeWSP(mensajeCodificado);
+        const mensajeCodificado = encodeURIComponent(mensaje.trim());
 
-      vaciarCarrito();
+        actualizarMensajeWSP(mensajeCodificado);
 
-      navigate(`/ver-pedido/${doc.id}`);
+        vaciarCarrito();
+
+        navigate(`/ver-pedido/${doc.id}`);
+      })
+      .catch((error) => {
+        console.error("Error al crear solicitud:", error);
+      })
+      .finally(() => {
+        setProcesando(false);
       })
   }
 
@@ -106,13 +116,13 @@ const CrearSolicitud = () => {
   }
 
   const hamburguesas = obtenerHamburguesasConVariantes(productos);
-  
+
   const obtenerHamburguesasDePollo = () => {
     // Buscar la categoría 'POLLO CRISPY'
     const categoriaPollo = categorias.find(cat => cat.nombre === 'POLLO CRISPY');
-    
+
     if (!categoriaPollo) return [];
-    
+
     // Filtrar productos que pertenecen a la categoría POLLO CRISPY
     return productos.filter(p => p.categoria === categoriaPollo.nombre);
   };
@@ -138,120 +148,120 @@ const CrearSolicitud = () => {
 
         {/* Sección de categorías con accordions */}
         <div className='mainpageCS itemListConteiner'>
-           {categorias.length === 0 || productos.length === 0 ? (
-             <div className="text-white fw-bold text-center py-5">
-               No hay categorías o productos disponibles
-             </div>
-           ) : (
-             <div className="accordion accordionCS mt-3" id="accordionCategorias" key={`accordion-${carrito.reduce((sum, p) => sum + (p.amountInCart || 1), 0)}`}>
-       
-               {/* OFERTAS */}
-               {productosOferta.length > 0 && (
-                 <div className="accordion-item">
-                   <h2 className="accordion-header" id="headingOFERTAS">
-                     <button
-                       className="accordion-button accordionButtonCS collapsed"
-                       type="button"
-                       data-bs-toggle="collapse"
-                       data-bs-target="#collapseOFERTAS"
-                       aria-expanded="false"
-                       aria-controls="collapseOFERTAS"
-                     >
-                       🏷️ OFERTAS
-                     </button>
-                   </h2>
-                   <div
-                     id="collapseOFERTAS"
-                     className="accordion-collapse collapse"
-                     data-bs-parent="#accordionCategorias"
-                   >
-                     <div className="accordion-body text-center">
-                       {productosOferta.map(p => (
-                         <Card key={p.id} producto={p} />
-                       ))}
-                     </div>
-                   </div>
-                 </div>
-               )}
+          {categorias.length === 0 || productos.length === 0 ? (
+            <div className="text-white fw-bold text-center py-5">
+              No hay categorías o productos disponibles
+            </div>
+          ) : (
+            <div className="accordion accordionCS mt-3" id="accordionCategorias" key={`accordion-${carrito.reduce((sum, p) => sum + (p.amountInCart || 1), 0)}`}>
 
-               {/* HAMBURGUESAS */}
-               {hamburguesas.length > 0 && (
-                 <div className="accordion-item">
-                   <h2 className="accordion-header" id="headingHAMBURGUESAS">
-                     <button
-                       className="accordion-button accordionButtonCS collapsed"
-                       type="button"
-                       data-bs-toggle="collapse"
-                       data-bs-target="#collapseHAMBURGUESAS"
-                       aria-expanded="false"
-                       aria-controls="collapseHAMBURGUESAS"
-                     >
-                       HAMBURGUESAS
-                     </button>
-                   </h2>
-         
-                   <div
-                     id="collapseHAMBURGUESAS"
-                     className="accordion-collapse collapse"
-                     data-bs-parent="#accordionCategorias"
-                   >
-                     <div className="accordion-body text-center">
-                       {hamburguesas.map(p => (
-                         <Card key={p.id} producto={p} />
-                       ))
-                       }
-                       {hamburguesasPollo.map(p => (
-                         <Card key={p.id} producto={p} />
-                       ))
-                       }
-                     </div>
-                   </div>
-                 </div>
-               )}
+              {/* OFERTAS */}
+              {productosOferta.length > 0 && (
+                <div className="accordion-item">
+                  <h2 className="accordion-header" id="headingOFERTAS">
+                    <button
+                      className="accordion-button accordionButtonCS collapsed"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseOFERTAS"
+                      aria-expanded="false"
+                      aria-controls="collapseOFERTAS"
+                    >
+                      🏷️ OFERTAS
+                    </button>
+                  </h2>
+                  <div
+                    id="collapseOFERTAS"
+                    className="accordion-collapse collapse"
+                    data-bs-parent="#accordionCategorias"
+                  >
+                    <div className="accordion-body text-center">
+                      {productosOferta.map(p => (
+                        <Card key={p.id} producto={p} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
-               
-       
-               {/* RESTO CATEGORÍAS */}
-               {categorias
-                 .filter(cat => !CATEGORIAS_HAMBURGUESA.includes(cat.nombre) && cat.nombre !== "EXTRA" && cat.nombre !== 'POLLO CRISPY')
-                 .map((categoria, index) => {
-                   const productosCat = productos.filter(p => p.categoria === categoria.nombre);
-                   if (!productosCat.length) return null;
-       
-                   const safeName = categoria.nombre.replace(/\s+/g, "");
-       
-                   return (
-                     <div key={categoria.id} className="accordion-item">
-                       <h2 className="accordion-header" id={`heading${safeName}`}>
-                         <button
-                           className="accordion-button accordionButtonCS collapsed"
-                           type="button"
-                           data-bs-toggle="collapse"
-                           data-bs-target={`#collapse${safeName}`}
-                           aria-expanded="false"
-                           aria-controls={`collapse${safeName}`}
-                         >
-                           {categoria.nombre}
-                         </button>
-                       </h2>
-       
-                       <div
-                         id={`collapse${safeName}`}
-                         className="accordion-collapse collapse"
-                         data-bs-parent="#accordionCategorias"
-                       >
-                         <div className="accordion-body text-center">
-                           {productosCat.map(p => (
-                             <Card key={p.id} producto={p} />
-                           ))}
-                         </div>
-                       </div>
-                     </div>
-                   );
-                 })}
-       
-             </div>
-           )}
+              {/* HAMBURGUESAS */}
+              {hamburguesas.length > 0 && (
+                <div className="accordion-item">
+                  <h2 className="accordion-header" id="headingHAMBURGUESAS">
+                    <button
+                      className="accordion-button accordionButtonCS collapsed"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseHAMBURGUESAS"
+                      aria-expanded="false"
+                      aria-controls="collapseHAMBURGUESAS"
+                    >
+                      HAMBURGUESAS
+                    </button>
+                  </h2>
+
+                  <div
+                    id="collapseHAMBURGUESAS"
+                    className="accordion-collapse collapse"
+                    data-bs-parent="#accordionCategorias"
+                  >
+                    <div className="accordion-body text-center">
+                      {hamburguesas.map(p => (
+                        <Card key={p.id} producto={p} />
+                      ))
+                      }
+                      {hamburguesasPollo.map(p => (
+                        <Card key={p.id} producto={p} />
+                      ))
+                      }
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+
+              {/* RESTO CATEGORÍAS */}
+              {categorias
+                .filter(cat => !CATEGORIAS_HAMBURGUESA.includes(cat.nombre) && cat.nombre !== "EXTRA" && cat.nombre !== 'POLLO CRISPY')
+                .map((categoria, index) => {
+                  const productosCat = productos.filter(p => p.categoria === categoria.nombre);
+                  if (!productosCat.length) return null;
+
+                  const safeName = categoria.nombre.replace(/\s+/g, "");
+
+                  return (
+                    <div key={categoria.id} className="accordion-item">
+                      <h2 className="accordion-header" id={`heading${safeName}`}>
+                        <button
+                          className="accordion-button accordionButtonCS collapsed"
+                          type="button"
+                          data-bs-toggle="collapse"
+                          data-bs-target={`#collapse${safeName}`}
+                          aria-expanded="false"
+                          aria-controls={`collapse${safeName}`}
+                        >
+                          {categoria.nombre}
+                        </button>
+                      </h2>
+
+                      <div
+                        id={`collapse${safeName}`}
+                        className="accordion-collapse collapse"
+                        data-bs-parent="#accordionCategorias"
+                      >
+                        <div className="accordion-body text-center">
+                          {productosCat.map(p => (
+                            <Card key={p.id} producto={p} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+            </div>
+          )}
 
           <h2 id='finalizarCompra' className="w-75 tituloCategoria">Finalizar Compra</h2>
           <div className='itemsConteiner position-relative z-3'>
@@ -282,11 +292,11 @@ const CrearSolicitud = () => {
                 </div>
               )
             })}
-      
+
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
                 <button type="button" className="btn btn-danger" onClick={() => vaciarCarrito()}>Vaciar carrito</button>
-                <div className="m-2 fw-bold">Total: ${ pagoSeleccionado === "MP" ? totalCarrito() + totalCarrito() * parseFloat(process.env.REACT_APP_recargoMP)/100 : totalCarrito()}</div>
+                <div className="m-2 fw-bold">Total: ${pagoSeleccionado === "MP" ? totalCarrito() + totalCarrito() * parseFloat(process.env.REACT_APP_recargoMP) / 100 : totalCarrito()}</div>
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
@@ -376,7 +386,7 @@ const CrearSolicitud = () => {
                       <p className="text-danger fw-bold">{'Advertencia: HASTA QUE NO INGRESE LA TRANSFERENCIA NO SE TOMARÁ SU PEDIDO'}</p>
                     </>
                   )}
-                  <button className="btn btn-success" type="submit">Comprar</button>
+                  <button className="btn btn-success" type="submit" disabled={procesando}>{procesando ? "Cargando..." : "Comprar"}</button>
                 </form>
               </div>
               : <><p className='error'>Sin productos seleccionados.</p><a href='/crear-solicitud#HAMBURGUESAS'><p className='fw-bold'>Ir a inicio ↑↑↑</p></a></>}
@@ -389,79 +399,7 @@ const CrearSolicitud = () => {
       <ModalExtras />
       <ModalExtrasGenericos />
 
-      <footer className="m-auto bg-dark text-white py-4 position-relative z-3">
-        <div className="container">
-          <div className="row">
-            {/* Columna 1 - Información del local */}
-            <div className="col-12 col-md-4 mb-4 mb-md-0 text-center text-md-start  ">
-              <h5 className="mb-3">GARDEN BURGER</h5>
-              <p className="small text-white-50">
-                <span className="">📍</span>
-                Leonardo Da Vinci 425<br />
-                Gregorio de Laferrere, La Matanza<br />
-                Buenos Aires
-              </p>
-              <p className="small text-white-50">
-                <span className="me-2">📞</span>
-                {process.env.REACT_APP_celular || "11-1234-5678"}
-              </p>
-              <p className="small text-white-50 mb-0">
-                <span className="me-2">🕒</span>
-                Horario: 19:00 a 00:00 hrs
-              </p>
-            </div>
-
-            {/* Columna 2 - Enlaces rápidos */}
-            <div className="col-12 col-md-4 mb-4 mb-md-0 text-center">
-              <h5 className="mb-3">Enlaces rápidos</h5>
-              <ul className="list-unstyled">
-                <li className="mb-2">
-                  <a href="#HAMBURGUESAS" className="text-white-50 text-decoration-none">
-                    Hamburguesas
-                  </a>
-                </li>
-                <li className="mb-2">
-                  <a href="#CAJA PAPAS" className="text-white-50 text-decoration-none">
-                    Caja Papas
-                  </a>
-                </li>
-                <li className="mb-2">
-                  <a href="#POLLO CRISPY" className="text-white-50 text-decoration-none">
-                    Pollo Crispy
-                  </a>
-                </li>
-                <li className="mb-2">
-                  <a href="#NUGGETS" className="text-white-50 text-decoration-none">
-                    Nuggets
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Columna 3 - Redes sociales y copyright */}
-            <div className="col-12 col-md-4 text-center text-md-end">
-              <h5 className="mb-3">Seguinos</h5>
-              <div className="d-flex justify-content-center justify-content-md-end gap-3">
-                <a href="#" className="text-white text-decoration-none" target="_blank" rel="noopener noreferrer">
-                  <span className="fs-4">📷</span>
-                </a>
-                <a href="#" className="text-white text-decoration-none" target="_blank" rel="noopener noreferrer">
-                  <span className="fs-4">👤</span>
-                </a>
-                <a href="#" className="text-white text-decoration-none" target="_blank" rel="noopener noreferrer">
-                  <span className="fs-4">💬</span>
-                </a>
-              </div>
-              <p className="small mt-3 text-white-50 mb-0">
-                © {new Date().getFullYear()} Garden Burger.
-              </p>
-              <p className="small text-white-50">
-                Todos los derechos reservados.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -932,7 +932,8 @@ select {
   font-weight: normal;
 }
 
-.container, .container-fluid {
+.container,
+.container-fluid {
   overflow-x: hidden;
 }
 
@@ -1231,3 +1232,28 @@ input::placeholder {
     display: block;
   }
 }
+
+/*<!------------Estilo Botón Flotante WhatsApp---------------->*/
+.fab-whatsapp {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 65px;
+  height: 65px;
+  background-color: #25d366;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.fab-whatsapp img {
+  width: 35px;
+  height: 35px;
+}
+/*<!------------Termina Estilo Botón Flotante WhatsApp---------------->*/

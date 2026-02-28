@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
 import PedidosEspera from "./PedidosEspera";
 import PedidosCocinando from "./PedidosCocinando";
 import '../../style/Main.css';

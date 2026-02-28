@@ -9,7 +9,7 @@ import { CartContext } from '../../context/CartContext.jsx'
 import { FaCartPlus } from 'react-icons/fa';
 import { Link } from "react-router-dom";
 import { ESTADOS_SOLICITUDES } from '../../Utils/Constantes.jsx';
-
+import Footer from './Footer';
 
 export const PaginaDetalle = () => {
   const { id } = useParams(); // ID de la URL
@@ -45,20 +45,6 @@ export const PaginaDetalle = () => {
       <header>
         <img className='logoCS' src={logo} alt="logoGarden" />
       </header>
-      <main>
-        <section className="m-1">
-          <div className="d-flex justify-content-center">
-            <i className="fa fa-map-marker m-1" aria-hidden="true"></i>
-            <h5>Leonardo Da Vinci 4225 - Gregorio de Laferrere</h5>
-          </div>
-          <h6>La Matanza, La Matanza (Buenos Aires)</h6>
-          <div className="d-flex justify-content-center">
-            <i className="fa fa-motorcycle m-1" aria-hidden="true"></i>
-            <h5>Envios a domicilio</h5>
-          </div>
-        </section>
-
-      </main>
 
       {pedido && (
         <div className="container">
@@ -145,33 +131,29 @@ export const PaginaDetalle = () => {
             </div>
 
             <div className='d-flex flex-column align-items-center text-center mt-3 mb-3 w-50 mx-auto'>
-              <button
-                type="button"
-                className="btn btn-success fw-bold d-flex align-items-center justify-content-center gap-2"
-                onClick={enviarMensajeWSP}
-              >
-                <img
-                  src={whatsapp}
-                  width="20"
-                  alt="Logo Wsp"
-                />
-                Enviar Whatsapp
-              </button>
-
               <Link
                 to="/crear-solicitud"
-                className="btn btn-primary fw-bold mt-3 d-flex align-items-center justify-content-center gap-2"
+                className="btn btn-primary fw-bold mt-3 mb-3 d-flex align-items-center justify-content-center gap-2"
               >
                 <FaCartPlus />
                 Hacer Otro Pedido
               </Link>
-
             </div>
+
+            {/* Botón flotante WhatsApp */}
+            <button
+              type="button"
+              className="fab-whatsapp"
+              onClick={enviarMensajeWSP}
+            >
+              <img src={whatsapp} alt="WhatsApp" />
+            </button>
           </>
         ) : (
           <p>Cargando pedido...</p>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

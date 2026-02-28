@@ -17,7 +17,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth(); // Import centralize login
+  const { login } = useAuth();
 
   const togglePasswordVisibility = (e) => {
     e.preventDefault();

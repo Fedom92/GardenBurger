@@ -5,11 +5,12 @@ import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
 import 'moment/locale/es';
+import { useAuth } from "../../../context/AuthContext";
 
 const PendientesMP = ({ isOpen, onClose }) => {
+    const { userData } = useAuth();
     const [pedidosPendientes, setPedidosPendientes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    // Función para cargar pedidos pendientes de MP (solo usada por botón manual)
 
 
     // Función para aprobar pedido
@@ -17,7 +18,9 @@ const PendientesMP = ({ isOpen, onClose }) => {
         try {
             const pedidoRef = doc(db, "pedidos", pedidoId);
             await updateDoc(pedidoRef, {
-                estado: "PENDIENTE"
+                estado: "PENDIENTE",
+                cajeroID: userData.id,
+                cajero: userData.nombreCompleto,
             });
 
             Swal.fire({
@@ -54,7 +57,9 @@ const PendientesMP = ({ isOpen, onClose }) => {
             try {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 await updateDoc(pedidoRef, {
-                    estado: "ELIMINADO"
+                    estado: "ELIMINADO",
+                    cajeroID: userData.id,
+                    cajero: userData.nombreCompleto,
                 });
 
                 Swal.fire({

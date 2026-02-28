@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, doc, query, orderBy, getDocs, where } from "firebase/firestore";
+import { collection, updateDoc, doc, query, getDocs, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
@@ -17,7 +17,7 @@ const Deliverys = () => {
     const pedidosCollection = useRef(query(pedidosCollectiona, where("estado", "==", "DELIVERY")));
 
     const deliverysCollectiona = collection(db, "deliverys");
-    const deliverysCollection = useRef(query(deliverysCollectiona, orderBy("nombre", "asc")));
+    const deliverysCollection = useRef(query(deliverysCollectiona, where("activo", "==", true)));
 
     const getPedidos = useCallback((snapshot) => {
         const pedidosArray = snapshot.docs
@@ -34,7 +34,8 @@ const Deliverys = () => {
         const deliverysArray = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
-        }));
+        }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre));
         setDeliverys(deliverysArray);
     }, []);
 

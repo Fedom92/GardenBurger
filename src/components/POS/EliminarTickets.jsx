@@ -3,12 +3,14 @@ import { collection, query, getDocs, updateDoc, doc, where, limit } from "fireba
 import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from 'sweetalert2';
+import { useAuth } from "../../context/AuthContext";
 
 const EliminarTickets = ({ isOpen, onClose }) => {
     const [pedido, setPedido] = useState(null);
     const [numeroTicket, setNumeroTicket] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [errorBusqueda, setErrorBusqueda] = useState("");
+    const { userData } = useAuth();
 
     // Función para buscar un pedido por su código
     const buscarPedido = async () => {
@@ -58,7 +60,9 @@ const EliminarTickets = ({ isOpen, onClose }) => {
             try {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 await updateDoc(pedidoRef, {
-                    estado: "ELIMINADO"
+                    estado: "ELIMINADO",
+                    cajeroID: userData.id,
+                    cajero: userData.nombreCompleto,
                 });
 
                 // Actualizar el pedido local
