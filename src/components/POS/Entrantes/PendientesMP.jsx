@@ -3,8 +3,6 @@ import { collection, query, where, updateDoc, doc, onSnapshot } from "firebase/f
 import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
-import moment from 'moment';
-import 'moment/locale/es';
 import { useAuth } from "../../../context/AuthContext";
 
 const PendientesMP = ({ isOpen, onClose }) => {
@@ -12,79 +10,12 @@ const PendientesMP = ({ isOpen, onClose }) => {
     const [pedidosPendientes, setPedidosPendientes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
-
-    // Función para aprobar pedido
-    const aprobarPedido = async (pedidoId) => {
-        try {
-            const pedidoRef = doc(db, "pedidos", pedidoId);
-            await updateDoc(pedidoRef, {
-                estado: "PENDIENTE",
-                cajeroID: userData.id,
-                cajero: userData.nombreCompleto,
-            });
-
-            Swal.fire({
-                title: '¡Aprobado!',
-                text: 'El pedido ha sido aprobado',
-                icon: 'success',
-                confirmButtonColor: '#198754',
-            });
-        } catch (error) {
-            console.error('Error aprobando pedido:', error);
-            Swal.fire({
-                title: 'Error',
-                text: 'Error al aprobar el pedido',
-                icon: 'error',
-                confirmButtonColor: '#dc3545',
-            });
-        }
-    };
-
-    // Función para rechazar pedido
-    const rechazarPedido = async (pedidoId) => {
-        const result = await Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'El pedido será eliminado cancelado.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                const pedidoRef = doc(db, "pedidos", pedidoId);
-                await updateDoc(pedidoRef, {
-                    estado: "ELIMINADO",
-                    cajeroID: userData.id,
-                    cajero: userData.nombreCompleto,
-                });
-
-                Swal.fire({
-                    title: '¡Eliminado!',
-                    text: 'El pedido ha sido eliminado',
-                    icon: 'success',
-                    confirmButtonColor: '#198754',
-                });
-            } catch (error) {
-                console.error('Error eliminando pedido:', error);
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Error al eliminar el pedido',
-                    icon: 'error',
-                    confirmButtonColor: '#dc3545',
-                });
-            }
-        }
-    };
-
-    // Cargar pedidos cuando se abre el modal
     useEffect(() => {
         if (!isOpen) return;
 
         setIsLoading(true);
+        let initialLoad = true;
+
         const pedidosCollection = collection(db, "pedidos");
         const q = query(pedidosCollection, where("estado", "==", "PENDIENTEMP"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -92,15 +23,17 @@ const PendientesMP = ({ isOpen, onClose }) => {
                 id: doc.id,
                 ...doc.data()
             }));
-
-            pedidos.sort((a, b) => {
-                const fechaA = moment(`${a.fecha} ${a.hora}`, "DD/MM/YYYY HH:mm");
-                const fechaB = moment(`${b.fecha} ${b.hora}`, "DD/MM/YYYY HH:mm");
-                return fechaB.diff(fechaA);
-            });
+            pedidos.sort((a, b) =>
+                a.timestamp.seconds - b.timestamp.seconds
+            );
 
             setPedidosPendientes(pedidos);
             setIsLoading(false);
+
+            if (!initialLoad && pedidos.length === 0) {
+                onClose();
+            }
+            initialLoad = false;
         }, (error) => {
             console.error('Error escuchando pedidos pendientes:', error);
             Swal.fire({
@@ -114,6 +47,57 @@ const PendientesMP = ({ isOpen, onClose }) => {
 
         return () => unsubscribe();
     }, [isOpen]);
+
+    const aprobarPedido = async (pedidoId) => {
+        try {
+            const pedidoRef = doc(db, "pedidos", pedidoId);
+            await updateDoc(pedidoRef, {
+                estado: "APROBADO",
+                cajeroID: userData.id,
+                cajero: userData.nombreCompleto,
+            });
+        } catch (error) {
+            console.error('Error aprobando pedido:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al aprobar el pedido',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+            });
+        }
+    };
+
+    const rechazarPedido = async (pedidoId) => {
+        const result = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: 'El pedido será rechazado.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, rechazar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const pedidoRef = doc(db, "pedidos", pedidoId);
+                await updateDoc(pedidoRef, {
+                    estado: "CANCELADO",
+                    cajeroID: userData.id,
+                    cajero: userData.nombreCompleto,
+                });
+            } catch (error) {
+                console.error('Error rechazando el pedido:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error al rechazar el pedido',
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545',
+                });
+            }
+        }
+    };
 
     return (
         <Modal
@@ -131,11 +115,6 @@ const PendientesMP = ({ isOpen, onClose }) => {
                     <div className="text-center">
                         <span className="loader"></span>
                         <p>Cargando pedidos...</p>
-                    </div>
-                ) : pedidosPendientes.length === 0 ? (
-                    <div className="text-center text-body-secondary">
-                        <i className="fa fa-check-circle fa-3x mb-3"></i>
-                        <h4>No hay pedidos pendientes</h4>
                     </div>
                 ) : (
                     <div className="row">
@@ -183,6 +162,16 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                                 <p className="mb-1">
                                                     <strong>Total:</strong> ${pedido.total}
                                                 </p>
+                                                <div className="mt-2">
+                                                    <a
+                                                        href={`https://api.whatsapp.com/send?phone=549${pedido.telefono}&text=Hola ${pedido.nombre}. `}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="btn btn-success btn-sm w-75 fw-bold"
+                                                    >
+                                                        <i className="fa-brands fa-whatsapp fs-5 align-middle me-1"></i> Enviar WhatsApp
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -223,4 +212,3 @@ const PendientesMP = ({ isOpen, onClose }) => {
 };
 
 export default PendientesMP;
-

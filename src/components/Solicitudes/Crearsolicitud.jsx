@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from '../../context/CartContext.jsx'
-import { collection, addDoc } from "firebase/firestore";
+import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { useNavigate } from 'react-router-dom';
-import 'moment/locale/es';
 import { Card } from "./Card.jsx";
 import { ModalHamburguesa } from "./ModalHamburguesa.jsx";
 import { ModalExtras } from "./ModalExtras.jsx";
@@ -14,10 +13,15 @@ import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
 import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
 import Footer from "./Footer";
+import moment from 'moment';
 
 const CrearSolicitud = () => {
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
+
+  const ahora = moment();
+  const fecha = ahora.format("DD/MM/YYYY");
+  const hora = ahora.format("HH:mm");
 
   const {
     carrito,
@@ -27,7 +31,6 @@ const CrearSolicitud = () => {
     totalCarrito,
     vaciarCarrito,
     obtenerHamburguesasConVariantes,
-    actualizarMensajeWSP,
     obtenerCategorias,
     obtenerProductos,
     productos,
@@ -35,6 +38,10 @@ const CrearSolicitud = () => {
     categorias,
     setCategorias,
   } = useContext(CartContext);
+
+  const total = totalCarrito();
+  const recargo = 1 + Number(process.env.REACT_APP_recargoMP) / 100;
+  const totalConRecargo = Math.round(total * recargo);
 
   //registro
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
@@ -44,42 +51,45 @@ const CrearSolicitud = () => {
   const navigate = useNavigate();
 
   const comprar = (data) => {
+    setProcesando(true);
+
+    const solicitudesRef = collection(db, "solicitudes");
+    const newDocRef = doc(solicitudesRef);
+
+    const mensaje = `
+    🍔 *NUEVO PEDIDO WEB*
+
+    👤 Nombre: ${data.nombre}
+    📞 Teléfono: ${data.telefono}
+    💳 Método de pago: ${data.metodoPago}
+    ${data.opcion === "delivery" ? ` 🛵 Delivery
+    📍 Dirección: ${data.direccion}`
+        : `🏪 Retiro en local`}
+
+    🔎 *Ver detalle pedido*
+    https://gardenburger.com.ar/ver-pedido/${newDocRef.id}
+    `;
+
+    const mensajeCodificado = encodeURIComponent(mensaje.trim());
+
+
+
     const solicitud = {
       cliente: data,
       productos: carrito,
-      total: pagoSeleccionado === "MP" ? totalCarrito() + totalCarrito() * parseFloat(process.env.REACT_APP_recargoMP) / 100 : totalCarrito(),
+      total: pagoSeleccionado === "MP" ? totalConRecargo : total,
       estado: "PENDIENTE",
-      fecha: new Date()
+      timestamp: serverTimestamp(),
+      fecha: fecha,
+      hora: hora,
+      mensajeWsp: mensajeCodificado
     }
 
-    setProcesando(true);
-
-    const solicitudesRef = collection(db, "solicitudes")
-
-    addDoc(solicitudesRef, solicitud)
-      .then((doc) => {
-
-        const mensaje = `
-      🍔 *NUEVO PEDIDO WEB*
-      
-      👤 Nombre: ${data.nombre}
-      📞 Teléfono: ${data.telefono}
-      💳 Método de pago: ${data.metodoPago}
-      ${data.opcion === "delivery" ? ` 🛵 Delivery
-      📍 Dirección: ${data.direccion}`
-            : `🏪 Retiro en local`}
-      
-      🔎 *Ver detalle pedido*
-      https://gardenburger.com.ar/ver-pedido/${doc.id}
-      `;
-
-        const mensajeCodificado = encodeURIComponent(mensaje.trim());
-
-        actualizarMensajeWSP(mensajeCodificado);
-
+    setDoc(newDocRef, solicitud)
+      .then(() => {
         vaciarCarrito();
-
-        navigate(`/ver-pedido/${doc.id}`);
+        window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${mensajeCodificado}`, "_blank");
+        navigate(`/ver-pedido/${newDocRef.id}`);
       })
       .catch((error) => {
         console.error("Error al crear solicitud:", error);
@@ -153,7 +163,7 @@ const CrearSolicitud = () => {
               No hay categorías o productos disponibles
             </div>
           ) : (
-            <div className="accordion accordionCS mt-3" id="accordionCategorias" key={`accordion-${carrito.reduce((sum, p) => sum + (p.amountInCart || 1), 0)}`}>
+            <div className="accordion accordionCS mt-3" id="accordionCategorias" key={`accordion-${carrito.reduce((sum, p) => sum + (p.cantidad || 1), 0)}`}>
 
               {/* OFERTAS */}
               {productosOferta.length > 0 && (
@@ -282,12 +292,12 @@ const CrearSolicitud = () => {
                     {producto.categoria === 'BEBIDAS' && (
                       <>
                         <button type="button" className="disminuir text-danger" onClick={() => disminuir(producto)}>-</button>
-                        <span className="numeroCantidad mx-2 fw-bold">{producto.amountInCart}</span>
+                        <span className="numeroCantidad mx-2 fw-bold">{producto.cantidad}</span>
                         <button type="button" className="aumentar text-success" onClick={() => aumentar(producto)}>+</button>
                       </>
                     )}
                   </div>
-                  <div className="precioVP">${(producto.precio * producto.amountInCart)}</div>
+                  <div className="precioVP">${(producto.precio * producto.cantidad)}</div>
                   <button type="button" className="btn btn-danger" onClick={() => eliminar(producto)}>❌</button>
                 </div>
               )
@@ -296,7 +306,7 @@ const CrearSolicitud = () => {
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
                 <button type="button" className="btn btn-danger" onClick={() => vaciarCarrito()}>Vaciar carrito</button>
-                <div className="m-2 fw-bold">Total: ${pagoSeleccionado === "MP" ? totalCarrito() + totalCarrito() * parseFloat(process.env.REACT_APP_recargoMP) / 100 : totalCarrito()}</div>
+                <div className="m-2 fw-bold">Total: ${pagoSeleccionado === "MP" ? totalConRecargo : total}</div>
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />

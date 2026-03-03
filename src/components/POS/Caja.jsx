@@ -13,7 +13,7 @@ import EliminarTickets from './EliminarTickets';
 import BuscarSolicitud from './BuscarSolicitud';
 import AutocompleteGoogle from '../../Utils/AutocompleteGoogle';
 import logoMP from '../../img/mercado-pago.webp';
-
+import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
@@ -22,6 +22,8 @@ const Caja = () => {
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
+    const telefono = watch("telefono");
+    console.log(telefono)
     const { userData } = useAuth();
     const [search, setSearch] = useState("");
     const [productos, setProductos] = useState([]);
@@ -46,6 +48,10 @@ const Caja = () => {
 
     const [tieneSolicitudesPendientes, setTieneSolicitudesPendientes] = useState(false);
     const [tienePendientesMP, setTienePendientesMP] = useState(false);
+
+    const ahora = moment();
+    const fecha = ahora.format("DD/MM/YYYY");
+    const hora = ahora.format("HH:mm");
 
     const getResumen = useMemo(() => {
         const subtotal = carrito.reduce((acum, producto) => acum + producto.subtotal, 0);
@@ -146,7 +152,6 @@ const Caja = () => {
             (err) => console.error("Error Pendientes MP:", err)
         );
 
-        // Cleanup
         return () => {
             unsubSolicitudes();
             unsubPedidos();
@@ -203,11 +208,10 @@ const Caja = () => {
     const handleAgregarAlCarrito = (producto) => {
         // Validación para extras de tipo HAMBURGUESA
         if (producto.categoria === "EXTRA" && producto.tipoExtra === "HAMBURGUESA") {
-            const categoriasHamburguesa = ["SIMPLE", "DOBLE", "TRIPLE"];
             const ultimoProducto = carrito[carrito.length - 1];
 
             const esValido = ultimoProducto && (
-                categoriasHamburguesa.includes(ultimoProducto.categoria) ||
+                CATEGORIAS_HAMBURGUESA.includes(ultimoProducto.categoria) ||
                 (ultimoProducto.categoria === "EXTRA" && ultimoProducto.tipoExtra === "HAMBURGUESA")
             );
 
@@ -272,11 +276,6 @@ const Caja = () => {
 
         setProcesando(true);
 
-        // Crear timestamp en GMT-3 (Argentina)
-        const ahora = moment();
-        const fecha = ahora.format("DD/MM/YYYY");
-        const hora = ahora.format("HH:mm");
-
         try {
             const q = query(pedidosCollection, orderBy("codigo", "desc"), limit(1));
             const querySnapshot = await getDocs(q);
@@ -312,7 +311,7 @@ const Caja = () => {
                 montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
                 total: Number(totalFinal),
                 carrito: carrito,
-                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "PENDIENTE",
+                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "APROBADO",
                 fecha: fecha,
                 hora: data.horarioEspecial || hora,
                 timestamp: serverTimestamp()
@@ -442,7 +441,7 @@ const Caja = () => {
         }
 
         // Validar teléfono
-        if (!data.telefono.startsWith('11') || !data.telefono.startsWith('23')) {
+        if (!data.telefono.startsWith('11') && !data.telefono.startsWith('23')) {
             Swal.fire({
                 title: 'Advertencia',
                 text: 'El teléfono debe comenzar con 11 o 23',
@@ -514,28 +513,41 @@ const Caja = () => {
             setValue("nombre", solicitud.cliente?.nombre || "");
             setValue("telefono", solicitud.cliente?.telefono || "");
             setValue("direccion", solicitud.cliente?.direccion || "");
-            setValue("latitud", solicitud.cliente?.latitud || "");
-            setValue("longitud", solicitud.cliente?.longitud || "");
+            setValue("entreCalles", solicitud.cliente?.entreCalles || "");
             setValue("metodoPago", solicitud.cliente?.metodoPago || "");
-            setValue("observaciones", `Solicitud ${solicitud.cliente?.opcion || " "}`);
+
+            // Juntar observaciones de cada producto del carrito
+            const obsProductos = (solicitud.productos || [])
+                .filter(p => p.observaciones)
+                .map(p => `${p.descripcion}: ${p.observaciones}`)
+                .join("\n");
+            setValue("observaciones", obsProductos);
+
+            // Mapear opcion a zona_envio
+            if (solicitud.cliente?.opcion === "Retira") {
+                const envioRetira = envios.find(e =>
+                    e.zona_envio.toLowerCase().includes("retira")
+                );
+                if (envioRetira) {
+                    setValue("envio", JSON.stringify({
+                        zona_envio: envioRetira.zona_envio,
+                        costo_envio: envioRetira.costo_envio
+                    }));
+                }
+            }
 
             // Agregar productos al carrito
             if (solicitud.productos && solicitud.productos.length > 0) {
                 setCarrito(solicitud.productos.map(producto => ({
                     ...producto,
-                    subtotal: producto.amountInCart * producto.precio
+                    cantidad: producto.cantidad || 1,
+                    subtotal: (producto.cantidad || 1) * producto.precio
                 })));
             }
 
             // Cerrar el modal
             setShowPendientesSolicitudes(false);
 
-            Swal.fire({
-                title: '¡Datos cargados!',
-                text: 'Los datos de la solicitud han sido cargados en el formulario',
-                icon: 'success',
-                confirmButtonColor: '#198754',
-            });
         } catch (error) {
             console.error('Error cargando datos de solicitud:', error);
             Swal.fire({
@@ -571,13 +583,15 @@ const Caja = () => {
                             className="d-flex justify-content-start align-items-center">
                             <h3>Sistema Caja</h3>
                             <button
-                                className={`btn btn-warning mx-2 text-white fw-bold mb-1 ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-blink' : ''}`}
+                                className={`btn mx-2 fw-bold mb-1 ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-warning text-white btn-blink' : 'btn-outline-secondary'}`}
+                                disabled={!tieneSolicitudesPendientes}
                                 onClick={() => setShowPendientesSolicitudes(true)}
                             >
                                 <i className="fa fa-list-check"></i> Ver Solicitudes
                             </button>
                             <button
-                                className={`btn btn-info mx-2 btn-sm text-white fw-bold mb-1 ${tienePendientesMP && !showPendientesMP ? 'btn-blink' : ''}`}
+                                className={`btn mx-2 btn-sm fw-bold mb-1 ${tienePendientesMP && !showPendientesMP ? 'btn-info text-white btn-blink' : 'btn-outline-secondary'}`}
+                                disabled={!tienePendientesMP}
                                 onClick={() => setShowPendientesMP(true)}
                             >
                                 <img src={logoMP} alt="MP" className="img-fluid" style={{ height: "3vh" }}></img> Pendientes MP

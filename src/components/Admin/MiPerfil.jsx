@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { doc, updateDoc, where, collection, getDocs, query, } from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig/firebase";
-import { signOut, updateEmail, onAuthStateChanged } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 import EditClave from "./EditClave";
 import Swal from "sweetalert2";
@@ -13,7 +13,7 @@ const MiPerfil = () => {
   const [nombreCompleto, setNombreCompleto] = useState("");
   const [correo, setCorreo] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [fechaAlta, setFechaAlta] = useState("");
+  const [fecha, setFecha] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [editable, setEditable] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
@@ -38,7 +38,7 @@ const MiPerfil = () => {
         setNombreCompleto(userData2.nombreCompleto);
         setCorreo(userData2.correo);
         setTelefono(userData2.telefono);
-        setFechaAlta(userData2.fechaAlta);
+        setFecha(userData2.fecha);
         setId(userId)
       }
       setIsLoading(false);
@@ -134,7 +134,7 @@ const MiPerfil = () => {
                       <div className="row gx-3 mb-3">
                         <div className="col-md-12">
                           <label className="small mb-1">Fecha de Alta</label>
-                          <input className="form-control" id="inputBirthday" type="text" name="birthday" value={fechaAlta} disabled style={{ textAlign: "center" }} />
+                          <input className="form-control" id="inputBirthday" type="text" name="birthday" value={fecha} disabled style={{ textAlign: "center" }} />
                         </div>
                       </div>
                       <button className="btn btn-success" type="submit" onClick={editable ? handleSave : handleEdit} style={{ margin: "1px" }}>

@@ -4,8 +4,6 @@ import logo from '../../img/logo_negro3.png';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import whatsapp from "../../img/whatsapp.webp";
-import { useContext } from "react";
-import { CartContext } from '../../context/CartContext.jsx'
 import { FaCartPlus } from 'react-icons/fa';
 import { Link } from "react-router-dom";
 import { ESTADOS_SOLICITUDES } from '../../Utils/Constantes.jsx';
@@ -14,8 +12,7 @@ import Footer from './Footer';
 export const PaginaDetalle = () => {
   const { id } = useParams(); // ID de la URL
   const [pedido, setPedido] = useState(null);
-
-  const { mensajeWSP } = useContext(CartContext);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPedido = async () => {
@@ -25,9 +22,13 @@ export const PaginaDetalle = () => {
 
         if (pedidoSnap.exists()) {
           setPedido(pedidoSnap.data());
+        } else {
+          setPedido(null);
         }
       } catch (error) {
         console.error("Error obteniendo el pedido:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -35,7 +36,9 @@ export const PaginaDetalle = () => {
   }, [id]);
 
   const enviarMensajeWSP = (() => {
-    window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${mensajeWSP}`, "_blank")
+    if (pedido?.mensajeWsp) {
+      window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${pedido.mensajeWsp}`, "_blank");
+    }
   })
 
   const indexActivo = ESTADOS_SOLICITUDES.findIndex(i => i.key === pedido?.estado);
@@ -88,7 +91,9 @@ export const PaginaDetalle = () => {
       )}
 
       <div>
-        {pedido ? (
+        {loading ? (
+          <p className="text-center mt-5">Cargando pedido...</p>
+        ) : pedido ? (
           <>
             {pedido.estado !== "CANCELADO" && (<h1 className='text-center m-4'>Gracias por tu compra!</h1>)}
 
@@ -111,15 +116,15 @@ export const PaginaDetalle = () => {
                 <em> {pedido.cliente.telefono}</em>
               </div>
 
-              {pedido.productos.map((producto) => {
+              {pedido.productos?.map((producto, index) => {
                 return (
-                  <div key={producto.id} className='itemDetalle'>
+                  <div key={`${producto.id}-${index}`} className='itemDetalle'>
                     <div className="imagen">
                       <img src={producto.imagen} alt="imagen" />
                     </div>
-                    <div className='tituloVP'>{producto.descripcion} x{producto.amountInCart}</div>
+                    <div className='tituloVP'>{producto.descripcion} x{producto.cantidad}</div>
 
-                    <div className="precioVP">${(producto.precio * producto.amountInCart)}</div>
+                    <div className="precioVP">${(producto.precio * producto.cantidad)}</div>
                   </div>
                 )
               }
@@ -150,7 +155,7 @@ export const PaginaDetalle = () => {
             </button>
           </>
         ) : (
-          <p>Cargando pedido...</p>
+          <h1 className='text-center m-4'>No se ha encontrado registros!</h1>
         )}
       </div>
       <Footer />

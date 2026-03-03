@@ -40,7 +40,6 @@ export const CartProvider = ({ children }) => {
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
 
-  const [mensajeWSP, setMensajeWSP] = useState('');
   // Estados para modales y selecciones
   const [showModalVariante, setShowModalVariante] = useState(false);
   const [showModalExtras, setShowModalExtras] = useState(false);
@@ -103,7 +102,7 @@ export const CartProvider = ({ children }) => {
           const nuevoCarrito = [...prevCarrito];
           nuevoCarrito[idxBebida] = {
             ...nuevoCarrito[idxBebida],
-            amountInCart: nuevoCarrito[idxBebida].amountInCart + 1
+            cantidad: nuevoCarrito[idxBebida].cantidad + 1
           };
           return nuevoCarrito;
         }
@@ -112,17 +111,13 @@ export const CartProvider = ({ children }) => {
       return [...prevCarrito, {
         ...producto,
         combo: combo,
-        amountInCart: 1,
+        cantidad: 1,
         subtotal: producto.precio
       }];
     });
 
   }, [combo]);
 
-
-  const actualizarMensajeWSP = useCallback((nuevoMensaje) => {
-    setMensajeWSP(nuevoMensaje);
-  }, []);
 
   const aumentarCombo = useCallback(() => setCombo(prev => prev + 1), []);
 
@@ -136,7 +131,7 @@ export const CartProvider = ({ children }) => {
     setCarrito(prevCarrito =>
       prevCarrito.map((prod) =>
         esMismoProducto(prod, productoParam)
-          ? { ...prod, amountInCart: prod.amountInCart + 1 }
+          ? { ...prod, cantidad: prod.cantidad + 1 }
           : prod
       )
     );
@@ -145,8 +140,8 @@ export const CartProvider = ({ children }) => {
   const disminuir = useCallback((productoParam) => {
     setCarrito(prevCarrito =>
       prevCarrito.map((prod) =>
-        esMismoProducto(prod, productoParam) && prod.amountInCart > 1
-          ? { ...prod, amountInCart: prod.amountInCart - 1 }
+        esMismoProducto(prod, productoParam) && prod.cantidad > 1
+          ? { ...prod, cantidad: prod.cantidad - 1 }
           : prod
       )
     );
@@ -159,7 +154,7 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const totalCarrito = useCallback(() => {
-    return parseFloat(carrito.reduce((total, prod) => total + (prod.amountInCart * prod.precio), 0));
+    return parseFloat(carrito.reduce((total, prod) => total + (prod.cantidad * prod.precio), 0));
   }, [carrito]);
 
   const vaciarCarrito = useCallback(() => {
@@ -472,8 +467,6 @@ export const CartProvider = ({ children }) => {
     // Estado del carrito
     carrito,
     setCarrito,
-    mensajeWSP,
-    actualizarMensajeWSP,
 
     // Funciones básicas del carrito
     agregarAlCarrito,
@@ -559,7 +552,6 @@ export const CartProvider = ({ children }) => {
     extrasHamburguesas,
     extrasGenericos,
     bebidasDisponibles,
-    mensajeWSP,
     setVarianteElegida,
     setExtrasSeleccionados,
     setExtrasGenericosSeleccionados,
@@ -582,7 +574,6 @@ export const CartProvider = ({ children }) => {
     limpiarNombreHamburguesa,
     hamburguesaYaEnCarrito,
     cargarExtrasYBebidas,
-    actualizarMensajeWSP,
     obtenerCategorias,
     obtenerProductos,
     productos,

@@ -35,12 +35,9 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
                     ...doc.data()
                 }));
 
-                // Ordenar localmente por timestamp descendente
-                solicitudesEncontradas.sort((a, b) => {
-                    const timeA = a.timestamp ? a.timestamp.toMillis() : 0;
-                    const timeB = b.timestamp ? b.timestamp.toMillis() : 0;
-                    return timeB - timeA;
-                });
+                solicitudesEncontradas.sort((a, b) =>
+                    a.timestamp.seconds - b.timestamp.seconds
+                );
 
                 setSolicitudes(solicitudesEncontradas);
             }
@@ -130,7 +127,7 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
                                     </h6>
                                     <div className="d-flex align-items-center gap-2">
                                         <small className="text-body-secondary">
-                                            {moment(solicitud.fecha.toDate()).format("DD/MM/YYYY HH:mm")}
+                                            {moment(solicitud.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
                                         </small>
                                     </div>
                                 </div>

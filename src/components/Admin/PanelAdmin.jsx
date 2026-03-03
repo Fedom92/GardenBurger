@@ -247,7 +247,7 @@ const PanelAdmin = () => {
                         <th onClick={() => sorting("nombreCompleto")}>Nombre Completo</th>
                         <th onClick={() => sorting("correo")}>Email</th>
                         <th onClick={() => sorting("telefono")}>Telefono</th>
-                        <th onClick={() => sorting("fechaAlta")}>Fecha Agregado</th>
+                        <th onClick={() => sorting("fecha")}>Fecha Agregado</th>
                         <th onClick={() => sorting("rol")}>Rol</th>
                         <th>Accion</th>
                       </tr>
@@ -261,7 +261,7 @@ const PanelAdmin = () => {
                           <td> {usuario.nombreCompleto}</td>
                           <td> {usuario.correo} </td>
                           <td> {usuario.telefono} </td>
-                          <td> {usuario.fechaAlta}</td>
+                          <td> {usuario.fecha}</td>
                           <td>{usuario.rol === process.env.REACT_APP_admin ?
                             'Admin' : usuario.rol === process.env.REACT_APP_encargado ?
                               'Encargado' : usuario.rol === process.env.REACT_APP_cajero ?
