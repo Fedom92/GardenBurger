@@ -527,18 +527,20 @@ select {
 }
 
 .search-bar {
-  position: absolute;
   align-items: center;
-  z-index: 1;
+  background-color: black;
+  width: 100%;
+  padding: 10px 20px;
+  display: flex;
+  margin-bottom: 15px;
 }
 
 .container {
-  margin-top: 3%;
   max-width: fit-content;
 }
 
 .search-bar input {
-  width: 100%;
+  width: 35%;
   padding: 3px;
   background-color: white;
   color: var(--color-primario-normal);
@@ -828,6 +830,40 @@ select {
 .sidebar-item.plain i {
   display: inline-block;
   width: 1.7em;
+}
+
+@media (max-width: 768px) {
+  .navigation {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 240px;
+    z-index: 1060;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .navigation.mobile-open {
+    left: 0;
+  }
+
+  .mainpage {
+    padding-top: 60px;
+    /* Space for the mobile topbar */
+  }
+
+  .navigation header {
+    padding: 10px 0;
+    margin-bottom: 5px;
+  }
+
+  .sidebar-title {
+    margin: 0;
+  }
+
+  .navigation .nav {
+    padding: 6px 12px;
+  }
 }
 
 /*<!------------Termina Estilo Navigation---------------->*/
@@ -1258,4 +1294,5 @@ input::placeholder {
   width: 35px;
   height: 35px;
 }
+
 /*<!------------Termina Estilo Botón Flotante WhatsApp---------------->*/

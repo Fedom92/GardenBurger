@@ -83,74 +83,6 @@ function BarChart({ items = [], valueKey = "valor", labelKey = "label", fmt = fm
     );
 }
 
-function StockTable({ items = [], limit, showCategory = true }) {
-    const [expanded, setExpanded] = useState(false);
-
-    if (!items.length) return <p className="text-secondary text-center py-4 small">Sin datos</p>;
-
-    const displayItems = (limit && !expanded) ? items.slice(0, limit) : items;
-
-    return (
-        <div className="w-100 d-flex flex-column">
-            <div className="table-responsive rounded border border-secondary border-opacity-25">
-                <table className="table table-dark table-striped table-hover table-sm mb-0 align-middle" style={{ fontSize: "0.8rem", backgroundColor: "transparent" }}>
-                    <thead style={{ borderBottom: "2px solid #334155" }}>
-                        <tr>
-                            <th className="text-center py-2" style={{ width: "70px", color: "#f97316", backgroundColor: "#0f172a" }}>CANT.</th>
-                            {showCategory && <th className="py-2" style={{ color: "#f97316", backgroundColor: "#0f172a" }}>Categoría</th>}
-                            <th className="py-2" style={{ color: "#f97316", backgroundColor: "#0f172a" }}>Descripción</th>
-                        </tr>
-                    </thead>
-                    <tbody style={{ borderTop: "none" }}>
-                        {displayItems.map((item, idx) => (
-                            <tr key={idx}>
-                                <td className="text-center fw-bold" style={{ backgroundColor: "transparent" }}>{fmtN(item.valor)}</td>
-                                {showCategory && <td style={{ backgroundColor: "transparent" }}>{item.cat}</td>}
-                                <td style={{ backgroundColor: "transparent" }}>{item.desc}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            {limit && items.length > limit && (
-                <button
-                    className="btn btn-sm btn-outline-secondary mt-3 w-100"
-                    onClick={() => setExpanded(!expanded)}
-                >
-                    {expanded ? "Ver menos" : `Ver ${items.length - limit} más`}
-                </button>
-            )}
-        </div>
-    );
-}
-
-function DualBarChart({ items = [], labelKey = "label", qtyKey = "valor", moneyKey = "monto", color1 = "#3b82f6", color2 = "#10b981" }) {
-    if (!items.length) return <p className="text-secondary text-center py-4 small">Sin datos</p>;
-    const maxQty = Math.max(...items.map(i => i[qtyKey]), 1);
-    const maxMoney = Math.max(...items.map(i => i[moneyKey]), 1);
-    return (
-        <div className="d-flex flex-column gap-3 w-100">
-            {items.map((item, idx) => (
-                <div key={idx} className="d-flex flex-column gap-1">
-                    <span className="small fw-bold text-light">{item[labelKey]}</span>
-                    <div className="d-flex align-items-center gap-2">
-                        <div className="bar-track flex-grow-1 overflow-hidden" style={{ height: "6px" }}>
-                            <div className="bar-fill" style={{ width: `${(item[qtyKey] / maxQty) * 100}%`, background: color1 }} />
-                        </div>
-                        <span className="small text-end fw-bold" style={{ minWidth: "70px", color: color1 }}>{fmtN(item[qtyKey])} u.</span>
-                    </div>
-                    <div className="d-flex align-items-center gap-2">
-                        <div className="bar-track flex-grow-1 overflow-hidden" style={{ height: "6px" }}>
-                            <div className="bar-fill" style={{ width: `${(item[moneyKey] / maxMoney) * 100}%`, background: color2 }} />
-                        </div>
-                        <span className="small text-end fw-bold" style={{ minWidth: "70px", color: color2 }}>{fmt$(item[moneyKey])}</span>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
-
 function Section({ title, children }) {
     return (
         <div className="est-card p-4 h-100 d-flex flex-column">
@@ -220,7 +152,7 @@ export default function Estadisticas() {
             }
             return true;
         });
-    }, [pagos, sucursal, modoFecha, desde, hasta, mesSelec, añoSelec]);
+    }, [pagos, sucursal, modoFecha, desde, hasta, desdeHora, hastaHora,mesSelec, añoSelec]);
 
     // ── Separar válidos / cancelados ──
     const ticketsCancelados = useMemo(() =>
@@ -412,38 +344,6 @@ export default function Estadisticas() {
         return Object.entries(map).map(([label, valor]) => ({ label, valor })).sort((a, b) => a.label.localeCompare(b.label));
     }, [ticketsValidos]);
 
-    // ── Volumen mensual ──
-    const porMes = useMemo(() => {
-        const map = {};
-        ticketsValidos.forEach(p => {
-            const d = parseDate(p.timestamp);
-            if (!d) return;
-            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-            const label = `${MESES_CORTO[d.getMonth()]} ${d.getFullYear()}`;
-            if (!map[key]) map[key] = { label, valor: 0, monto: 0 };
-            map[key].valor++;
-            map[key].monto += parseMoney(p.total);
-        });
-        return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).map(([, v]) => v);
-    }, [ticketsValidos]);
-
-    // ── Comparación anual (sin filtro de fecha, solo sucursal) ──
-    const comparacionAnual = useMemo(() => {
-        const map = {};
-        pagos.filter(p => {
-            if (sucursal !== "TODAS" && (p.sucursal || "").trim() !== sucursal) return false;
-            return (p.cancelado || "").toUpperCase() !== "X";
-        }).forEach(p => {
-            const d = parseDate(p.timestamp);
-            if (!d) return;
-            const y = d.getFullYear();
-            if (!map[y]) map[y] = { label: String(y), valor: 0, monto: 0 };
-            map[y].valor++;
-            map[y].monto += parseMoney(p.total);
-        });
-        return Object.values(map).sort((a, b) => +a.label - +b.label);
-    }, [pagos, sucursal]);
-
     // ── Zonas de envío (porcentajes) ──
     const zonas = useMemo(() => {
         const map = {};
@@ -502,7 +402,7 @@ export default function Estadisticas() {
         <div className="est-wrap container-fluid">
 
             {/* ── Header ── */}
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                 <div>
                     <h1 className="est-title fw-bolder mb-1">📊 Estadísticas</h1>
                 </div>

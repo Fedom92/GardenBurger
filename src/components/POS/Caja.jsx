@@ -567,7 +567,7 @@ const Caja = () => {
                 </div>
             ) : (
                 <div className="w-100" id="caja">
-                    <div className="search-bar d-flex col-3 m-2">
+                    <div className="search-bar">
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -577,8 +577,7 @@ const Caja = () => {
                         <i className="fa-solid fa-magnifying-glass"></i>
                     </div>
 
-                    <div className="container mw-100 p-1 mt-4">
-                        <br></br>
+                    <div className="container mw-100 p-1">
                         <div
                             className="d-flex justify-content-start align-items-center">
                             <h3>Sistema Caja</h3>

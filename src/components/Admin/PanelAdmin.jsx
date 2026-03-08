@@ -181,13 +181,12 @@ const PanelAdmin = () => {
         </div>
       ) : (
         <div className="w-100">
-          <div className="search-bar d-flex col-3 m-2">
+          <div className="search-bar">
             <input
               value={search}
               onChange={searcher}
               type="text"
               placeholder="Buscar..."
-              className="w-100"
             />
             <i className="fa-solid fa-magnifying-glass"></i>
           </div>

@@ -242,11 +242,9 @@ const Productos = () => {
             <div className="row">
               <div className="col">
                 <br></br>
-                <div className="d-flex justify-content-between mt-3">
+                <div className="d-flex justify-content-between">
                   <div
-                    className="d-flex justify-content-start align-items-center"
-                    style={{ maxHeight: "40px", marginLeft: "10px" }}
-                  >
+                    className="d-flex justify-content-start align-items-center">
                     <h1>Productos</h1>
                     {rol === process.env.REACT_APP_admin ? (
                       <button

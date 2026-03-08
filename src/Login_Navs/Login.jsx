@@ -2,7 +2,7 @@ import { useState } from "react";
 import logo from "../img/logo_blanco.webp";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebaseConfig/firebase";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -17,6 +17,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const togglePasswordVisibility = (e) => {
@@ -29,7 +30,8 @@ const Login = () => {
     try {
       const data = await login(email, password);
       if (data) {
-        navigate('/productos');
+        const from = location.state?.from?.pathname || '/productos';
+        navigate(from, { replace: true });
       }
     } catch (error) {
       console.error("Submit Login.jsx " + error);

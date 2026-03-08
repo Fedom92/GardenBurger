@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -8,7 +8,6 @@ import Productos from "./components/Productos/Productos";
 import PanelAdmin from "./components/Admin/PanelAdmin";
 import MiPerfil from "./components/Admin/MiPerfil";
 import Navigation from "./Login_Navs/Navigation"
-import UpNav from "./Login_Navs/UpNav"
 import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import Menu from "./components/Solicitudes/Menu.jsx";
 import Caja from "./components/POS/Caja";
@@ -29,14 +28,14 @@ function App() {
   const { userData } = useAuth();
 
   const RequireAuth = ({ children }) => {
+    const location = useLocation();
     return userData ? (
       <>
         <Navigation />
-        <UpNav />
         {children}
       </>
     ) : (
-      <Navigate to="/" />
+      <Navigate to="/" state={{ from: location }} replace />
     );
   };
 
@@ -99,7 +98,7 @@ function App() {
             <Route path="/gestion-cocina" element={<RequireAuth><RequireAdmin><Cocina /></RequireAdmin></RequireAuth>} />
             <Route path="/historial-pedidos" element={<RequireAuth><RequireAdmin><HistorialPedidos /></RequireAdmin></RequireAuth>} />
             <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />
-            <Route path="/estadisticas-historicas" element={<RequireAuth><RequireAdmin><Estadisticas /></RequireAdmin></RequireAuth>} />
+            <Route path="/estadisticas-viejas" element={<RequireAuth><RequireAdmin><Estadisticas /></RequireAdmin></RequireAuth>} />
             <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
             <Route path="/crear-solicitud" element={<CrearSolicitud />} />
             <Route path="/menu" element={<Menu />} />
