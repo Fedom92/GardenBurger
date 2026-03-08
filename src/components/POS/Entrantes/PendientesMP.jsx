@@ -46,7 +46,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
         });
 
         return () => unsubscribe();
-    }, [isOpen]);
+    }, [isOpen, onClose]);
 
     const aprobarPedido = async (pedidoId) => {
         try {

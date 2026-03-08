@@ -1,5 +1,5 @@
 import Nav from "./NavIcons/Nav";
-import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaPeopleCarry, FaHistory } from 'react-icons/fa';
+import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaPeopleCarry, FaHistory, FaChartBar } from 'react-icons/fa';
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -15,6 +15,8 @@ const Navigation = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [openConfig, setOpenConfig] = useState(false);
     const [openDeliverys, setOpenDeliverys] = useState(false);
+    const [openEstadisticas, setOpenEstadisticas] = useState(false);
+    const [openHistorial, setOpenHistorial] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { logout, userData } = useAuth();
@@ -54,6 +56,12 @@ const Navigation = () => {
 
         const rutasQueAbrenSubmenuDeliverys = ["/gestion-deliverys", "/delivery-pedidos"];
         setOpenDeliverys(rutasQueAbrenSubmenuDeliverys.includes(location.pathname));
+
+        const rutasQueAbrenSubmenuEstadisticas = ["/estadisticas-historicas"];
+        setOpenEstadisticas(rutasQueAbrenSubmenuEstadisticas.includes(location.pathname));
+
+        const rutasQueAbrenSubmenuHistorial = ["/historial-pedidos"];
+        setOpenHistorial(rutasQueAbrenSubmenuHistorial.includes(location.pathname));
     }, [userData.rol, location.pathname]);
 
     return (
@@ -92,8 +100,26 @@ const Navigation = () => {
                         <Link to="/pedidos-caja" className="text-decoration-none link-light"><Nav title="Caja" Icon={FaCashRegister} isActive={isActive} /></Link>
                     </div>
 
-                    <div className="sidebar-title">
-                        <Link to="/historial-pedidos" className="text-decoration-none link-light"><Nav title="Historial Pedidos" Icon={FaHistory} isActive={isActive} /></Link>
+                    <div className="sidebar">
+                        <div className={openHistorial ? "sidebar-item open" : "sidebar-item"}>
+                            <div className="sidebar-title link-light" onClick={() => setOpenHistorial(prev => !prev)}>
+                                <Nav title="Historial" Icon={FaHistory} isActive={isActive} />
+                            </div>
+                            <div className="sidebar-content">
+                                <Link to="/historial-pedidos" className="text-decoration-none link-light"><Nav title="Pedidos" Icon={FaHistory} isActive={isActive} /></Link>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="sidebar">
+                        <div className={openEstadisticas ? "sidebar-item open" : "sidebar-item"}>
+                            <div className="sidebar-title link-light" onClick={() => setOpenEstadisticas(prev => !prev)}>
+                                <Nav title="Estadísticas" Icon={FaChartBar} isActive={isActive} />
+                            </div>
+                            <div className="sidebar-content">
+                                <Link to="/estadisticas-historicas" className="text-decoration-none link-light"><Nav title="Histórico" Icon={FaHistory} isActive={isActive} /></Link>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="sidebar-title">
@@ -106,8 +132,7 @@ const Navigation = () => {
                                 <Nav title="Configuracion" Icon={FaTools} isActive={isActive} />
                             </div>
                             <div className="sidebar-content">
-                                {tipoUsuario === process.env.REACT_APP_admin ? (
-                                    <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUsers} isActive={isActive} /></Link>) : null}
+                                <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUsers} isActive={isActive} /></Link>
                                 <Link to="/miPerfil" className="text-decoration-none link-light"><Nav title="Mi Perfil" Icon={FaUser} isActive={isActive} /></Link>
                             </div>
                         </div>

@@ -989,10 +989,7 @@ const Caja = () => {
             {/* Modal de Pendientes Solicitudes */}
             <PendientesSolicitudes
                 isOpen={showPendientesSolicitudes}
-                onClose={() => {
-                    setShowPendientesSolicitudes(false);
-                    // No forzamos false aquí, el onSnapshot actualizará automáticamente si hay solicitudes
-                }}
+                onClose={() => setShowPendientesSolicitudes(false)}
                 onAprobarSolicitud={handleAprobarSolicitud}
             />
 

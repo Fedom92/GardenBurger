@@ -795,6 +795,8 @@ select {
   padding-top: 0.25em;
   height: 0;
   overflow: hidden;
+  width: 100%;
+  padding-left: 6%;
 }
 
 .nav {

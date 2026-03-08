@@ -17,6 +17,7 @@ import PersonalDeliverys from "./components/Delivery/GestionPersonal/PersonalDel
 import Clientes from "./components/Clientes/Clientes";
 import Cocina from "./components/Cocina/Cocina";
 import HistorialPedidos from "./components/Pedidos/HistorialPedidos";
+import Estadisticas from "./components/Estadisticas/Historico/Estadisticas";
 
 import { CartProvider } from './context/CartContext';
 import { ToastContainer } from 'react-toastify';
@@ -98,6 +99,7 @@ function App() {
             <Route path="/gestion-cocina" element={<RequireAuth><RequireAdmin><Cocina /></RequireAdmin></RequireAuth>} />
             <Route path="/historial-pedidos" element={<RequireAuth><RequireAdmin><HistorialPedidos /></RequireAdmin></RequireAuth>} />
             <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />
+            <Route path="/estadisticas-historicas" element={<RequireAuth><RequireAdmin><Estadisticas /></RequireAdmin></RequireAuth>} />
             <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
             <Route path="/crear-solicitud" element={<CrearSolicitud />} />
             <Route path="/menu" element={<Menu />} />
