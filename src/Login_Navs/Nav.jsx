@@ -1,7 +1,7 @@
-import "./Nav.css";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
 import Button from "react-bootstrap/Button";
+import "../style/Main.css";
 
 const Nav = ({ Icon, title, isActive }) => {
   const popover = (

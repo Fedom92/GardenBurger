@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager} from "firebase/firestore";
 import { getAuth, EmailAuthProvider } from "firebase/auth";
-
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_apiKey,
@@ -20,6 +20,7 @@ export const db = initializeFirestore(app, {
   }),
 });
 export const auth = getAuth();
+export const storage = getStorage(app);
 
 export const verifCredenciales = EmailAuthProvider.credential;
 export { signOut, reauthenticateWithCredential, updatePassword, updateProfile, updateEmail, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";

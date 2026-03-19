@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { collection, addDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 
@@ -8,34 +9,68 @@ const CrearProducto = (props) => {
   const { register, handleSubmit, reset, watch } = useForm();
   const { agregar_producto, categorias_options, ...propsModal } = props;
   const [error, setError] = useState("");
+  const [modoImagen, setModoImagen] = useState("link"); // "link" | "upload"
+  const [archivoImagen, setArchivoImagen] = useState(null);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const categoriaSeleccionada = watch("categoria");
 
   const productosCollection = collection(db, "productos");
 
-  const guardarBD = async (data) => {
-    const nuevoProducto = {
-      categoria: data.categoria,
-      descripcion: data.descripcion,
-      precio: Number(data.precio),
-      imagen: data.imagen,
-      ingredientes: data.ingredientes,
-      visible: true,
-      oferta: data.oferta || false,
-      tipoExtra: data.categoria === "EXTRA" ? data.tipoExtra : "",
-    };
+  const subirImagenStorage = async (archivo) => {
+    const nombreArchivo = `productos/${Date.now()}_${archivo.name}`;
+    const storageRef = ref(storage, nombreArchivo);
+    const metadata = { cacheControl: "public, max-age=31536000" };
+    await uploadBytes(storageRef, archivo, metadata);
+    return await getDownloadURL(storageRef);
+  };
 
+  const guardarBD = async (data) => {
     try {
+      setSubiendoImagen(true);
+      let urlImagen = data.imagen;
+
+      if (modoImagen === "upload") {
+        if (!archivoImagen) {
+          setError("Seleccioná una imagen para subir.");
+          setSubiendoImagen(false);
+          return;
+        }
+        urlImagen = await subirImagenStorage(archivoImagen);
+      }
+
+      if (!urlImagen) {
+        setError("La imagen es requerida.");
+        setSubiendoImagen(false);
+        return;
+      }
+
+      const nuevoProducto = {
+        categoria: data.categoria,
+        descripcion: data.descripcion,
+        precio: Number(data.precio),
+        imagen: urlImagen,
+        ingredientes: data.ingredientes,
+        visible: true,
+        oferta: data.oferta || false,
+        tipoExtra: data.categoria === "EXTRA" ? data.tipoExtra : "",
+      };
+
       const docRef = await addDoc(productosCollection, nuevoProducto);
       agregar_producto({ id: docRef.id, ...nuevoProducto });
       clearForm();
-    } catch (error) {
-      console.error("Error al agregar producto: ", error);
+    } catch (err) {
+      console.error("Error al agregar producto: ", err);
+      setError("Error al guardar el producto.");
+    } finally {
+      setSubiendoImagen(false);
     }
   };
 
   const clearForm = () => {
     reset();
     setError("");
+    setArchivoImagen(null);
+    setModoImagen("link");
     props.onHide();
   };
 
@@ -86,24 +121,63 @@ const CrearProducto = (props) => {
 
               <div className="row mt-2">
                 <div className="col-9">
-                  <label className="form-label">Link Imagen*</label>
-                  <input type="text" className="form-control" autoComplete="off" required {...register("imagen")} />
+                  <label className="form-label me-3">Imagen*</label>
+                  <div className="btn-group" role="group">
+                    <button
+                      type="button"
+                      className={`btn btn-sm btn-upload ${modoImagen === "link" ? "btn-dark" : "btn-outline-dark"}`}
+                      onClick={() => setModoImagen("link")}
+                    >
+                      🔗 Link URL
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm btn-upload ${modoImagen === "upload" ? "btn-dark" : "btn-outline-dark"}`}
+                      onClick={() => setModoImagen("upload")}
+                    >
+                      📁 Subir archivo
+                    </button>
+                  </div>
+
+                  {modoImagen === "link" ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      autoComplete="off"
+                      {...register("imagen")}
+                    />
+                  ) : (
+                    <input
+                      type="file"
+                      className="form-control"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const archivo = e.target.files[0] || null;
+                        if (archivo && archivo.size > 5 * 1024 * 1024) {
+                          setError("La imagen es pesada, no puede superar los 5MB.");
+                          e.target.value = "";
+                          setArchivoImagen(null);
+                        } else {
+                          setError("");
+                          setArchivoImagen(archivo);
+                        }
+                      }}
+                    />
+                  )}
                 </div>
 
-                <div className="col-3 text-center mt-1">
-                  <label className="form-label align-middle" htmlFor="oferta">¿Oferta?</label>
-                  <div className="form-check ">
-                    <input
-                      className="form-check-input m-auto p-3"
-                      type="checkbox"
-                      id="oferta"
-                      {...register("oferta")}
-                    />
-                  </div>
+                <div className="col-3 text-center">
+                  <label className="form-check-label" htmlFor="ofertaCrear">¿Oferta?</label>
+                  <input
+                    className="form-check-input mt-2 p-3"
+                    type="checkbox"
+                    id="ofertaCrear"
+                    {...register("oferta")}
+                  />
                 </div>
               </div>
 
-              <div className="row">
+              <div className="row mt-2">
                 <div className="col-12">
                   <label className="form-label">Ingredientes</label>
                   <textarea className="form-control" rows="3" autoComplete="off" {...register("ingredientes")}></textarea>
@@ -112,17 +186,12 @@ const CrearProducto = (props) => {
 
               <div className="d-flex justify-content-end align-items-baseline mt-2">
                 {error && (
-                  <div
-                    className="alert alert-danger p-0 me-1"
-                    role="alert">
+                  <div className="alert alert-danger p-0 me-2 px-2" role="alert">
                     {error}
                   </div>
                 )}
-                <button
-                  type="submit"
-                  className="btn btn-success"
-                >
-                  Agregar
+                <button type="submit" className="btn btn-success" disabled={subiendoImagen}>
+                  {subiendoImagen ? "Subiendo..." : "Agregar"}
                 </button>
               </div>
             </form>

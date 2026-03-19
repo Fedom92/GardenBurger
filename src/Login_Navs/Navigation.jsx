@@ -1,13 +1,12 @@
-import Nav from "./NavIcons/Nav";
+import Nav from "./Nav";
 import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaPeopleCarry, FaHistory, FaChartBar, FaUserCog } from 'react-icons/fa';
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import icono from "../../src/img/logo_negro_corto.webp";
-import "../style/Main.css";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
-
+import "../style/Main.css";
 
 const Navigation = () => {
     const [isActive, setIsActive] = useState(false);
