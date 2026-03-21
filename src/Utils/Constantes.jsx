@@ -4,6 +4,15 @@ export const CATEGORIAS_HAMBURGUESA = [
   "TRIPLE",
 ];
 
+export const CATEGORIAS_COMBOS = [
+  { key: "SIMPLE", label: "Simple" },
+  { key: "DOBLE", label: "Doble" },
+  { key: "TRIPLE", label: "Triple" },
+  { key: "CAJA PAPAS", label: "Papas" },
+  { key: "POLLO CRISPY", label: "Pollo Crispy" },
+  { key: "NUGGETS", label: "Nuggets" }
+];
+
 export const CANTIDAD_CARNES = {
   TRIPLE: 3,
   DOBLE: 2,

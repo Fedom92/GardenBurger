@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useSheetData } from "./useGoogleSheets";
-import { CATEGORIAS_HAMBURGUESA } from "../../../Utils/Constantes";
+import { CATEGORIAS_COMBOS } from "../../../Utils/Constantes";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import "./Estadisticas.css";
 
@@ -152,7 +152,7 @@ export default function Estadisticas() {
             }
             return true;
         });
-    }, [pagos, sucursal, modoFecha, desde, hasta, desdeHora, hastaHora,mesSelec, añoSelec]);
+    }, [pagos, sucursal, modoFecha, desde, hasta, desdeHora, hastaHora, mesSelec, añoSelec]);
 
     // ── Separar válidos / cancelados ──
     const ticketsCancelados = useMemo(() =>
@@ -247,10 +247,33 @@ export default function Estadisticas() {
         return Object.values(map).sort((a, b) => b.valor - a.valor);
     }, [ventasFiltradas]);
 
-    // hamburguesas agrupadas
-    const totalBurgers = useMemo(() =>
-        categorias.filter(c => CATEGORIAS_HAMBURGUESA.includes(c.label)).reduce((s, c) => s + c.valor, 0),
-        [categorias]);
+    const totalCombos = useMemo(() => {
+        const comboKeys = CATEGORIAS_COMBOS.map(c => c.key);
+
+        return categorias
+            .filter(c => comboKeys.includes(c.label))
+            .reduce((s, c) => s + c.valor, 0);
+    }, [categorias]);
+
+    const combosSub = useMemo(() => {
+        const rows = CATEGORIAS_COMBOS.reduce((acc, item, i) => {
+            const rowIndex = Math.floor(i / 3);
+            if (!acc[rowIndex]) acc[rowIndex] = [];
+            acc[rowIndex].push(item.label);
+            return acc;
+        }, []);
+
+        return (
+            <span style={{ fontSize: "0.65rem", whiteSpace: "nowrap" }}>
+                {rows.map((row, idx) => (
+                    <React.Fragment key={idx}>
+                        {row.join(" + ")}
+                        {idx < rows.length - 1 && <br />}
+                    </React.Fragment>
+                ))}
+            </span>
+        );
+    }, []);
 
     // ── Top productos / bebidas ──
     const topProductos = useMemo(() => {
@@ -477,7 +500,7 @@ export default function Estadisticas() {
                 <div className="col"><KpiCard icon="📱" label="MercadoPago" value={fmt$(totalMP)} sub={`${metodosPago.find(m => m.label === "MP")?.pct ?? 0}% de los tickets`} color="#3b82f6" /></div>
                 <div className="col"><KpiCard icon="💰" label="Total Facturado" value={fmt$(totalCaja)} sub={`Ticket promedio: ${fmt$(ticketPromedio)}`} color="#22c55e" /></div>
                 <div className="col"><KpiCard icon="📦" label="Stock Vendido" value={fmtN(stockTotal)} sub={`${promedioItems} ítems por ticket`} color="#06b6d4" /></div>
-                <div className="col"><KpiCard icon="🍔" label="Combos" value={fmtN(totalBurgers)} sub="Simple + Doble + Triple" color="#e85d04" /></div>
+                <div className="col"><KpiCard icon="🍔" label="Combos" value={fmtN(totalCombos)} sub={combosSub} color="#e85d04" /></div>
                 <div className="col"><KpiCard icon="🛵" label="Delivery" value={`${pctDelivery}%`} sub={`${fmtN(delivery.length)} delivery · ${fmtN(retiro.length)} retiro`} color="#a855f7" /></div>
                 <div className="col"><KpiCard icon="📝" label="Con Observaciones" value={fmtN(conObservaciones.length)} sub={`${ticketsValidos.length > 0 ? Math.round((conObservaciones.length / ticketsValidos.length) * 100) : 0}% de los pedidos`} color="#ec4899" /></div>
             </div>
