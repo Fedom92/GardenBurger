@@ -1,9 +1,13 @@
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
 import Button from "react-bootstrap/Button";
+import { useContext } from "react";
+import { NavigationContext } from "./Navigation";
 import "../style/Main.css";
 
-const Nav = ({ Icon, title, isActive }) => {
+const Nav = ({ Icon, title }) => {
+  const { isActive } = useContext(NavigationContext);
+
   const popover = (
     <Popover id="popover-basic">
       <Popover.Body>{title}</Popover.Body>

@@ -37,6 +37,12 @@ h3 {
   background-color: white;
 }
 
+@media (max-width: 768px) {
+  .mainpage {
+    padding-top: 40px;
+  }
+}
+
 .btn-contorno {
   background-color: var(--color-secundario);
   color: white;

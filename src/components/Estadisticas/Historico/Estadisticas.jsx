@@ -427,7 +427,7 @@ export default function Estadisticas() {
             {/* ── Header ── */}
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                 <div>
-                    <h1 className="est-title fw-bolder mb-1">📊 Estadísticas</h1>
+                    <h1 className="est-title fw-bolder mb-1">Estadísticas</h1>
                 </div>
                 {/*<div className="d-flex gap-2 flex-wrap">
                     <span className="chip chip--green text-nowrap">{fmtN(ticketsValidos.length)} tickets válidos</span>

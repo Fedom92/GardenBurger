@@ -60,8 +60,6 @@ const MiPerfil = () => {
   const handleSave = async (e) => {
     try {
       e.preventDefault();
-      const user = auth.currentUser;
-
       const userDocRef = doc(db, "usuarios", id);
       await updateDoc(userDocRef, {
         nombreCompleto,
@@ -94,8 +92,8 @@ const MiPerfil = () => {
           <span className="loader position-absolute start-50 top-50 mt-3"></span>
         </div>
       ) : (
-        <div className="w-100 mt-5">
-          <div className="container mw-100">
+        <div className="w-100 mt-5 d-flex flex-column" style={{ minHeight: 'calc(100vh - 3rem)' }}>
+          <div className="container mw-100 d-flex flex-column flex-grow-1">
             <div className="d-flex">
               <h1>Mi Perfil</h1>
             </div>
@@ -105,7 +103,7 @@ const MiPerfil = () => {
               <div className="nav-link" onClick={() => { setMostrarPerfil(false); setModalShowEditClave(true); }} >Seguridad</div>
             </nav>
             <hr className="mt-0 mb-4" />
-            <div className="row justify-content-center">
+            <div className="row justify-content-center flex-grow-1">
               <div className="col-xl-8">
                 <div className="card mb-4">
                   <div className="card-header">Detalles de la Cuenta</div>

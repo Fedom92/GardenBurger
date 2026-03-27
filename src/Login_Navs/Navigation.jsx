@@ -1,12 +1,14 @@
 import Nav from "./Nav";
 import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaPeopleCarry, FaHistory, FaChartBar, FaUserCog } from 'react-icons/fa';
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import icono from "../../src/img/logo_negro_corto.webp";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
 import "../style/Main.css";
+
+export const NavigationContext = createContext();
 
 const Navigation = () => {
     const [isActive, setIsActive] = useState(false);
@@ -65,7 +67,7 @@ const Navigation = () => {
     }, [userData.rol, location.pathname]);
 
     return (
-        <>
+        <NavigationContext.Provider value={{ isActive }}>
             <nav className="mobile-topbar d-md-none w-100 position-fixed top-0 start-0 d-flex justify-content-end align-items-center p-2" style={{ zIndex: 1050, backgroundColor: 'var(--color-primario-normal)' }}>
                 <div className="d-flex align-items-center me-3" onClick={() => setMobileMenuOpen(true)}>
                     <i className="p-2" style={{ cursor: 'pointer' }}><FaUserCog className='fs-3 text-white' /></i>
@@ -76,12 +78,12 @@ const Navigation = () => {
                 <div className="mobile-overlay d-md-none position-fixed top-0 start-0 w-100 h-100 bg-dark opacity-50" style={{ zIndex: 1040 }} onClick={() => setMobileMenuOpen(false)}></div>
             )}
 
-            <div className={`navigation ${isActive && "active"} text-start ${mobileMenuOpen ? "mobile-open" : ""}`} onClick={(e) => {
+            <div className={`navigation ${isActive ? "active" : ""} text-start ${mobileMenuOpen ? "mobile-open" : ""}`} onClick={(e) => {
                 if (mobileMenuOpen && e.target.tagName === 'A') {
                     setMobileMenuOpen(false);
                 }
             }}>
-                <div className={`menu d-none d-md-flex ${isActive && "active"}`} onClick={() => setIsActive(!isActive)}>
+                <div className={`menu d-none d-md-flex ${isActive ? "active" : ""}`} onClick={() => setIsActive(!isActive)}>
                     <FaAngleLeft className="menu-icon" />
                 </div>
                 <div className="d-md-none text-end p-2 pb-0 pt-3">
@@ -95,36 +97,36 @@ const Navigation = () => {
                 {isLoading && (
                     <>
                         <div className="sidebar-title">
-                            <Link to="/productos" className="text-decoration-none link-light"><Nav title="Productos" Icon={FaCartPlus} isActive={isActive} /></Link>
+                            <Link to="/productos" className="text-decoration-none link-light"><Nav title="Productos" Icon={FaCartPlus} /></Link>
                         </div>
 
                         <div className="sidebar-title">
-                            <Link to="/gestion-cocina" className="text-decoration-none link-light"><Nav title="Cocina" Icon={FaHamburger} isActive={isActive} /></Link>
+                            <Link to="/gestion-cocina" className="text-decoration-none link-light"><Nav title="Cocina" Icon={FaHamburger} /></Link>
                         </div>
 
                         <div className="sidebar">
                             <div className={openDeliverys ? "sidebar-item open" : "sidebar-item"}>
                                 <div className="sidebar-title link-light" onClick={() => setOpenDeliverys(prev => !prev)}>
-                                    <Nav title="Deliverys" Icon={FaMotorcycle} isActive={isActive} />
+                                    <Nav title="Deliverys" Icon={FaMotorcycle} />
                                 </div>
                                 <div className="sidebar-content">
-                                    <Link to="/gestion-deliverys" className="text-decoration-none link-light"><Nav title="Gestion Personal" Icon={FaUsers} isActive={isActive} /></Link>
-                                    <Link to="/delivery-pedidos" className="text-decoration-none link-light"><Nav title="Entregas" Icon={FaPeopleCarry} isActive={isActive} /></Link>
+                                    <Link to="/gestion-deliverys" className="text-decoration-none link-light"><Nav title="Gestion Personal" Icon={FaUsers} /></Link>
+                                    <Link to="/delivery-pedidos" className="text-decoration-none link-light"><Nav title="Entregas" Icon={FaPeopleCarry} /></Link>
                                 </div>
                             </div>
                         </div>
 
                         <div className="sidebar-title">
-                            <Link to="/pedidos-caja" className="text-decoration-none link-light"><Nav title="Caja" Icon={FaCashRegister} isActive={isActive} /></Link>
+                            <Link to="/pedidos-caja" className="text-decoration-none link-light"><Nav title="Caja" Icon={FaCashRegister} /></Link>
                         </div>
 
                         <div className="sidebar">
                             <div className={openHistorial ? "sidebar-item open" : "sidebar-item"}>
                                 <div className="sidebar-title link-light" onClick={() => setOpenHistorial(prev => !prev)}>
-                                    <Nav title="Historial" Icon={FaHistory} isActive={isActive} />
+                                    <Nav title="Historial" Icon={FaHistory} />
                                 </div>
                                 <div className="sidebar-content">
-                                    <Link to="/historial-pedidos" className="text-decoration-none link-light"><Nav title="Pedidos" Icon={FaHistory} isActive={isActive} /></Link>
+                                    <Link to="/historial-pedidos" className="text-decoration-none link-light"><Nav title="Pedidos" Icon={FaHistory} /></Link>
                                 </div>
                             </div>
                         </div>
@@ -132,37 +134,37 @@ const Navigation = () => {
                         <div className="sidebar">
                             <div className={openEstadisticas ? "sidebar-item open" : "sidebar-item"}>
                                 <div className="sidebar-title link-light" onClick={() => setOpenEstadisticas(prev => !prev)}>
-                                    <Nav title="Estadísticas" Icon={FaChartBar} isActive={isActive} />
+                                    <Nav title="Estadísticas" Icon={FaChartBar} />
                                 </div>
                                 <div className="sidebar-content">
-                                    <Link to="/estadisticas-viejas" className="text-decoration-none link-light"><Nav title="Histórico" Icon={FaHistory} isActive={isActive} /></Link>
+                                    <Link to="/estadisticas-viejas" className="text-decoration-none link-light" onClick={() => setIsActive(true)}><Nav title="Histórico" Icon={FaHistory} /></Link>
                                 </div>
                             </div>
                         </div>
 
                         <div className="sidebar-title">
-                            <Link to="/clientes" className="text-decoration-none link-light"><Nav title="Clientes" Icon={FaUsers} isActive={isActive} /></Link>
+                            <Link to="/clientes" className="text-decoration-none link-light"><Nav title="Clientes" Icon={FaUsers} /></Link>
                         </div>
 
                         <div className="sidebar">
                             <div className={openConfig ? "sidebar-item open" : "sidebar-item"}>
                                 <div className="sidebar-title link-light" onClick={() => setOpenConfig(prev => !prev)}>
-                                    <Nav title="Configuracion" Icon={FaTools} isActive={isActive} />
+                                    <Nav title="Configuracion" Icon={FaTools} />
                                 </div>
                                 <div className="sidebar-content">
-                                    <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUsers} isActive={isActive} /></Link>
-                                    <Link to="/miPerfil" className="text-decoration-none link-light"><Nav title="Mi Perfil" Icon={FaUser} isActive={isActive} /></Link>
+                                    <Link to="/admin" className="text-decoration-none link-light"><Nav title="Usuarios" Icon={FaUsers} /></Link>
+                                    <Link to="/miPerfil" className="text-decoration-none link-light"><Nav title="Mi Perfil" Icon={FaUser} /></Link>
                                 </div>
                             </div>
                         </div>
                         <div className="sidebar-title">
-                            <Link to="/" className="text-decoration-none link-light" onClick={confirmLogout}><Nav title="Salir" Icon={FaSignOutAlt} isActive={isActive} /></Link>
+                            <Link to="/" className="text-decoration-none link-light" onClick={confirmLogout}><Nav title="Salir" Icon={FaSignOutAlt} /></Link>
                         </div>
 
                     </>
                 )}
             </div>
-        </>
+        </NavigationContext.Provider>
     );
 };
 
