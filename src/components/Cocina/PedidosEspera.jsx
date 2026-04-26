@@ -13,9 +13,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     const [procesando, setProcesando] = useState(false);
     const [pedidosEspera, setPedidosEspera] = useState([]);
 
-    const pedidosCollectiona = collection(db, "pedidos");
-    const pedidosCollection = useRef(query(
-        pedidosCollectiona,
+    const pedidosCollection = useRef(query(collection(db, "pedidos"),
         where("estado", "==", "APROBADO"),
         orderBy("timestamp", "asc")
     ));

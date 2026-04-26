@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager} from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, runTransaction } from "firebase/firestore";
 import { getAuth, EmailAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
@@ -24,3 +24,17 @@ export const storage = getStorage(app);
 
 export const verifCredenciales = EmailAuthProvider.credential;
 export { signOut, reauthenticateWithCredential, updatePassword, updateProfile, updateEmail, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
+
+export const getNextSequence = async (coleccion) => {
+  const counterRef = doc(db, "contadores", coleccion);
+
+  return await runTransaction(db, async (transaction) => {
+    const counterDoc = await transaction.get(counterRef);
+
+    const newValue = counterDoc.exists() ? counterDoc.data().value + 1 : 1;
+
+    transaction.set(counterRef, { value: newValue }, { merge: true });
+
+    return newValue;
+  });
+};

@@ -14,8 +14,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const [procesando, setProcesando] = useState(false);
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
 
-    const pedidosCollectiona = collection(db, "pedidos");
-    const pedidosCollection = useRef(query(pedidosCollectiona,
+    const pedidosCollection = useRef(query(collection(db, "pedidos"),
         where("estado", "==", "COCINA"),
         where("cocineroID", "==", userData.id)
     ));

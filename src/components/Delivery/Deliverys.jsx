@@ -13,11 +13,8 @@ const Deliverys = () => {
     const [metricasDelivery, setMetricasDelivery] = useState({});
     const [showMetricas, setShowMetricas] = useState(false);
 
-    const pedidosCollectiona = collection(db, "pedidos");
-    const pedidosCollection = useRef(query(pedidosCollectiona, where("estado", "==", "DELIVERY")));
-
-    const deliverysCollectiona = collection(db, "deliverys");
-    const deliverysCollection = useRef(query(deliverysCollectiona, where("activo", "==", true)));
+    const pedidosCollection = useRef(query(collection(db, "pedidos"), where("estado", "==", "DELIVERY")));
+    const deliverysCollection = useRef(query(collection(db, "deliverys"), where("activo", "==", true)));
 
     const getPedidos = useCallback((snapshot) => {
         const pedidosArray = snapshot.docs

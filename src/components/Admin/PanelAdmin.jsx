@@ -20,8 +20,7 @@ const PanelAdmin = () => {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const userCollectiona = collection(db, "usuarios");
-  const userCollection = useRef(query(userCollectiona, orderBy("rol")));
+  const userCollection = useRef(query(collection(db, "usuarios"), orderBy("rol")));
 
   const getUsuarios = useCallback((snapshot) => {
     const currentUserEmail = auth.currentUser?.email;

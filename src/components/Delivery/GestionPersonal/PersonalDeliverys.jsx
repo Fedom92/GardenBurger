@@ -14,8 +14,7 @@ const PersonalDeliverys = () => {
     const [delivery, setDelivery] = useState({});
     const [isLoading, setIsLoading] = useState(true);
 
-    const deliverysCollectiona = collection(db, "deliverys");
-    const deliverysCollection = useRef(query(deliverysCollectiona));
+    const deliverysCollection = useRef(query(collection(db, "deliverys")));
 
     const getDeliverys = useCallback((snapshot) => {
         const deliverysArray = snapshot.docs

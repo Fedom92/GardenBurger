@@ -3,7 +3,7 @@ import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, 
 import { useState, useEffect, createContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import icono from "../../src/img/logo_negro_corto.webp";
+import logo from "../../src/img/logo_negro_corto.webp";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
 import "../style/Main.css";
@@ -78,7 +78,7 @@ const Navigation = () => {
                 <div className="mobile-overlay d-md-none position-fixed top-0 start-0 w-100 h-100 bg-dark opacity-50" style={{ zIndex: 1040 }} onClick={() => setMobileMenuOpen(false)}></div>
             )}
 
-            <div className={`navigation ${isActive ? "active" : ""} text-start ${mobileMenuOpen ? "mobile-open" : ""}`} onClick={(e) => {
+            <div className={`navigation text-white ${isActive ? "active" : ""} text-start ${mobileMenuOpen ? "mobile-open" : ""}`} onClick={(e) => {
                 if (mobileMenuOpen && e.target.tagName === 'A') {
                     setMobileMenuOpen(false);
                 }
@@ -91,7 +91,7 @@ const Navigation = () => {
                 </div>
                 <header>
                     <div className="profile">
-                        <img src={icono} alt="profile" className={isActive ? "profile-img-inactive d-none d-md-block" : "profile-picture-login"} />
+                        <img src={logo} alt="profile" className={isActive ? "img-barraNav-inactive d-none d-md-block" : "img-barraNav"} />
                     </div>
                 </header>
                 {isLoading && (

@@ -11,8 +11,7 @@ const Envios = ({ show, onHide }) => {
   const [envios, setEnvios] = useState([]);
   const [error, setError] = useState("");
 
-  const enviosCollection = collection(db, "envios");
-  const enviosCollectionOrdenados = useRef(query(enviosCollection, orderBy("zona_envio")));
+  const enviosCollection = useRef(query(collection(db, "envios"), orderBy("zona_envio")));
 
   const getEnvios = useCallback((snapshot) => {
     const enviosArray = snapshot.docs.map((doc) => ({
@@ -25,7 +24,7 @@ const Envios = ({ show, onHide }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const enviosSnapshot = await getDocs(enviosCollectionOrdenados.current);
+        const enviosSnapshot = await getDocs(enviosCollection.current);
         await getEnvios(enviosSnapshot);
 
       } catch (error) {

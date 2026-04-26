@@ -36,9 +36,7 @@ const HistorialPedidos = () => {
     return { inicio, fin };
   }
 
-  const pedidosCollectiona = collection(db, "pedidos");
-  const pedidosCollection = useRef(query(
-    pedidosCollectiona,
+  const pedidosCollection = useRef(query(collection(db, "pedidos"),
     where("estado", "==", "FIN"),
     where("timestamp", ">=", inicio),
     where("timestamp", "<=", fin),

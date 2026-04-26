@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { collection, addDoc, query, orderBy, getDocs, where, limit, serverTimestamp, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db, getNextSequence } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import { Modal } from "react-bootstrap";
@@ -13,7 +13,13 @@ import EliminarTickets from './EliminarTickets';
 import BuscarSolicitud from './BuscarSolicitud';
 import AutocompleteGoogle from '../../Utils/AutocompleteGoogle';
 import logoMP from '../../img/mercado-pago.webp';
-import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
+
+import useTraerDatos from './pos_hooks/useTraerDatos';
+import usePendientes from './pos_hooks/usePendientes';
+import useCliente from './pos_hooks/useCliente';
+import useCarrito from './pos_hooks/useCarrito';
+import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
+import validarPedido from './pos_hooks/validarPedido';
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
@@ -23,18 +29,13 @@ const Caja = () => {
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
     const telefono = watch("telefono");
-    console.log(telefono)
+
     const { userData } = useAuth();
     const [search, setSearch] = useState("");
-    const [productos, setProductos] = useState([]);
-    const [carrito, setCarrito] = useState([]);
-    const [envios, setEnvios] = useState([]);
 
-    const [categorias, setCategorias] = useState([]);
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
-    const [recargo] = useState(Number(process.env.REACT_APP_recargoMP) || "");
-    const [isLoading, setIsLoading] = useState(true);
+    const recargo = Number(process.env.REACT_APP_recargoMP) || 0;
     const [procesando, setProcesando] = useState(false);
     const [montoEfectivo, setMontoEfectivo] = useState(0);
 
@@ -43,256 +44,30 @@ const Caja = () => {
     const [showModalDividido, setShowModalDividido] = useState(false);
     const [showEliminarTickets, setShowEliminarTickets] = useState(false);
     const [showBuscarSolicitud, setShowBuscarSolicitud] = useState(false);
-    const [showHorarioEspecial, setShowHorarioEspecial] = useState(false);
-    const horarioEspecial = watch("horarioEspecial");
 
-    const [tieneSolicitudesPendientes, setTieneSolicitudesPendientes] = useState(false);
-    const [tienePendientesMP, setTienePendientesMP] = useState(false);
+    const horarioEspecial = watch("horarioEspecial");
+    const horaEspecial = horarioEspecial ? horarioEspecial.split(':')[0] : "20";
+    const minutosEspecial = horarioEspecial ? horarioEspecial.split(':')[1] : "00";
+
+    const { productos, categorias, envios, isLoading } = useTraerDatos();
+    const { tieneSolicitudesPendientes, tienePendientesMP } = usePendientes();
+    const { clienteEncontradoRef, saltearAutocompletadoRef, resetCliente } = useCliente({ telefono, setValue });
+    const { carrito, setCarrito, handleAgregarAlCarrito, handleEliminarDelCarrito, resetCarrito, getResumen } = useCarrito({ envioSeleccionado, metodoPago, montoEfectivo, recargo });
+    const { showHorarioEspecial, toggleHorarioEspecial, handleHoraEspecialChange, handleMinutosEspecialChange, resetHorario } = useHorarioEspecial({ setValue });
 
     const ahora = moment();
     const fecha = ahora.format("DD/MM/YYYY");
     const hora = ahora.format("HH:mm");
 
-    const getResumen = useMemo(() => {
-        const subtotal = carrito.reduce((acum, producto) => acum + producto.subtotal, 0);
-        const costoEnvio = envioSeleccionado?.costo_envio || 0;
-        const base = subtotal + costoEnvio;
-
-        // Recargo segun metodo de pago
-        const recargoCalculado = (() => {
-            if (metodoPago === "MP") return base * (recargo / 100);
-            if (metodoPago === "%") return (base - montoEfectivo) * (recargo / 100);
-            return 0;
-        })();
-
-        // Total final
-        const total = base + recargoCalculado;
-        const restoMP = base - montoEfectivo;
-        const montoMPConRecargo = restoMP + recargoCalculado;
-
-        return {
-            subtotal,
-            costoEnvio,
-            totalBase: base,
-            recargo: recargoCalculado,
-            total,
-            restoMP,
-            montoMPConRecargo
-        };
-    }, [carrito, envioSeleccionado, metodoPago, recargo, montoEfectivo]);
-
     const { totalBase, total: totalFinal, montoMPConRecargo } = getResumen;
 
-    const productosCollectiona = collection(db, "productos");
-    const productosCollection = useRef(query(productosCollectiona, where("visible", "==", true)));
-
-    const categoriasCollectiona = collection(db, "categorias");
-    const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));
-
-    const enviosCollectiona = collection(db, "envios");
-    const enviosCollection = useRef(query(enviosCollectiona, orderBy("zona_envio", "asc")));
-
-    const pedidosCollection = collection(db, "pedidos");
-
-    useEffect(() => {
-        let isMounted = true;
-
-        const parseDocs = (snapshot) =>
-            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-        const fetchData = async () => {
-            try {
-                const [prodSnap, catSnap, envSnap] = await Promise.all([
-                    getDocs(productosCollection.current),
-                    getDocs(categoriasCollection.current),
-                    getDocs(enviosCollection.current)
-                ]);
-
-                if (!isMounted) return;
-
-                // Productos
-                const productos = parseDocs(prodSnap).sort((a, b) =>
-                    a.descripcion.localeCompare(b.descripcion)
-                );
-                setProductos(productos);
-
-                // Categorías
-                const categorias = [...parseDocs(catSnap), { id: "todas", nombre: "" }];
-                setCategorias(categorias);
-
-                // Envíos
-                const envios = parseDocs(envSnap);
-                setEnvios(envios);
-
-                setIsLoading(false);
-
-            } catch (error) {
-                console.error("Error fetching data Caja:", error);
-                if (isMounted) setIsLoading(false);
-            }
-        };
-
-        fetchData();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
-
-    useEffect(() => {
-        const unsubSolicitudes = onSnapshot(
-            query(collection(db, "solicitudes"), where("estado", "==", "PENDIENTE"), limit(1)),
-            (snap) => setTieneSolicitudesPendientes(!snap.empty),
-            (err) => console.error("Error solicitudes:", err)
-        );
-
-        const unsubPedidos = onSnapshot(
-            query(collection(db, "pedidos"), where("estado", "==", "PENDIENTEMP"), limit(1)),
-            (snap) => setTienePendientesMP(!snap.empty),
-            (err) => console.error("Error Pendientes MP:", err)
-        );
-
-        return () => {
-            unsubSolicitudes();
-            unsubPedidos();
-        };
-    }, []);
-
-    // Función para buscar cliente por teléfono
-    const buscarClientePorTelefono = useCallback(async (telefono) => {
-        if (!telefono || telefono.length < 10) return null;
-
-        try {
-            const clientesCollection = collection(db, "clientes");
-            const q = query(clientesCollection, where("telefono", "==", telefono), limit(1));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                const clienteDoc = querySnapshot.docs[0];
-                return { id: clienteDoc.id, ...clienteDoc.data() };
-            }
-            return null;
-        } catch (error) {
-            console.error('Error buscando cliente:', error);
-            return null;
-        }
-    }, []);
-
-    // Autocompletar datos del cliente al escribir teléfono
-    const telefonoIngresado = watch("telefono");
-    useEffect(() => {
-        const autocompletarCliente = async () => {
-            if (!telefonoIngresado || telefonoIngresado.length < 10) return;
-
-            const cliente = await buscarClientePorTelefono(telefonoIngresado);
-
-            if (cliente) {
-                setValue("nombre", cliente.nombre || "");
-                setValue("direccion", cliente.direccion || "");
-                setValue("latitud", cliente.latitud || "");
-                setValue("longitud", cliente.longitud || "");
-                setValue("entreCalles", cliente.entreCalles || "");
-            } else {
-                // Limpiar campos si no se encuentra el cliente
-                setValue("nombre", "");
-                setValue("direccion", "");
-                setValue("latitud", "");
-                setValue("longitud", "");
-                setValue("entreCalles", "");
-            }
-        };
-
-        autocompletarCliente();
-    }, [telefonoIngresado, buscarClientePorTelefono, setValue]);
-
-    const handleAgregarAlCarrito = (producto) => {
-        // Validación para extras de tipo HAMBURGUESA
-        if (producto.categoria === "EXTRA" && producto.tipoExtra === "HAMBURGUESA") {
-            const ultimoProducto = carrito[carrito.length - 1];
-
-            const esValido = ultimoProducto && (
-                CATEGORIAS_HAMBURGUESA.includes(ultimoProducto.categoria) ||
-                (ultimoProducto.categoria === "EXTRA" && ultimoProducto.tipoExtra === "HAMBURGUESA")
-            );
-
-            if (!esValido) {
-                Swal.fire({
-                    title: 'Advertencia',
-                    text: 'Solo puedes agregar un extra de Hamburguesa después de una Hamburguesa',
-                    icon: 'warning',
-                    confirmButtonColor: '#ffc107',
-                });
-                return;
-            }
-        }
-
-        setCarrito((prevCarrito) => {
-            // Obtener último elemento del carrito
-            const ultimoProducto = prevCarrito.length > 0 ? prevCarrito[prevCarrito.length - 1] : null;
-
-            if (ultimoProducto && ultimoProducto.id === producto.id) {
-                // Si tiene el mismo ID, suma la cantidad 
-                return prevCarrito.map((item, index) =>
-                    index === prevCarrito.length - 1 && item.id === producto.id
-                        ? {
-                            ...item,
-                            cantidad: item.cantidad + 1,
-                            subtotal: (item.cantidad + 1) * item.precio
-                        }
-                        : item
-                );
-            } else {
-                // Si no es último o no existe, agrega como nuevo
-                return [...prevCarrito, {
-                    ...producto,
-                    cantidad: 1,
-                    subtotal: producto.precio
-                }];
-            }
-        });
-    };
-
-    const handleEliminarDelCarrito = (id) => {
-        setCarrito((prev) => {
-            return prev
-                .map((item) =>
-                    item.id === id
-                        ? {
-                            ...item,
-                            cantidad: item.cantidad - 1,
-                            subtotal: (item.cantidad - 1) * item.precio
-                        }
-                        : item
-                )
-                .filter((item) => item.cantidad > 0);
-        });
-    };
-
     const guardarBD = async (data) => {
-        // Validar datos usando la función modularizada
-        if (!validarDatos(data)) {
-            return;
-        }
+        if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal })) return;
 
         setProcesando(true);
 
         try {
-            const q = query(pedidosCollection, orderBy("codigo", "desc"), limit(1));
-            const querySnapshot = await getDocs(q);
-
-            let nuevoCodigo = 1;
-            if (!querySnapshot.empty) {
-                const codigoExistente = querySnapshot.docs[0].data().codigo;
-
-                // Extraer solo la parte numérica del código existente
-                const match = codigoExistente.match(/^(\d+)/);
-                if (match) {
-                    const numeroAnterior = parseInt(match[1], 10);
-                    if (!isNaN(numeroAnterior)) {
-                        nuevoCodigo = numeroAnterior + 1;
-                    }
-                }
-            }
+            let nuevoCodigo = await getNextSequence("pedidos");
 
             const nuevoPedido = {
                 codigo: `${nuevoCodigo}-${userData.iniciales}`,
@@ -317,13 +92,11 @@ const Caja = () => {
                 timestamp: serverTimestamp()
             };
 
-            await addDoc(pedidosCollection, nuevoPedido);
+            await addDoc(collection(db, "pedidos"), nuevoPedido);
 
             // Verificar si el cliente existe antes de guardarlo
-            const clienteExistente = await buscarClientePorTelefono(data.telefono);
-            if (!clienteExistente) {
-                const clientesCollection = collection(db, "clientes");
-                await addDoc(clientesCollection, {
+            if (!clienteEncontradoRef.current) {
+                await addDoc(collection(db, "clientes"), {
                     nombre: data.nombre || "",
                     direccion: data.direccion || "",
                     entreCalles: data.entreCalles || "",
@@ -358,34 +131,6 @@ const Caja = () => {
         setMontoEfectivo(0);
     }, [resetField, setMontoEfectivo]);
 
-    // Extraer hora y minutos del horario especial del formulario
-    const horaEspecial = horarioEspecial ? horarioEspecial.split(':')[0] : "20";
-    const minutosEspecial = horarioEspecial ? horarioEspecial.split(':')[1] : "00";
-
-    const toggleHorarioEspecial = useCallback(() => {
-        setShowHorarioEspecial((prev) => {
-            const next = !prev;
-            if (!next) {
-                setValue("horarioEspecial", "");
-            } else {
-                setValue("horarioEspecial", "20:00");
-            }
-            return next;
-        });
-    }, [setValue]);
-
-    const handleHoraEspecialChange = (e) => {
-        const nuevaHora = e.target.value;
-        const horarioCompleto = `${nuevaHora}:${minutosEspecial}`;
-        setValue("horarioEspecial", horarioCompleto);
-    };
-
-    const handleMinutosEspecialChange = (e) => {
-        const nuevosMinutos = e.target.value;
-        const horarioCompleto = `${horaEspecial}:${nuevosMinutos}`;
-        setValue("horarioEspecial", horarioCompleto);
-    };
-
     const handleMetodoPagoChange = (e) => {
         const nuevoMetodo = e.target.value;
         limpiarCamposMetodoPago();
@@ -417,98 +162,17 @@ const Caja = () => {
         setShowModalDividido(false);
     };
 
-    // Función para validar los datos antes de guardar
-    const validarDatos = (data) => {
-        // Validar dirección (debe seleccionarse del listado de Google Maps)
-        if (!data.direccion || data.direccion.trim() === '') {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'Selecciona una dirección del listado desplegable',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return false;
-        }
-
-        if (!data.latitud || !data.longitud) {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'Debes seleccionar la dirección del listado (no escribir a mano)',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return false;
-        }
-
-        // Validar teléfono
-        if (!data.telefono.startsWith('11') && !data.telefono.startsWith('23')) {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'El teléfono debe comenzar con 11 o 23',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return false;
-        }
-
-        // Validar carrito
-        if (carrito.length === 0) {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'No hay productos en el carrito',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return false;
-        }
-
-        // Validar envío
-        if (!data.envio) {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'No hay envío seleccionado',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return false;
-        }
-
-        // Validar método de pago
-        if (!data.metodoPago) {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'No hay método de pago seleccionado',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return false;
-        }
-
-        // Validar "Paga Con" para método efectivo
-        if (data.metodoPago === "EFECTIVO") {
-            if (!data.pagaCon || data.pagaCon < totalFinal) {
-                Swal.fire({
-                    title: 'Advertencia',
-                    text: `El monto "Paga Con" debe ser igual o mayor al total ($${totalFinal})`,
-                    icon: 'warning',
-                    confirmButtonColor: '#ffc107',
-                });
-                return false;
-            }
-        }
-
-        return true;
-    };
-
-    const limpiar = () => {
+    const limpiar = useCallback(() => {
         reset();
-        setCarrito([]);
+        resetCarrito();
         setMontoEfectivo(0);
-        setShowHorarioEspecial(false);
-    };
+        resetHorario();
+        resetCliente();
+    }, [reset, resetCarrito, resetHorario, resetCliente]);
 
     const handleAprobarSolicitud = (solicitud) => {
         try {
+            saltearAutocompletadoRef.current = true;
             // Llenar los campos del formulario con los datos de la solicitud
             setValue("nombre", solicitud.cliente?.nombre || "");
             setValue("telefono", solicitud.cliente?.telefono || "");
@@ -559,6 +223,37 @@ const Caja = () => {
         }
     };
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            switch (e.key) {
+                case 'F1':
+                    e.preventDefault();
+                    setShowPendientesSolicitudes(true);
+                    break;
+                case 'F2':
+                    e.preventDefault();
+                    setShowPendientesMP(true);
+                    break;
+                case 'F3':
+                    e.preventDefault();
+                    setShowBuscarSolicitud(true);
+                    break;
+                case 'F4':
+                    e.preventDefault();
+                    setShowEliminarTickets(true);
+                    break;
+                case 'Escape':
+                    limpiar();
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [limpiar]);
+
     return (
         <>
             {isLoading ? (
@@ -582,31 +277,31 @@ const Caja = () => {
                             className="d-flex justify-content-start align-items-center">
                             <h3>Sistema Caja</h3>
                             <button
-                                className={`btn mx-2 fw-bold mb-1 ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-warning text-white btn-blink' : 'btn-outline-secondary'}`}
+                                className={`btn mx-2 btn-sm fw-bold mb-1 ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-warning text-white btn-blink' : 'btn-outline-secondary'}`}
                                 disabled={!tieneSolicitudesPendientes}
                                 onClick={() => setShowPendientesSolicitudes(true)}
                             >
-                                <i className="fa fa-list-check"></i> Ver Solicitudes
+                                <i className="fa fa-list-check"></i> Ver Solicitudes <small className="fst-italic"> (F1)</small>
                             </button>
                             <button
                                 className={`btn mx-2 btn-sm fw-bold mb-1 ${tienePendientesMP && !showPendientesMP ? 'btn-info text-white btn-blink' : 'btn-outline-secondary'}`}
                                 disabled={!tienePendientesMP}
                                 onClick={() => setShowPendientesMP(true)}
                             >
-                                <img src={logoMP} alt="MP" className="img-fluid" style={{ height: "3vh" }}></img> Pendientes MP
+                                <img src={logoMP} alt="MP" className="img-fluid" style={{ height: "3vh" }}></img> Pendientes MP <small className="fst-italic"> (F2)</small>
                             </button>
                             <div className="ms-auto d-flex">
                                 <button
-                                    className="btn btn-primary mx-2 fw-bold mb-1"
+                                    className="btn btn-sm btn-primary mx-2 fw-bold mb-1"
                                     onClick={() => setShowBuscarSolicitud(true)}
                                 >
-                                    <i className="fa fa-search"></i> Buscar Solicitud
+                                    <i className="fa fa-search"></i> Buscar Solicitud <small className="fst-italic"> (F3)</small>
                                 </button>
                                 <button
-                                    className="btn btn-danger mx-2 fw-bold mb-1"
+                                    className="btn btn-sm btn-danger mx-2 fw-bold mb-1"
                                     onClick={() => setShowEliminarTickets(true)}
                                 >
-                                    <i className="fa fa-trash"></i> Eliminar Ticket
+                                    <i className="fa fa-trash"></i> Eliminar Ticket <small className="fst-italic"> (F4)</small>
                                 </button>
                             </div>
                         </div>
@@ -621,7 +316,7 @@ const Caja = () => {
                                             }}
                                         />
                                         <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Nombre..." autoComplete="off" required {...register("nombre")} />
-                                        <AutocompleteGoogle
+                                        {envioSeleccionado?.zona_envio !== "Retira" && (<AutocompleteGoogle
                                             value={watch("direccion")}
                                             onChange={({ direccion, latitud, longitud }) => {
                                                 setValue("direccion", direccion || "");
@@ -631,6 +326,7 @@ const Caja = () => {
                                             placeholder="Dirección (selecciona del listado)..."
                                             required
                                         />
+                                        )}
                                         <input type="hidden" {...register("latitud")} />
                                         <input type="hidden" {...register("longitud")} />
                                         <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
@@ -657,8 +353,8 @@ const Caja = () => {
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    carrito.map((producto, index) => (
-                                                        <tr key={producto.id}>
+                                                    carrito.map((producto) => (
+                                                        <tr key={producto.carritoItemId}>
                                                             <td className="text-center">{producto.cantidad}</td>
                                                             <td className="text-start">
                                                                 <p
@@ -674,7 +370,7 @@ const Caja = () => {
                                                             <td className="text-center">
                                                                 <button
                                                                     className="btn text-danger p-0"
-                                                                    onClick={() => handleEliminarDelCarrito(producto.id)}
+                                                                    onClick={() => handleEliminarDelCarrito(producto.carritoItemId)}
                                                                 >
                                                                     <i className="fa fa-circle-xmark fs-4"></i>
                                                                 </button>
@@ -808,6 +504,7 @@ const Caja = () => {
                                         <div className="row" id="acciones">
                                             <div className="d-flex justify-content-center align-items-center gap-2 flex-wrap mb-1">
                                                 <button
+                                                    title="(Esc)"
                                                     className="btn btn-danger"
                                                     type="reset"
                                                     onClick={() => { limpiar() }}
@@ -815,6 +512,7 @@ const Caja = () => {
                                                     Limpiar <i className="fas fa-trash-alt"></i>
                                                 </button>
                                                 <button
+                                                    title="(ALT+ENTER)"
                                                     className="btn btn-success"
                                                     type="submit"
                                                     disabled={procesando}
@@ -838,7 +536,7 @@ const Caja = () => {
                                                                 className="form-control text-center"
                                                                 style={{ width: "80px" }}
                                                                 value={horaEspecial}
-                                                                onChange={handleHoraEspecialChange}
+                                                                onChange={(e) => handleHoraEspecialChange(e, minutosEspecial)}
                                                             >
                                                                 <option value="20">20</option>
                                                                 <option value="21">21</option>
@@ -850,7 +548,7 @@ const Caja = () => {
                                                                 className="form-control text-center"
                                                                 style={{ width: "80px" }}
                                                                 value={minutosEspecial}
-                                                                onChange={handleMinutosEspecialChange}
+                                                                onChange={(e) => handleMinutosEspecialChange(e, horaEspecial)}
                                                             >
                                                                 <option value="00">00</option>
                                                                 <option value="15">15</option>

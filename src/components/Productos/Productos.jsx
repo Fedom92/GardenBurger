@@ -21,11 +21,8 @@ const Productos = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
 
-  const productosCollectiona = collection(db, "productos");
-  const productosCollection = useRef(query(productosCollectiona, orderBy("descripcion", "desc")));
-
-  const categoriasCollectiona = collection(db, "categorias");
-  const categoriasCollection = useRef(query(categoriasCollectiona, orderBy("nroOrden", "asc")));
+  const productosCollection = useRef(query(collection(db, "productos"), orderBy("descripcion", "desc")));
+  const categoriasCollection = useRef(query(collection(db, "categorias"), orderBy("nroOrden", "asc")));
 
   const getProductos = useCallback((snapshot) => {
     const productosArray = snapshot.docs

@@ -111,6 +111,7 @@ const Login = () => {
                 />
                 <label htmlFor="password">Contraseña</label>
                 <button
+                  type="button"
                   style={{ border: "none", background: "transparent", cursor: "pointer", color: "#000", borderRadius: "0px" }}
                   onClick={togglePasswordVisibility}
                   tabIndex="-1"

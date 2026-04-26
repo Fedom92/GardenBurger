@@ -14,8 +14,7 @@ const Clientes = () => {
     const [modalShowEditar, setModalShowEditar] = useState(false);
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
 
-    const clientesCollectiona = collection(db, "clientes");
-    const clientesCollection = useRef(query(clientesCollectiona, orderBy("nombre", "asc")));
+    const clientesCollection = useRef(query(collection(db, "clientes"), orderBy("nombre", "asc")));
 
     const getClientes = useCallback((snapshot) => {
         const clientesArray = snapshot.docs

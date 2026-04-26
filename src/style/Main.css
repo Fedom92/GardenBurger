@@ -4,8 +4,7 @@
   --color-secundario: #cecece;
 
   --color-menu: #000000;
-  --color-menu2: #0a0a0a;
-  --color-menu3: #141414;
+  --color-submenu: #0a0a0a;
   --color-letras-menu: #ffffff;
 }
 
@@ -66,10 +65,10 @@ h3 {
 }
 
 /*<!------------Inicia estilos tablas---------------->*/
-table.table__body td,
+.table__body td,
 th {
   text-align: center;
-  align-items: center;
+  align-items: centtableer;
   justify-content: center;
 }
 
@@ -488,46 +487,16 @@ select {
   color: black;
 }
 
-.icono {
-  font-size: 20px;
-  margin-right: 12px;
-  color: var(--color-primario-normal);
-}
-
-.profile-picture-login {
-  height: 100px;
-  border-radius: 60%;
-  margin-right: 10px;
-}
-
-.right-navbar {
-  width: 28%;
-}
-
 @media (max-width: 1440px) and (max-height: 768px) {
-  .right-navbar {
-    width: 35%;
-  }
-
   .navigation {
     width: 40%
   }
-}
-
-.notificacion {
-  position: relative;
-  display: inline-block;
-  margin-right: 10px;
 }
 
 .badge {
   position: absolute;
   top: -5px;
   right: -5px;
-}
-
-.icono svg {
-  margin-right: 5px;
 }
 
 /*<!------------Termina Estilo UpNav---------------->*/
@@ -584,9 +553,8 @@ select {
   top: 0;
   display: flex;
   flex-direction: column;
-  width: 18%;
+  width: auto;
   min-height: 100vh;
-  color: var(--color-letras-menu);
   background-color: var(--color-menu);
   z-index: 2;
 }
@@ -661,7 +629,12 @@ select {
   object-fit: contain;
 }
 
-.profile-img-inactive {
+.img-barraNav {
+  height: 100%;
+  margin-right: 10px;
+}
+
+.img-barraNav-inactive {
   position: sticky;
   height: 34px;
   width: 50px;
@@ -728,7 +701,7 @@ select {
   position: relative;
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: nowrap !important;
   gap: 12px;
   padding: 10px;
   border-radius: 10px;
@@ -752,11 +725,7 @@ select {
 
 .sidebar-item.open>.sidebar-content {
   height: auto;
-  background-color: var(--color-menu2);
-}
-
-.sidebar-item.open>.sub-content {
-  background-color: var(--color-menu3);
+  background-color: var(--color-submenu);
 }
 
 .sidebar-item.plain {
@@ -1142,11 +1111,6 @@ input::placeholder {
 
 .desktop-img {
   display: none;
-}
-
-.iconosCS {
-  background-color: black;
-  padding: 2rem;
 }
 
 .fraccionDetalle {
