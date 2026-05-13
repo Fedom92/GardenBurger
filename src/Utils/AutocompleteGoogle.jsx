@@ -132,6 +132,7 @@ const AutocompleteGoogle = ({
         <input
           type="text"
           value={inputValue}
+          onPaste={(e) => e.preventDefault()}
           onChange={handleInputChange}
           placeholder={placeholder}
           className={`form-control fs-6 p-1 mb-1 ${className} ${error ? "is-invalid" : ""

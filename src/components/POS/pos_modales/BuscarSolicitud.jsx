@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { collection, query, getDocs, where, limit, orderBy } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import moment from 'moment';
 

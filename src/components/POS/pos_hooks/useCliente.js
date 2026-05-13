@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, limit, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
 
 const useCliente = () => {
@@ -16,8 +16,24 @@ const useCliente = () => {
         }
     }, []);
 
+    const guardarClienteSiNoExiste = useCallback((clienteData) => {
+        buscarClientePorTelefono(clienteData.telefono).then(existente => {
+            if (!existente) {
+                addDoc(collection(db, "clientes"), {
+                    nombre: clienteData.nombre || "",
+                    direccion: clienteData.direccion || "",
+                    entreCalles: clienteData.entreCalles || "",
+                    telefono: clienteData.telefono,
+                    latitud: clienteData.latitud || "",
+                    longitud: clienteData.longitud || "",
+                });
+            }
+        });
+    }, [buscarClientePorTelefono]);
+
     return {
         buscarClientePorTelefono,
+        guardarClienteSiNoExiste
     };
 };
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { collection, query, where, updateDoc, doc, onSnapshot, orderBy } from "firebase/firestore";
-import { db } from "../../../firebaseConfig/firebase";
+import { db } from "../../../../firebaseConfig/firebase";
+import { useAuth } from "../../../../context/AuthContext";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
-import { useAuth } from "../../../context/AuthContext";
 import moment from "moment";
 
 const PendientesMP = ({ isOpen, onClose }) => {

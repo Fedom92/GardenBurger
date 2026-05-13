@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { collection, query, where, updateDoc, doc, onSnapshot } from "firebase/firestore";
-import { db } from "../../../firebaseConfig/firebase";
+import { db } from "../../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
 import 'moment/locale/es';
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../../../context/AuthContext";
 
 const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
     const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { collection, query, getDocs, updateDoc, doc, where, limit } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from 'sweetalert2';
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext";
 import moment from "moment";
 
 const EliminarTickets = ({ isOpen, onClose }) => {
@@ -21,7 +21,7 @@ const EliminarTickets = ({ isOpen, onClose }) => {
 
         try {
             const pedidosCollection = collection(db, "pedidos");
-            const q = query(pedidosCollection, where("codigo", "==", numeroTicket.trim()),limit(1));
+            const q = query(pedidosCollection, where("codigo", "==", numeroTicket.trim()), limit(1));
 
             const querySnapshot = await getDocs(q);
 

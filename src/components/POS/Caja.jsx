@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, serverTimestamp, writeBatch, doc } from "firebase/firestore";
 import { db, getNextSequence } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
-import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
-import PendientesMP from './Entrantes/PendientesMP';
-import PendientesSolicitudes from './Entrantes/PendientesSolicitudes';
-import EliminarTickets from './EliminarTickets';
-import BuscarSolicitud from './BuscarSolicitud';
-import AutocompleteGoogle from '../../Utils/AutocompleteGoogle';
 import logoMP from '../../img/mercado-pago.webp';
+import AutocompleteGoogle from '../../Utils/AutocompleteGoogle';
+
+import PendientesMP from './pos_modales/Alertas/PendientesMP';
+import PendientesSolicitudes from './pos_modales/Alertas/PendientesSolicitudes';
+import EliminarTickets from './pos_modales/EliminarTickets';
+import BuscarSolicitud from './pos_modales/BuscarSolicitud';
+import PagoDividido from './pos_modales/PagoDividido';
 
 import useTraerDatos from './pos_hooks/useTraerDatos';
 import usePendientes from './pos_hooks/usePendientes';
@@ -19,6 +20,8 @@ import useCliente from './pos_hooks/useCliente';
 import useCarrito from './pos_hooks/useCarrito';
 import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
 import validarPedido from './pos_hooks/validarPedido';
+import useAprobarSolicitud from './pos_hooks/useAprobarSolicitud';
+import getResumenOperation from './pos_hooks/useResumenDiario';
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
@@ -49,22 +52,23 @@ const Caja = () => {
 
     const { productos, categorias, envios, isLoading } = useTraerDatos();
     const { tieneSolicitudesPendientes, tienePendientesMP } = usePendientes();
-    const { buscarClientePorTelefono } = useCliente();
+    const { guardarClienteSiNoExiste } = useCliente();
     const { carrito, setCarrito, handleAgregarAlCarrito, handleEliminarDelCarrito, resetCarrito, getResumen } = useCarrito({ envioSeleccionado, metodoPago, montoEfectivo, recargo });
     const { showHorarioEspecial, toggleHorarioEspecial, handleHoraEspecialChange, handleMinutosEspecialChange, resetHorario } = useHorarioEspecial({ setValue });
+    const { handleAprobarSolicitud } = useAprobarSolicitud({ setValue, setCarrito, setShowPendientesSolicitudes, envios });
 
     const { totalBase, total: totalFinal, montoMPConRecargo } = getResumen;
 
     const guardarBD = async (data) => {
         if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal })) return;
-
         setProcesando(true);
 
         try {
-            let nuevoCodigo = await getNextSequence("pedidos");
-            const clienteExistente = await buscarClientePorTelefono(data.telefono);
+            const nuevoCodigo = await getNextSequence("pedidos");
+            const batch = writeBatch(db);
 
-            const nuevoPedido = {
+            const pedidoRef = doc(collection(db, "pedidos"));
+            batch.set(pedidoRef, {
                 codigo: `${nuevoCodigo}-${userData.iniciales}`,
                 cajeroID: userData.id,
                 cajero: userData.nombreCompleto,
@@ -84,28 +88,26 @@ const Caja = () => {
                 estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "APROBADO",
                 hora: data.horarioEspecial || null,
                 timestamp: serverTimestamp()
-            };
+            });
 
-            await addDoc(collection(db, "pedidos"), nuevoPedido);
 
-            if (!clienteExistente) {
-                await addDoc(collection(db, "clientes"), {
-                    nombre: data.nombre || "",
-                    direccion: data.direccion || "",
-                    entreCalles: data.entreCalles || "",
-                    telefono: data.telefono,
-                    latitud: data.latitud || "",
-                    longitud: data.longitud || "",
-                });
-            }
-            Swal.fire({
+            const { ref, stats: resumenData } = getResumenOperation({
+                metodoPago: data.metodoPago,
+                total: totalFinal,
+                montoEfectivo,
+                montoMPConRecargo
+            });
+            batch.set(ref, resumenData, { merge: true });
+
+            await batch.commit();
+            guardarClienteSiNoExiste(data);
+            await Swal.fire({
                 title: '¡Éxito!',
                 text: 'Pedido agregado!.',
                 icon: 'success',
                 confirmButtonColor: '#198754',
-            }).then(() => {
-                limpiar();
             });
+            limpiar();
         } catch (error) {
             console.error("Error al agregar pedido: ", error);
             Swal.fire({
@@ -131,88 +133,12 @@ const Caja = () => {
         setShowModalDividido(nuevoMetodo === "%");
     };
 
-    const handleConfirmarDividido = () => {
-        if (montoEfectivo <= 0) {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'El monto en efectivo debe ser mayor a 0',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return;
-        }
-
-        if (montoEfectivo >= totalBase) {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'El monto en efectivo no puede ser mayor o igual al total base',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return;
-        }
-
-        setShowModalDividido(false);
-    };
-
     const limpiar = useCallback(() => {
         reset();
         resetCarrito();
         setMontoEfectivo(0);
         resetHorario();
     }, [reset, resetCarrito, resetHorario]);
-
-    const handleAprobarSolicitud = (solicitud) => {
-        try {
-            // Llenar los campos del formulario con los datos de la solicitud
-            setValue("nombre", solicitud.cliente?.nombre || "");
-            setValue("telefono", solicitud.cliente?.telefono || "");
-            setValue("direccion", solicitud.cliente?.direccion || "");
-            setValue("entreCalles", solicitud.cliente?.entreCalles || "");
-            setValue("metodoPago", solicitud.cliente?.metodoPago || "");
-
-            // Juntar observaciones de cada producto del carrito
-            const obsProductos = (solicitud.productos || [])
-                .filter(p => p.observaciones)
-                .map(p => `${p.descripcion}: ${p.observaciones}`)
-                .join("\n");
-            setValue("observaciones", obsProductos);
-
-            // Mapear opcion a zona_envio
-            if (solicitud.cliente?.opcion === "Retira") {
-                const envioRetira = envios.find(e =>
-                    e.zona_envio.toLowerCase().includes("retira")
-                );
-                if (envioRetira) {
-                    setValue("envio", JSON.stringify({
-                        zona_envio: envioRetira.zona_envio,
-                        costo_envio: envioRetira.costo_envio
-                    }));
-                }
-            }
-
-            // Agregar productos al carrito
-            if (solicitud.productos && solicitud.productos.length > 0) {
-                setCarrito(solicitud.productos.map(producto => ({
-                    ...producto,
-                    cantidad: producto.cantidad || 1,
-                    subtotal: (producto.cantidad || 1) * producto.precio
-                })));
-            }
-
-            // Cerrar el modal
-            setShowPendientesSolicitudes(false);
-
-        } catch (error) {
-            console.error('Error cargando datos de solicitud:', error);
-            Swal.fire({
-                title: 'Error',
-                text: 'Error al cargar los datos de la solicitud',
-                icon: 'error',
-                confirmButtonColor: '#dc3545',
-            });
-        }
-    };
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -617,56 +543,18 @@ const Caja = () => {
             )}
 
             {/* Modal para método de pago dividido */}
-            <Modal
-                show={showModalDividido}
-                onHide={() => {
+            <PagoDividido
+                isOpen={showModalDividido}
+                onClose={() => setShowModalDividido(false)}
+                onCancelar={() => {
                     setShowModalDividido(false);
                     setValue("metodoPago", "");
                     setMontoEfectivo(0);
                 }}
-                centered
-            >
-                <Modal.Header closeButton>
-                    <Modal.Title>Pago Dividido</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <div className="mb-3">
-                        <label className="form-label">Monto en efectivo:</label>
-                        <div className="input-group">
-                            <span className="input-group-text">$</span>
-                            <input
-                                type="number"
-                                className="form-control"
-                                value={montoEfectivo}
-                                onChange={(e) => setMontoEfectivo(Number(e.target.value))}
-                                min="0"
-                                step="1000"
-                                placeholder="Ingrese el monto en efectivo"
-                            />
-                        </div>
-                    </div>
-                </Modal.Body>
-                <Modal.Footer>
-                    <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => {
-                            setShowModalDividido(false);
-                            setValue("metodoPago", "");
-                            setMontoEfectivo(0);
-                        }}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={handleConfirmarDividido}
-                    >
-                        Confirmar
-                    </button>
-                </Modal.Footer>
-            </Modal>
+                montoEfectivo={montoEfectivo}
+                setMontoEfectivo={setMontoEfectivo}
+                totalBase={totalBase}
+            />
 
             {/* Modal de Pendientes MP */}
             <PendientesMP
