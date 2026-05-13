@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { collection, query, getDocs, where, limit } from "firebase/firestore";
+import { collection, query, getDocs, where, limit, orderBy } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import moment from 'moment';
@@ -22,6 +22,7 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
                 solicitudesCollection,
                 where("cliente.telefono", ">=", telefonoBuscar.trim()),
                 where("cliente.telefono", "<=", telefonoBuscar.trim() + '\uf8ff'),
+                orderBy("timestamp", "asc"),
                 limit(10)
             );
 
@@ -34,10 +35,6 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
                     id: doc.id,
                     ...doc.data()
                 }));
-
-                solicitudesEncontradas.sort((a, b) =>
-                    a.timestamp.seconds - b.timestamp.seconds
-                );
 
                 setSolicitudes(solicitudesEncontradas);
             }

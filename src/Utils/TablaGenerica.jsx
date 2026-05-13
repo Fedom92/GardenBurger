@@ -23,7 +23,7 @@ function generarColumnas(columnas) {
     });
 }
 
-const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, camposBusqueda = [], camposFiltros = [] }) => {
+const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, camposBusqueda = [], camposFiltros = [] , rowClassName = () => '' }) => {
     const columnasProcesadas = useMemo(() => generarColumnas(columnas), [columnas]);
     const [search, setSearch] = useState("");
     const [filtrosActivos, setFiltrosActivos] = useState({});
@@ -148,11 +148,7 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
                 <tbody>
                     {table.getRowModel().rows.map((row) => (
                         <tr
-                            className={`
-                                ${row.original.visible === false ? 'fila-no-visible' : ''} 
-                                ${row.original.estadoDelivery === 'SALIO' ? 'bg-warning' : ''} 
-                                ${row.original.estadoDelivery === 'VOLVIO' ? 'bg-success' : ''}
-                            `.trim()}
+                            className={rowClassName(row.original)}
                             key={row.id}
                         >
                             {row.getVisibleCells().map((cell) => (

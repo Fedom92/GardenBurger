@@ -4,6 +4,7 @@ import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from 'sweetalert2';
 import { useAuth } from "../../context/AuthContext";
+import moment from "moment";
 
 const EliminarTickets = ({ isOpen, onClose }) => {
     const [pedido, setPedido] = useState(null);
@@ -159,7 +160,7 @@ const EliminarTickets = ({ isOpen, onClose }) => {
                             </h6>
                             <div className="d-flex align-items-center gap-2">
                                 <small className="text-body-secondary">
-                                    {pedido.fecha} - {pedido.hora}
+                                    {moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
                                 </small>
                             </div>
                         </div>

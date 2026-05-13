@@ -5,6 +5,7 @@ import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
+import moment from "moment";
 
 const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const { userData } = useAuth();
@@ -35,7 +36,11 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
             id: doc.id,
             ...doc.data()
         }))
-            .sort((a, b) => a.codigo - b.codigo);
+            .sort((a, b) => {
+                const numA = parseInt(a.codigo?.split('-')[0], 10) || 0;
+                const numB = parseInt(b.codigo?.split('-')[0], 10) || 0;
+                return numA - numB;
+            });
         setPedidosCocinando(pedidosArray);
         setIsLoading(false);
     }, []);
@@ -158,7 +163,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                                     <div className="card border border-warning">
                                         <div className="card-header bg-warning bg-opacity-25">
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <strong>{pedido.hora}</strong>
+                                                <strong>{moment(pedido.timestamp.toDate()).format("HH:mm")}</strong>
                                                 <span className="badge bg-dark">{pedido.codigo}</span>
                                             </div>
                                             <h6 className="mb-0">{pedido.nombre}</h6>

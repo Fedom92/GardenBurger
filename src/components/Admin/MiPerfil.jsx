@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { doc, updateDoc, where, collection, getDocs, query, } from "firebase/firestore";
+import { doc, updateDoc, getDoc} from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig/firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 import EditClave from "./EditClave";
 import Swal from "sweetalert2";
 import "../../style/Main.css"
-
+import moment from 'moment';
 
 const MiPerfil = () => {
   const [user, setUser] = useState("");
@@ -29,17 +29,15 @@ const MiPerfil = () => {
 
   const fetchUserData = async (user) => {
     if (user) {
-      const userQuery = query(collection(db, "usuarios"), where("correo", "==", user.email));
-      const userDocsSnapshot = await getDocs(userQuery);
-      if (!userDocsSnapshot.empty) {
-        const userData2 = userDocsSnapshot.docs[0].data();
-        const userId = userDocsSnapshot.docs[0].id;
-        setUser(userData2);
-        setNombreCompleto(userData2.nombreCompleto);
-        setCorreo(userData2.correo);
-        setTelefono(userData2.telefono);
-        setFecha(userData2.fecha);
-        setId(userId)
+      const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUser(userData);
+        setNombreCompleto(userData.nombreCompleto);
+        setCorreo(userData.correo);
+        setTelefono(userData.telefono);
+        setId(userDoc.id);
+        setFecha(moment(userData.timestamp?.toDate()).format("DD/MM/YYYY"))
       }
       setIsLoading(false);
     }

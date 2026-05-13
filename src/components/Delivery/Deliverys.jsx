@@ -5,6 +5,7 @@ import { db } from "../../firebaseConfig/firebase";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
+import moment from "moment";
 
 const Deliverys = () => {
     const [pedidos, setPedidos] = useState([]);
@@ -32,7 +33,7 @@ const Deliverys = () => {
             id: doc.id,
             ...doc.data(),
         }))
-        .sort((a, b) => a.nombre.localeCompare(b.nombre));
+            .sort((a, b) => a.nombre.localeCompare(b.nombre));
         setDeliverys(deliverysArray);
     }, []);
 
@@ -79,7 +80,10 @@ const Deliverys = () => {
         try {
             const pedidoDoc = doc(db, 'pedidos', pedidoId);
             const deliverySel = deliverys.find(d => d.id === deliveryId) || "";
-            await updateDoc(pedidoDoc, { deliveryAsignado: deliverySel ? deliverySel.nombre : "" });
+            await updateDoc(pedidoDoc, {
+                deliveryAsignado: deliverySel.nombre,
+                deliveryID: deliverySel.id
+            });
 
             setPedidos(prevPedidos =>
                 prevPedidos.map(pedido =>
@@ -110,7 +114,12 @@ const Deliverys = () => {
 
 
     const columnasPedidos = [
-        { columnasBasicas: ["codigo", "direccion", "hora", "total"] },
+        { columnasBasicas: ["codigo", "direccion", "total"] },
+        {
+            accessorKey: "timestamp",
+            header: "Hora",
+            cell: ({ getValue }) => moment(getValue()?.toDate()).format("HH:mm")
+        },
         {
             accessorKey: "envio.zona_envio",
             header: "Zona Envío",
@@ -215,6 +224,11 @@ const Deliverys = () => {
                                     ordenDescendente={false}
                                     camposBusqueda={["codigo", "direccion", "nombre"]}
                                     camposFiltros={["deliveryAsignado"]}
+                                    rowClassName={(row) => {
+                                        if (row.estadoDelivery === 'SALIO') return 'bg-warning';
+                                        if (row.estadoDelivery === 'VOLVIO') return 'bg-success';
+                                        return '';
+                                    }}
                                 />
                             </div>
                         </div>

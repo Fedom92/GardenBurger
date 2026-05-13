@@ -13,15 +13,11 @@ import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
 import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
 import Footer from "./Footer";
-import moment from 'moment';
+
 
 const CrearSolicitud = () => {
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
-
-  const ahora = moment();
-  const fecha = ahora.format("DD/MM/YYYY");
-  const hora = ahora.format("HH:mm");
 
   const {
     carrito,
@@ -80,8 +76,6 @@ const CrearSolicitud = () => {
       total: pagoSeleccionado === "MP" ? totalConRecargo : total,
       estado: "PENDIENTE",
       timestamp: serverTimestamp(),
-      fecha: fecha,
-      hora: hora,
       mensajeWsp: mensajeCodificado
     }
 

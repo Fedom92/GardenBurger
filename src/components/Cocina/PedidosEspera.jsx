@@ -5,6 +5,7 @@ import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
 import { CANTIDAD_CARNES } from "../../Utils/Constantes";
+import moment from "moment";
 
 const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     const { userData } = useAuth();
@@ -164,7 +165,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                                     <div className="card-body p-2 d-flex flex-column">
                                         <div className="d-flex justify-content-between align-items-start mb-1">
                                             <span className="badge bg-dark">{pedido.codigo}</span>
-                                            <small className="text-body-secondary">{pedido.fecha} - {pedido.hora}</small>
+                                            <small className="text-body-secondary">{moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}</small>
                                         </div>
                                         <h6 className="mb-2 text-truncate">{pedido.nombre}</h6>
                                         <div className="m-auto">

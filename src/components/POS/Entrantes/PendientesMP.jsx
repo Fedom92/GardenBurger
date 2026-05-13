@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, updateDoc, doc, onSnapshot } from "firebase/firestore";
+import { collection, query, where, updateDoc, doc, onSnapshot, orderBy } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { useAuth } from "../../../context/AuthContext";
+import moment from "moment";
 
 const PendientesMP = ({ isOpen, onClose }) => {
     const { userData } = useAuth();
@@ -17,15 +18,12 @@ const PendientesMP = ({ isOpen, onClose }) => {
         let initialLoad = true;
 
         const pedidosCollection = collection(db, "pedidos");
-        const q = query(pedidosCollection, where("estado", "==", "PENDIENTEMP"));
+        const q = query(pedidosCollection, where("estado", "==", "PENDIENTEMP"), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const pedidos = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
-            pedidos.sort((a, b) =>
-                a.timestamp.seconds - b.timestamp.seconds
-            );
 
             setPedidosPendientes(pedidos);
             setIsLoading(false);
@@ -126,7 +124,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                             <strong>Pedido #{pedido.codigo}</strong>
                                         </h6>
                                         <small className="text-body-secondary">
-                                            {pedido.fecha} - {pedido.hora}
+                                            {moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
                                         </small>
                                     </div>
                                     <div className="card-body h-auto">

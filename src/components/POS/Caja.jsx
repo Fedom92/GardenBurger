@@ -5,7 +5,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
-import moment from 'moment';
 import '../../style/Main.css';
 import PendientesMP from './Entrantes/PendientesMP';
 import PendientesSolicitudes from './Entrantes/PendientesSolicitudes';
@@ -28,7 +27,6 @@ const Caja = () => {
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
-    const telefono = watch("telefono");
 
     const { userData } = useAuth();
     const [search, setSearch] = useState("");
@@ -51,13 +49,9 @@ const Caja = () => {
 
     const { productos, categorias, envios, isLoading } = useTraerDatos();
     const { tieneSolicitudesPendientes, tienePendientesMP } = usePendientes();
-    const { clienteEncontradoRef, saltearAutocompletadoRef, resetCliente } = useCliente({ telefono, setValue });
+    const { buscarClientePorTelefono } = useCliente();
     const { carrito, setCarrito, handleAgregarAlCarrito, handleEliminarDelCarrito, resetCarrito, getResumen } = useCarrito({ envioSeleccionado, metodoPago, montoEfectivo, recargo });
     const { showHorarioEspecial, toggleHorarioEspecial, handleHoraEspecialChange, handleMinutosEspecialChange, resetHorario } = useHorarioEspecial({ setValue });
-
-    const ahora = moment();
-    const fecha = ahora.format("DD/MM/YYYY");
-    const hora = ahora.format("HH:mm");
 
     const { totalBase, total: totalFinal, montoMPConRecargo } = getResumen;
 
@@ -68,6 +62,7 @@ const Caja = () => {
 
         try {
             let nuevoCodigo = await getNextSequence("pedidos");
+            const clienteExistente = await buscarClientePorTelefono(data.telefono);
 
             const nuevoPedido = {
                 codigo: `${nuevoCodigo}-${userData.iniciales}`,
@@ -87,15 +82,13 @@ const Caja = () => {
                 total: Number(totalFinal),
                 carrito: carrito,
                 estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "APROBADO",
-                fecha: fecha,
-                hora: data.horarioEspecial || hora,
+                hora: data.horarioEspecial || null,
                 timestamp: serverTimestamp()
             };
 
             await addDoc(collection(db, "pedidos"), nuevoPedido);
 
-            // Verificar si el cliente existe antes de guardarlo
-            if (!clienteEncontradoRef.current) {
+            if (!clienteExistente) {
                 await addDoc(collection(db, "clientes"), {
                     nombre: data.nombre || "",
                     direccion: data.direccion || "",
@@ -167,12 +160,10 @@ const Caja = () => {
         resetCarrito();
         setMontoEfectivo(0);
         resetHorario();
-        resetCliente();
-    }, [reset, resetCarrito, resetHorario, resetCliente]);
+    }, [reset, resetCarrito, resetHorario]);
 
     const handleAprobarSolicitud = (solicitud) => {
         try {
-            saltearAutocompletadoRef.current = true;
             // Llenar los campos del formulario con los datos de la solicitud
             setValue("nombre", solicitud.cliente?.nombre || "");
             setValue("telefono", solicitud.cliente?.telefono || "");

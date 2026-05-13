@@ -3,7 +3,6 @@ import { collection, setDoc, doc, query, limit, getDocs, where, serverTimestamp 
 import { db, auth } from "../../firebaseConfig/firebase";
 import { createUserWithEmailAndPassword, updateCurrentUser } from "firebase/auth"
 import { Modal } from "react-bootstrap";
-import moment from 'moment';
 import Swal from "sweetalert2";
 import { useForm } from "react-hook-form";
 
@@ -11,9 +10,6 @@ const CrearUsuario = (props) => {
   const { register, handleSubmit, reset } = useForm();
   const { agregarusuario, ...propsModal } = props;
   const [error, setError] = useState('');
-  const ahora = moment();
-  const fecha = ahora.format("DD/MM/YYYY");
-  const hora = ahora.format("HH:mm");
 
   const userCollection = collection(db, "usuarios");
 
@@ -50,8 +46,6 @@ const CrearUsuario = (props) => {
     const nuevoUsuario = {
       correo: data.correo,
       timestamp: serverTimestamp(),
-      fecha: fecha,
-      hora: hora,
       nombreCompleto: data.nombreCompleto,
       rol: data.rol,
       telefono: data.telefono,

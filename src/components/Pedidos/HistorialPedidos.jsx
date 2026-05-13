@@ -70,7 +70,7 @@ const HistorialPedidos = () => {
   }, [userData]);
 
   const columnasPedidos = [
-    { columnasBasicas: ["codigo", "nombre", "direccion", "telefono", "total", "fecha", "hora"] },
+    { columnasBasicas: ["codigo", "nombre", "direccion", "telefono", "total", "timestamp"] },
     {
       accessorKey: "metodoPago",
       header: "Método de Pago",

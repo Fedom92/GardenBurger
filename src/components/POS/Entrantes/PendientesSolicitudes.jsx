@@ -46,7 +46,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
         });
 
         return () => unsubscribe();
-    }, [isOpen]);
+    }, [isOpen, onClose]);
 
 
     const aprobarSolicitud = async (solicitudId) => {
@@ -133,10 +133,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                                             <strong>Cliente:</strong> {solicitud.cliente?.nombre}
                                         </p>
                                         <small className="text-body-secondary">
-                                            {solicitud.timestamp ?
-                                                moment(solicitud.timestamp.toDate()).format("DD/MM/YYYY HH:mm") :
-                                                "Sin fecha"
-                                            }
+                                            {moment(solicitud.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
                                         </small>
                                     </div>
                                     <div className="card-body h-auto">

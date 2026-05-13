@@ -1,6 +1,7 @@
 import React from 'react';
 import './TicketImpresion.css';
 import icono from "../../img/logo_blanco_corto.webp";
+import moment from "moment";
 
 const TicketImpresion = ({ pedido, onClose }) => {
     if (!pedido) return null;
@@ -76,7 +77,7 @@ const TicketImpresion = ({ pedido, onClose }) => {
                     {/* Header del Ticket */}
                     <div className="ticket-header-section">
                         <div className="ticket-number">
-                            Ticket# {pedido.codigo} - {pedido.fecha} {pedido.hora}
+                            Ticket# {pedido.codigo} - {moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
                         </div>
                         <div className="customer-name">{pedido.nombre}</div>
                         <div className="delivery-address-bold">{pedido.direccion}</div>
