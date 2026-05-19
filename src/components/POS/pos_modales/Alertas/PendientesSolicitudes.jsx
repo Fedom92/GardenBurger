@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, updateDoc, doc, onSnapshot } from "firebase/firestore";
+import { collection, query, where, updateDoc, doc, onSnapshot, orderBy, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
@@ -20,7 +20,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
         let initialLoad = true;
 
         const solicitudesCollection = collection(db, "solicitudes");
-        const q = query(solicitudesCollection, where("estado", "==", "PENDIENTE"));
+        const q = query(solicitudesCollection, where("estado", "==", process.env.REACT_APP_ESTADO_SOLICITUD), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const solicitudes = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -59,9 +59,10 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
 
             const solicitudRef = doc(db, "solicitudes", solicitudId);
             await updateDoc(solicitudRef, {
-                estado: "CONFIRMADO",
-                cajeroID: userData.id,
-                cajero: userData.nombreCompleto,
+                estado: process.env.REACT_APP_ESTADOPUB_SOLICITUD,
+                cajeroApruebaSolID: userData.id,
+                cajerApruebaSolo: userData.nombreCompleto,
+                cajerApruebaSolTimestamp: serverTimestamp(),
             });
         } catch (error) {
             console.error('Error aprobando solicitud:', error);
@@ -90,9 +91,10 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
             try {
                 const solicitudRef = doc(db, "solicitudes", solicitudId);
                 await updateDoc(solicitudRef, {
-                    estado: "CANCELADO",
-                    cajeroID: userData.id,
-                    cajero: userData.nombreCompleto,
+                    estado: process.env.REACT_APP_ESTADOPUB_CANCELADO,
+                    cajeroCancelaSolID: userData.id,
+                    cajeroCancelaSol: userData.nombreCompleto,
+                    cajeroCancelaSolTimestamp: serverTimestamp(),
                 });
             } catch (error) {
                 console.error('Error rechazando solicitud:', error);
@@ -133,7 +135,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                                             <strong>Cliente:</strong> {solicitud.cliente?.nombre}
                                         </p>
                                         <small className="text-body-secondary">
-                                            {moment(solicitud.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
+                                            {moment(solicitud.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
                                         </small>
                                     </div>
                                     <div className="card-body h-auto">

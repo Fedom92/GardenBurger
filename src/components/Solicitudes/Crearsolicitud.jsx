@@ -74,7 +74,7 @@ const CrearSolicitud = () => {
       cliente: data,
       productos: carrito,
       total: pagoSeleccionado === "MP" ? totalConRecargo : total,
-      estado: "PENDIENTE",
+      estado: process.env.REACT_APP_ESTADO_SOLICITUD,
       timestamp: serverTimestamp(),
       mensajeWsp: mensajeCodificado
     }

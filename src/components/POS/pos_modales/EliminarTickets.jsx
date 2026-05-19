@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { collection, query, getDocs, updateDoc, doc, where, limit } from "firebase/firestore";
+import { collection, query, getDocs, updateDoc, doc, where, limit, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from 'sweetalert2';
@@ -21,7 +21,11 @@ const EliminarTickets = ({ isOpen, onClose }) => {
 
         try {
             const pedidosCollection = collection(db, "pedidos");
-            const q = query(pedidosCollection, where("codigo", "==", numeroTicket.trim()), limit(1));
+            const q = query(pedidosCollection,
+                where("codigo", "==", numeroTicket.trim()),
+                where("estado", "!=", process.env.REACT_APP_ESTADO_ELIMINADO),
+                limit(1)
+            );
 
             const querySnapshot = await getDocs(q);
 
@@ -61,13 +65,14 @@ const EliminarTickets = ({ isOpen, onClose }) => {
             try {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 await updateDoc(pedidoRef, {
-                    estado: "ELIMINADO",
-                    cajeroID: userData.id,
-                    cajero: userData.nombreCompleto,
+                    estado: process.env.REACT_APP_ESTADO_ELIMINADO,
+                    cajeroEliminaID: userData.id,
+                    cajeroElimina: userData.nombreCompleto,
+                    cajeroEliminaTimestamp: serverTimestamp(),
                 });
 
                 // Actualizar el pedido local
-                setPedido(prev => prev ? { ...prev, estado: "ELIMINADO" } : null);
+                setPedido(prev => prev ? { ...prev, estado: process.env.REACT_APP_ESTADO_ELIMINADO } : null);
 
                 Swal.fire({
                     title: '¡Eliminado!',
@@ -185,7 +190,7 @@ const EliminarTickets = ({ isOpen, onClose }) => {
                                 <div className="col-6">
                                     <p className="mb-2">
                                         <strong>Estado:</strong>
-                                        <span className={`rounded-3 p-1 px-2 mx-2 fw-bold border border-dark ${pedido.estado === "ELIMINADO" ? "bg-danger text-white border-danger" : "bg-info text-dark"}`}>
+                                        <span className={`rounded-3 p-1 px-2 mx-2 fw-bold border border-dark ${pedido.estado === process.env.REACT_APP_ESTADO_ELIMINADO ? "bg-danger text-white border-danger" : "bg-info text-dark"}`}>
                                             {pedido.estado}
                                         </span>
                                     </p>
@@ -205,7 +210,7 @@ const EliminarTickets = ({ isOpen, onClose }) => {
                                     </p>
 
                                     <div className="mt-3 d-flex flex-column gap-2">
-                                        {pedido.estado !== "ELIMINADO" ? (
+                                        {pedido.estado !== process.env.REACT_APP_ESTADO_ELIMINADO ? (
                                             <button
                                                 className="btn btn-danger btn-sm w-75 fw-bold"
                                                 onClick={() => eliminarPedido(pedido.id, pedido.codigo)}

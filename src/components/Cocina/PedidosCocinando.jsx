@@ -16,7 +16,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
 
     const pedidosCollection = useRef(query(collection(db, "pedidos"),
-        where("estado", "==", "COCINA"),
+        where("estado", "==", process.env.REACT_APP_ESTADO_COCINA),
         where("cocineroID", "==", userData.id)
     ));
 
@@ -84,7 +84,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
 
             pedidosCocinando.forEach(pedido => {
                 const pedidoRef = doc(db, "pedidos", pedido.id);
-                batch.update(pedidoRef, { estado: "DELIVERY" });
+                batch.update(pedidoRef, { estado: process.env.REACT_APP_ESTADO_DELIVERY });
             });
 
             await batch.commit();

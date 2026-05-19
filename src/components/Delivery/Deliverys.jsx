@@ -14,7 +14,7 @@ const Deliverys = () => {
     const [metricasDelivery, setMetricasDelivery] = useState({});
     const [showMetricas, setShowMetricas] = useState(false);
 
-    const pedidosCollection = useRef(query(collection(db, "pedidos"), where("estado", "==", "DELIVERY")));
+    const pedidosCollection = useRef(query(collection(db, "pedidos"), where("estado", "==", process.env.REACT_APP_ESTADO_DELIVERY)));
     const deliverysCollection = useRef(query(collection(db, "deliverys"), where("activo", "==", true)));
 
     const getPedidos = useCallback((snapshot) => {
@@ -160,23 +160,23 @@ const Deliverys = () => {
             header: "Acciones",
             cell: ({ row }) => {
                 const pedido = row.original;
-                const estadoDelivery = pedido.estadoDelivery || "PENDIENTE";
+                const estadoDelivery = pedido.estadoDelivery || "PENDIENTE"; //TODO: PENDIENTE??
                 const tieneAsignado = Boolean(pedido.deliveryAsignado);
 
                 return (
                     <>
                         <button
-                            className={`btn mx-1 ${estadoDelivery === "SALIO" ? "btn-warning" : "btn-outline-warning"}`}
+                            className={`btn mx-1 ${estadoDelivery === process.env.REACT_APP_SUBESTADO_MOTO_INICIO ? "btn-warning" : "btn-outline-warning"}`}
                             title="MARCAR COMO SALIDA"
-                            onClick={() => marcarEstado(pedido.id, "SALIO")}
+                            onClick={() => marcarEstado(pedido.id, process.env.REACT_APP_SUBESTADO_MOTO_INICIO)}
                             disabled={!tieneAsignado}
                         >
                             <i className="fa-solid fa-motorcycle"></i>
                         </button>
                         <button
-                            className={`btn mx-1 ${estadoDelivery === "VOLVIO" ? "btn-success" : "btn-outline-success"}`}
+                            className={`btn mx-1 ${estadoDelivery === process.env.REACT_APP_SUBESTADO_MOTO_FIN ? "btn-success" : "btn-outline-success"}`}
                             title="MARCAR COMO VUELTA"
-                            onClick={() => marcarEstado(pedido.id, "VOLVIO")}
+                            onClick={() => marcarEstado(pedido.id, process.env.REACT_APP_SUBESTADO_MOTO_FIN)}
                             disabled={!tieneAsignado}
                         >
                             <i className="fa-solid fa-check"></i>
@@ -225,8 +225,8 @@ const Deliverys = () => {
                                     camposBusqueda={["codigo", "direccion", "nombre"]}
                                     camposFiltros={["deliveryAsignado"]}
                                     rowClassName={(row) => {
-                                        if (row.estadoDelivery === 'SALIO') return 'bg-warning';
-                                        if (row.estadoDelivery === 'VOLVIO') return 'bg-success';
+                                        if (row.estadoDelivery === process.env.REACT_APP_SUBESTADO_MOTO_INICIO) return 'bg-warning';
+                                        if (row.estadoDelivery === process.env.REACT_APP_SUBESTADO_MOTO_FIN) return 'bg-success';
                                         return '';
                                     }}
                                 />

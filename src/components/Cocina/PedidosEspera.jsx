@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { collection, where, query, onSnapshot, orderBy, doc, writeBatch } from "firebase/firestore";
+import { collection, where, query, onSnapshot, orderBy, doc, writeBatch, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
@@ -15,7 +15,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     const [pedidosEspera, setPedidosEspera] = useState([]);
 
     const pedidosCollection = useRef(query(collection(db, "pedidos"),
-        where("estado", "==", "APROBADO"),
+        where("estado", "==", process.env.REACT_APP_ESTADO_CAJA),
         orderBy("timestamp", "asc")
     ));
 
@@ -97,9 +97,10 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
             selectedPedidos.forEach(pedidoId => {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 batch.update(pedidoRef, {
-                    estado: "COCINA",
+                    estado: process.env.REACT_APP_ESTADO_COCINA,
                     cocineroID: userData.id,
-                    cocinero: userData.nombreCompleto
+                    cocinero: userData.nombreCompleto,
+                    cocineroTimestamp: serverTimestamp(),
                 });
             });
 

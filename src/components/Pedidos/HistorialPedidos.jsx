@@ -5,6 +5,7 @@ import "../../style/Main.css"
 import TablaGenerica from "../../Utils/TablaGenerica";
 import { useAuth } from "../../context/AuthContext";
 import { Modal } from 'react-bootstrap';
+import { getRangoJornada } from "../../Utils/fechaComercial";
 
 const HistorialPedidos = () => {
   const { userData } = useAuth();
@@ -14,30 +15,8 @@ const HistorialPedidos = () => {
   const [modalShowVerNotas, setModalShowVerNotas] = useState([false, ""]);
   const { inicio, fin } = getRangoJornada(new Date());
 
-  function getRangoJornada(now = new Date()) {
-    const startHour = 19; // 19:00
-    const endHour = 2;    // 02:00 del día siguiente
-
-    let inicio = new Date(now);
-    let fin = new Date(now);
-
-    if (now.getHours() < endHour) {
-      // Caso: Entre 00:00 y 02:00 → jornada que empezó ayer
-      inicio.setDate(inicio.getDate() - 1);
-      inicio.setHours(startHour, 0, 0, 0);
-      fin.setHours(endHour, 0, 0, 0);
-    } else {
-      // Caso: Después de 02:00 → jornada actual
-      inicio.setHours(startHour, 0, 0, 0);
-      fin.setDate(fin.getDate() + 1);
-      fin.setHours(endHour, 0, 0, 0);
-    }
-
-    return { inicio, fin };
-  }
-
   const pedidosCollection = useRef(query(collection(db, "pedidos"),
-    where("estado", "==", "FIN"),
+    where("estado", "==", process.env.REACT_APP_ESTADO_FINAL),
     where("timestamp", ">=", inicio),
     where("timestamp", "<=", fin),
     orderBy("timestamp", "desc")

@@ -95,7 +95,7 @@ export const PaginaDetalle = () => {
           <p className="text-center mt-5">Cargando pedido...</p>
         ) : pedido ? (
           <>
-            {pedido.estado !== "CANCELADO" && (<h1 className='text-center m-4'>Gracias por tu compra!</h1>)}
+            {pedido.estado !== process.env.REACT_APP_ESTADO_CANCELADO && (<h1 className='text-center m-4'>Gracias por tu compra!</h1>)}
 
             <div className='itemsConteiner'>
 

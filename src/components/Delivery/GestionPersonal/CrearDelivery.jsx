@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
+import { useAuth } from "../../../context/AuthContext";
 
 const CrearDelivery = (props) => {
+    const { userData } = useAuth();
     const { register, handleSubmit, reset } = useForm();
     const { agregarDelivery, deliveryExiste, ...propsModal } = props;
     const [error, setError] = useState("");
@@ -28,6 +30,9 @@ const CrearDelivery = (props) => {
             colorMoto: data.colorMoto,
             patente: data.patente,
             activo: true,
+            creaDeliveryID: userData.id,
+            creaDelivery: userData.nombreCompleto,
+            creaDeliveryTimestamp: serverTimestamp(),
         };
 
         try {

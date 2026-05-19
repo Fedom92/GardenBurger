@@ -26,3 +26,6 @@ export const ESTADOS_SOLICITUDES = [
   { key: "COCINA", label: "Cocina" },
   { key: "DELIVERY", label: "Delivery" },
 ];
+
+
+//TODO PASAR LAS CONSTANTES QUE ESTAN EN .env AQUI

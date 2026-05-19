@@ -21,7 +21,7 @@ import useCarrito from './pos_hooks/useCarrito';
 import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
 import validarPedido from './pos_hooks/validarPedido';
 import useAprobarSolicitud from './pos_hooks/useAprobarSolicitud';
-import getResumenOperation from './pos_hooks/useResumenDiario';
+import { getResumenOperation } from './pos_hooks/useResumenDiario';
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
@@ -72,6 +72,7 @@ const Caja = () => {
                 codigo: `${nuevoCodigo}-${userData.iniciales}`,
                 cajeroID: userData.id,
                 cajero: userData.nombreCompleto,
+                cajeroTimestamp: serverTimestamp(),
                 nombre: data.nombre,
                 direccion: data.direccion,
                 latitud: data.latitud || "",
@@ -85,7 +86,7 @@ const Caja = () => {
                 montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
                 total: Number(totalFinal),
                 carrito: carrito,
-                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? "PENDIENTEMP" : "APROBADO",
+                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? process.env.REACT_APP_ESTADO_PENDIENTE_MP : process.env.REACT_APP_ESTADO_CAJA,
                 hora: data.horarioEspecial || null,
                 timestamp: serverTimestamp()
             });

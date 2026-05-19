@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, updateDoc, doc, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, query, where, updateDoc, doc, onSnapshot, orderBy, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../../firebaseConfig/firebase";
 import { useAuth } from "../../../../context/AuthContext";
 import { Modal } from "react-bootstrap";
@@ -18,7 +18,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
         let initialLoad = true;
 
         const pedidosCollection = collection(db, "pedidos");
-        const q = query(pedidosCollection, where("estado", "==", "PENDIENTEMP"), orderBy("timestamp", "asc"));
+        const q = query(pedidosCollection, where("estado", "==", process.env.REACT_APP_ESTADO_PENDIENTE_MP), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const pedidos = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -50,9 +50,10 @@ const PendientesMP = ({ isOpen, onClose }) => {
         try {
             const pedidoRef = doc(db, "pedidos", pedidoId);
             await updateDoc(pedidoRef, {
-                estado: "APROBADO",
-                cajeroID: userData.id,
-                cajero: userData.nombreCompleto,
+                estado: process.env.REACT_APP_ESTADO_CAJA,
+                cajeroApruebaMPID: userData.id,
+                cajeroApruebaMP: userData.nombreCompleto,
+                cajeroApruebaMPTimestamp: serverTimestamp(),
             });
         } catch (error) {
             console.error('Error aprobando pedido:', error);
@@ -81,9 +82,10 @@ const PendientesMP = ({ isOpen, onClose }) => {
             try {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 await updateDoc(pedidoRef, {
-                    estado: "CANCELADO",
-                    cajeroID: userData.id,
-                    cajero: userData.nombreCompleto,
+                    estado: process.env.REACT_APP_ESTADO_CANCELADO,
+                    cajeroCancelaMPID: userData.id,
+                    cajeroCancelaMP: userData.nombreCompleto,
+                    cajeroCancelaMPTimestamp: serverTimestamp(),
                 });
             } catch (error) {
                 console.error('Error rechazando el pedido:', error);
@@ -124,7 +126,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                             <strong>Pedido #{pedido.codigo}</strong>
                                         </h6>
                                         <small className="text-body-secondary">
-                                            {moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
+                                            {moment(pedido.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
                                         </small>
                                     </div>
                                     <div className="card-body h-auto">
