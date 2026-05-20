@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import moment from 'moment';
 import 'moment/locale/es';
 import { useAuth } from "../../../../context/AuthContext";
+import { ESTADOS } from "../../../../Utils/Constantes";
 
 const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
     const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
@@ -20,7 +21,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
         let initialLoad = true;
 
         const solicitudesCollection = collection(db, "solicitudes");
-        const q = query(solicitudesCollection, where("estado", "==", process.env.REACT_APP_ESTADO_SOLICITUD), orderBy("timestamp", "asc"));
+        const q = query(solicitudesCollection, where("estado", "==", ESTADOS.SOLICITUD_PENDIENTE), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const solicitudes = snapshot.docs.map(doc => ({
                 id: doc.id,

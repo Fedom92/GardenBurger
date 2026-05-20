@@ -11,7 +11,7 @@ import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
-import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
+import { CATEGORIAS_HAMBURGUESA, ESTADOS } from "../../Utils/Constantes";
 import Footer from "./Footer";
 
 
@@ -74,7 +74,7 @@ const CrearSolicitud = () => {
       cliente: data,
       productos: carrito,
       total: pagoSeleccionado === "MP" ? totalConRecargo : total,
-      estado: process.env.REACT_APP_ESTADO_SOLICITUD,
+      estado: ESTADOS.SOLICITUD_PENDIENTE,
       timestamp: serverTimestamp(),
       mensajeWsp: mensajeCodificado
     }

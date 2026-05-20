@@ -20,12 +20,32 @@ export const CANTIDAD_CARNES = {
   "CARNE EXTRA": 1,
 };
 
-export const ESTADOS_SOLICITUDES = [
-  { key: "PENDIENTE", label: "Pendiente" },
-  { key: "CONFIRMADO", label: "Confirmado" },
-  { key: "COCINA", label: "Cocina" },
-  { key: "DELIVERY", label: "Delivery" },
+export const ESTADOS = {
+  OK_CAJA:             "APROBADO",
+  PENDIENTE_MP:        "PENDIENTEMP",
+  SOLICITUD_PENDIENTE: "PENDIENTE",
+  COCINA:              "COCINA",
+  DELIVERY:            "DELIVERY",
+  FINAL:               "ENTREGADO",
+  
+  CONFIRMADO:          "CONFIRMADO",
+  CANCELADO:           "CANCELADO",
+  ELIMINADO:           "ELIMINADO",
+};
+
+export const SUBESTADOS_MOTODELIVERY = {
+  INICIA: "SALIO",
+  FIN: "VOLVIO",
+};
+
+export const FLUJO_PUB_ESTADOS = [
+  ESTADOS.SOLICITUD_PENDIENTE,
+  ESTADOS.CONFIRMADO,
+  ESTADOS.COCINA,
+  ESTADOS.DELIVERY,
+  ESTADOS.FINAL
 ];
 
-
-//TODO PASAR LAS CONSTANTES QUE ESTAN EN .env AQUI
+export const getCurrentStepIndex = (estado) => {
+  return FLUJO_PUB_ESTADOS.indexOf(estado);
+};

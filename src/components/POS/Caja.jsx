@@ -22,10 +22,11 @@ import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
 import validarPedido from './pos_hooks/validarPedido';
 import useAprobarSolicitud from './pos_hooks/useAprobarSolicitud';
 import { getResumenOperation } from './pos_hooks/useResumenDiario';
+import { ESTADOS } from '../../Utils/Constantes';
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
-        defaultValues: { direccion: "", latitud: "", longitud: "" }
+        defaultValues: { direccion: "", latitud: "", longitud: "", solicitudID: "" }
     });
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
@@ -86,10 +87,19 @@ const Caja = () => {
                 montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
                 total: Number(totalFinal),
                 carrito: carrito,
-                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? process.env.REACT_APP_ESTADO_PENDIENTE_MP : process.env.REACT_APP_ESTADO_CAJA,
+                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTE_MP : ESTADOS.OK_CAJA,
+                solicitudID: data.solicitudID || "",
                 hora: data.horarioEspecial || null,
                 timestamp: serverTimestamp()
             });
+
+            if (data.solicitudID) {
+                const solicitudRef = doc(db, "solicitudes", data.solicitudID);
+                batch.update(solicitudRef, {
+                    estado: ESTADOS.COCINA,
+                    pedidoAsociadoID: pedidoRef.id,
+                });
+            }
 
 
             const { ref, stats: resumenData } = getResumenOperation({

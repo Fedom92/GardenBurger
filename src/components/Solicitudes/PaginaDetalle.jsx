@@ -6,7 +6,7 @@ import { db } from "../../firebaseConfig/firebase";
 import whatsapp from "../../img/whatsapp.webp";
 import { FaCartPlus } from 'react-icons/fa';
 import { Link } from "react-router-dom";
-import { ESTADOS_SOLICITUDES } from '../../Utils/Constantes.jsx';
+import { ESTADOS, FLUJO_PUB_ESTADOS, getCurrentStepIndex } from '../../Utils/Constantes.jsx';
 import Footer from './Footer';
 
 export const PaginaDetalle = () => {
@@ -41,7 +41,9 @@ export const PaginaDetalle = () => {
     }
   })
 
-  const indexActivo = ESTADOS_SOLICITUDES.findIndex(i => i.key === pedido?.estado);
+  const estado = pedido?.estado;
+  const isCancelado = estado === ESTADOS.CANCELADO || estado === ESTADOS.ELIMINADO;
+  const currentStep = getCurrentStepIndex(estado);
 
   return (
     <div className='mainpageVP' >
@@ -51,7 +53,7 @@ export const PaginaDetalle = () => {
 
       {pedido && (
         <div className="container">
-          {pedido.estado === "CANCELADO" ? (
+          {isCancelado ? (
             <div className="d-flex justify-content-center align-items-center flex-column">
               <div className="mb-2 small text-danger fw-bold text-uppercase">
                 {pedido.estado}
@@ -62,21 +64,19 @@ export const PaginaDetalle = () => {
             </div>
           ) : (
             <div className="d-flex justify-content-between">
-              {ESTADOS_SOLICITUDES.map((estado, index) => {
-                const esCompletado = index <= indexActivo;
-                const esActivo = index < indexActivo;
-                const esUltimo = index === ESTADOS_SOLICITUDES.length - 1;
+              {FLUJO_PUB_ESTADOS.map((paso, index) => {
+                const esCompletado = index <= currentStep;
+                const esActivo = index < currentStep;
+                const esUltimo = index === FLUJO_PUB_ESTADOS.length - 1;
 
                 return (
-                  <div key={estado.key} className="text-center position-relative flex-fill">
+                  <div key={paso} className="text-center position-relative flex-fill">
                     {!esUltimo && (
                       <div className={`mt-2 position-absolute end-0 top-50 w-100 opacity-50 start-50 z-0 border border-1 border-dark ${esActivo ? 'bg-dark' : 'bg-secondary'}`}></div>
                     )}
 
-                    <div className={`mb-1
-                      ${esCompletado ? 'text-dark fw-bold' : 'text-secondary'
-                      }`}>
-                      <span className='fs-6 mx-2'>{estado.label}</span>
+                    <div className={`mb-1 ${esCompletado ? 'text-dark fw-bold' : 'text-secondary'}`}>
+                      <span className='fs-6 mx-2'>{paso}</span>
                     </div>
 
                     <div className="position-relative bg-white" style={{ zIndex: 1, display: 'inline-block', padding: '0 10px' }}>
@@ -95,7 +95,7 @@ export const PaginaDetalle = () => {
           <p className="text-center mt-5">Cargando pedido...</p>
         ) : pedido ? (
           <>
-            {pedido.estado !== process.env.REACT_APP_ESTADO_CANCELADO && (<h1 className='text-center m-4'>Gracias por tu compra!</h1>)}
+            {!isCancelado && (<h1 className='text-center m-4'>Gracias por tu compra!</h1>)}
 
             <div className='itemsConteiner'>
 

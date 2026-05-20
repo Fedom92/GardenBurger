@@ -12,6 +12,7 @@ const useAprobarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
             setValue("direccion", solicitud.cliente?.direccion || "");
             setValue("entreCalles", solicitud.cliente?.entreCalles || "");
             setValue("metodoPago", solicitud.cliente?.metodoPago || "");
+            setValue("solicitudID", solicitud.id);
 
 
             // Juntar observaciones de cada producto del carrito

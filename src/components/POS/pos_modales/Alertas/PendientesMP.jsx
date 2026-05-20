@@ -5,6 +5,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from "moment";
+import { ESTADOS } from "../../../../Utils/Constantes";
 
 const PendientesMP = ({ isOpen, onClose }) => {
     const { userData } = useAuth();
@@ -18,7 +19,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
         let initialLoad = true;
 
         const pedidosCollection = collection(db, "pedidos");
-        const q = query(pedidosCollection, where("estado", "==", process.env.REACT_APP_ESTADO_PENDIENTE_MP), orderBy("timestamp", "asc"));
+        const q = query(pedidosCollection, where("estado", "==", ESTADOS.PENDIENTE_MP), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const pedidos = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -50,7 +51,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
         try {
             const pedidoRef = doc(db, "pedidos", pedidoId);
             await updateDoc(pedidoRef, {
-                estado: process.env.REACT_APP_ESTADO_CAJA,
+                estado: ESTADO.OK_CAJA,
                 cajeroApruebaMPID: userData.id,
                 cajeroApruebaMP: userData.nombreCompleto,
                 cajeroApruebaMPTimestamp: serverTimestamp(),
@@ -82,7 +83,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
             try {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 await updateDoc(pedidoRef, {
-                    estado: process.env.REACT_APP_ESTADO_CANCELADO,
+                    estado: ESTADOS.CANCELADO,
                     cajeroCancelaMPID: userData.id,
                     cajeroCancelaMP: userData.nombreCompleto,
                     cajeroCancelaMPTimestamp: serverTimestamp(),

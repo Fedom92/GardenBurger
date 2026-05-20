@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
 import moment from "moment";
+import { ESTADOS } from "../../Utils/Constantes";
 
 const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const { userData } = useAuth();
@@ -16,7 +17,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
 
     const pedidosCollection = useRef(query(collection(db, "pedidos"),
-        where("estado", "==", process.env.REACT_APP_ESTADO_COCINA),
+        where("estado", "==", ESTADOS.COCINA),
         where("cocineroID", "==", userData.id)
     ));
 
@@ -84,7 +85,12 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
 
             pedidosCocinando.forEach(pedido => {
                 const pedidoRef = doc(db, "pedidos", pedido.id);
-                batch.update(pedidoRef, { estado: process.env.REACT_APP_ESTADO_DELIVERY });
+                batch.update(pedidoRef, { estado: ESTADOS.DELIVERY });
+
+                if (pedido.solicitudID) {
+                    const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
+                    batch.update(solicitudRef, { estado: ESTADOS.DELIVERY });
+                }
             });
 
             await batch.commit();

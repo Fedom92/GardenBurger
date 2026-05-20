@@ -68,7 +68,7 @@ src/
 │   ├── Productos/                  # ABM de productos y categorías
 │   └── Solicitudes/                # Menú público online para clientes
 ├── Utils/
-│   ├── Constantes.jsx              # CATEGORIAS_HAMBURGUESA, ESTADOS_SOLICITUDES, CANTIDAD_CARNES
+│   ├── Constantes.jsx              # CATEGORIAS_HAMBURGUESA, FLUJO_PUB_ESTADOS, CANTIDAD_CARNES, ESTADOS, SUBESTADOS_MOTODELIVERY
 │   ├── TablaGenerica.jsx           # Tabla reutilizable con búsqueda y ordenamiento
 │   └── AutocompleteGoogle.jsx      # Input con autocompletado de direcciones Google
 └── style/
@@ -141,7 +141,9 @@ El `CartContext` es el estado central del menú online y tiene lógica compleja:
 ### Categorías especiales en Constantes.jsx:
 - `CATEGORIAS_HAMBURGUESA = ["SIMPLE", "DOBLE", "TRIPLE"]`
 - `CANTIDAD_CARNES` → mapea categorías a cantidad de medallones (para el contador de cocina)
-- `ESTADOS_SOLICITUDES` → pipeline de estados
+- `FLUJO_PUB_ESTADOS` → orden de estados para el menú público
+- `ESTADOS` → pipeline de estados
+- `SUBESTADOS_MOTODELIVERY` → pipeline de estados
 
 ---
 
@@ -204,11 +206,11 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 
 ## Cosas a tener en cuenta al modificar
 
-1. Al agregar una nueva ruta admin, seguir el patrón `<RequireAuth><RequireAdmin><Componente /></RequireAdmin></RequireAuth>`
-2. Al crear un nuevo componente de ABM, usar `TablaGenerica` para la tabla
-3. Los estados de pedido deben coincidir exactamente con los strings de `ESTADOS_SOLICITUDES` en Constantes.jsx
+1. Al agregar una nueva ruta admin, seguir el patrón `<RequireAuth><RequireAdmin><Componente /></RequireAdmin></RequireAuth>` o recomendar el que se considere mejor
+2. Al crear un nuevo componente de ABM, tratar de usar `TablaGenerica` para la tabla
+3. Los estados de pedido deben coincidir exactamente con los strings de `ESTADOS`, `SUBESTADOS_MOTODELIVERY` y el orden definido en `FLUJO_PUB_ESTADOS` en Constantes.jsx
 4. El `getNextSequence` usa transacciones — no reemplazar por `getDocs` + incremento manual
-5. Firebase está configurado con `persistentLocalCache` para funcionar offline
+5. Firebase está configurado con `persistentLocalCache` para funcionar offline y para ahorrar operaciones de lectura
 6. La colección `solicitudes` es del menú público; `pedidos` es de la Caja interna
 7. Cosas pendientes para realizar:
     - Dashboard con estadísticas

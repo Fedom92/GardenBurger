@@ -6,6 +6,7 @@ import TablaGenerica from "../../Utils/TablaGenerica";
 import { useAuth } from "../../context/AuthContext";
 import { Modal } from 'react-bootstrap';
 import { getRangoJornada } from "../../Utils/fechaComercial";
+import { ESTADOS } from "../../Utils/Constantes";
 
 const HistorialPedidos = () => {
   const { userData } = useAuth();
@@ -16,7 +17,7 @@ const HistorialPedidos = () => {
   const { inicio, fin } = getRangoJornada(new Date());
 
   const pedidosCollection = useRef(query(collection(db, "pedidos"),
-    where("estado", "==", process.env.REACT_APP_ESTADO_FINAL),
+    where("estado", "==", ESTADOS.FINAL),
     where("timestamp", ">=", inicio),
     where("timestamp", "<=", fin),
     orderBy("timestamp", "desc")

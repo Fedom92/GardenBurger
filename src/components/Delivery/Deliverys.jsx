@@ -6,6 +6,7 @@ import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
 import moment from "moment";
+import { ESTADOS, SUBESTADOS_MOTODELIVERY } from "../../Utils/Constantes";
 
 const Deliverys = () => {
     const [pedidos, setPedidos] = useState([]);
@@ -14,7 +15,7 @@ const Deliverys = () => {
     const [metricasDelivery, setMetricasDelivery] = useState({});
     const [showMetricas, setShowMetricas] = useState(false);
 
-    const pedidosCollection = useRef(query(collection(db, "pedidos"), where("estado", "==", process.env.REACT_APP_ESTADO_DELIVERY)));
+    const pedidosCollection = useRef(query(collection(db, "pedidos"), where("estado", "==",ESTADOS.DELIVERY)));
     const deliverysCollection = useRef(query(collection(db, "deliverys"), where("activo", "==", true)));
 
     const getPedidos = useCallback((snapshot) => {
@@ -160,23 +161,23 @@ const Deliverys = () => {
             header: "Acciones",
             cell: ({ row }) => {
                 const pedido = row.original;
-                const estadoDelivery = pedido.estadoDelivery || "PENDIENTE"; //TODO: PENDIENTE??
+                const estadoDelivery = pedido.estadoDelivery || "";
                 const tieneAsignado = Boolean(pedido.deliveryAsignado);
 
                 return (
                     <>
                         <button
-                            className={`btn mx-1 ${estadoDelivery === process.env.REACT_APP_SUBESTADO_MOTO_INICIO ? "btn-warning" : "btn-outline-warning"}`}
+                            className={`btn mx-1 ${estadoDelivery === SUBESTADOS_MOTODELIVERY.INICIA ? "btn-warning" : "btn-outline-warning"}`}
                             title="MARCAR COMO SALIDA"
-                            onClick={() => marcarEstado(pedido.id, process.env.REACT_APP_SUBESTADO_MOTO_INICIO)}
+                            onClick={() => marcarEstado(pedido.id, SUBESTADOS_MOTODELIVERY.INICIA)}
                             disabled={!tieneAsignado}
                         >
                             <i className="fa-solid fa-motorcycle"></i>
                         </button>
                         <button
-                            className={`btn mx-1 ${estadoDelivery === process.env.REACT_APP_SUBESTADO_MOTO_FIN ? "btn-success" : "btn-outline-success"}`}
+                            className={`btn mx-1 ${estadoDelivery === SUBESTADOS_MOTODELIVERY.FIN ? "btn-success" : "btn-outline-success"}`}
                             title="MARCAR COMO VUELTA"
-                            onClick={() => marcarEstado(pedido.id, process.env.REACT_APP_SUBESTADO_MOTO_FIN)}
+                            onClick={() => marcarEstado(pedido.id, SUBESTADOS_MOTODELIVERY.FIN)}
                             disabled={!tieneAsignado}
                         >
                             <i className="fa-solid fa-check"></i>
@@ -225,8 +226,8 @@ const Deliverys = () => {
                                     camposBusqueda={["codigo", "direccion", "nombre"]}
                                     camposFiltros={["deliveryAsignado"]}
                                     rowClassName={(row) => {
-                                        if (row.estadoDelivery === process.env.REACT_APP_SUBESTADO_MOTO_INICIO) return 'bg-warning';
-                                        if (row.estadoDelivery === process.env.REACT_APP_SUBESTADO_MOTO_FIN) return 'bg-success';
+                                        if (row.estadoDelivery === SUBESTADOS_MOTODELIVERY.INICIA) return 'bg-warning';
+                                        if (row.estadoDelivery === SUBESTADOS_MOTODELIVERY.FIN) return 'bg-success';
                                         return '';
                                     }}
                                 />
