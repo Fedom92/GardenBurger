@@ -87,7 +87,7 @@ const Caja = () => {
                 montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
                 total: Number(totalFinal),
                 carrito: carrito,
-                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTE_MP : ESTADOS.OK_CAJA,
+                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTE_MP : ESTADOS.CONFIRMADO,
                 solicitudID: data.solicitudID || "",
                 hora: data.horarioEspecial || null,
                 timestamp: serverTimestamp()
@@ -95,8 +95,11 @@ const Caja = () => {
 
             if (data.solicitudID) {
                 const solicitudRef = doc(db, "solicitudes", data.solicitudID);
+                const nuevoEstadoSolicitud = data.metodoPago === "MP" || data.metodoPago === "%"
+                    ? ESTADOS.CONFIRMADO
+                    : ESTADOS.COCINA;
                 batch.update(solicitudRef, {
-                    estado: ESTADOS.COCINA,
+                    estado: nuevoEstadoSolicitud,
                     pedidoAsociadoID: pedidoRef.id,
                 });
             }

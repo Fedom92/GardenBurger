@@ -21,14 +21,13 @@ export const CANTIDAD_CARNES = {
 };
 
 export const ESTADOS = {
-  OK_CAJA:             "APROBADO",
+  CONFIRMADO:          "CONFIRMADO",
   PENDIENTE_MP:        "PENDIENTEMP",
   SOLICITUD_PENDIENTE: "PENDIENTE",
   COCINA:              "COCINA",
   DELIVERY:            "DELIVERY",
   FINAL:               "ENTREGADO",
   
-  CONFIRMADO:          "CONFIRMADO",
   CANCELADO:           "CANCELADO",
   ELIMINADO:           "ELIMINADO",
 };

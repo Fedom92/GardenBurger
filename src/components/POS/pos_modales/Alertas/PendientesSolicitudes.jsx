@@ -60,10 +60,10 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
 
             const solicitudRef = doc(db, "solicitudes", solicitudId);
             await updateDoc(solicitudRef, {
-                estado: process.env.REACT_APP_ESTADOPUB_SOLICITUD,
+                estado: ESTADOS.CONFIRMADO,
                 cajeroApruebaSolID: userData.id,
-                cajerApruebaSolo: userData.nombreCompleto,
-                cajerApruebaSolTimestamp: serverTimestamp(),
+                cajeroApruebaSol: userData.nombreCompleto,
+                cajeroApruebaSolTimestamp: serverTimestamp(),
             });
         } catch (error) {
             console.error('Error aprobando solicitud:', error);
@@ -92,7 +92,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
             try {
                 const solicitudRef = doc(db, "solicitudes", solicitudId);
                 await updateDoc(solicitudRef, {
-                    estado: process.env.REACT_APP_ESTADOPUB_CANCELADO,
+                    estado: ESTADOS.CANCELADO,
                     cajeroCancelaSolID: userData.id,
                     cajeroCancelaSol: userData.nombreCompleto,
                     cajeroCancelaSolTimestamp: serverTimestamp(),

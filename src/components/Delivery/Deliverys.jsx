@@ -1,14 +1,16 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, doc, query, getDocs, where } from "firebase/firestore";
+import { collection, updateDoc, doc, query, getDocs, where, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
 import moment from "moment";
 import { ESTADOS, SUBESTADOS_MOTODELIVERY } from "../../Utils/Constantes";
+import { useAuth } from "../../context/AuthContext";
 
 const Deliverys = () => {
+    const { userData } = useAuth();
     const [pedidos, setPedidos] = useState([]);
     const [deliverys, setDeliverys] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -81,15 +83,28 @@ const Deliverys = () => {
         try {
             const pedidoDoc = doc(db, 'pedidos', pedidoId);
             const deliverySel = deliverys.find(d => d.id === deliveryId) || "";
-            await updateDoc(pedidoDoc, {
-                deliveryAsignado: deliverySel.nombre,
-                deliveryID: deliverySel.id
-            });
+            
+            const updates = {
+                deliveryAsignado: deliverySel ? deliverySel.nombre : "",
+                deliveryID: deliverySel ? deliverySel.id : "",
+            };
+
+            if (deliverySel) {
+                updates.gestorDelivery = userData?.nombreCompleto || "";
+                updates.gestorDeliveryID = userData?.id || "";
+                updates.gestorDeliveryTimestamp = serverTimestamp();
+            } else {
+                updates.gestorDelivery = "";
+                updates.gestorDeliveryID = "";
+                updates.gestorDeliveryTimestamp = null;
+            }
+
+            await updateDoc(pedidoDoc, updates);
 
             setPedidos(prevPedidos =>
                 prevPedidos.map(pedido =>
                     pedido.id === pedidoId
-                        ? { ...pedido, deliveryAsignado: deliverySel ? deliverySel.nombre : "" }
+                        ? { ...pedido, ...updates }
                         : pedido
                 )
             );
@@ -101,12 +116,44 @@ const Deliverys = () => {
 
     const marcarEstado = async (pedidoId, nuevoEstado) => {
         try {
-            const pedidoDoc = doc(db, 'pedidos', pedidoId);
-            await updateDoc(pedidoDoc, { estadoDelivery: nuevoEstado });
+            const pedido = pedidos.find(p => p.id === pedidoId);
+            if (!pedido) return;
 
-            setPedidos(prevPedidos =>
-                prevPedidos.map(pedido => pedido.id === pedidoId ? { ...pedido, estadoDelivery: nuevoEstado } : pedido)
-            );
+            const pedidoDoc = doc(db, 'pedidos', pedidoId);
+            const updates = { estadoDelivery: nuevoEstado };
+
+            if (nuevoEstado === SUBESTADOS_MOTODELIVERY.INICIA) {
+                updates.deliverySalidaUser = userData?.nombreCompleto || "";
+                updates.deliverySalidaUserID = userData?.id || "";
+                updates.deliverySalidaTimestamp = serverTimestamp();
+            } else if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
+                updates.estado = ESTADOS.FINAL;
+                updates.deliveryFinUser = userData?.nombreCompleto || "";
+                updates.deliveryFinUserID = userData?.id || "";
+                updates.deliveryFinTimestamp = serverTimestamp();
+            }
+
+            await updateDoc(pedidoDoc, updates);
+
+            if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN && pedido.solicitudID) {
+                const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
+                await updateDoc(solicitudRef, {
+                    estado: ESTADOS.FINAL,
+                    cajeroEntregaSolID: userData?.id || "",
+                    cajeroEntregaSol: userData?.nombreCompleto || "",
+                    cajeroEntregaSolTimestamp: serverTimestamp(),
+                });
+            }
+
+            if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
+                setPedidos(prevPedidos => prevPedidos.filter(p => p.id !== pedidoId));
+                Swal.fire('¡Éxito!', 'Pedido entregado y finalizado con éxito.', 'success');
+            } else {
+                setPedidos(prevPedidos =>
+                    prevPedidos.map(p => p.id === pedidoId ? { ...p, ...updates } : p
+                ));
+                Swal.fire('¡Éxito!', 'Estado de salida registrado.', 'success');
+            }
         } catch (error) {
             console.error('Error actualizando estado:', error);
             Swal.fire('Error', 'No se pudo actualizar el estado', 'error');

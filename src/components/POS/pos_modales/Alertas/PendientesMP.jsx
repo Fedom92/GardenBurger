@@ -49,13 +49,21 @@ const PendientesMP = ({ isOpen, onClose }) => {
 
     const aprobarPedido = async (pedidoId) => {
         try {
+            const pedido = pedidosPendientes.find(p => p.id === pedidoId);
             const pedidoRef = doc(db, "pedidos", pedidoId);
             await updateDoc(pedidoRef, {
-                estado: ESTADO.OK_CAJA,
+                estado: ESTADOS.CONFIRMADO,
                 cajeroApruebaMPID: userData.id,
                 cajeroApruebaMP: userData.nombreCompleto,
                 cajeroApruebaMPTimestamp: serverTimestamp(),
             });
+
+            if (pedido?.solicitudID) {
+                const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
+                await updateDoc(solicitudRef, {
+                    estado: ESTADOS.COCINA,
+                });
+            }
         } catch (error) {
             console.error('Error aprobando pedido:', error);
             Swal.fire({
@@ -81,6 +89,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
 
         if (result.isConfirmed) {
             try {
+                const pedido = pedidosPendientes.find(p => p.id === pedidoId);
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 await updateDoc(pedidoRef, {
                     estado: ESTADOS.CANCELADO,
@@ -88,6 +97,16 @@ const PendientesMP = ({ isOpen, onClose }) => {
                     cajeroCancelaMP: userData.nombreCompleto,
                     cajeroCancelaMPTimestamp: serverTimestamp(),
                 });
+
+                if (pedido?.solicitudID) {
+                    const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
+                    await updateDoc(solicitudRef, {
+                        estado: ESTADOS.CANCELADO,
+                        cajeroCancelaSolID: userData.id,
+                        cajeroCancelaSol: userData.nombreCompleto,
+                        cajeroCancelaSolTimestamp: serverTimestamp(),
+                    });
+                }
             } catch (error) {
                 console.error('Error rechazando el pedido:', error);
                 Swal.fire({
