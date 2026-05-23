@@ -17,7 +17,7 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
         setSolicitudes([]);
 
         try {
-            const solicitudesCollection = collection(db, "solicitudes");
+            const solicitudesCollection = collection(db, "pedidos");
             const q = query(
                 solicitudesCollection,
                 where("cliente.telefono", ">=", telefonoBuscar.trim()),

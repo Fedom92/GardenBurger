@@ -86,11 +86,6 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
             pedidosCocinando.forEach(pedido => {
                 const pedidoRef = doc(db, "pedidos", pedido.id);
                 batch.update(pedidoRef, { estado: ESTADOS.DELIVERY });
-
-                if (pedido.solicitudID) {
-                    const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
-                    batch.update(solicitudRef, { estado: ESTADOS.DELIVERY });
-                }
             });
 
             await batch.commit();

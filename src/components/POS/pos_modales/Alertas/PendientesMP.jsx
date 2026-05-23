@@ -49,7 +49,6 @@ const PendientesMP = ({ isOpen, onClose }) => {
 
     const aprobarPedido = async (pedidoId) => {
         try {
-            const pedido = pedidosPendientes.find(p => p.id === pedidoId);
             const pedidoRef = doc(db, "pedidos", pedidoId);
             await updateDoc(pedidoRef, {
                 estado: ESTADOS.CONFIRMADO,
@@ -57,13 +56,6 @@ const PendientesMP = ({ isOpen, onClose }) => {
                 cajeroApruebaMP: userData.nombreCompleto,
                 cajeroApruebaMPTimestamp: serverTimestamp(),
             });
-
-            if (pedido?.solicitudID) {
-                const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
-                await updateDoc(solicitudRef, {
-                    estado: ESTADOS.COCINA,
-                });
-            }
         } catch (error) {
             console.error('Error aprobando pedido:', error);
             Swal.fire({
@@ -91,22 +83,15 @@ const PendientesMP = ({ isOpen, onClose }) => {
             try {
                 const pedido = pedidosPendientes.find(p => p.id === pedidoId);
                 const pedidoRef = doc(db, "pedidos", pedidoId);
-                await updateDoc(pedidoRef, {
+                
+                const updateData = {
                     estado: ESTADOS.CANCELADO,
                     cajeroCancelaMPID: userData.id,
                     cajeroCancelaMP: userData.nombreCompleto,
                     cajeroCancelaMPTimestamp: serverTimestamp(),
-                });
+                };
 
-                if (pedido?.solicitudID) {
-                    const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
-                    await updateDoc(solicitudRef, {
-                        estado: ESTADOS.CANCELADO,
-                        cajeroCancelaSolID: userData.id,
-                        cajeroCancelaSol: userData.nombreCompleto,
-                        cajeroCancelaSolTimestamp: serverTimestamp(),
-                    });
-                }
+                await updateDoc(pedidoRef, updateData);
             } catch (error) {
                 console.error('Error rechazando el pedido:', error);
                 Swal.fire({

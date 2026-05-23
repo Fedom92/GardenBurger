@@ -82,7 +82,7 @@ const Deliverys = () => {
     const asignarDelivery = async (pedidoId, deliveryId) => {
         try {
             const pedidoDoc = doc(db, 'pedidos', pedidoId);
-            const deliverySel = deliverys.find(d => d.id === deliveryId) || "";
+            const deliverySel = deliverys.find(d => d.id === deliveryId);
             
             const updates = {
                 deliveryAsignado: deliverySel ? deliverySel.nombre : "",
@@ -90,8 +90,8 @@ const Deliverys = () => {
             };
 
             if (deliverySel) {
-                updates.gestorDelivery = userData?.nombreCompleto || "";
-                updates.gestorDeliveryID = userData?.id || "";
+                updates.gestorDelivery = userData.nombreCompleto;
+                updates.gestorDeliveryID = userData.id;
                 updates.gestorDeliveryTimestamp = serverTimestamp();
             } else {
                 updates.gestorDelivery = "";
@@ -122,28 +122,14 @@ const Deliverys = () => {
             const pedidoDoc = doc(db, 'pedidos', pedidoId);
             const updates = { estadoDelivery: nuevoEstado };
 
-            if (nuevoEstado === SUBESTADOS_MOTODELIVERY.INICIA) {
-                updates.deliverySalidaUser = userData?.nombreCompleto || "";
-                updates.deliverySalidaUserID = userData?.id || "";
+            if (nuevoEstado === SUBESTADOS_MOTODELIVERY.SALIDA) {
                 updates.deliverySalidaTimestamp = serverTimestamp();
             } else if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
                 updates.estado = ESTADOS.FINAL;
-                updates.deliveryFinUser = userData?.nombreCompleto || "";
-                updates.deliveryFinUserID = userData?.id || "";
                 updates.deliveryFinTimestamp = serverTimestamp();
             }
 
             await updateDoc(pedidoDoc, updates);
-
-            if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN && pedido.solicitudID) {
-                const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
-                await updateDoc(solicitudRef, {
-                    estado: ESTADOS.FINAL,
-                    cajeroEntregaSolID: userData?.id || "",
-                    cajeroEntregaSol: userData?.nombreCompleto || "",
-                    cajeroEntregaSolTimestamp: serverTimestamp(),
-                });
-            }
 
             if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
                 setPedidos(prevPedidos => prevPedidos.filter(p => p.id !== pedidoId));
@@ -214,9 +200,9 @@ const Deliverys = () => {
                 return (
                     <>
                         <button
-                            className={`btn mx-1 ${estadoDelivery === SUBESTADOS_MOTODELIVERY.INICIA ? "btn-warning" : "btn-outline-warning"}`}
+                            className={`btn mx-1 ${estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA ? "btn-warning" : "btn-outline-warning"}`}
                             title="MARCAR COMO SALIDA"
-                            onClick={() => marcarEstado(pedido.id, SUBESTADOS_MOTODELIVERY.INICIA)}
+                            onClick={() => marcarEstado(pedido.id, SUBESTADOS_MOTODELIVERY.SALIDA)}
                             disabled={!tieneAsignado}
                         >
                             <i className="fa-solid fa-motorcycle"></i>
@@ -273,7 +259,7 @@ const Deliverys = () => {
                                     camposBusqueda={["codigo", "direccion", "nombre"]}
                                     camposFiltros={["deliveryAsignado"]}
                                     rowClassName={(row) => {
-                                        if (row.estadoDelivery === SUBESTADOS_MOTODELIVERY.INICIA) return 'bg-warning';
+                                        if (row.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA) return 'bg-warning';
                                         if (row.estadoDelivery === SUBESTADOS_MOTODELIVERY.FIN) return 'bg-success';
                                         return '';
                                     }}

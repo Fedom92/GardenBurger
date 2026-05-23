@@ -20,8 +20,8 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
         setIsLoading(true);
         let initialLoad = true;
 
-        const solicitudesCollection = collection(db, "solicitudes");
-        const q = query(solicitudesCollection, where("estado", "==", ESTADOS.SOLICITUD_PENDIENTE), orderBy("timestamp", "asc"));
+        const solicitudesCollection = collection(db, "pedidos");
+        const q = query(solicitudesCollection, where("estado", "==", ESTADOS.WEB_PENDIENTE), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const solicitudes = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -50,30 +50,13 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
     }, [isOpen, onClose]);
 
 
-    const aprobarSolicitud = async (solicitudId) => {
-        try {
-            const solicitud = solicitudesPendientes.find(s => s.id === solicitudId);
+    const aprobarSolicitud = (solicitudId) => {
+        const solicitud = solicitudesPendientes.find(s => s.id === solicitudId);
 
-            if (onAprobarSolicitud && solicitud) {
-                onAprobarSolicitud(solicitud);
-            }
-
-            const solicitudRef = doc(db, "solicitudes", solicitudId);
-            await updateDoc(solicitudRef, {
-                estado: ESTADOS.CONFIRMADO,
-                cajeroApruebaSolID: userData.id,
-                cajeroApruebaSol: userData.nombreCompleto,
-                cajeroApruebaSolTimestamp: serverTimestamp(),
-            });
-        } catch (error) {
-            console.error('Error aprobando solicitud:', error);
-            Swal.fire({
-                title: 'Error',
-                text: 'Error al aprobar la solicitud',
-                icon: 'error',
-                confirmButtonColor: '#dc3545',
-            });
+        if (onAprobarSolicitud && solicitud) {
+            onAprobarSolicitud(solicitud);
         }
+        onClose();
     };
 
     const rechazarSolicitud = async (solicitudId) => {
@@ -90,7 +73,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
 
         if (result.isConfirmed) {
             try {
-                const solicitudRef = doc(db, "solicitudes", solicitudId);
+                const solicitudRef = doc(db, "pedidos", solicitudId);
                 await updateDoc(solicitudRef, {
                     estado: ESTADOS.CANCELADO,
                     cajeroCancelaSolID: userData.id,

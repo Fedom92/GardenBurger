@@ -12,11 +12,11 @@ const useAprobarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
             setValue("direccion", solicitud.cliente?.direccion || "");
             setValue("entreCalles", solicitud.cliente?.entreCalles || "");
             setValue("metodoPago", solicitud.cliente?.metodoPago || "");
-            setValue("solicitudID", solicitud.id);
+            setValue("id", solicitud.id);
 
 
             // Juntar observaciones de cada producto del carrito
-            const obsProductos = (solicitud.productos || [])
+            const obsProductos = (solicitud.carrito || [])
                 .filter(p => p.observaciones)
                 .map(p => `${p.descripcion}: ${p.observaciones}`)
                 .join("\n");
@@ -36,8 +36,8 @@ const useAprobarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
             }
 
             // Agregar productos al carrito
-            if (solicitud.productos?.length > 0) {
-                setCarrito(solicitud.productos.map(producto => ({
+            if (solicitud.carrito?.length > 0) {
+                setCarrito(solicitud.carrito.map(producto => ({
                     ...producto,
                     cantidad: producto.cantidad || 1,
                     subtotal: (producto.cantidad || 1) * producto.precio

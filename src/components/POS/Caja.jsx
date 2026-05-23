@@ -26,7 +26,7 @@ import { ESTADOS } from '../../Utils/Constantes';
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
-        defaultValues: { direccion: "", latitud: "", longitud: "", solicitudID: "" }
+        defaultValues: { direccion: "", latitud: "", longitud: "", id: "" }
     });
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
@@ -68,7 +68,9 @@ const Caja = () => {
             const nuevoCodigo = await getNextSequence("pedidos");
             const batch = writeBatch(db);
 
-            const pedidoRef = doc(collection(db, "pedidos"));
+            const isWebOrder = !!data.id;
+            const pedidoRef = isWebOrder ? doc(db, "pedidos", data.id) : doc(collection(db, "pedidos"));
+            
             batch.set(pedidoRef, {
                 codigo: `${nuevoCodigo}-${userData.iniciales}`,
                 cajeroID: userData.id,
@@ -88,22 +90,10 @@ const Caja = () => {
                 total: Number(totalFinal),
                 carrito: carrito,
                 estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTE_MP : ESTADOS.CONFIRMADO,
-                solicitudID: data.solicitudID || "",
                 hora: data.horarioEspecial || null,
-                timestamp: serverTimestamp()
-            });
-
-            if (data.solicitudID) {
-                const solicitudRef = doc(db, "solicitudes", data.solicitudID);
-                const nuevoEstadoSolicitud = data.metodoPago === "MP" || data.metodoPago === "%"
-                    ? ESTADOS.CONFIRMADO
-                    : ESTADOS.COCINA;
-                batch.update(solicitudRef, {
-                    estado: nuevoEstadoSolicitud,
-                    pedidoAsociadoID: pedidoRef.id,
-                });
-            }
-
+                sucursal: process.env.REACT_APP_sucursal,
+                origen: isWebOrder ? "WEB" : "CAJA",
+            }, { merge: true });
 
             const { ref, stats: resumenData } = getResumenOperation({
                 metodoPago: data.metodoPago,

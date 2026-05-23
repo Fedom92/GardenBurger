@@ -31,8 +31,13 @@ Todas las vars empiezan con `REACT_APP_`:
 | `REACT_APP_apiKey` ... `REACT_APP_appId` | Config de Firebase |
 | `REACT_APP_admin` | Valor del rol administrador |
 | `REACT_APP_rolBloq` | Rol de usuario bloqueado |
-| `REACT_APP_rolCaja` | Rol cajero (hay un ejemplo comentado en App.js) |
+| `REACT_APP_rolCaja` | Rol cajero (aún no implementado y habrá otros) |
 | `REACT_APP_recargoMP` | % de recargo para Mercado Pago (ej: `10`) |
+| `REACT_APP_GOOGLE_MAPS_API_KEY` | Api Key de Google Maps para desplegable de direcciones |
+| `REACT_APP_BASE_LATITUD` | latitud de la sucursal |
+| `REACT_APP_BASE_LONGITUD` | longitud de la sucursal |
+| `REACT_APP_MAXKM` | kilometraje de cobertura maxima alrededor (`10`) |
+| `REACT_APP_horaAbre, REACT_APP_horaCierre, REACT_APP_sucursal` | info de negocio |
 
 **Nunca hardcodear estos valores.** Siempre usar `process.env.REACT_APP_*`.
 
@@ -96,8 +101,7 @@ src/
 | Colección | Descripción |
 |---|---|
 | `usuarios` | Usuarios del sistema con campo `rol` |
-| `pedidos` | Pedidos creados desde Caja |
-| `solicitudes` | Pedidos creados desde el menú online público |
+| `pedidos` | Pedidos creados, se pueden crear desde web pública (campo `origen`) o los cajeros directamente |
 | `productos` | Catálogo de productos con `visible`, `categoria`, `precio` |
 | `categorias` | Categorías ordenadas por `nroOrden` |
 | `clientes` | Registro de clientes para autocompletado en Caja |
@@ -113,9 +117,9 @@ Genera IDs secuenciales incrementales via transacción Firestore. Se usa para el
 
 ```
 Caja crea pedido
-    estado: "APROBADO" (efectivo) o "PENDIENTEMP" (MP), cuando es MP los cajeros deben cotejar en MercadoPago si fue realmente abonado y luego lo aprueban actualizando su estado a "APROBADO"
+    estado: "CONFIRMADO" (efectivo) o "PENDIENTEMP" (MP), cuando es MP los cajeros deben cotejar en MercadoPago si fue realmente abonado y luego lo aprueban actualizando su estado a "CONFIRMADO"
         ↓
-Cocina: PedidosEspera (estado: "APROBADO")
+Cocina: PedidosEspera (estado: "CONFIRMADO")
     → se seleccionan pedidos → se mandan a cocinar
         ↓
 Cocina: PedidosCocinando (estado: "COCINA")
@@ -211,10 +215,9 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 3. Los estados de pedido deben coincidir exactamente con los strings de `ESTADOS`, `SUBESTADOS_MOTODELIVERY` y el orden definido en `FLUJO_PUB_ESTADOS` en Constantes.jsx
 4. El `getNextSequence` usa transacciones — no reemplazar por `getDocs` + incremento manual
 5. Firebase está configurado con `persistentLocalCache` para funcionar offline y para ahorrar operaciones de lectura
-6. La colección `solicitudes` es del menú público; `pedidos` es de la Caja interna
-7. Cosas pendientes para realizar:
+6. Cosas pendientes para realizar:
     - Dashboard con estadísticas
     - Cierre del día con los números de ventas/finanzas
     - Módulo de auditoría de movimientos por usuario según una orden realizada
     - Mapa interactivo de pedidos por dirección leaflet
-8. Lo más importante de todo es tener en cuenta que Firebasee tiene grandes limitaciones de operaciones de lectura, por eso siempre trata de mantener una estructura o lógica que minimice la cantidad de consultas.
+7. Lo más importante de todo es tener en cuenta que Firebasee tiene grandes limitaciones de operaciones de lectura, por eso siempre trata de mantener una estructura o lógica que minimice la cantidad de consultas.

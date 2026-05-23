@@ -65,22 +65,14 @@ const EliminarTickets = ({ isOpen, onClose }) => {
         if (result.isConfirmed) {
             try {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
-                await updateDoc(pedidoRef, {
+                const updateData = {
                     estado: ESTADOS.ELIMINADO,
                     cajeroEliminaID: userData.id,
                     cajeroElimina: userData.nombreCompleto,
                     cajeroEliminaTimestamp: serverTimestamp(),
-                });
+                };
 
-                if (pedido?.solicitudID) {
-                    const solicitudRef = doc(db, "solicitudes", pedido.solicitudID);
-                    await updateDoc(solicitudRef, {
-                        estado: ESTADOS.CANCELADO,
-                        cajeroCancelaSolID: userData.id,
-                        cajeroCancelaSol: userData.nombreCompleto,
-                        cajeroCancelaSolTimestamp: serverTimestamp(),
-                    });
-                }
+                await updateDoc(pedidoRef, updateData);
 
                 // Actualizar el pedido local
                 setPedido(prev => prev ? { ...prev, estado: ESTADOS.ELIMINADO } : null);

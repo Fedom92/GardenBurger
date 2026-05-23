@@ -17,7 +17,7 @@ export const PaginaDetalle = () => {
   useEffect(() => {
     const fetchPedido = async () => {
       try {
-        const pedidoRef = doc(db, "solicitudes", id);
+        const pedidoRef = doc(db, "pedidos", id);
         const pedidoSnap = await getDoc(pedidoRef);
 
         if (pedidoSnap.exists()) {

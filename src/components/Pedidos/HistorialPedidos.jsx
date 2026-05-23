@@ -3,18 +3,17 @@ import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import "../../style/Main.css"
 import TablaGenerica from "../../Utils/TablaGenerica";
-import { useAuth } from "../../context/AuthContext";
 import { Modal } from 'react-bootstrap';
 import { getRangoJornada } from "../../Utils/fechaComercial";
 import { ESTADOS } from "../../Utils/Constantes";
+import AuditoriaPedido from "./AuditoriaPedido";
 
 const HistorialPedidos = () => {
-  const { userData } = useAuth();
-  const [, setRol] = useState("");
   const [pedidos, setPedidos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modalShowVerNotas, setModalShowVerNotas] = useState([false, ""]);
-  const { inicio, fin } = getRangoJornada(new Date());
+  const [auditoriaId, setAuditoriaId] = useState(null);
+  const { inicio, fin } = getRangoJornada();
 
   const pedidosCollection = useRef(query(collection(db, "pedidos"),
     where("estado", "==", ESTADOS.FINAL),
@@ -44,10 +43,6 @@ const HistorialPedidos = () => {
 
     fetchData();
   }, [getPedidos]);
-
-  useEffect(() => {
-    setRol(userData?.rol || "");
-  }, [userData]);
 
   const columnasPedidos = [
     { columnasBasicas: ["codigo", "nombre", "direccion", "telefono", "total", "timestamp"] },
@@ -114,6 +109,19 @@ const HistorialPedidos = () => {
         ) : "-";
       },
     },
+    {
+      id: "acciones",
+      header: "Acciones",
+      cell: ({ row }) => (
+        <button
+          className="btn btn-outline-dark btn-sm"
+          title="Ver auditoría"
+          onClick={() => setAuditoriaId(row.original.id)}
+        >
+          <i className="fa-solid fa-magnifying-glass" />
+        </button>
+      ),
+    },
   ];
 
   return (
@@ -174,6 +182,12 @@ const HistorialPedidos = () => {
           </Modal.Body>
         </Modal>
       )}
+
+      <AuditoriaPedido
+        pedidoId={auditoriaId}
+        isOpen={!!auditoriaId}
+        onClose={() => setAuditoriaId(null)}
+      />
     </>
   );
 };

@@ -9,7 +9,7 @@ const usePendientes = () => {
 
     useEffect(() => {
         const unsubSolicitudes = onSnapshot(
-            query(collection(db, "solicitudes"), where("estado", "==", ESTADOS.SOLICITUD_PENDIENTE), limit(1)),
+            query(collection(db, "pedidos"), where("estado", "==", ESTADOS.WEB_PENDIENTE), limit(1)),
             (snap) => setTieneSolicitudesPendientes(!snap.empty),
             (err) => console.error("Error solicitudes:", err)
         );

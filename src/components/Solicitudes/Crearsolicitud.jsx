@@ -49,7 +49,7 @@ const CrearSolicitud = () => {
   const comprar = (data) => {
     setProcesando(true);
 
-    const solicitudesRef = collection(db, "solicitudes");
+    const solicitudesRef = collection(db, "pedidos");
     const newDocRef = doc(solicitudesRef);
 
     const mensaje = `
@@ -72,9 +72,10 @@ const CrearSolicitud = () => {
 
     const solicitud = {
       cliente: data,
-      productos: carrito,
+      carrito: carrito,
       total: pagoSeleccionado === "MP" ? totalConRecargo : total,
-      estado: ESTADOS.SOLICITUD_PENDIENTE,
+      estado: ESTADOS.WEB_PENDIENTE,
+      origen: "WEB",
       timestamp: serverTimestamp(),
       mensajeWsp: mensajeCodificado
     }

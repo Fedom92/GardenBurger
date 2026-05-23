@@ -16,7 +16,7 @@ Pedidos creados desde la Caja interna.
   direccion: "Av. Corrientes 1234",   // string
   entreCalles: "Entre Callao y Pueyrredón", // string
   envio: {},                            // map de colección envios
-  estado: "APROBADO" | "PENDIENTEMP" | "COCINA" | "DELIVERY" | "ENTREGADO" | "CANCELADO",
+  estado: "PENDIENTE" | "CONFIRMADO" | "PENDIENTEMP" | "COCINA" | "DELIVERY" | "ENTREGADO" | "CANCELADO" | "ELIMINADO",
   gestorDelivery: "Nombre Gestor Delivery",                 // string, agrega datos del delivery gestor del pedido
   gestorDeliveryID: "uid_firebase",               // string, agrega datos del delivery gestor del pedido
   latitud: "-34.6037",                // string
@@ -25,15 +25,13 @@ Pedidos creados desde la Caja interna.
   montoEfectivo: 0                     // number: se completa con monto efectivo solo si metodoPago === "%"
   nombre: "Carlos López",             // string: nombre del cliente
   observaciones: "Sin cebolla",       // string
+  origen: "WEB" | "CAJA",           // string: indica el origen del pedido
   pagaCon: 2000,                       // number: con cuánto paga (para vuelto)
   telefono: "1155556666",             // string
   timestamp: Timestamp,                // serverTimestamp()
   total: 1850,                         // number
 }
 ```
-
-## Colección: `solicitudes`
-Pedidos del menú online público (CrearSolicitud.jsx).
 
 ```js
 {
@@ -83,7 +81,7 @@ Pedidos del menú online público (CrearSolicitud.jsx).
 {
   categoria: "DOBLE" | "SIMPLE" | "TRIPLE" | "BEBIDAS" | "EXTRA" | "POLLO CRISPY" | "NUGGETS" | "CAJA PAPAS" | ...,
   descripcion: "Hamburguesa Doble",
-  ingredientes: "",                   //importante para el menú público y Solicitudes públcas
+  ingredientes: "",                   //importante para el menú público
   oferta: true | false,             //indica si está en oferta
   precio: 1500,
   visible: true | false,
@@ -185,28 +183,46 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {    
-    match /solicitudes/{document=**} {
-     	allow create, read: if true;
-      allow update, delete: if request.auth != null && !isBloqueado();
-    }
+    match /pedidos/{document=**} {
+      allow create: if esCreacionPublicaValida();
+      allow read: if estaAutenticado() || esOrigenWeb();
+      allow update: if estaAutenticado() && !isBloqueado();
+      allow delete: if false;
+    }	
     
     match /productos/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null && !isBloqueado();
+      allow write: if estaAutenticado() && !isBloqueado();
     }
     
     match /categorias/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null && !isBloqueado();
+      allow write: if estaAutenticado() && !isBloqueado();
     }
         
     match /{document=**} {
-      allow read, write: if request.auth != null && !isBloqueado();
+      allow read, write: if estaAutenticado() && !isBloqueado();
     }
     
     function isBloqueado() {
       let userDoc = get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
-      return userDoc != null && userDoc.rol == "(Valor harcodeado igual al del .env)";
+      return userDoc != null && userDoc.rol == "Blo_JkR62qVmNz";
+    }
+    
+    function esCreacionPublicaValida() {
+      let data = request.resource.data;
+      return data.origen == "WEB"
+        && data.estado == "PENDIENTE"
+        && data.keys().hasAll(["cliente", "productos", "total", "estado", "origen", "timestamp"])
+        && !data.keys().hasAny(["cajeroID", "cocineroID", "deliveryID"]);
+    }
+    
+    function esOrigenWeb() {
+      return resource.data.origen == "WEB";
+    }
+    
+     function estaAutenticado() {
+      return request.auth != null;
     }
   }
 }
