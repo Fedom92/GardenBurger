@@ -9,13 +9,14 @@ import moment from "moment";
 import { ESTADOS, SUBESTADOS_MOTODELIVERY } from "../../Utils/Constantes";
 import { useAuth } from "../../context/AuthContext";
 
-const Deliverys = () => {
+const JefeDeliverys = () => {
     const { userData } = useAuth();
     const [pedidos, setPedidos] = useState([]);
     const [deliverys, setDeliverys] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [metricasDelivery, setMetricasDelivery] = useState({});
     const [showMetricas, setShowMetricas] = useState(false);
+    const [isAsignando, setIsAsignando] = useState(false);
 
     const pedidosCollection = useRef(query(collection(db, "pedidos"), where("estado", "==",ESTADOS.DELIVERY)));
     const deliverysCollection = useRef(query(collection(db, "deliverys"), where("activo", "==", true)));
@@ -80,37 +81,41 @@ const Deliverys = () => {
     }, [pedidos, deliverys]);
 
     const asignarDelivery = async (pedidoId, deliveryId) => {
+        setIsAsignando(true);
         try {
             const pedidoDoc = doc(db, 'pedidos', pedidoId);
             const deliverySel = deliverys.find(d => d.id === deliveryId);
-            
-            const updates = {
-                deliveryAsignado: deliverySel ? deliverySel.nombre : "",
-                deliveryID: deliverySel ? deliverySel.id : "",
-            };
 
-            if (deliverySel) {
-                updates.gestorDelivery = userData.nombreCompleto;
-                updates.gestorDeliveryID = userData.id;
-                updates.gestorDeliveryTimestamp = serverTimestamp();
-            } else {
-                updates.gestorDelivery = "";
-                updates.gestorDeliveryID = "";
-                updates.gestorDeliveryTimestamp = null;
-            }
+            const updates = deliverySel
+                ? {
+                    deliveryAsignado: deliverySel.nombre,
+                    deliveryID: deliverySel.id,
+
+                    gestorDelivery: userData.nombreCompleto,
+                    gestorDeliveryID: userData.id,
+                    gestorDeliveryTimestamp: serverTimestamp(),
+                }
+                : {
+                    deliveryAsignado: "",
+                    deliveryID: "",
+                    
+                    gestorDelivery: "",
+                    gestorDeliveryID: "",
+                    gestorDeliveryTimestamp: null,
+                };
 
             await updateDoc(pedidoDoc, updates);
 
             setPedidos(prevPedidos =>
                 prevPedidos.map(pedido =>
-                    pedido.id === pedidoId
-                        ? { ...pedido, ...updates }
-                        : pedido
+                    pedido.id === pedidoId ? { ...pedido, ...updates } : pedido
                 )
             );
         } catch (error) {
             console.error('Error asignando delivery:', error);
             Swal.fire('Error', 'No se pudo asignar el delivery', 'error');
+        } finally {
+            setIsAsignando(false);
         }
     };
 
@@ -178,6 +183,8 @@ const Deliverys = () => {
                         className="form-select form-select-sm"
                         value={selectedId}
                         onChange={(e) => asignarDelivery(row.original.id, e.target.value)}
+                        disabled={isAsignando}
+                        title={isAsignando ? "Guardando..." : undefined}
                     >
                         <option value="">Sin asignar</option>
                         {deliverys.map(delivery => (
@@ -317,4 +324,4 @@ const Deliverys = () => {
     );
 }
 
-export default Deliverys;
+export default JefeDeliverys;

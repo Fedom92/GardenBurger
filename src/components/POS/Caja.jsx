@@ -89,10 +89,11 @@ const Caja = () => {
                 montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
                 total: Number(totalFinal),
                 carrito: carrito,
-                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTE_MP : ESTADOS.CONFIRMADO,
+                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTEMP : ESTADOS.CONFIRMADO,
                 hora: data.horarioEspecial || null,
                 sucursal: process.env.REACT_APP_sucursal,
                 origen: isWebOrder ? "WEB" : "CAJA",
+                timestamp: serverTimestamp(),
             }, { merge: true });
 
             const { ref, stats: resumenData } = getResumenOperation({

@@ -1,7 +1,7 @@
 # GardenBurger — Instrucciones de Proyecto para Claude
 
 ## ¿Qué es esto?
-Sistema de gestión integral para una hamburguesería. Incluye punto de venta (POS), cocina, delivery, menú online para clientes y panel de administración. Es una SPA en React con Firebase como backend. Aún está pendiente el desarrollo de panel estadísticas, mapa interactivo de pedidos por direccion, cierre del día con los números de ventas/finanzas y un modulo de auditoría de movimientos por usuario según una orden realizada.
+Sistema de gestión integral para una hamburguesería. Incluye punto de venta (POS), cocina, delivery, menú online para clientes y panel de administración. Es una SPA en React con Firebase como backend. Aún está pendiente el desarrollo de panel estadísticas, mapa interactivo de pedidos por direccion, cierre del día con los números de ventas/finanzas.
 
 ---
 
@@ -221,3 +221,22 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
     - Módulo de auditoría de movimientos por usuario según una orden realizada
     - Mapa interactivo de pedidos por dirección leaflet
 7. Lo más importante de todo es tener en cuenta que Firebasee tiene grandes limitaciones de operaciones de lectura, por eso siempre trata de mantener una estructura o lógica que minimice la cantidad de consultas.
+
+## Test y Pendientes (TODO)
+1) Cocina: 
+    -Arreglar alto ventanas
+    -Testear impresiones
+
+2) Delivery
+    -Lógica Nueva
+
+3) Modificar estadísticas Viejas agregar al grafico combos
+
+4) Estadisticas Nuevas
+
+5) Mapa Fachero Lafe
+
+6) Testear tema un panel para dos estadisticas simples
+    -Numeros Importantes
+    -Combos
+

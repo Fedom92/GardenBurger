@@ -56,7 +56,7 @@ const Navigation = () => {
         const rutasQueAbrenSubmenu = ["/miPerfil", "/admin"];
         setOpenConfig(rutasQueAbrenSubmenu.includes(location.pathname));
 
-        const rutasQueAbrenSubmenuDeliverys = ["/gestion-deliverys", "/delivery-pedidos"];
+        const rutasQueAbrenSubmenuDeliverys = ["/gestion-motodeliverys", "/jefe-deliverys"];
         setOpenDeliverys(rutasQueAbrenSubmenuDeliverys.includes(location.pathname));
 
         const rutasQueAbrenSubmenuEstadisticas = ["/estadisticas-viejas"];
@@ -110,8 +110,8 @@ const Navigation = () => {
                                     <Nav title="Deliverys" Icon={FaMotorcycle} />
                                 </div>
                                 <div className="sidebar-content">
-                                    <Link to="/gestion-deliverys" className="text-decoration-none link-light"><Nav title="Gestion Personal" Icon={FaUsers} /></Link>
-                                    <Link to="/delivery-pedidos" className="text-decoration-none link-light"><Nav title="Entregas" Icon={FaPeopleCarry} /></Link>
+                                    <Link to="/gestion-motodeliverys" className="text-decoration-none link-light"><Nav title="Gestion Personal" Icon={FaUsers} /></Link>
+                                    <Link to="/jefe-deliverys" className="text-decoration-none link-light"><Nav title="Entregas" Icon={FaPeopleCarry} /></Link>
                                 </div>
                             </div>
                         </div>

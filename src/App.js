@@ -11,7 +11,7 @@ import Navigation from "./Login_Navs/Navigation"
 import CrearSolicitud from "./components/Solicitudes/Crearsolicitud";
 import Menu from "./components/Solicitudes/Menu.jsx";
 import Caja from "./components/POS/Caja";
-import Deliverys from "./components/Delivery/Deliverys";
+import JefeDeliverys from "./components/Delivery/JefeDeliverys";
 import PersonalDeliverys from "./components/Delivery/GestionPersonal/PersonalDeliverys";
 import Clientes from "./components/Clientes/Clientes";
 import Cocina from "./components/Cocina/Cocina";
@@ -93,8 +93,8 @@ function App() {
             <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
             <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
             <Route path="/pedidos-caja" element={<RequireAuth><RequireAdmin><Caja /></RequireAdmin></RequireAuth>} />
-            <Route path="/gestion-deliverys" element={<RequireAuth><RequireAdmin><PersonalDeliverys /></RequireAdmin></RequireAuth>} />
-            <Route path="/delivery-pedidos" element={<RequireAuth><RequireAdmin><Deliverys /></RequireAdmin></RequireAuth>} />
+            <Route path="/gestion-motodeliverys" element={<RequireAuth><RequireAdmin><PersonalDeliverys /></RequireAdmin></RequireAuth>} />
+            <Route path="/jefe-deliverys" element={<RequireAuth><RequireAdmin><JefeDeliverys /></RequireAdmin></RequireAuth>} />
             <Route path="/gestion-cocina" element={<RequireAuth><RequireAdmin><Cocina /></RequireAdmin></RequireAuth>} />
             <Route path="/historial-pedidos" element={<RequireAuth><RequireAdmin><HistorialPedidos /></RequireAdmin></RequireAuth>} />
             <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />

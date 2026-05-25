@@ -15,7 +15,7 @@ const usePendientes = () => {
         );
 
         const unsubPedidos = onSnapshot(
-            query(collection(db, "pedidos"), where("estado", "==", ESTADOS.PENDIENTE_MP), limit(1)),
+            query(collection(db, "pedidos"), where("estado", "==", ESTADOS.PENDIENTEMP), limit(1)),
             (snap) => setTienePendientesMP(!snap.empty),
             (err) => console.error("Error Pendientes MP:", err)
         );

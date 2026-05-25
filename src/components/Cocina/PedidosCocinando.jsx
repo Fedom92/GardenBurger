@@ -5,6 +5,7 @@ import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
+import VerPedidoModal from './VerPedidoModal';
 import moment from "moment";
 import { ESTADOS } from "../../Utils/Constantes";
 
@@ -12,6 +13,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const { userData } = useAuth();
     const [ticketVisible, setTicketVisible] = useState(false);
     const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
+    const [pedidoParaVer, setPedidoParaVer] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [procesando, setProcesando] = useState(false);
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
@@ -64,16 +66,20 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
         setTicketVisible(true);
     };
 
+    const imprimirTodos = () => {
+        setPedidoParaImprimir(null);
+        setTicketVisible(true);
+    };
+
     const marcarTodosComoCocinado = async () => {
         if (pedidosCocinando.length === 0) return;
 
         const result = await Swal.fire({
-            title: '¿Estás seguro de marcar Todos como cocinados?',
+            title: '¿Estás seguro de Cocinar Todos?',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#198754',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, marcar como cocinado',
+            confirmButtonColor: 'green',
+            confirmButtonText: 'Aceptar',
             cancelButtonText: 'Cancelar'
         });
 
@@ -125,12 +131,6 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
 
     return (
         <>
-            {ticketVisible && (
-                <TicketImpresion
-                    pedido={pedidoParaImprimir}
-                    onClose={cerrarTicket}
-                />
-            )}
             <section className="card p-3" id="cocinando">
                 {isLoading ? (
                     <div className="text-center">
@@ -141,13 +141,13 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                         <div className="d-flex justify-content-end align-items-center mb-3">
 
                             <div className="d-flex gap-2">
-                                {<button
+                                <button
                                     className="btn btn-outline-primary"
-                                    //onClick={imprimirTodos}
+                                    onClick={imprimirTodos}
                                     disabled={pedidosCocinando.length === 0}
                                 >
                                     Imprimir Todos
-                                </button>}
+                                </button>
                                 <button
                                     className="btn btn-success"
                                     onClick={marcarTodosComoCocinado}
@@ -158,39 +158,53 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                             </div>
                         </div>
 
-                        <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2">
-                            {pedidosCocinando.map(pedido => (
-                                <div className="col" key={pedido.id}>
-                                    <div className="card border border-warning">
-                                        <div className="card-header bg-warning bg-opacity-25">
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <strong>{moment(pedido.timestamp.toDate()).format("HH:mm")}</strong>
-                                                <span className="badge bg-dark">{pedido.codigo}</span>
-                                            </div>
-                                            <h6 className="mb-0">{pedido.nombre}</h6>
-                                        </div>
+                        <div className="row row-col-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2">
+                            {pedidosCocinando.map(pedido => {
+                                const productosVisibles = pedido.carrito.slice(0, 8);
+                                const hayMasProductos = pedido.carrito.length > 8;
 
-                                        <div className="card-body d-flex flex-column">
-                                            <div>
-                                                {pedido.carrito.map((item, i) => (
-                                                    <div key={i} className="d-flex justify-content-between small mt-2">
-                                                        <span>{item.cantidad}x {item.descripcion}</span>
-                                                    </div>
-                                                ))}
+                                return (
+                                    <div className="col" key={pedido.id}>
+                                        <div className="card border border-warning h-100">
+                                            <div className="card-header bg-warning bg-opacity-25">
+                                                <div className="d-flex justify-content-between align-items-center">
+                                                    <strong>{moment(pedido.timestamp?.toDate()).format("HH:mm")}</strong>
+                                                    <span className="badge bg-dark fs-5 p-2">{pedido.codigo}</span>
+                                                </div>
+                                                <h6 className="mb-0">{pedido.nombre}</h6>
                                             </div>
-                                        </div>
 
-                                        <div className="card-footer">
-                                            <button
-                                                className="btn btn-outline-primary btn-sm w-100"
-                                                onClick={() => imprimirPedido(pedido)}
-                                            >
-                                                Imprimir Individual
-                                            </button>
+                                            <div className="card-body">
+                                                <div className="small d-flex flex-column gap-1 text-start">
+                                                    {productosVisibles.map((item, i) => (
+                                                        <div key={i} className={item.categoria === 'EXTRA' ? 'ps-3 text-muted' : ''}>
+                                                            {item.cantidad}x {item.descripcion}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {hayMasProductos && (
+                                                    <div className="text-muted small fst-italic mt-1">Mas...</div>
+                                                )}
+                                            </div>
+
+                                            <div className="card-footer d-flex gap-1">
+                                                <button
+                                                    className="btn btn-outline-primary btn-sm flex-grow-1"
+                                                    onClick={() => imprimirPedido(pedido)}
+                                                >
+                                                    Imprimir Solo
+                                                </button>
+                                                <button
+                                                    className="btn btn-warning btn-sm px-3"
+                                                    onClick={() => setPedidoParaVer(pedido)}
+                                                >
+                                                    Ver
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {pedidosCocinando.length === 0 && (
@@ -201,6 +215,21 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                     </>
                 )}
             </section>
+
+            {ticketVisible && (
+                <TicketImpresion
+                    pedido={pedidoParaImprimir}
+                    pedidos={pedidoParaImprimir ? null : pedidosCocinando}
+                    onClose={cerrarTicket}
+                />
+            )}
+
+            {pedidoParaVer && (
+                <VerPedidoModal
+                    pedido={pedidoParaVer}
+                    onClose={() => setPedidoParaVer(null)}
+                />
+            )}
         </>
     );
 };

@@ -19,7 +19,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
         let initialLoad = true;
 
         const pedidosCollection = collection(db, "pedidos");
-        const q = query(pedidosCollection, where("estado", "==", ESTADOS.PENDIENTE_MP), orderBy("timestamp", "asc"));
+        const q = query(pedidosCollection, where("estado", "==", ESTADOS.PENDIENTEMP), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const pedidos = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -81,7 +81,6 @@ const PendientesMP = ({ isOpen, onClose }) => {
 
         if (result.isConfirmed) {
             try {
-                const pedido = pedidosPendientes.find(p => p.id === pedidoId);
                 const pedidoRef = doc(db, "pedidos", pedidoId);
                 
                 const updateData = {

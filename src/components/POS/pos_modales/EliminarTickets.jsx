@@ -168,7 +168,7 @@ const EliminarTickets = ({ isOpen, onClose }) => {
                             </h6>
                             <div className="d-flex align-items-center gap-2">
                                 <small className="text-body-secondary">
-                                    {moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
+                                    {moment(pedido.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
                                 </small>
                             </div>
                         </div>

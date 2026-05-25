@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebaseConfig/firebase";
+import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import moment from "moment";
-import { ESTADOS } from "./Constantes";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 

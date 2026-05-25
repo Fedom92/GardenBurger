@@ -321,7 +321,6 @@ tbody tr.hide td p {
 }
 
 .card-body {
-  height: 30vh;
   background-color: var(--color-fondo);
 }
 
@@ -493,11 +492,7 @@ select {
   }
 }
 
-.badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-}
+
 
 /*<!------------Termina Estilo UpNav---------------->*/
 

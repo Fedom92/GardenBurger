@@ -154,32 +154,40 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                     </div>
 
                     <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2">
-                        {pedidosEspera.map(pedido => (
-                            <div className="col" key={pedido.id}>
-                                <div
-                                    className={`card border ${selectedPedidos.includes(pedido.id)
-                                        ? 'border-danger bg-danger bg-opacity-10'
-                                        : 'border-secondary'}`}
-                                    onClick={() => togglePedidoSelection(pedido.id)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <div className="card-body p-2 d-flex flex-column">
-                                        <div className="d-flex justify-content-between align-items-start mb-1">
-                                            <span className="badge bg-dark">{pedido.codigo}</span>
-                                            <small className="text-body-secondary">{moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}</small>
-                                        </div>
-                                        <h6 className="mb-2 text-truncate">{pedido.nombre}</h6>
-                                        <div className="m-auto">
-                                            {pedido.carrito.map((item, i) => (
-                                                <div key={i} className="d-flex justify-content-between small">
-                                                    <span>{item.cantidad}x {item.descripcion}</span>
-                                                </div>
-                                            ))}
+                        {pedidosEspera.map((pedido) => {
+                            const productosVisibles = pedido.carrito.slice(0, 6);
+                            const hayMasProductos = pedido.carrito.length > 6;
+
+                            return (
+                                <div className="col" key={pedido.id}>
+                                    <div
+                                        className={`card h-100 border ${selectedPedidos.includes(pedido.id)
+                                            ? 'border-danger bg-danger bg-opacity-10'
+                                            : 'border-secondary'}`}
+                                        onClick={() => togglePedidoSelection(pedido.id)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <div className="card-body p-2 d-flex flex-column">
+                                            <div className="d-flex justify-content-between align-items-start mb-1">
+                                                <span className="badge bg-dark fs-5 m-0">{pedido.codigo}</span>
+                                                <small className="text-body-secondary">{moment(pedido.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}</small>
+                                            </div>
+                                            <h6 className="mb-2 text-truncate">{pedido.nombre}</h6>
+                                            <div className="small d-flex flex-column gap-1 text-start">
+                                                {productosVisibles.map((item, i) => (
+                                                    <div key={i} className={item.categoria === 'EXTRA' ? 'ps-3 text-muted' : ''}>
+                                                        {item.cantidad}x {item.descripcion}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {hayMasProductos && (
+                                                <div className="text-muted small fst-italic mt-1">Mas...</div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {pedidosEspera.length === 0 && (

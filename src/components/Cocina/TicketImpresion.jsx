@@ -3,8 +3,11 @@ import './TicketImpresion.css';
 import icono from "../../img/logo_blanco_corto.webp";
 import moment from "moment";
 
-const TicketImpresion = ({ pedido, onClose }) => {
-    if (!pedido) return null;
+const TicketImpresion = ({ pedido, pedidos, onClose }) => {
+    const isMultiple = Array.isArray(pedidos);
+    const list = isMultiple ? pedidos : (pedido ? [pedido] : []);
+
+    if (list.length === 0) return null;
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('es-AR', {
@@ -34,15 +37,27 @@ const TicketImpresion = ({ pedido, onClose }) => {
         // Obtener el contenido del ticket
         const contenidoTicket = document.getElementById('ticket-content');
 
+        // Obtener los estilos del documento actual
+        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+            .map(el => el.outerHTML)
+            .join('\n');
+
         // Crear el HTML completo para la ventana de impresión
         const htmlCompleto = `
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Ticket - ${pedido.codigo}</title>
+                <title>${isMultiple ? 'Todos los Pedidos' : `Ticket - ${pedido?.codigo || 'Multi'}`}</title>
+                ${styles}
+                <style>
+                    body { margin: 0; padding: 10px; }
+                    @media print {
+                        .ticket-single-print { page-break-inside: avoid; }
+                    }
+                </style>
             </head>
             <body>
-                ${contenidoTicket.innerHTML}
+                ${contenidoTicket.outerHTML}
             </body>
             </html>
         `;
@@ -51,11 +66,11 @@ const TicketImpresion = ({ pedido, onClose }) => {
         ventanaImpresion.document.write(htmlCompleto);
         ventanaImpresion.document.close();
 
-        // Esperar a que se cargue el contenido y luego imprimir
-        ventanaImpresion.onload = () => {
+        // Esperar un breve momento para asegurar renderizado correcto antes de imprimir
+        setTimeout(() => {
             ventanaImpresion.print();
             ventanaImpresion.close();
-        };
+        }, 300);
     };
 
     return (
@@ -74,82 +89,86 @@ const TicketImpresion = ({ pedido, onClose }) => {
                 </div>
 
                 <div className="ticket-paper" id="ticket-content">
-                    {/* Header del Ticket */}
-                    <div className="ticket-header-section">
-                        <div className="ticket-number">
-                            Ticket# {pedido.codigo} - {moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
-                        </div>
-                        <div className="customer-name">{pedido.nombre}</div>
-                        <div className="delivery-address-bold">{pedido.direccion}</div>
-                        <div className="delivery-address-detail">{pedido.entrecalles}</div>
-                        <div className="phone-number">{pedido.telefono}</div>
-                    </div>
-
-                    {/* Línea separadora */}
-                    <div className="ticket-separator"></div>
-
-                    {/* Encabezados de la tabla */}
-                    <div className="ticket-table-header">
-                        <div className="ticket-col-cant">Cant</div>
-                        <div className="ticket-col-desc">Descripcion</div>
-                        <div className="ticket-col-subtotal">Subtotal</div>
-                    </div>
-
-                    {/* Línea separadora */}
-                    <div className="ticket-separator"></div>
-
-                    {/* Items del pedido */}
-                    <div className="ticket-items">
-                        {pedido.carrito.map((item, index) => (
-                            <div key={index} className="ticket-item">
-                                <div className="ticket-col-cant">{item.cantidad}</div>
-                                <div className="ticket-col-desc">{item.descripcion}</div>
-                                <div className="ticket-col-subtotal">{formatPrice(item.subtotal)}</div>
+                    {list.map((p, idx) => (
+                        <div key={p.id || idx} className="ticket-single-print" style={idx > 0 ? { marginTop: '40px', borderTop: '2px dashed #000', paddingTop: '40px', pageBreakBefore: 'always' } : {}}>
+                            {/* Header del Ticket */}
+                            <div className="ticket-header-section">
+                                <div className="ticket-number">
+                                    Ticket# {p.codigo} - {moment(p.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
+                                </div>
+                                <div className="customer-name">{p.nombre}</div>
+                                <div className="delivery-address-bold">{p.direccion}</div>
+                                <div className="delivery-address-detail">{p.entrecalles}</div>
+                                <div className="phone-number">{p.telefono}</div>
                             </div>
-                        ))}
-                    </div>
 
-                    {/* Observaciones */}
-                    {pedido.observaciones && (
-                        <div className="ticket-observations mt-3">
-                            {pedido.observaciones}
-                        </div>
-                    )}
+                            {/* Línea separadora */}
+                            <div className="ticket-separator"></div>
 
-                    {/* Línea separadora */}
-                    <div className="ticket-separator"></div>
-
-                    {/* Resumen y pago */}
-                    <div className="ticket-summary">
-                        <div className="delivery-info">
-                            Envio {pedido.envio?.zona_envio} : {formatPrice(pedido.envio?.costo_envio || 0)}
-                        </div>
-                        <div className="total-amount">
-                            Total: {formatPrice(pedido.total)}
-                        </div>
-                        <div className="payment-method">
-                            Metodo Pago: {formatMetodoPago(pedido.metodoPago)}
-                        </div>
-                    </div>
-
-                    {/* Línea separadora */}
-                    <div className="ticket-separator"></div>
-
-                    {/* Footer del ticket */}
-                    <div className="ticket-footer">
-                        <div className="logo-section">
-                            <div className="logo-circle">
-                                <img src={icono} alt="logo" className="logo-burger" />
+                            {/* Encabezados de la tabla */}
+                            <div className="ticket-table-header">
+                                <div className="ticket-col-cant">Cant</div>
+                                <div className="ticket-col-desc">Descripcion</div>
+                                <div className="ticket-col-subtotal">Subtotal</div>
                             </div>
-                            <div className="business-name">
-                                <div className="business-name-main">GARDEN BURGER</div>
-                                <div className="business-name-sub">HAMBURGUESERIA</div>
+
+                            {/* Línea separadora */}
+                            <div className="ticket-separator"></div>
+
+                            {/* Items del pedido */}
+                            <div className="ticket-items">
+                                {p.carrito.map((item, index) => (
+                                    <div key={index} className="ticket-item">
+                                        <div className="ticket-col-cant">{item.cantidad}</div>
+                                        <div className="ticket-col-desc">{item.descripcion}</div>
+                                        <div className="ticket-col-subtotal">{formatPrice(item.subtotal)}</div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Observaciones */}
+                            {p.observaciones && (
+                                <div className="ticket-observations mt-3">
+                                    {p.observaciones}
+                                </div>
+                            )}
+
+                            {/* Línea separadora */}
+                            <div className="ticket-separator"></div>
+
+                            {/* Resumen y pago */}
+                            <div className="ticket-summary">
+                                <div className="delivery-info">
+                                    Envio {p.envio?.zona_envio} : {formatPrice(p.envio?.costo_envio || 0)}
+                                </div>
+                                <div className="total-amount">
+                                    Total: {formatPrice(p.total)}
+                                </div>
+                                <div className="payment-method">
+                                    Metodo Pago: {formatMetodoPago(p.metodoPago)}
+                                </div>
+                            </div>
+
+                            {/* Línea separadora */}
+                            <div className="ticket-separator"></div>
+
+                            {/* Footer del ticket */}
+                            <div className="ticket-footer">
+                                <div className="logo-section">
+                                    <div className="logo-circle">
+                                        <img src={icono} alt="logo" className="logo-burger" />
+                                    </div>
+                                    <div className="business-name">
+                                        <div className="business-name-main">GARDEN BURGER</div>
+                                        <div className="business-name-sub">HAMBURGUESERIA</div>
+                                    </div>
+                                </div>
+                                <div className="thank-you">
+                                    Gracias por su compra!
+                                </div>
                             </div>
                         </div>
-                        <div className="thank-you">
-                            Gracias por su compra!
-                        </div>
-                    </div>
+                    ))}
                 </div>
             </div>
         </div>
