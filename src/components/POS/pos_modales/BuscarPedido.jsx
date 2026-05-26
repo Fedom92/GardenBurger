@@ -3,44 +3,42 @@ import { collection, query, getDocs, where, limit, orderBy } from "firebase/fire
 import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import moment from 'moment';
+import { ESTADOS } from "../../../Utils/Constantes";
 
-const BuscarSolicitud = ({ isOpen, onClose }) => {
-    const [solicitudes, setSolicitudes] = useState([]);
+const BuscarPedido = ({ isOpen, onClose }) => {
+    const [pedidos, setPedidos] = useState([]);
     const [telefonoBuscar, setTelefonoBuscar] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [errorBusqueda, setErrorBusqueda] = useState("");
 
-    // Función para buscar solicitudes por teléfono
-    const buscarSolicitudes = async () => {
+    // Función para buscar pedidos por teléfono
+    const buscarPedidos = async () => {
         setIsLoading(true);
         setErrorBusqueda("");
-        setSolicitudes([]);
+        setPedidos([]);
 
         try {
-            const solicitudesCollection = collection(db, "pedidos");
+            const pedidosCollection = collection(db, "pedidos");
             const q = query(
-                solicitudesCollection,
-                where("cliente.telefono", ">=", telefonoBuscar.trim()),
-                where("cliente.telefono", "<=", telefonoBuscar.trim() + '\uf8ff'),
-                orderBy("timestamp", "asc"),
+                pedidosCollection,
+                where("telefono", "==", telefonoBuscar.trim()),
+                orderBy("timestamp", "desc"),
                 limit(10)
             );
 
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                setErrorBusqueda(`No se encontraron solicitudes.`);
+                setErrorBusqueda(`No se encontraron pedidos.`);
             } else {
-                const solicitudesEncontradas = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
-                setSolicitudes(solicitudesEncontradas);
+                const pedidosEncontrados = querySnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(p => p.estado !== ESTADOS.WEB_PENDIENTE);
+                setPedidos(pedidosEncontrados);
             }
         } catch (error) {
-            console.error('Error buscando solicitudes:', error);
-            setErrorBusqueda('Error al buscar la solicitud');
+            console.error('Error buscando pedido:', error);
+            setErrorBusqueda('Error al buscar el pedido');
         } finally {
             setIsLoading(false);
         }
@@ -48,7 +46,7 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
 
     // Limpiar el estado cuando se cierra el modal
     const handleClose = () => {
-        setSolicitudes([]);
+        setPedidos([]);
         setTelefonoBuscar("");
         setErrorBusqueda("");
         onClose();
@@ -64,12 +62,12 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
         >
             <Modal.Header closeButton className="border-0 pb-0 pt-2 px-4">
                 <div>
-                    <Modal.Title className="fs-4 fw-bold text-dark">Buscar Solicitudes</Modal.Title>
+                    <Modal.Title className="fs-4 fw-bold text-dark">Buscar Pedidos por Teléfono...</Modal.Title>
                 </div>
             </Modal.Header>
             <Modal.Body className="p-4">
                 <div className="mb-4">
-                    <div className="input-group input-group-lg shadow-sm rounded-3 border border-secondary-subtle" style={{ overflow: 'hidden'}}>
+                    <div className="input-group input-group-lg shadow-sm rounded-3 border border-secondary-subtle" style={{ overflow: 'hidden' }}>
                         <span className="input-group-text bg-white border-0 text-primary px-4">
                             <i className="fa fa-search"></i>
                         </span>
@@ -83,19 +81,20 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
                             }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !isLoading && telefonoBuscar.trim() && telefonoBuscar.length >= 4) {
-                                    buscarSolicitudes();
+                                    buscarPedidos();
                                 }
                             }}
                             onChange={(e) => setTelefonoBuscar(e.target.value)}
                             disabled={isLoading}
                             autoComplete="off"
+                            minLength={10}
                             maxLength={10}
                             style={{ boxShadow: 'none' }}
                         />
                         <button
                             className="btn btn-primary px-4 fw-bold"
                             type="button"
-                            onClick={buscarSolicitudes}
+                            onClick={buscarPedidos}
                             disabled={isLoading || !telefonoBuscar.trim() || telefonoBuscar.length < 4}
                             style={{ borderRadius: '0' }}
                         >
@@ -106,7 +105,7 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
                 {isLoading ? (
                     <div className="text-center py-5">
                         <span className="loader"></span>
-                        <p className="mt-3">Buscando solicitudes...</p>
+                        <p className="mt-3">Buscando pedidos...</p>
                     </div>
                 ) : errorBusqueda ? (
                     <div className="text-center text-body-secondary py-5">
@@ -114,17 +113,17 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
                         <h5>SIN RESULTADOS</h5>
                         <p>{errorBusqueda}</p>
                     </div>
-                ) : solicitudes.length > 0 ? (
+                ) : pedidos.length > 0 ? (
                     <div className="d-flex flex-column gap-3">
-                        {solicitudes.map((solicitud) => (
-                            <div key={solicitud.id} className="card bg-body shadow-sm border border-secondary-subtle">
+                        {pedidos.map((pedido) => (
+                            <div key={pedido.id} className="card bg-body shadow-sm border border-secondary-subtle">
                                 <div className="card-header bg-body-secondary d-flex justify-content-between align-items-center border-bottom pb-2">
                                     <h6 className="mb-0">
-                                        <strong>Cliente:</strong> {solicitud.cliente.nombre}
+                                        <strong>Cliente:</strong> {pedido.nombre}
                                     </h6>
                                     <div className="d-flex align-items-center gap-2">
                                         <small className="text-body-secondary">
-                                            {moment(solicitud.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
+                                            {moment(pedido.timestamp.toDate()).format("DD/MM/YYYY HH:mm")}
                                         </small>
                                     </div>
                                 </div>
@@ -132,33 +131,33 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
                                     <div className="row">
                                         <div className="col-6">
                                             <p className="mb-2">
-                                                <strong>Teléfono:</strong> {solicitud.cliente.telefono}
+                                                <strong>Teléfono:</strong> {pedido.telefono}
                                             </p>
                                             <p className="mb-2">
-                                                <strong>Opción:</strong> {solicitud.cliente.opcion === "delivery" ? "Delivery" : "Retiro"}
+                                                <strong>Opción:</strong> {pedido.envio.zona_envio === "Retira" ? "Retira" : "Delivery"}
                                             </p>
-                                            {solicitud.cliente?.opcion === "delivery" && solicitud.cliente?.direccion && (
+                                            {pedido.envio.zona_envio !== "Retira" && (
                                                 <p className="mb-2">
-                                                    <strong>Dirección:</strong> {solicitud.cliente.direccion} {solicitud.cliente.entreCalles}
+                                                    <strong>Dirección:</strong> {pedido.direccion} {pedido.entreCalles}
                                                 </p>
                                             )}
                                             <p className="mb-2">
-                                                <strong>Método de pago:</strong> {solicitud.cliente.metodoPago}
+                                                <strong>Método de pago:</strong> {pedido.metodoPago}
                                             </p>
                                         </div>
                                         <div className="col-6">
                                             <p className="mb-2">
                                                 <strong>Estado:</strong>
                                                 <span className={'rounded-3 p-1 px-2 mx-2 fw-bold text-dark border border-dark'}>
-                                                    {solicitud.estado}
+                                                    {pedido.estado}
                                                 </span>
                                             </p>
                                             <p className="mb-2">
-                                                <strong>Total:</strong> ${solicitud.total}
+                                                <strong>Total:</strong> ${pedido.total}
                                             </p>
                                             <div className="mt-2">
                                                 <a
-                                                    href={`https://api.whatsapp.com/send?phone=549${solicitud.cliente.telefono}&text=Hola ${solicitud.cliente.nombre}. `}
+                                                    href={`https://api.whatsapp.com/send?phone=549${pedido.telefono}&text=Hola ${pedido.nombre}. `}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="btn btn-success btn-sm w-75 fw-bold"
@@ -184,4 +183,4 @@ const BuscarSolicitud = ({ isOpen, onClose }) => {
     );
 };
 
-export default BuscarSolicitud;
+export default BuscarPedido;

@@ -30,14 +30,9 @@ Pedidos creados desde la Caja interna.
   telefono: "1155556666",             // string
   timestamp: Timestamp,                // serverTimestamp()
   total: 1850,                         // number
-}
-```
 
-```js
-{
-  // Campos similares a pedidos pero sin campos internos
-  cajero: "",                       //Este se completa cuando el cajero en el POS aprueba el pedido. Dato auditoria
-  cajeroID: "",                     //Este se completa cuando el cajero en el POS aprueba el pedido. Dato auditoria
+
+  //Si el pedido tiene origen "WEB, contendrá el campo "cliente" con los datos completados por el usuario
   cliente: {
     nombre: "Juan Pérez",
     direccion: "Av. Corrientes 1234",
@@ -46,11 +41,6 @@ Pedidos creados desde la Caja interna.
     opcion: "DELIVERY" | "RETIRO",
     telefono: "1112345678"
   },
-  estado: "PENDIENTE" | "CONFIRMADO" | "COCINA" | "DELIVERY",
-  mensajeWsp: "",                    //string: contiene mensaje a ser enviado via whatsapp al cliente con los datos del pedido 
-  productos: [],                     //array: contiene la lista de productos del pedido. (Campos iguales a la colección)
-  timestamp: serverTimestamp(),
-  total: 11800,                    // number
 }
 ```
 
@@ -213,7 +203,7 @@ service cloud.firestore {
       let data = request.resource.data;
       return data.origen == "WEB"
         && data.estado == "PENDIENTE"
-        && data.keys().hasAll(["cliente", "productos", "total", "estado", "origen", "timestamp"])
+        && data.keys().hasAll(["cliente", "carrito", "total", "estado", "origen", "timestamp"])
         && !data.keys().hasAny(["cajeroID", "cocineroID", "deliveryID"]);
     }
     

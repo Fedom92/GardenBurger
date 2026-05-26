@@ -116,7 +116,7 @@ export const PaginaDetalle = () => {
                 <em> {pedido.cliente.telefono}</em>
               </div>
 
-              {pedido.productos?.map((producto, index) => {
+              {pedido.carrito?.map((producto, index) => {
                 return (
                   <div key={`${producto.id}-${index}`} className='itemDetalle'>
                     <div className="imagen">

@@ -21,7 +21,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
         let initialLoad = true;
 
         const solicitudesCollection = collection(db, "pedidos");
-        const q = query(solicitudesCollection, where("estado", "==", ESTADOS.WEB_PENDIENTE), orderBy("timestamp", "asc"));
+        const q = query(solicitudesCollection, where("estado", "==", ESTADOS.WEB_PENDIENTE), orderBy("clienteTimestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const solicitudes = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -152,11 +152,11 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                                             </div>
                                         </div>
 
-                                        {solicitud.productos && solicitud.productos.length > 0 && (
+                                        {solicitud.carrito && solicitud.carrito.length > 0 && (
                                             <div className="mt-2">
-                                                <h6 className="fw-semibold">Productos: ({solicitud.productos?.length || 0})</h6>
+                                                <h6 className="fw-semibold">Productos: ({solicitud.carrito?.length || 0})</h6>
                                                 <div className="row">
-                                                    {solicitud.productos.map((producto, index) => (
+                                                    {solicitud.carrito.map((producto, index) => (
                                                         <div key={index} className="d-flex justify-content-between align-items-center border-bottom">
                                                             <small style={{ width: 35 }} className="text-muted small">
                                                                 x{producto.cantidad}

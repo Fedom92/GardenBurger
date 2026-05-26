@@ -76,7 +76,7 @@ const CrearSolicitud = () => {
       total: pagoSeleccionado === "MP" ? totalConRecargo : total,
       estado: ESTADOS.WEB_PENDIENTE,
       origen: "WEB",
-      timestamp: serverTimestamp(),
+      clienteTimestamp: serverTimestamp(),
       mensajeWsp: mensajeCodificado
     }
 

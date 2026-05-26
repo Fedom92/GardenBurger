@@ -23,6 +23,12 @@ const MESES_CORTO = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Se
 const fmt$ = (n) => `$${Math.round(n).toLocaleString("es-AR")}`;
 const fmtN = (n) => Number(n).toLocaleString("es-AR");
 
+const comboKeys = CATEGORIAS_COMBOS.map(c => c.key);
+
+const esComboConta = (v) =>
+    comboKeys.includes(v.categoria) &&
+    !(v.categoria === "CAJA PAPAS" && v.descripcion === "(porcion individual)");
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function KpiCard({ icon, label, value, sub, color = "#6366f1" }) {
     return (
@@ -104,7 +110,7 @@ export default function Estadisticas() {
     const [desdeHora, setDesdeHora] = useState("");
     const [hasta, setHasta] = useState("");
     const [hastaHora, setHastaHora] = useState("");
-    const [evolucionVista, setEvolucionVista] = useState("mes");
+    const [evolucionVista, setEvolucionVista] = useState("combos");
     const now = new Date();
     const [mesSelec, setMesSelec] = useState(
         `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
@@ -248,12 +254,10 @@ export default function Estadisticas() {
     }, [ventasFiltradas]);
 
     const totalCombos = useMemo(() => {
-        const comboKeys = CATEGORIAS_COMBOS.map(c => c.key);
-
-        return categorias
-            .filter(c => comboKeys.includes(c.label))
-            .reduce((s, c) => s + c.valor, 0);
-    }, [categorias]);
+        return ventasFiltradas
+            .filter(esComboConta)
+            .reduce((sum, v) => sum + (Number(v.cantidad) || 1), 0);
+    }, [ventasFiltradas]);
 
     const combosSub = useMemo(() => {
         const rows = CATEGORIAS_COMBOS.reduce((acc, item, i) => {
@@ -366,7 +370,6 @@ export default function Estadisticas() {
         });
         return Object.entries(map).map(([label, valor]) => ({ label, valor })).sort((a, b) => a.label.localeCompare(b.label));
     }, [ticketsValidos]);
-
     // ── Zonas de envío (porcentajes) ──
     const zonas = useMemo(() => {
         const map = {};
@@ -387,8 +390,15 @@ export default function Estadisticas() {
 
     // ── Data para Recharts (Evolución) ──
     const chartData = useMemo(() => {
-        // [ { name: 'Ene', '2023_tickets': 150, '2023_monto': 500000, '2024_tickets': 200, ... }, ... ]
+        // [ { name: 'Ene', '2023_tickets': 150, '2023_monto': 500000, '2023_combos': 75, ... }, ... ]
         const data = MESES_CORTO.map(m => ({ name: m }));
+
+        const combosMap = {};
+        ventas.forEach(v => {
+            if (esComboConta(v)) {
+                combosMap[v.nroTicket] = (combosMap[v.nroTicket] || 0) + (Number(v.cantidad) || 1);
+            }
+        });
 
         pagos.filter(p => {
             if (sucursal !== "TODAS" && (p.sucursal || "").trim() !== sucursal) return false;
@@ -401,9 +411,10 @@ export default function Estadisticas() {
 
             data[mesIdx][`${year}_tickets`] = (data[mesIdx][`${year}_tickets`] || 0) + 1;
             data[mesIdx][`${year}_monto`] = (data[mesIdx][`${year}_monto`] || 0) + parseMoney(p.total);
+            data[mesIdx][`${year}_combos`] = (data[mesIdx][`${year}_combos`] || 0) + (combosMap[p.nroTicket] || 0);
         });
         return data;
-    }, [pagos, sucursal]);
+    }, [pagos, ventas, sucursal]);
 
     // ── Observaciones ──
     const conObservaciones = useMemo(() =>
@@ -614,6 +625,7 @@ export default function Estadisticas() {
                         <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
                             <h3 className="fs-6 fw-bold m-0 d-flex align-items-center gap-2 text-light">📈 Evolución Histórica Anual</h3>
                             <div className="mode-tabs d-flex rounded overflow-hidden" style={{ transform: "scale(0.85)", margin: 0 }}>
+                                <button className={`flex-fill py-1 px-3 fw-bold m-0 ${evolucionVista === "combos" ? "active" : ""}`} onClick={() => setEvolucionVista("combos")}>Combos</button>
                                 <button className={`flex-fill py-1 px-3 fw-bold m-0 ${evolucionVista === "mes" ? "active" : ""}`} onClick={() => setEvolucionVista("mes")}>Cantidad Tickets</button>
                                 <button className={`flex-fill py-1 px-3 fw-bold m-0 ${evolucionVista === "año" ? "active" : ""}`} onClick={() => setEvolucionVista("año")}>Monto ($)</button>
                             </div>
@@ -646,7 +658,11 @@ export default function Estadisticas() {
                                             <Line
                                                 key={yr}
                                                 type="monotone"
-                                                dataKey={evolucionVista === "mes" ? `${yr}_tickets` : `${yr}_monto`}
+                                                dataKey={
+                                                    evolucionVista === "mes"
+                                                        ? `${yr}_tickets`
+                                                        : (evolucionVista === "año" ? `${yr}_monto` : `${yr}_combos`)
+                                                }
                                                 name={String(yr)}
                                                 stroke={color}
                                                 strokeWidth={3}

@@ -157,7 +157,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                                 </p>
                                                 {pedido.metodoPago === "%" && (
                                                     <p className="mb-1">
-                                                        <strong>Efectivo:</strong> ${pedido.montoEfectivo || 0}
+                                                        <strong>Monto Efectivo:</strong> ${pedido.montoEfectivo || 0}
                                                     </p>
                                                 )}
                                                 <p className="mb-1">

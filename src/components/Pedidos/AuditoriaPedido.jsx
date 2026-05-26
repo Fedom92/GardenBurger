@@ -184,6 +184,7 @@ const AuditoriaPedido = ({ pedidoId, isOpen, onClose }) => {
                                         { label: "Entre calles orig.", valor: p.cliente?.entreCalles || null },
                                         { label: "Método pago orig.",  valor: p.cliente?.metodoPago || null },
                                         { label: "Opción orig.",       valor: p.cliente?.opcion || null },
+                                        { label: "Hora Cliente",       valor: p.clienteTimestamp || null },
                                     ] : [])
                                 ]}
                             />
@@ -244,9 +245,10 @@ const AuditoriaPedido = ({ pedidoId, isOpen, onClose }) => {
                                 titulo="Repartidor asignado"
                                 activo={!!p.deliveryID}
                                 campos={[
-                                    { label: "Repartidor",        valor: p.deliveryAsignado },
-                                    { label: "Asignado por",      valor: p.gestorDelivery },
-                                    { label: "Fecha/hora",        valor: fmt(p.gestorDeliveryTimestamp) },
+                                    { label: "Repartidor",                valor: p.deliveryAsignado },
+                                    { label: "Asignado por",              valor: p.gestorDelivery },
+                                    { label: "Fecha/hora",                valor: fmt(p.gestorDeliveryTimestamp) },
+                                    { label: "Subestado MotoDelivery",    valor: p.estadoDelivery }
                                 ]}
                             />
 

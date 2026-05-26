@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { collection, serverTimestamp, writeBatch, doc } from "firebase/firestore";
+import { collection, serverTimestamp, writeBatch, doc, Timestamp } from "firebase/firestore";
 import { db, getNextSequence } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
@@ -11,7 +11,7 @@ import AutocompleteGoogle from '../../Utils/AutocompleteGoogle';
 import PendientesMP from './pos_modales/Alertas/PendientesMP';
 import PendientesSolicitudes from './pos_modales/Alertas/PendientesSolicitudes';
 import EliminarTickets from './pos_modales/EliminarTickets';
-import BuscarSolicitud from './pos_modales/BuscarSolicitud';
+import BuscarPedido from './pos_modales/BuscarPedido';
 import PagoDividido from './pos_modales/PagoDividido';
 
 import useTraerDatos from './pos_hooks/useTraerDatos';
@@ -32,6 +32,13 @@ const Caja = () => {
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
 
+    const handleSelectDelivery = () => {
+        const firstDelivery = envios.find(env => env.zona_envio !== "Retira");
+        if (firstDelivery) {
+            setValue("envio", JSON.stringify({ zona_envio: firstDelivery.zona_envio, costo_envio: firstDelivery.costo_envio }));
+        }
+    };
+
     const { userData } = useAuth();
     const [search, setSearch] = useState("");
 
@@ -45,7 +52,7 @@ const Caja = () => {
     const [showPendientesSolicitudes, setShowPendientesSolicitudes] = useState(false);
     const [showModalDividido, setShowModalDividido] = useState(false);
     const [showEliminarTickets, setShowEliminarTickets] = useState(false);
-    const [showBuscarSolicitud, setShowBuscarSolicitud] = useState(false);
+    const [showBuscarPedido, setShowBuscarPedido] = useState(false);
 
     const horarioEspecial = watch("horarioEspecial");
     const horaEspecial = horarioEspecial ? horarioEspecial.split(':')[0] : "20";
@@ -70,7 +77,15 @@ const Caja = () => {
 
             const isWebOrder = !!data.id;
             const pedidoRef = isWebOrder ? doc(db, "pedidos", data.id) : doc(collection(db, "pedidos"));
-            
+
+            let timestampPedido = serverTimestamp();
+            if (data.horarioEspecial) {
+                const [h, m] = data.horarioEspecial.split(":").map(Number);
+                const fecha = new Date();
+                fecha.setHours(h, m, 0, 0);
+                timestampPedido = Timestamp.fromDate(fecha);
+            }
+
             batch.set(pedidoRef, {
                 codigo: `${nuevoCodigo}-${userData.iniciales}`,
                 cajeroID: userData.id,
@@ -90,10 +105,10 @@ const Caja = () => {
                 total: Number(totalFinal),
                 carrito: carrito,
                 estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTEMP : ESTADOS.CONFIRMADO,
-                hora: data.horarioEspecial || null,
+                esHorarioEspecial: !!data.horarioEspecial,
                 sucursal: process.env.REACT_APP_sucursal,
                 origen: isWebOrder ? "WEB" : "CAJA",
-                timestamp: serverTimestamp(),
+                timestamp: timestampPedido,
             }, { merge: true });
 
             const { ref, stats: resumenData } = getResumenOperation({
@@ -146,19 +161,32 @@ const Caja = () => {
     }, [reset, resetCarrito, resetHorario]);
 
     useEffect(() => {
+        if (envioSeleccionado?.zona_envio === "Retira") {
+            setValue("direccion", "");
+            setValue("latitud", "");
+            setValue("longitud", "");
+            setValue("entreCalles", "");
+        }
+    }, [envioSeleccionado?.zona_envio, setValue]);
+
+    useEffect(() => {
         const handleKeyDown = (e) => {
             switch (e.key) {
                 case 'F1':
                     e.preventDefault();
-                    setShowPendientesSolicitudes(true);
+                    if (tieneSolicitudesPendientes) {
+                        setShowPendientesSolicitudes(true);
+                    }
                     break;
                 case 'F2':
                     e.preventDefault();
-                    setShowPendientesMP(true);
+                    if (tienePendientesMP) {
+                        setShowPendientesMP(true);
+                    }
                     break;
                 case 'F3':
                     e.preventDefault();
-                    setShowBuscarSolicitud(true);
+                    setShowBuscarPedido(true);
                     break;
                 case 'F4':
                     e.preventDefault();
@@ -174,7 +202,7 @@ const Caja = () => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [limpiar]);
+    }, [limpiar, tieneSolicitudesPendientes, tienePendientesMP]);
 
     return (
         <>
@@ -215,9 +243,9 @@ const Caja = () => {
                             <div className="ms-auto d-flex">
                                 <button
                                     className="btn btn-sm btn-primary mx-2 fw-bold mb-1"
-                                    onClick={() => setShowBuscarSolicitud(true)}
+                                    onClick={() => setShowBuscarPedido(true)}
                                 >
-                                    <i className="fa fa-search"></i> Buscar Solicitud <small className="fst-italic"> (F3)</small>
+                                    <i className="fa fa-search"></i> Buscar Pedido <small className="fst-italic"> (F3)</small>
                                 </button>
                                 <button
                                     className="btn btn-sm btn-danger mx-2 fw-bold mb-1"
@@ -238,7 +266,25 @@ const Caja = () => {
                                             }}
                                         />
                                         <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Nombre..." autoComplete="off" required {...register("nombre")} />
-                                        {envioSeleccionado?.zona_envio !== "Retira" && (<AutocompleteGoogle
+
+                                        <div className="btn-group w-100 mb-2" role="group">
+                                            <button
+                                                type="button"
+                                                className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio === "Retira" ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                                onClick={() => setValue("envio", JSON.stringify({ zona_envio: "Retira", costo_envio: 0 }))}
+                                            >
+                                                <i className="fa-solid fa-store me-1"></i> Retira
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio && envioSeleccionado?.zona_envio !== "Retira" ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                                onClick={handleSelectDelivery}
+                                            >
+                                                <i className="fa-solid fa-motorcycle me-1"></i> Delivery
+                                            </button>
+                                        </div>
+
+                                        {envioSeleccionado?.zona_envio && envioSeleccionado?.zona_envio !== "Retira" && (<><AutocompleteGoogle
                                             value={watch("direccion")}
                                             onChange={({ direccion, latitud, longitud }) => {
                                                 setValue("direccion", direccion || "");
@@ -248,10 +294,8 @@ const Caja = () => {
                                             placeholder="Dirección (selecciona del listado)..."
                                             required
                                         />
-                                        )}
-                                        <input type="hidden" {...register("latitud")} />
-                                        <input type="hidden" {...register("longitud")} />
-                                        <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
+                                            <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
+                                        </>)}
                                         <textarea className="form-control" rows="2" placeholder="Observaciones..." autoComplete="off" {...register("observaciones")}></textarea>
                                     </div>
 
@@ -312,13 +356,27 @@ const Caja = () => {
                                             <div className="col-4 d-flex align-items-center text-end">
                                                 <label className="form-label mb-0">Envío</label>
 
-                                                <select className="form-control border-0 text-center" multiple={false} required {...register("envio")}>
-                                                    <option value="">....</option>
-                                                    {envios.map(env => (
-                                                        <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
-                                                            {env.zona_envio}
-                                                        </option>
-                                                    ))}
+                                                <select
+                                                    className={`form-control border-0 text-center ${envioSeleccionado?.zona_envio === "Retira" ? "pe-none bg-transparent" : ""}`}
+                                                    multiple={false}
+                                                    required
+                                                    {...register("envio")}
+                                                >
+                                                    {envioSeleccionado?.zona_envio === "Retira" ? (
+                                                        <option value={JSON.stringify({ zona_envio: "Retira", costo_envio: 0 })}>Retira</option>
+                                                    ) : (
+                                                        <>
+                                                            <option value="">....</option>
+                                                            {envios
+                                                                .filter(env => env.zona_envio !== "Retira")
+                                                                .map(env => (
+                                                                    <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
+                                                                        {env.zona_envio}
+                                                                    </option>
+                                                                ))
+                                                            }
+                                                        </>
+                                                    )}
                                                 </select>
                                                 :
                                             </div>
@@ -580,10 +638,10 @@ const Caja = () => {
                 onClose={() => setShowEliminarTickets(false)}
             />
 
-            {/* Modal de Buscar Solicitudes */}
-            <BuscarSolicitud
-                isOpen={showBuscarSolicitud}
-                onClose={() => setShowBuscarSolicitud(false)}
+            {/* Modal de Buscar Pedido */}
+            <BuscarPedido
+                isOpen={showBuscarPedido}
+                onClose={() => setShowBuscarPedido(false)}
             />
         </>
     );
