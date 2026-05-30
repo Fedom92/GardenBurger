@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+import { ENVIOS_LOCALES } from "../../../Utils/Constantes";
 
 const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal }) => {
     if (data.telefono.length < 10) {
@@ -11,7 +12,7 @@ const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal }) => {
         return false;
     }
 
-    if (envioSeleccionado?.zona_envio !== "Retira" && (!data.direccion || data.direccion.trim() === '')) {
+    if (!ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) && (!data.direccion || data.direccion.trim() === '')) {
         Swal.fire({
             title: 'Advertencia',
             text: 'Selecciona una dirección del listado desplegable',
@@ -21,7 +22,7 @@ const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal }) => {
         return false;
     }
 
-    if (envioSeleccionado?.zona_envio !== "Retira" && (!data.latitud || !data.longitud)) {
+    if (!ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) && (!data.latitud || !data.longitud)) {
         Swal.fire({
             title: 'Advertencia',
             text: 'Debes seleccionar la dirección del listado (no escribir a mano)',

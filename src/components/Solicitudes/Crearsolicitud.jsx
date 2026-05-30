@@ -11,7 +11,7 @@ import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
-import { CATEGORIAS_HAMBURGUESA, ESTADOS } from "../../Utils/Constantes";
+import { CATEGORIAS_HAMBURGUESA, ENVIOS_LOCALES, ESTADOS } from "../../Utils/Constantes";
 import Footer from "./Footer";
 
 
@@ -321,7 +321,7 @@ const CrearSolicitud = () => {
                         <input
                           style={{ margin: "0px" }}
                           type="radio"
-                          value="Retira"
+                          value={ENVIOS_LOCALES[0]}
                           {...register("opcion", { required: "Debes seleccionar una opción" })}
                         />
                         Lo retiro

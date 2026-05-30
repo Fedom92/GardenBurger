@@ -26,7 +26,8 @@ export const ESTADOS = {
   PENDIENTEMP: "PENDIENTEMP",
   COCINA: "COCINA",
   DELIVERY: "DELIVERY",
-  FINAL: "ENTREGADO",
+  ATP: "ATP",
+  FINAL: "COMPLETADO",
 
   CANCELADO: "CANCELADO",
   ELIMINADO: "ELIMINADO",
@@ -48,3 +49,5 @@ export const FLUJO_PUB_ESTADOS = [
 export const getCurrentStepIndex = (estado) => {
   return FLUJO_PUB_ESTADOS.indexOf(estado);
 };
+
+export const ENVIOS_LOCALES = ["Retira", "Espera Afuera"];

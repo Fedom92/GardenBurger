@@ -125,8 +125,12 @@ Cocina: PedidosEspera (estado: "CONFIRMADO")
 Cocina: PedidosCocinando (estado: "COCINA")
     → se marcan como listos
         ↓
+ATP: ATP.jsx (estado: "ATP")
+    → cuando sale de cocina si el pedido tenía como zona_envio "Espera Afuera" o "Retira" se lo deriva a este componente de Atención al Público
+        ↓
 Delivery: Deliverys.jsx (estado: "DELIVERY")
-    → se asigna repartidor → se marca como entregado y pasaría a futuro al historial de pedidos para estadísticas
+    → si el pedido tenía dirección, se lo deriva a este componente de Delivery
+    → se asigna repartidor → se marca cuando sale y vuelve marcandolo como entregado-> a futuro al historial de pedidos para estadísticas
 ```
 
 ---
@@ -166,7 +170,7 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 
 ## Estilos y diseño (De prefrencia estilo Negro y Blanco, excepto botones)
 
-- **Tema oscuro**: `--color-primario-normal: #272727`, `--color-primario-fuerte: #000000`
+- **Tema oscuro**: `--color-primario-normal: #272727`, `--color-primario-fuerte: #000000` (aun no implementado)
 - **Sidebar**: colapsable en desktop, drawer en mobile (clase `mobile-open`)
 - Animaciones definidas en `Main.css` (ej: `EntradaDerechaAIzquierda`)
 - En mobile hay un topbar fijo con el ícono `FaUserCog` que abre el menú
@@ -196,15 +200,16 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 | `/crear-solicitud` | `CrearSolicitud` | Público |
 | `/ver-pedido/:id` | `PaginaDetalle` | Público |
 | `/miPerfil` | `MiPerfil` | Auth |
-| `/pedidos-caja` | `Caja` | Admin |
-| `/gestion-cocina` | `Cocina` | Admin |
-| `/delivery-pedidos` | `Deliverys` | Admin |
-| `/gestion-deliverys` | `PersonalDeliverys` | Admin |
+| `/pedidos-caja` | `Caja` | Admin, Auth |
+| `/gestion-cocina` | `Cocina` | Admin, Auth |
+| `/delivery-pedidos` | `Deliverys` | Admin, Auth |
+| `/gestion-deliverys` | `PersonalDeliverys` | Admin, Auth |
 | `/productos` | `Productos` | Admin |
 | `/clientes` | `Clientes` | Admin |
 | `/historial-pedidos` | `HistorialPedidos` | Admin |
 | `/admin` | `PanelAdmin` | Admin |
 | `/estadisticas-viejas` | `Estadisticas` | Admin |
+| `/gestion-atp` | `ATP` | Admin |
 
 ---
 

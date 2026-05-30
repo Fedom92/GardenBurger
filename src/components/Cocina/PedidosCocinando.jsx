@@ -7,7 +7,7 @@ import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
 import VerPedidoModal from './VerPedidoModal';
 import moment from "moment";
-import { ESTADOS } from "../../Utils/Constantes";
+import { ENVIOS_LOCALES, ESTADOS } from "../../Utils/Constantes";
 
 const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const { userData } = useAuth();
@@ -91,7 +91,10 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
 
             pedidosCocinando.forEach(pedido => {
                 const pedidoRef = doc(db, "pedidos", pedido.id);
-                batch.update(pedidoRef, { estado: ESTADOS.DELIVERY });
+                const nuevoEstado = (pedido.envio?.zona_envio === ENVIOS_LOCALES[0] || pedido.envio?.zona_envio === ENVIOS_LOCALES[1])
+                    ? ESTADOS.ATP
+                    : ESTADOS.DELIVERY;
+                batch.update(pedidoRef, { estado: nuevoEstado });
             });
 
             await batch.commit();

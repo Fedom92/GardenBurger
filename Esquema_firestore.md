@@ -158,12 +158,29 @@ Configurada desde `Admin/Parametros/Envios.jsx`.
 
 ```js
 {
-  zona_envio: "Zona Centro",
+  zona_envio: "0-1",      //Definido distancias en KM (0-1, 2-4, 5-6)
   costo_envio: 500
 },
 {
   zona_envio: "Retira",
   costo_envio: 0
+},
+{
+  zona_envio: "Espera Afuera",
+  costo_envio: 0
+}
+```
+
+## Colección: `resumenDiario`
+Usada por `useResumenDiario()`.
+
+```js
+//cada nuevo día se crea un nuevo documento con el id = fecha en formato dd-mm-aaaa
+//se suman los totales del día al generarse el pedido
+{
+  efectivo: 40000,
+  mp: 10000,
+  totalPedidos: 50000,
 }
 ```
 
@@ -203,7 +220,7 @@ service cloud.firestore {
       let data = request.resource.data;
       return data.origen == "WEB"
         && data.estado == "PENDIENTE"
-        && data.keys().hasAll(["cliente", "carrito", "total", "estado", "origen", "timestamp"])
+        && data.keys().hasAll(["cliente", "carrito", "total", "estado", "origen", "clienteTimestamp"])
         && !data.keys().hasAny(["cajeroID", "cocineroID", "deliveryID"]);
     }
     

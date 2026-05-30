@@ -23,3 +23,5 @@ export const getResumenOperation = ({ metodoPago, total, montoEfectivo, montoMPC
         }
     };
 };
+
+//TODO AL CANCELAR O ELIMINAR UN PEDIDO HAY QUE DESCONTAR ESTOS MONTOS

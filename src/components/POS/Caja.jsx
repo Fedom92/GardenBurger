@@ -22,7 +22,7 @@ import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
 import validarPedido from './pos_hooks/validarPedido';
 import useAprobarSolicitud from './pos_hooks/useAprobarSolicitud';
 import { getResumenOperation } from './pos_hooks/useResumenDiario';
-import { ESTADOS } from '../../Utils/Constantes';
+import { ESTADOS, ENVIOS_LOCALES } from '../../Utils/Constantes';
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
@@ -33,7 +33,7 @@ const Caja = () => {
     const metodoPago = watch("metodoPago");
 
     const handleSelectDelivery = () => {
-        const firstDelivery = envios.find(env => env.zona_envio !== "Retira");
+        const firstDelivery = envios.find(env => !ENVIOS_LOCALES.includes(env.zona_envio));
         if (firstDelivery) {
             setValue("envio", JSON.stringify({ zona_envio: firstDelivery.zona_envio, costo_envio: firstDelivery.costo_envio }));
         }
@@ -161,7 +161,7 @@ const Caja = () => {
     }, [reset, resetCarrito, resetHorario]);
 
     useEffect(() => {
-        if (envioSeleccionado?.zona_envio === "Retira") {
+        if (ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio)) {
             setValue("direccion", "");
             setValue("latitud", "");
             setValue("longitud", "");
@@ -270,21 +270,28 @@ const Caja = () => {
                                         <div className="btn-group w-100 mb-2" role="group">
                                             <button
                                                 type="button"
-                                                className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio === "Retira" ? "btn-dark text-white" : "btn-outline-dark"}`}
-                                                onClick={() => setValue("envio", JSON.stringify({ zona_envio: "Retira", costo_envio: 0 }))}
+                                                className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio === ENVIOS_LOCALES[1] ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                                onClick={() => setValue("envio", JSON.stringify({ zona_envio: ENVIOS_LOCALES[1], costo_envio: 0 }))}
+                                            >
+                                                <i className="fa-solid fa-store me-1"></i> Espera Afuera
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio === ENVIOS_LOCALES[0] ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                                onClick={() => setValue("envio", JSON.stringify({ zona_envio: ENVIOS_LOCALES[0], costo_envio: 0 }))}
                                             >
                                                 <i className="fa-solid fa-store me-1"></i> Retira
                                             </button>
                                             <button
                                                 type="button"
-                                                className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio && envioSeleccionado?.zona_envio !== "Retira" ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                                className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? "btn-dark text-white" : "btn-outline-dark"}`}
                                                 onClick={handleSelectDelivery}
                                             >
                                                 <i className="fa-solid fa-motorcycle me-1"></i> Delivery
                                             </button>
                                         </div>
 
-                                        {envioSeleccionado?.zona_envio && envioSeleccionado?.zona_envio !== "Retira" && (<><AutocompleteGoogle
+                                        {envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio)(<><AutocompleteGoogle
                                             value={watch("direccion")}
                                             onChange={({ direccion, latitud, longitud }) => {
                                                 setValue("direccion", direccion || "");
@@ -357,18 +364,20 @@ const Caja = () => {
                                                 <label className="form-label mb-0">Envío</label>
 
                                                 <select
-                                                    className={`form-control border-0 text-center ${envioSeleccionado?.zona_envio === "Retira" ? "pe-none bg-transparent" : ""}`}
+                                                    className={`form-control border-0 text-center ${ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? "pe-none bg-transparent" : ""}`}
                                                     multiple={false}
                                                     required
                                                     {...register("envio")}
                                                 >
-                                                    {envioSeleccionado?.zona_envio === "Retira" ? (
-                                                        <option value={JSON.stringify({ zona_envio: "Retira", costo_envio: 0 })}>Retira</option>
+                                                    {ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? (
+                                                        <option value={JSON.stringify({ zona_envio: envioSeleccionado.zona_envio, costo_envio: 0 })}>
+                                                            {envioSeleccionado.zona_envio}
+                                                        </option>
                                                     ) : (
                                                         <>
                                                             <option value="">....</option>
                                                             {envios
-                                                                .filter(env => env.zona_envio !== "Retira")
+                                                                .filter(env => !ENVIOS_LOCALES.includes(env.zona_envio))
                                                                 .map(env => (
                                                                     <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
                                                                         {env.zona_envio}

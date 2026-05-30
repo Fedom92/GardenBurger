@@ -3,7 +3,7 @@ import { collection, query, getDocs, where, limit, orderBy } from "firebase/fire
 import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import moment from 'moment';
-import { ESTADOS } from "../../../Utils/Constantes";
+import { ESTADOS, ENVIOS_LOCALES } from "../../../Utils/Constantes";
 
 const BuscarPedido = ({ isOpen, onClose }) => {
     const [pedidos, setPedidos] = useState([]);
@@ -134,9 +134,9 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                 <strong>Teléfono:</strong> {pedido.telefono}
                                             </p>
                                             <p className="mb-2">
-                                                <strong>Opción:</strong> {pedido.envio.zona_envio === "Retira" ? "Retira" : "Delivery"}
+                                                <strong>Opción:</strong> {ENVIOS_LOCALES.includes(pedido.envio.zona_envio) ? pedido.envio.zona_envio : "Delivery"}
                                             </p>
-                                            {pedido.envio.zona_envio !== "Retira" && (
+                                            {!ENVIOS_LOCALES.includes(pedido.envio.zona_envio) && (
                                                 <p className="mb-2">
                                                     <strong>Dirección:</strong> {pedido.direccion} {pedido.entreCalles}
                                                 </p>

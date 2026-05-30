@@ -11,7 +11,8 @@ const Categorias = ({ show, onHide }) => {
   const [categorias, setCategorias] = useState([]);
   const [error, setError] = useState("");
 
-  const categoriasCollection = useRef(query(collection(db, "categorias"), orderBy("nroOrden", "asc")));
+  const categoriasCollection = collection(db, "categorias");
+  const categoriasCollectionOrdenados =useRef(query(categoriasCollection, orderBy("nroOrden", "asc")));
 
   const getCategorias = useCallback((snapshot) => {
     const categoriasArray = snapshot.docs.map((doc) => ({
@@ -25,7 +26,7 @@ const Categorias = ({ show, onHide }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const categoriasSnapshot = await getDocs(categoriasCollection.current);
+        const categoriasSnapshot = await getDocs(categoriasCollectionOrdenados.current);
         await getCategorias(categoriasSnapshot);
 
       } catch (error) {

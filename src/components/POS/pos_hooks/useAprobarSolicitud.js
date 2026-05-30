@@ -1,6 +1,7 @@
 // pos_hooks/useAprobarSolicitud.js
 import { useCallback } from "react";
 import Swal from "sweetalert2";
+import { ENVIOS_LOCALES } from "../../../Utils/Constantes";
 
 const useAprobarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitudes, envios }) => {
 
@@ -23,10 +24,8 @@ const useAprobarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
             setValue("observaciones", obsProductos);
 
             // Mapear opcion a zona_envio
-            if (solicitud.cliente?.opcion === "Retira") {
-                const envioRetira = envios.find(e =>
-                    e.zona_envio.toLowerCase().includes("retira")
-                );
+            if (solicitud.cliente?.opcion === ENVIOS_LOCALES[0]) {
+                const envioRetira = envios.find(e => e.zona_envio === ENVIOS_LOCALES[0]);
                 if (envioRetira) {
                     setValue("envio", JSON.stringify({
                         zona_envio: envioRetira.zona_envio,
