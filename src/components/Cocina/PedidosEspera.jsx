@@ -173,7 +173,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                                                 <small className="text-body-secondary">
                                                     {moment(pedido.timestamp?.toDate()).format("HH:mm")}
                                                     {pedido.esHorarioEspecial && (
-                                                        <span className="badge bg-warning text-dark ms-1">⏰ Especial</span>
+                                                        <span className="badge bg-warning text-dark ms-1">⏰</span>
                                                     )}
                                                 </small>
                                             </div>

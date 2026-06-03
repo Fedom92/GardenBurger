@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, updateDoc, doc, onSnapshot, orderBy, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, doc, onSnapshot, updateDoc, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "../../../../firebaseConfig/firebase";
 import { useAuth } from "../../../../context/AuthContext";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from "moment";
 import { ESTADOS } from "../../../../Utils/Constantes";
+import { getResumenOperation } from "../../pos_hooks/useResumenDiario";
 
 const PendientesMP = ({ isOpen, onClose }) => {
     const { userData } = useAuth();
@@ -82,7 +83,8 @@ const PendientesMP = ({ isOpen, onClose }) => {
         if (result.isConfirmed) {
             try {
                 const pedidoRef = doc(db, "pedidos", pedidoId);
-                
+                const pedido = pedidosPendientes.find(p => p.id === pedidoId);
+
                 const updateData = {
                     estado: ESTADOS.CANCELADO,
                     cajeroCancelaMPID: userData.id,
@@ -90,7 +92,17 @@ const PendientesMP = ({ isOpen, onClose }) => {
                     cajeroCancelaMPTimestamp: serverTimestamp(),
                 };
 
-                await updateDoc(pedidoRef, updateData);
+                const { ref: resumenRef, stats } = getResumenOperation({
+                    metodoPago: pedido.metodoPago,
+                    total: pedido.total,
+                    montoEfectivo: pedido.montoEfectivo,
+                    descontar: true,
+                });
+
+                const batch = writeBatch(db);
+                batch.update(pedidoRef, updateData);
+                batch.set(resumenRef, stats, { merge: true });
+                await batch.commit();
             } catch (error) {
                 console.error('Error rechazando el pedido:', error);
                 Swal.fire({

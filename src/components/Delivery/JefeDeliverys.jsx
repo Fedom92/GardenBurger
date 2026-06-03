@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, doc, query, getDocs, where, serverTimestamp } from "firebase/firestore";
+import { collection, updateDoc, doc, query, getDocs, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
@@ -18,7 +18,10 @@ const JefeDeliverys = () => {
     const [showMetricas, setShowMetricas] = useState(false);
     const [isAsignando, setIsAsignando] = useState(false);
 
-    const pedidosCollection = useRef(query(collection(db, "pedidos"), where("estado", "==",ESTADOS.DELIVERY)));
+    const pedidosCollection = useRef(query(collection(db, "pedidos"),
+        where("estado", "==", ESTADOS.DELIVERY),
+        orderBy("timestamp", "asc")
+    ));
     const deliverysCollection = useRef(query(collection(db, "deliverys"), where("activo", "==", true)));
 
     const getPedidos = useCallback((snapshot) => {
@@ -27,7 +30,6 @@ const JefeDeliverys = () => {
                 id: doc.id,
                 ...doc.data(),
             }))
-            .sort((a, b) => a.codigo.localeCompare(b.codigo));
         setPedidos(pedidosArray);
         setIsLoading(false);
     }, []);
@@ -98,7 +100,7 @@ const JefeDeliverys = () => {
                 : {
                     deliveryAsignado: "",
                     deliveryID: "",
-                    
+
                     gestorDelivery: "",
                     gestorDeliveryID: "",
                     gestorDeliveryTimestamp: null,
@@ -142,7 +144,7 @@ const JefeDeliverys = () => {
             } else {
                 setPedidos(prevPedidos =>
                     prevPedidos.map(p => p.id === pedidoId ? { ...p, ...updates } : p
-                ));
+                    ));
                 Swal.fire('¡Éxito!', 'Estado de salida registrado.', 'success');
             }
         } catch (error) {

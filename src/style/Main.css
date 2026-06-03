@@ -140,10 +140,6 @@ tbody tr.hide {
   transform: translateX(100%);
 }
 
-tbody tr:not(.admin-row):not(.fila-no-visible):hover {
-  background-color: gray !important;
-}
-
 .fila-no-visible {
   background-color: bisque !important;
 }

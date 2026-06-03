@@ -34150,6 +34150,990 @@ TimeStamp	ID_NRO_TICKET	Total	Metodo Pago	MontoEfectivo %	Envio	Nombre	Direcció
 17/05/2026 23:47	33376 EO	$28.400	Efectivo		0	MARIANO	espera afuera	.	.	SIN BACON 	Retira			DaVinci
 17/05/2026 23:53	33377 EO	$35.310	MP		2700	Matías Ortiz 	Raulies 7082 	 Varela y Sáenz 	1163011035		4-5	X	GD	DaVinci
 17/05/2026 23:57	33378 GD	$49.610	MP		2700	matias ortiz	raulies 7082	varela y saenz	1163011035		4-5			DaVinci
+20/05/2026 19:22	33379 GD	$33.000	MP		0	Maria	retira	x	11 2171-9434		Retira			DaVinci
+20/05/2026 19:29	33380 EO	$31.000	Efectivo		1000	Laura               22hs	 huemul 4898	 las flores y el resero	1140851927		0-1			DaVinci
+20/05/2026 19:48	33381 EO	$16.500	Efectivo		1800	jorge Bogado 	Lavalleja 4793 	los ceibos y las flores	1140233840		2-3			DaVinci
+20/05/2026 19:50	33382 GD	$27.700	Efectivo		1500	abi	ibera 5444	entre donizetti y echaurri	1149399745		1-2			DaVinci
+20/05/2026 19:55	33383 EO	$18.370	MP		2000	Martina	Encina 5687	riglos y doblas	1164540514		3-4	X	EO	DaVinci
+20/05/2026 19:58	33384 EO	$34.540	MP		2000	Martina	Encina 5687	riglos y doblas	1164540514		3-4			DaVinci
+20/05/2026 20:08	33385 GD	$31.570	MP		1000	Daniel	huemul 4510	esquina Rocamora	11 5933-1445		0-1			DaVinci
+20/05/2026 20:23	33386 GD	$17.600	MP		1500	Violeta	Rocamora 4571	entre dumont y tinogasta	11 2452-8733		1-2			DaVinci
+20/05/2026 20:24	33387 EO	$44.100	Efectivo		0	paola	.	.	1140957110		Retira	X	EO	DaVinci
+20/05/2026 20:26	33388 EO	$44.100	Efectivo		0	paola	espera afuera	.	1140957110		Retira			DaVinci
+20/05/2026 20:29	33389 GD	$31.800	Efectivo		1800	PABLO	Echaurri 2921	entre acasuso y alagón	11 3469-4751		2-3			DaVinci
+20/05/2026 20:31	33390 GD	$17.700	Efectivo		1500	Aron Leguizamon	urdaneta 4421	entre sixto fajardo y rocamora	11 2534-0349		1-2			DaVinci
+20/05/2026 20:36	33391 GD	$34.980	MP		1800	Alicia	Salvigni  4592	esquina de colectora pero por salvigni	11 3158-5650		2-3			DaVinci
+20/05/2026 20:49	33392 EO	$34.100	MP		1500	nahir	severo garcia de sequeira 4681	entre da vinci y del tejar	54 9 11 7025-1481		1-2			DaVinci
+20/05/2026 21:10	33393 GD	$30.250	MP		0	Vanesa Arce 	retira	x	1163098750		Retira			DaVinci
+20/05/2026 21:11	33394 GD	$29.400	Efectivo		0	ariel policia 	retira	x	x		Retira	X	GD	DaVinci
+20/05/2026 21:13	33395 GD	$16.000	Efectivo		1000	Dylan	el resero 4349	entre montgolfier y zeppelin 	11 5324-1047		0-1			DaVinci
+20/05/2026 21:14	33396 EO	$26.200	Efectivo		0	osvaldo	espera afuera	.	1126061385		Retira			DaVinci
+20/05/2026 21:22	33397 GD	$48.100	Efectivo		2000	Patricia  Yerpes 	Bonpland 2995	entre Echeverría y ascasubi	1138001732		3-4			DaVinci
+20/05/2026 21:28	33398 GD	$20.000	Efectivo		1800	Wendy lopez	Ipela 4948	entre resero y carcaraña	11 4947-1024		2-3			DaVinci
+20/05/2026 21:37	33399 GD	$43.900	Efectivo		1500	Diego	Ortega 4650	Entre del tejar y davinci	11 3078-4409		1-2			DaVinci
+20/05/2026 21:50	33400 EO	$36.850	MP		1800	Ayelen.	Larraya 4120 	recuero y rio cuarto	11 6269-6254		2-3			DaVinci
+20/05/2026 22:04	33401 EO	$20.350	MP		1800	Eli	Rocamora 2923	Entre Lujan y Castañon	11 2835-6586	Casa roja, rejas negras, ante esquina (frente a galpón de techo azul )	2-3			DaVinci
+20/05/2026 22:28	33402 EO	$27.200	Efectivo		1800	cris	juan lavalleja 4793 	 las flores y el ceibo	11 5064-3102		2-3			DaVinci
+20/05/2026 22:29	33403 GD	$16.500	Efectivo		1500	Jorgelina	Cobo 4279	Entre icalma y huemul	11 7640-0279		1-2			DaVinci
+20/05/2026 23:30	33404 GD	$20.900	MP		2000	Hugo	coronel ramos 3023	entre Llerena y Luján	11 5026-7508		3-4			DaVinci
+20/05/2026 23:34	33405 EO	$34.100	MP		0	gia delivery   ULT HORA	.	.	.	UNA CHEESE DOBLE ES F-ONION	Retira			DaVinci
+20/05/2026 23:55	33406 GD	$17.050	MP		1000	 Rocío González 	el resero 4263 	huemul y Montgolfier 	1123677324		0-1			DaVinci
+21/05/2026 19:08	33407 GD	$61.200	Efectivo		1800	Miguel 	el resero 2790	entre alagon y aguapey	11 6962-8085		2-3			DaVinci
+21/05/2026 19:29	33408 EO	$34.400	Efectivo		2000	Daniela Vicente 	Besares 2219 	gamboa y hualfin  	1131685787		3-4			DaVinci
+21/05/2026 19:31	33409 GD	$16.200	Efectivo		0	Matías 	retira	-	-		Retira			DaVinci
+21/05/2026 19:40	33410 GD	$32.900	Efectivo		1500	Juliana 	Cayetano cazón 4478	entre íbera y zeppelin	11 2188-8056		1-2			DaVinci
+21/05/2026 19:42	33411 GD	$4.200	Efectivo		0	matias	x	x	x		Retira			DaVinci
+21/05/2026 20:10	33412 EO	$34.100	MP		2000	Lucas	Antequera 4735	Jorge newbery y ruta 21 	11 3912-5463		3-4			DaVinci
+21/05/2026 20:13	33413 EO	$34.210	MP		0	gevi	espera afuera	.	1171877602	CRISPY DOBLE SIN CEBOLLA	Retira			DaVinci
+21/05/2026 20:32	33414 GD	$18.000	Efectivo		0	Daniela Irala 	retira	x	11 6472-1512		Retira			DaVinci
+21/05/2026 20:33	33415 EO	$52.800	Efectivo		3000	Jonas	armonía 6316	 entre López may y parejas	11 2772-4096		5-6			DaVinci
+21/05/2026 20:36	33416 GD	$44.400	Efectivo		1500	 sofia	 vidal 5598 	entro cobo y echuari 	11 5600-9811		1-2	X	GD	DaVinci
+21/05/2026 20:46	33417 GD	$21.780	MP		1800	Michelle 	Celestino Vidal 6010	Entre alegría y cespedes	11 4407-9108		2-3			DaVinci
+21/05/2026 20:53	33418 GD	$48.840	MP		1500	sofia	vidal 5598	cobo y echuari	1156009811		1-2			DaVinci
+21/05/2026 20:55	33419 GD	$33.000	Efectivo		0	 aaron         22:00hs	retira	.	11 5754-9370		Retira	X	GD	DaVinci
+21/05/2026 21:03	33420 EO	$28.500	Efectivo		2000	Leti	La bastilla 3551	 Entre Salvigny y santa Catalina	11 3907-5863		3-4			DaVinci
+21/05/2026 21:05	33421 EO	$27.400	Efectivo		1000	Carina yapura 	Mongolfiel 4595 	y del tejar 	11 2596-3066		0-1			DaVinci
+21/05/2026 21:07	33422 EO	$37.620	MP		1500	María Recalde	Zinny 4844 	entre el resero y las flores	1149605104		1-2			DaVinci
+21/05/2026 21:13	33423 EO	$35.700	Efectivo		2700	dylan	spilimbergo 5118 	besares y las flores	11 7066-0335		4-5			DaVinci
+21/05/2026 21:16	33424 GD	$47.700	Efectivo		1800	Franco	Clemente onelli 5550	entre cobo y echaurri	11 3156-9382		2-3			DaVinci
+21/05/2026 21:26	33425 GD	$33.900	Efectivo		3000	danila	monasterio 240	entre cepeda y sanabria	11 2759-3036		5-6			DaVinci
+21/05/2026 21:26	33426 EO	$17.820	MP		2000	Dylan Cabrera	Coronel ramos 2842	esquina alagon	11 6251-2008		3-4			DaVinci
+21/05/2026 21:38	33427 EO	$15.620	MP		1000	Flavia gramajo 	Santos dumont 4719	esquina Davinci 	11 6424-3527	reja y puerta negra primer piso 	0-1			DaVinci
+21/05/2026 21:40	33428 GD	$34.650	%	$33.000	1500	aaron 	Montgolfier 5200	entre besares y federico russo	11 5754-9370		1-2			DaVinci
+21/05/2026 22:10	33429 GD	$33.400	Efectivo		0	nico polia       ult hs	x	x	x	CAMBIAR PAPAS POR NUGGETS	Retira	X	GD	DaVinci
+21/05/2026 22:17	33430 GD	$20.570	MP		2000	Wilson del valle	Alagon   (no tiene altura)	entre Antequera y andonaegui	1131244468		3-4			DaVinci
+21/05/2026 22:21	33431 EO	$32.340	MP		0	ale	espera afuera	.	.		Retira	X	EO	DaVinci
+21/05/2026 22:23	33432 EO	$32.340	MP		0	ale	espera afuera	.	.		Retira			DaVinci
+21/05/2026 22:32	33433 GD	$90.000	Efectivo		1800	Rocío Galván	Besares 2750	entre alagon y Aguapey	1139459959	1 LA CUARTO SIN MOSTAZA Y SIN BACON 1 LA CUARTO SIN MOSTAZA 1 CHEESE TRIPLE SIN BACON PAPAS SIMPLES 1 CHEESE DOBLE SIN BACON 	2-3			DaVinci
+21/05/2026 22:32	33434 EO	$18.000	Efectivo		1500	lautaro	 Juan b justo 4427	esquina Sixto fajardo y rocamora	11 3085-3381		1-2			DaVinci
+21/05/2026 22:32	33435 GD	$15.000	Efectivo		0	Nicolás        11:20	retira	x	11 2603-2544		Retira			DaVinci
+21/05/2026 22:37	33436 EO	$59.840	MP		1500	María moreno	Voissin 4737	entre Davinci 	1134938905		1-2			DaVinci
+21/05/2026 22:38	33437 GD	$37.620	MP		1500	Selene Diaz 	Raulies 4105	casa 6 manzana 214	1132565170		1-2	X	GD	DaVinci
+21/05/2026 22:42	33438 GD	$39.820	MP		1500	selene diaz	Raulies 4105	casa 6 manzana 214	1132565170		1-2	X	GD	DaVinci
+21/05/2026 22:42	33439 EO	$16.700	Efectivo		2000	valentin	echeverria 2935 	ntre lujan y llerena 	11 3257-0942		3-4			DaVinci
+21/05/2026 22:44	33440 GD	$42.020	MP		1500	Selene Diaz	Raulies 4105	casa 6 manzana 214	1132565170		1-2			DaVinci
+21/05/2026 22:46	33441 EO	$16.300	Efectivo		1800	mirko	huemul 3946	risso patron y río cuarto	11 3819-6006		2-3			DaVinci
+21/05/2026 22:47	33442 GD	$18.400	Efectivo		0	Johanna Ramírez 	retira	x	11 5311-3843		Retira	X	GD	DaVinci
+21/05/2026 22:48	33443 EO	$25.000	Efectivo		0	brisa atp	ULTIMA HORA	.	.		Retira			DaVinci
+21/05/2026 22:55	33444 GD	$16.720	MP		2000	Ayelen 	las flores 2355	Entre Gamboa y la fuente	11 2474-0020		3-4			DaVinci
+21/05/2026 22:58	33445 GD	$20.240	MP		0	Johanna Ramírez 	retira	x	11 5311-3843		Retira			DaVinci
+22/05/2026 19:44	33446 EO	$51.700	Efectivo		2700	Jesica moro	Roulex y lanin 	pedir ubi	1154992028	LAS PAPAS LO MAS SEQUITAS QUE SE PUEDA!!	4-5			DaVinci
+22/05/2026 19:45	33447 GD	$31.900	MP		1000	Enzo 	Zeppelin 4899	entre resero y las flores	11 3940-1012	1 POLLO CRISPY LECH Y TOM SIN CHEDDAR	0-1			DaVinci
+22/05/2026 19:46	33448 GD	$22.000	MP		2000	bautista	la bastilla 3551	Entre salvigny y santa catalina	11 2591-8128		3-4			DaVinci
+22/05/2026 19:59	33449 GD	$27.500	MP		1800	Ulises 	rodney 4059	entre icalma y huemul	11 3203-1165		2-3			DaVinci
+22/05/2026 20:10	33450 GD	$26.400	Efectivo		0	Alexis	retira	x	11 2243-0290		Retira			DaVinci
+22/05/2026 20:11	33451 EO	$32.670	MP		0	Emanuel	retira	.	11 6623-7551		Retira	X	GD	DaVinci
+22/05/2026 20:16	33452 GD	$29.300	Efectivo		1800	Luciano	Athos palma 5472	entre echaurry y donizeti	11 6472-8406		2-3			DaVinci
+22/05/2026 20:17	33453 EO	$29.700	Efectivo		0	emanuel	retira	.	11 6623-7551		Retira			DaVinci
+22/05/2026 20:21	33454 GD	$32.200	Efectivo		1500	Micaela toro 	Zinny 4263	entre reaño y reauliet	1123686619		1-2			DaVinci
+22/05/2026 20:26	33455 GD	$27.700	Efectivo		1500	Melany Santillán	Raulies 3896	entre Juan b Justo y Urdaneta	11 2282-8022		1-2			DaVinci
+22/05/2026 20:38	33456 GD	$43.120	MP		0	Jennifer	retira	x	11 6250-4167	1 CHEESE SIMPLE SIN BACON Y SIN CHEDDAR 1 LA CUARTO SIMPLE SIN MOSTAZA	Retira			DaVinci
+22/05/2026 20:46	33457 EO	$30.470	MP		1000	Marcelo diaz	Rocamora 4490	Tinogasta y Zeppelin 	1126061385		0-1			DaVinci
+22/05/2026 20:48	33458 GD	$45.200	Efectivo		1500	Nicolas 	Zinny 5265	entre cazón y calderon	11 6845-9747	2 CHEESE DOBLE SIN BACON 1 BLT DOBLE SIN BACON Y SIN LECHUGA	1-2			DaVinci
+22/05/2026 20:49	33459 EO	$18.000	Efectivo		0	 Luciana	retira	.	11 3371-1233		Retira			DaVinci
+22/05/2026 20:50	33460 GD	$50.700	Efectivo		1800	Gonzalo	Cayetano cazón 3161	entre la bastilla y olivieri	11 5153-4088		2-3			DaVinci
+22/05/2026 20:52	33461 GD	$18.200	Efectivo		1800	Bruno	Donizetti 3184	Entre la bastilla y Llerena	11 4031-0045		2-3			DaVinci
+22/05/2026 20:52	33461 EO	$16.800	Efectivo		1500	Juliana	Cayetano cazón 4478	íbera y zeppelin	11 2188-8056		1-2			DaVinci
+22/05/2026 21:00	33462 GD	$34.100	Efectivo		1500	Nahir 	Cobo 4414 	entre zeppelin e ibera	11 3867-1733		1-2			DaVinci
+22/05/2026 21:05	33463 GD	$17.270	MP		1000	Melina Borquez 	Del tejar 4617	entre dumont y Tinogasta	1121586704		0-1			DaVinci
+22/05/2026 21:07	33464 EO	$42.700	Efectivo		2000	Andrés 	reaño 2322	Reaño y Gamboa 	Reaño y Gamboa 	1 CHEESE SMPLE SIN BACON 1 CHEESE DOBLE SIN BACON	3-4			DaVinci
+22/05/2026 21:08	33465 GD	$38.940	MP		1000	Benjamín 	Davinci 3835	entre Juan b justo y urdaneta	11 6166-3634	2 CHEESE TRIPLE SIN BACON	0-1			DaVinci
+22/05/2026 21:16	33466 GD	$16.500	MP		2000	Agustina 	Luján 5792	Coronel Ramos y Gonzalo doblas	11 3421-9939		3-4			DaVinci
+22/05/2026 21:17	33467 EO	$33.440	MP		1000	Manuel vera	Las flores 4468	Entre tinogasta y zeppelin	 11 7623-9424		0-1			DaVinci
+22/05/2026 21:19	33468 GD	$19.300	Efectivo		1800	luca	Riglos 5148	entre salado y voissin	11 3099-0534		2-3			DaVinci
+22/05/2026 21:21	33469 GD	$31.570	MP		1000	Mariano Frette 	Santos Dumont 4808	esquina las flores 	1133117647		0-1			DaVinci
+22/05/2026 21:21	33470 EO	$33.990	MP		0	Facundo 	retira	.	11 6833-9513		Retira			DaVinci
+22/05/2026 21:26	33471 GD	$35.310	MP		2700	Cardozo Gustavo	Carolina Gonzalez	casa 64 manzana 6 barrio walsh	11 3284-2312		4-5			DaVinci
+22/05/2026 21:32	33472 GD	$31.350	MP		1500	Daniela Vera	Voissin 4915	entre carcaraña y besares	1136382047		1-2			DaVinci
+22/05/2026 21:35	33473 GD	$85.400	Efectivo		0	braian	retira	x	11 3257-7609		Retira			DaVinci
+22/05/2026 21:41	33474 GD	$28.200	Efectivo		1800	karen	esquina rocha y olivieri	casa verde con un ventanal | kiosco	11 3218-7868	1 BURGER FAN SIMPLE SIN MOSTAZA Y SIN KETCHUP	2-3			DaVinci
+22/05/2026 21:42	33475 GD	$19.700	Efectivo		2700	alma	colegiales 5890	entre comodoro py y Pedro obligado	11 5517-8705		4-5			DaVinci
+22/05/2026 21:44	33476 GD	$30.470	MP		1500	Ariana	Donizetti 4251	entre icalma y huemul	11 6629-7764		1-2			DaVinci
+22/05/2026 21:44	33477 EO	$85.600	Efectivo		1500	rocio	Carcaraña 3961 	Juan B justo y Vidal	11 5097-4852		1-2			DaVinci
+22/05/2026 21:47	33478 GD	$44.200	Efectivo		1000	Roxana 	Del tejar 4522	entre dumont y Tinogasta	11 3781-5525		0-1			DaVinci
+22/05/2026 21:47	33479 EO	$33.220	MP		1000	Iris mendez	Montgolfier 4493	esquina rocamora	11 2781-9913		0-1			DaVinci
+22/05/2026 21:48	33480 GD	$33.770	MP		0	Nicolás Varela 	retira	x	11 4071-2203		Retira			DaVinci
+22/05/2026 21:51	33481 GD	$32.400	Efectivo		3000	Nicolas 	Virreyes 6343	entre pareja y lopez may	11 7038-3564	2 BLT DOBLE SIN BACON	5-6			DaVinci
+22/05/2026 21:52	33482 EO	$39.930	MP		2700	Thiago	Monte Egmont 4890	Monte Egmont 4890	11 6478-1457		4-5			DaVinci
+22/05/2026 21:52	33483 GD	$33.990	MP		1500	Nahir	sev Garcia de sequeira 4681	entre da vinci y del tejar	11 7025-1481		1-2			DaVinci
+22/05/2026 21:54	33484 EO	$33.700	Efectivo		0	martin	.	.	11 2279-8132		Retira			DaVinci
+22/05/2026 21:58	33485 GD	$14.700	Efectivo		1500	Agustina Alfonso	Iberá 5454	entre donizetti y echaurri	1150637485		1-2			DaVinci
+22/05/2026 21:59	33486 EO	$16.400	Efectivo		0	vanessa	espera afuera	-	1159716172		Retira			DaVinci
+22/05/2026 22:05	33487 GD	$31.100	Efectivo		0	Fabricio coronel 	retira	x	11 6407-0475		Retira			DaVinci
+22/05/2026 22:09	33488 GD	$34.300	Efectivo		1500	Bruno caballero 	Huemul 5225	entre calderon y besares	54 9 2246 58-7173		1-2			DaVinci
+22/05/2026 22:11	33489 GD	$14.800	Efectivo		1800	Antonella	Rio cuarto 3130	entre la bastilla y lavallol	11 3182-4935		2-3			DaVinci
+22/05/2026 22:14	33490 EO	$29.700	Efectivo		1800	Sebastian	zinny 5336 	calderon y donizetti	11 5841-6271		2-3			DaVinci
+22/05/2026 22:18	33491 GD	$33.440	MP		1000	milagros	Leonardo da vinci y vidal	enfrente de la heladeria los amores	11 6643-0660		0-1			DaVinci
+22/05/2026 22:20	33492 GD	$33.000	MP		1500	Nahuel 	Olivieri 4871	entre resero y las flores	11 5523-6432		1-2			DaVinci
+22/05/2026 22:24	33493 GD	$18.150	MP		1800	Brenda coria 	Capitan parodi 5497	entre echaurri y donicetti	1139574260		2-3			DaVinci
+22/05/2026 22:25	33494 EO	$32.500	Efectivo		1000	debora	 rocamora 4155.	huemul y Montgolfier	11 6488-7903		0-1			DaVinci
+22/05/2026 22:26	33495 GD	$17.700	Efectivo		1000	Valentina 	Besares 4293	Huemul y Montgolfier	1150603059		0-1	X	GD	DaVinci
+22/05/2026 22:27	33496 GD	$50.700	Efectivo		1500	Esteban Javier López 	Rocamora 3368	Entre Ortega y Sequeira 	1139190591		1-2			DaVinci
+22/05/2026 22:28	33497 EO	$21.120	MP		2000	Cristian Roux 	 Raulies 5876	José Hernandes y Pedro Obligado	1126413341		3-4			DaVinci
+22/05/2026 22:28	33498 GD	$14.700	Efectivo		1500	Agustina Alfonso	Iberá 5454	entre donizetti y echaurri	1150637485		1-2			DaVinci
+22/05/2026 22:32	33499 EO	$29.400	Efectivo		1500	lucas González 	Carcarañá 3521	zinny y ortega	1130820379		1-2			DaVinci
+22/05/2026 22:33	33500 GD	$16.700	Efectivo		0	tiara	retira	x	11 6491-1224		Retira			DaVinci
+22/05/2026 22:41	33501 EO	$15.700	Efectivo		1000	Mauro	Rocamora 4182	 huemul y montgolfier 	11 3234-1273		0-1			DaVinci
+22/05/2026 22:43	33502 GD	$35.970	MP		1500	Florencia 	El resero 3663	entre virgenes y zinny 	11 5463-6378		1-2			DaVinci
+22/05/2026 22:46	33503 EO	$72.700	Efectivo		1500	Sergio Roldan,	El resero 3450	Ortega y Zinny	11 2158-0712	1 CHEESE SIMPLE SIN CHEDDAR	1-2			DaVinci
+22/05/2026 22:46	33504 GD	$18.120	%	$13.500	1000	Valentina 	Besares 4293 	Huemul y Montgolfier	1150603059		0-1			DaVinci
+22/05/2026 22:48	33505 GD	$32.500	Efectivo		1800	Candela 	Donizetti 2947 	entre acassuso y alagon	11 3187-0148		2-3			DaVinci
+22/05/2026 22:51	33506 GD	$29.700	MP		1000	Tamara              23:30	del tejar 3883	entre urdaneta y virgenes	11 2301-2375		0-1			DaVinci
+22/05/2026 22:51	33507 EO	$33.880	MP		1800	Romina Silva 	Llerena 5271	cazón y Federico russo 	11 6880-6860		2-3			DaVinci
+22/05/2026 22:52	33508 GD	$42.130	MP		2700	Alex	Riglos 5959	Finochetto y pedro obligado	1135653615		4-5			DaVinci
+22/05/2026 23:05	33509 EO	$38.500	Efectivo		1800	Daniela 	Olivieri 4199	 reaño y recuero	11 2280-1108		2-3			DaVinci
+22/05/2026 23:05	33510 GD	$17.820	MP		1500	Ariana	Donizetti 4251	entre icalma y huemul	11 6629-7764		1-2	X	GD	DaVinci
+22/05/2026 23:11	33511 GD	$35.200	MP		1500	Michelle	Sixto Fajardo 4563	entre dumont y tinogasta	11 2591-5006	1 BIG GARDEN DOBLE SIN LECHUGA	1-2			DaVinci
+22/05/2026 23:15	33512 EO	$52.800	Efectivo		0	sebastian 	espera afuera	.	..		Retira			DaVinci
+22/05/2026 23:20	33513 GD	$32.120	MP		1500	Ariana	Donizetti 4251	entre icalma y huemul	11 6629-7764	1 CHEESE SIMPLE SIN BACON	1-2			DaVinci
+22/05/2026 23:22	33514 EO	$31.400	Efectivo		2000	rodrigo 23:50	Riglos 3050 	Llerena y Luján	11 3820-9974		3-4	X	GD	DaVinci
+22/05/2026 23:32	33515 GD	$30.000	Efectivo		0	Policas	reira	-	-		Retira	X	GD	DaVinci
+22/05/2026 23:37	33516 GD	$14.300	Efectivo		1800	Melina Bravo 	Cayetano donizetti 4770	Jorge newberry y inca	11 2739-0188		2-3			DaVinci
+22/05/2026 23:38	33517 EO	$33.990	MP		1500	Daniel gramajo 	Sev garcia d Sequeira 5139 	cazon y besares	 11 5348-3466		1-2			DaVinci
+22/05/2026 23:40	33518 GD	$31.200	Efectivo		1800	rodrigo         23:45	trébol de calderón y la bastilla	pedir ubi	11 3820-9974		2-3			DaVinci
+22/05/2026 23:40	33519 EO	$16.700	Efectivo		2000	Diego escobar 	Marcelo gamboa 4952	Colegiales y besares	11 3184-2124		3-4			DaVinci
+22/05/2026 23:46	33520 GD	$33.770	MP		1500	Victoria Milazzo	Carcaraña 4008	esquina Vidal 	1128726509		1-2			DaVinci
+22/05/2026 23:52	33521 EO	$30.400	Efectivo		1000	Melina 	Zeppelin 4887	las flores y resero	11 3697-2025		0-1			DaVinci
+23/05/2026 19:26	33522 EO	$14.500	Efectivo		0	agustin	espera afuera	.	1136254559		Retira			DaVinci
+23/05/2026 19:29	33523 GD	$30.500	Efectivo		1500	Walter	keynes 5182 fila 6	federico ruso y besares	 11 2336-0815		1-2			DaVinci
+23/05/2026 19:31	33524 GD	$36.190	MP		1800	Ezequiel	Riglos 3145	 la bastilla y llerena	11 3560-9981		2-3			DaVinci
+23/05/2026 19:47	33525 EO	$27.800	Efectivo		1800	yanina     21:15	llerena 5139	 cazón y besares	 11 5158-1200	2 CHEESE SMPLES SIN BACON	2-3			DaVinci
+23/05/2026 19:49	33526 GD	$19.700	Efectivo		1500	Carolina santoro	Echaurri 4379	Entre zepelin y mongofiel	1167372877		1-2			DaVinci
+23/05/2026 19:51	33527 EO	$18.150	MP		1800	Gonzalo Díaz	Santa Mónica 5746	 valentin gomez y jose hernandez 	11 5095-1103		2-3			DaVinci
+23/05/2026 19:54	33528 GD	$15.500	Efectivo		1500	Natasha	Cayetano Cazón 3375	entre Ortega y Sequeira	1123832011		1-2	X	GD	DaVinci
+23/05/2026 20:06	33529 EO	$14.800	Efectivo		1800	Camila 	Vírgenes 6244	 apipe y Ancón	11 2560-5305		2-3			DaVinci
+23/05/2026 20:09	33530 GD	$27.500	Efectivo		0	Evelyn mesa	retira	x	11 3434-2864		Retira			DaVinci
+23/05/2026 20:12	33531 EO	$16.200	Efectivo		1500	Maximiliano Garabito	icalma 4101	   pedir ubi	11 3589-6571	dentro del barrio fecoovima	1-2			DaVinci
+23/05/2026 20:12	33532 GD	$20.300	Efectivo		1800	joel	Recuero 4872	entre inca y fournier	11 2330-5542		2-3			DaVinci
+23/05/2026 20:13	33533 GD	$16.500	Efectivo		2000	Matias 	el resero 2650	entre Aguapey y lavalleja	11 5911-2241	1 CHEESE DOBLE SIN BACON	3-4	X	GD	DaVinci
+23/05/2026 20:15	33534 GD	$17.050	MP		1500	Natasha              22hs	Cayetano Cazón 3375	entre Ortega y Sequeira	1123832011	ENVIAR 1 PILETA AIOLI	1-2			DaVinci
+23/05/2026 20:19	33535 EO	$72.200	Efectivo		1800	Morena	 inca 5485 	echaurri y Donizetti 	11 6812-8271		2-3			DaVinci
+23/05/2026 20:24	33536 GD	$44.400	Efectivo		2700	Silvana	Juan Peña 2824	entre Acásuso esquina Omar torre	11 6267-3081		4-5			DaVinci
+23/05/2026 20:26	33537 EO	$30.800	Efectivo		1800	 valentin	 juan b justo 3824	 rocha y riso patron	 11 6783-3763		2-3	X	GD	DaVinci
+23/05/2026 20:26	33537 GD	$16.500	Efectivo		2000	matias          21:30	el resero 2650 	entre Aguapey y lavalleja	11 5911-2241	1 CHEESE DOBLE SIN BACON	3-4			DaVinci
+23/05/2026 20:28	33538 GD	$35.750	MP		1800	Brianna 	Icalma 3781	entre Rocha y rodney	11 3694-2157		2-3			DaVinci
+23/05/2026 20:29	33539 GD	$33.990	MP		1500	Thiago Ale	Resero 3414 	entre sequeira y ortega	11 61699106 		1-2			DaVinci
+23/05/2026 20:29	33540 EO	$35.860	MP		1500	mauro	Dumont 4991	 resero y besares	11 5490-1310		1-2			DaVinci
+23/05/2026 20:30	33541 GD	$18.200	Efectivo		2000	Sebastian	Larraya 5057	entre carcaraña y besares	11 6576-7685		3-4			DaVinci
+23/05/2026 20:37	33542 GD	$33.880	MP		1800	valentin	juan b justo 3824	entre rocha y riso patron	11 6783-3763		2-3			DaVinci
+23/05/2026 20:37	33543 EO	$30.470	MP		0	sergio	espera afuera	.	3764917138		Retira			DaVinci
+23/05/2026 20:41	33544 GD	$48.400	MP		1800	Toloza María	Echaurri 4811	entre inca y fournier	1150086632		2-3			DaVinci
+23/05/2026 20:42	33545 GD	$31.200	Efectivo		1800	Brenda	sixto fajardo 3390	entre ortega y sequeira	11 5755-8207		2-3			DaVinci
+23/05/2026 20:44	33546 EO	$34.980	MP		1800	simon	Sixto fajardo 5480	victor martinez y martin coronado	11 4970-0864		2-3			DaVinci
+23/05/2026 20:47	33547 GD	$23.760	MP		2000	David almada 	Besares 1855 	entre monte egmont y spilimbergo	11 7893-8695		3-4			DaVinci
+23/05/2026 20:48	33548 EO	$16.500	Efectivo		1500	Erika Giménez	Felipe Lavallol 4849 	pedir ubi	11 6408-3392		1-2			DaVinci
+23/05/2026 20:49	33549 GD	$16.170	MP		0	Yesica Orué	retira	x	1122835738		Retira			DaVinci
+23/05/2026 20:51	33550 GD	$59.070	MP		1800	Helen muller 	Llerena 5045	esquina carcaraña	1136812564	1 BURGER FAN DOBLE SIN CHEDDAR	2-3			DaVinci
+23/05/2026 20:54	33551 GD	$29.400	Efectivo		0	Lautaro	retira	x	11 3074-4782		Retira			DaVinci
+23/05/2026 20:58	33552 GD	$28.200	Efectivo		0	SANTIAGO LEIVA         21:30hs	retira	x	1141982832		Retira			DaVinci
+23/05/2026 20:58	33552 EO	$18.200	Efectivo		1000	: sol	icalma 4775	flores y davinci 	11 5016-3699		0-1			DaVinci
+23/05/2026 21:02	33553 EO	$17.200	Efectivo		2700	Mariam Galeano	Alegría 2 2195,	hualfin y gambia	11 3093-3633		4-5			DaVinci
+23/05/2026 21:05	33554 EO	$45.800	Efectivo		0	uriel	espera afuera	.	1150480838		Retira			DaVinci
+23/05/2026 21:07	33555 EO	$33.000	MP		1800	Nestor Rojas	Juan de Alagón 4039	Recuero y rio cuarto	1173683062		2-3			DaVinci
+23/05/2026 21:08	33556 GD	$40.590	MP		1000	Quimey	Huemul 5010	entre recero y besares	11 6809-1332		0-1			DaVinci
+23/05/2026 21:09	33557 GD	$16.500	Efectivo		1800	Olivera mara 	Olivieri 5282	Cazón y russo	1153767419		2-3			DaVinci
+23/05/2026 21:10	33558 EO	$18.480	MP		1800	simon	Sixto fajardo 5480	victor martinez y martin coronado	11 4970-0864		2-3			DaVinci
+23/05/2026 21:10	33559 GD	$31.200	Efectivo		1800	Emilce  	Rio cuarto 4405 	Entre Tinogasta y zeppelin 	11 7639-1812		2-3			DaVinci
+23/05/2026 21:13	33560 GD	$34.000	Efectivo		1800	Ezequiel 	Cayetano cazón 3171	entre la Bastilla y llerena	11 2360-8130		2-3			DaVinci
+23/05/2026 21:16	33561 GD	$16.500	Efectivo		1800	Florencia	alagon 3828	entre  vuelta de rocha y rizo patron	11 2588-4627		2-3			DaVinci
+23/05/2026 21:19	33562 GD	$33.990	MP		1500	Brian Gomez 	Rocamora 4935	entre fardman y fournier	11 5826-2290		1-2			DaVinci
+23/05/2026 21:21	33563 GD	$16.200	Efectivo		1500	Facundo	Rocamora 3271	entre sequeira y olivieri	11 5121-2942		1-2			DaVinci
+23/05/2026 21:22	33564 EO	$16.700	Efectivo		2000	Ricardo agostini	Monte Egmont 5050	pedir ubi	1126825566		3-4			DaVinci
+23/05/2026 21:25	33565 GD	$28.500	Efectivo		1500	Nadia	Manzana 198 A casa 20	e icalma (rejas blancas)	11 5338-4205		1-2			DaVinci
+23/05/2026 21:26	33566 EO	$48.620	MP		1500	celeste	Urdaneta 4570	 rocamora y del tejar	11 4095-8429		1-2			DaVinci
+23/05/2026 21:29	33567 GD	$31.900	Efectivo		1000	Diego 	Rocamora 4036	entre icalma y Vidal	11 2593-6811	1 CHEESE DOBLE SIN BACON	0-1			DaVinci
+23/05/2026 21:29	33568 EO	$42.400	Efectivo		0	melina	retira	.	 11 2406-4402		Retira	X	GD	DaVinci
+23/05/2026 21:33	33569 EO	$44.900	Efectivo		0	melina	retira	.	11 2406-4402		Retira			DaVinci
+23/05/2026 21:34	33570 GD	$31.000	Efectivo		1800	Belén	Lanza 4802	entre los ceibos y las flores	11 2286-2620		2-3			DaVinci
+23/05/2026 21:37	33571 EO	$17.930	MP		1800	nahuel	Juan b justo 5458	echaurri y donizett	11 5862-1482	1 CHEESE SIN CHEDDAR 	2-3			DaVinci
+23/05/2026 21:37	33572 GD	$77.220	MP		1000	Morena Benítez	ranqueles 4056	entre huemul e Icalma	1123635067		0-1	X	GD	DaVinci
+23/05/2026 21:42	33573 EO	$16.700	Efectivo		2000	jimena	 Larraya 5057 	carcaraña y besares	 11 3442-1361		3-4			DaVinci
+23/05/2026 21:47	33574 EO	$17.270	MP		1000	yanina	Del tejar 4059	icalma y Vidal 	11 2475-5223		0-1	X	EO	DaVinci
+23/05/2026 21:50	33575 GD	$75.020	MP		1000	Morena Benítez	ranqueles 4056	entre huemul e Icalma	1123635067		0-1			DaVinci
+23/05/2026 21:51	33576 EO	$52.100	Efectivo		0	luci	espera afuera	.	1156123745		Retira			DaVinci
+23/05/2026 21:53	33577 GD	$17.270	MP		1000	Yanina 	Del tejar 4059	entre icalma y Vidal 	11 2475-5223		0-1			DaVinci
+23/05/2026 21:55	33578 GD	$14.700	Efectivo		1500	Gimena Argañaraz	Carcaraña 3480	entre zinny y ortega 	1151053628		1-2			DaVinci
+23/05/2026 21:56	33579 GD	$69.850	MP		5500	Ezequiel	dragones 4401	esquina Sáenz	11 2742-5146		7-8			DaVinci
+23/05/2026 21:59	33580 GD	$19.800	MP		1500	Vanesa	Sixto Fajardo 4563	Dumon y tinogasta	11 6461-4294		1-2			DaVinci
+23/05/2026 22:02	33581 GD	$54.600	Efectivo		1500	Gisela	Santos Dumont 4456	entre rocamora y sixto fajardo	11 3359-4988	1 BLT DOBLE SIN LECHUGA	1-2			DaVinci
+23/05/2026 22:04	33582 EO	$17.600	MP		1500	dylan	 carcaraña 3156	olivieri y la bastilla	11 5014-8728	SIN BACON	1-2	X	GD	DaVinci
+23/05/2026 22:07	33583 GD	$19.800	MP		1500	Dylan 	carcaraña 3156	entre olivieri y la bastilla	11 5014-8728	1 CHEESE DOBLE SIN BACON	1-2			DaVinci
+23/05/2026 22:09	33584 GD	$77.600	Efectivo		1500	Cintia Juarez	IBERA 5468	entre donizzeti y echauri	1164982044	1 CHEESE DOBLE SIN BACON	1-2			DaVinci
+23/05/2026 22:09	33585 EO	$35.970	MP		1800	ALEXIS	 alegria 3990	icalma y vidal	11 3051-4877	1 CHEESE DOBLE SIN BACON	2-3			DaVinci
+23/05/2026 22:12	33586 EO	$45.000	Efectivo		1500	franco	resero 3952 	Juan b justo y Vidal	11 3090-3245		1-2			DaVinci
+23/05/2026 22:12	33587 GD	$34.100	MP		2000	Stefania	andonaegui 5308	Entre bavio y bacon	11 2782-4179		3-4			DaVinci
+23/05/2026 22:17	33588 GD	$37.000	Efectivo		1500	Maru	zepelin 5368	entra calderon  de la barca y donizetti	11 3492-1735		1-2			DaVinci
+23/05/2026 22:19	33589 EO	$18.900	Efectivo		2700	Melina blasco 	Lope de vega3443	olivieri y ortega	11 2351-5436		4-5			DaVinci
+23/05/2026 22:20	33590 GD	$37.300	Efectivo		2700	Nico	Soldado sosa 4102	entre vidal y huemul	11 2530-6867		4-5			DaVinci
+23/05/2026 22:23	33591 EO	$15.950	MP		1500	joseline olguera 	urdaneta 4458 	Pedir ubi	 11 2359-9250	1 CHEESE SIMPLE SIN CHEDDAR	1-2			DaVinci
+23/05/2026 22:25	33592 GD	$42.130	MP		1800	Diego alvarenga 	Reaño 3610	entre zinny y virgenes	11 5151-7929		2-3			DaVinci
+23/05/2026 22:26	33593 EO	$16.300	Efectivo		1800	Agustina Grismado	Río cuarte 3310	Entre ortega y bompland	11 6930-1910		2-3			DaVinci
+23/05/2026 22:29	33594 EO	$16.000	Efectivo		3000	Gonzalo	Ortega 5011	carcaraña y besares.	11 6140-3118		5-6			DaVinci
+23/05/2026 22:34	33595 EO	$17.600	MP		1500	Maia Altamirano	El resero 4765	Jorge newbery y ruta 3 	11 7624-3962		1-2	X	GD	DaVinci
+23/05/2026 22:34	33595 GD	$39.800	Efectivo		1800	Agustina Tolic 	ruiz de los llanos 5247	entre cazón y calderon	1126186314		2-3			DaVinci
+23/05/2026 22:37	33596 EO	$35.860	MP		1500	 agustina	 virgenes 4489	rocamora y Fajardo 	1165515778		1-2			DaVinci
+23/05/2026 22:38	33597 GD	$33.400	Efectivo		0	nico policia         ult hora	x	x	x	CAMBIAR PAPAS POR NUGGETS	Retira	X	GD	DaVinci
+23/05/2026 22:39	33598 EO	$16.000	Efectivo		1500	Maia Altamirano 	El resero 4765 	Jorge newbery y ruta 3 	1176243962		1-2			DaVinci
+23/05/2026 22:42	33599 GD	$17.700	Efectivo		1500	Matías Mujica 	Sev García de sequeira 4537	entre del tejar y rocamora	1125803582		1-2			DaVinci
+23/05/2026 22:47	33600 GD	$33.550	MP		1500	Belén Costanzo	besares 4551	entre dumont y tinogasta	1127675475	1 CHEESE SIMPLE SIN BACON	1-2	X	GD	DaVinci
+23/05/2026 22:49	33601 EO	$49.610	MP		1000	Yohana torales	Zeppelin 4517	Rocamora y del tejar	1131602645		0-1			DaVinci
+23/05/2026 22:49	33602 GD	$31.500	Efectivo		1500	brandon	Las flores 3277	entre sequeira y olivieri	11 4528-3883		1-2			DaVinci
+23/05/2026 22:52	33603 GD	$20.350	MP		1500	Maldonado Nahuel 	Russo 2931	entre Alagón y acassuso	11 4042-2500		1-2			DaVinci
+23/05/2026 22:53	33604 GD	$33.110	MP		2700	Valentina Morales	Silvino Olivieri 2413	esquina lope de vega	11 5720-4720		4-5			DaVinci
+23/05/2026 22:54	33605 GD	$32.200	Efectivo		1800	Noe Bullon	Luján 4749	Da Vinci y las flores	11 6284-2427		2-3			DaVinci
+23/05/2026 22:59	33606 GD	$24.970	MP		1800	Ulises	rodney 4059	entre icalma y huemul	11 3203-1165		2-3			DaVinci
+23/05/2026 23:02	33607 EO	$33.500	Efectivo		1800	Marcela Garcete 	Ipela 4948 	resero y carcaraña	11 3028-8485		2-3			DaVinci
+23/05/2026 23:05	33608 EO	$2.000	Efectivo		0	.	.	.	.		Retira			DaVinci
+23/05/2026 23:07	33609 EO	$38.720	MP		1800	Leo Ibarra 	Acassusso 5481	echaurri y donizeti 	1158519484		2-3			DaVinci
+23/05/2026 23:09	33610 EO	$14.500	Efectivo		0	nico	espera afuera	.	.		Retira			DaVinci
+23/05/2026 23:09	33611 GD	$34.600	Efectivo		2000	Kevin	Salvigny 3034	entre lavallol y la bastilla	11 4163-9002	1 CHEESE TRIPLE SIN BACON	3-4			DaVinci
+23/05/2026 23:12	33612 EO	$8.000	Efectivo		0	yesi	ultima hora	.	.		Retira	X	EO	DaVinci
+23/05/2026 23:12	33613 EO	$8.000	Efectivo		0	yesi	ultima hora	.	.		Retira			DaVinci
+23/05/2026 23:17	33614 EO	$50.490	MP		1800	KEVIN MONTERO	LA FLORES 2950	 acassuso y Luján	11 6790-4691		2-3			DaVinci
+23/05/2026 23:23	33615 EO	$39.160	MP		3000	Gabriel 	Calcia 705	pedir ubi	11 2692-3734		5-6	X	GD	DaVinci
+23/05/2026 23:30	33616 GD	$18.150	MP		1800	Liliana	Cobo 4300	Entre montgolfier y zepellin	11 5871-5204		2-3			DaVinci
+23/05/2026 23:31	33617 EO	$45.100	MP		1800	vera	alagon 3969 	risso patron y río cuarto	11 2775-7235		2-3			DaVinci
+23/05/2026 23:35	33618 EO	$43.500	Efectivo		0	cristian	espera afuera	.	1122619359		Retira			DaVinci
+23/05/2026 23:35	33618 GD	$43.560	MP		3000	Gabriel 	Calcia 705	calcia y aguirre	11 2692-3734		5-6			DaVinci
+23/05/2026 23:36	33619 GD	$31.800	Efectivo		1800	Teo	Larraya 4962	entre colegiales y el resero	11 3387-2313		2-3			DaVinci
+23/05/2026 23:38	33620 EO	$17.600	MP		1500	Aaron	Malthust 5183	 icalma y huemul 	11 7082-7320		1-2			DaVinci
+23/05/2026 23:38	33621 GD	$31.700	Efectivo		2700	Celeste 	Carolina González y cobo	Manzana 6 casa 58 	11 5386-7418		4-5			DaVinci
+24/05/2026 19:31	33622 GD	$37.840	MP		1800	Kevin	las flores 2610	las flores esquina la valleja y los ceibos	11 6474-1746	1 BURGER FAN TRIPLE SIN MOSTAZA	2-3			DaVinci
+24/05/2026 19:33	33623 GD	$37.620	MP		1800	Brandon 	las flores 2610 	entre calle la valleja Y los ceibos	11 2833-2629		2-3			DaVinci
+24/05/2026 19:35	33624 GD	$18.500	Efectivo		1500	Damián ayala	Olivieri 4836	entre resero y las flores	1176192232		1-2	X	GD	DaVinci
+24/05/2026 19:37	33625 GD	$20.500	Efectivo		1500	damian ayala	Olivieri 4836	entre resero y las flores	1176192232		1-2			DaVinci
+24/05/2026 19:44	33626 GD	$18.200	Efectivo		2000	debora 	Calderón de la barca 5980	entre Pedro obligado y zufriategui 	1130537096		3-4			DaVinci
+24/05/2026 19:46	33627 GD	$17.200	Efectivo		1000	Ignacio 	Rocamora 4526	entre tinogasta y santos dumont	11 5028-9454		0-1			DaVinci
+24/05/2026 19:47	33628 GD	$50.600	Efectivo		1500	Carolina santoro	Echaurri 4379	Entre zepelin y mongofiel	1167372877		1-2			DaVinci
+24/05/2026 19:50	33629 EO	$33.100	Efectivo		2000	Sebastián rodríguez	Larraya 6055	cespedes y achega	1125715694		3-4			DaVinci
+24/05/2026 19:52	33630 GD	$32.200	Efectivo		1800	Lucas 	Int Federico Pedro russo 2890	esquina acassuso 	11 6554-9693		2-3			DaVinci
+24/05/2026 19:58	33631 GD	$52.700	Efectivo		1500	Dylan	Juan b justo 5468	entre echaurri y Donizetti	11 2305-1408		1-2			DaVinci
+24/05/2026 20:07	33632 GD	$22.000	MP		2000	Ezequiel Ramos	Colegiales 2482	entre Lanza y De La Fuente	11 6490-3408		3-4			DaVinci
+24/05/2026 20:10	33633 GD	$34.540	MP		2000	Florencia 	alagon 5915 y céspedes	esquina	1124663991		3-4			DaVinci
+24/05/2026 20:14	33634 GD	$30.900	Efectivo		1500	Pamela Leiva            22hs	El resero 4547 	entre dumont y tinogasta	1160295941		1-2			DaVinci
+24/05/2026 20:15	33635 EO	$29.000	Efectivo		0	benjamin	espera afuera	.	1158090356		Retira			DaVinci
+24/05/2026 20:18	33636 GD	$78.760	MP		1800	Eric 	colegiales 2950	entre acassuso y lujan	11 2256-2413		2-3			DaVinci
+24/05/2026 20:22	33637 EO	$37.730	MP		1500	Leonardo	barrio fecovima 	manzana 182 b  casa 3	11 5306-8269	1 LA CUARTO TRIPLE SIN BACON	1-2			DaVinci
+24/05/2026 20:38	33638 EO	$31.900	MP		0	matias gonzalez	espera afuera	.	1141636793		Retira			DaVinci
+24/05/2026 20:38	33639 GD	$34.800	Efectivo		2000	daiana fernadez	vuelta de rocha 3545	entre zinny y bompland 	1153291379		3-4			DaVinci
+24/05/2026 20:44	33640 GD	$35.000	Efectivo		1800	Camila de Brito	Felipe lavallol 4260	entre reaño y raulies 	1164665117		2-3			DaVinci
+24/05/2026 20:47	33641 GD	$29.000	Efectivo		0	agustin arce	retira	x	11 5634-9318		Retira			DaVinci
+24/05/2026 20:51	33642 GD	$27.900	Efectivo		1500	Tiziano castro	Urdaneta 4423	entre rocamora y sixto fajardo	11 2172-9779	1 CARAMEL SIMPLE SIN CHEDDAR	1-2			DaVinci
+24/05/2026 20:54	33643 EO	$35.970	MP		1500	alexis 	Santos Dumont 4646	davinci y del tejar	1128097483		1-2			DaVinci
+24/05/2026 20:55	33644 GD	$32.400	Efectivo		3000	Dai	Zufriategui 6150	entre Ancon y Alegría	11 6710-6180		5-6			DaVinci
+24/05/2026 20:58	33645 GD	$15.500	Efectivo		2000	Facundo	Riglos 2916	entre alagon y lujan	11 5261-9906		3-4			DaVinci
+24/05/2026 21:02	33646 GD	$19.200	Efectivo		2000	Lautaro	Hualfin 5051	entre besares y cazón	11 5528-8760		3-4			DaVinci
+24/05/2026 21:04	33647 GD	$29.200	Efectivo		0	Mateo Pablo	retira	x	11 6626-3992		Retira	X	GD	DaVinci
+24/05/2026 21:05	33648 EO	$48.900	Efectivo		2700	Romero Nayla	Ramón lista 33 	manzana 4 casa 33    pedir ubi	1171377728		4-5			DaVinci
+24/05/2026 21:06	33649 GD	$42.900	Efectivo		1500	Carolina gonzalez	del tejar 3341	entre ortega y sequeira	11 3953-9603		1-2			DaVinci
+24/05/2026 21:09	33650 EO	$41.690	MP		1800	 Oriana	jorge newbery 5358 	donizetti y calderon 	11 5147-6520		2-3			DaVinci
+24/05/2026 21:12	33651 GD	$17.270	MP		1000	Carina 	Mongolfiel 4595 y del tejar	esquina casa de alambrado porton ver	11 2596-3066		0-1			DaVinci
+24/05/2026 21:14	33652 GD	$68.860	MP		2000	Brian	Larraya 4145	entre risso patron y río cuarto	11 2506-9506		3-4			DaVinci
+24/05/2026 21:18	33653 EO	$32.400	Efectivo		0	Aldana	retira	.	11 2567-6108		Retira			DaVinci
+24/05/2026 21:22	33654 GD	$32.700	Efectivo		1800	joaquín	montgolfier 3938	entre rio cuarto y risso patron	11 7044-4586		2-3			DaVinci
+24/05/2026 21:22	33655 EO	$29.610	%	$25.100	0	mateo	retira	-	-		Retira			DaVinci
+24/05/2026 21:24	33656 GD	$29.500	Efectivo		1500	Mariela	Federico pedro russo 4838	entre inca y fournier	11 3692-6165		1-2			DaVinci
+24/05/2026 21:25	33657 GD	$16.170	MP		0	Torres matias 	retira	x	11 2679-5143		Retira			DaVinci
+24/05/2026 21:26	33658 EO	$33.400	Efectivo		2700	Florencia Nicolossi 	Las flores 1959	ñorquin y monteegmont 	11 2562-2037		4-5			DaVinci
+24/05/2026 21:28	33659 GD	$38.600	Efectivo		2000	iara	colegiales 1970	Esquina norquin	11 2565-2820	1 BLT TRIPLE SIN BACON Y SIN LECHUGA	3-4	X	GD	DaVinci
+24/05/2026 21:30	33660 GD	$40.600	Efectivo		2000	iara	colegiales 1970	Esquina norquin	11 2565-2820	1 BLT TRIPLE SIN BACON Y SIN LECHUGA	3-4			DaVinci
+24/05/2026 21:30	33661 EO	$30.900	Efectivo		1500	 darian	Huemul 4860	 las flores y resero	11 6468-0337		1-2			DaVinci
+24/05/2026 21:32	33662 GD	$35.640	MP		3000	Nicolas	Virreyes 6343	entre pareja y lopez may	11 7038-3564	2 BLT DOBLE SIN BACON	5-6			DaVinci
+24/05/2026 21:33	33663 GD	$30.900	Efectivo		1500	Nicolás 	icalma 5650	entre Cobo y Gonzalo doblas	1137879862		1-2			DaVinci
+24/05/2026 21:34	33664 EO	$34.400	Efectivo		1800	Priscila Mischuk	Acassuso 5000	el resero y Carcaraña 	1136016071		2-3			DaVinci
+24/05/2026 21:34	33665 GD	$30.800	MP		1800	diego alvarenga	Reaño 3610	entre zinny y virgenes	11 5151-7929		2-3			DaVinci
+24/05/2026 21:36	33666 GD	$40.400	Efectivo		2700	Celeste 	Carolina González y cobo	Manzana 6 casa 58 	11 5386-7418		4-5			DaVinci
+24/05/2026 21:38	33667 EO	$15.950	MP		0	edgar	.	.	1134314538		Retira			DaVinci
+24/05/2026 21:40	33668 GD	$4.000	Efectivo		0	aldana	retira	x	x		Retira			DaVinci
+24/05/2026 21:45	33669 GD	$16.200	Efectivo		1500	Marcelo	El resero 4562	entre tinogasta y dumont	11 6712-4421		1-2			DaVinci
+24/05/2026 21:46	33670 EO	$51.920	MP		2700	Tamara Ledesma	pedir ubi	Manzana 4 casa 47	11 3465-9003		4-5			DaVinci
+24/05/2026 21:48	33671 GD	$48.290	MP		1500	Diego	Ortega 4650	Entre del tejar y davinci	11 3078-4409		1-2			DaVinci
+24/05/2026 21:52	33672 GD	$36.850	MP		1800	Alejo	Salvigny 4017 	entre icalma y huemul	1167474194	1 TASTY DOBLE SIN BACON	2-3			DaVinci
+24/05/2026 21:55	33673 GD	$38.720	MP		2000	Priscila Acevedo 	Lavalleja 4965	entre resero y colegiales	11 3690-2971	1 LA CUARTO DOBLE SIN MOSTAZA	3-4			DaVinci
+24/05/2026 21:57	33674 GD	$16.000	Efectivo		1500	Paz Walter	Rocamora 3852	entre Juan b justo y Vidal	1137684206		1-2			DaVinci
+24/05/2026 21:58	33675 EO	$19.800	MP		2000	David	Besares 1855	monte egmont y spilimbergo 	11 7893-8695		3-4			DaVinci
+24/05/2026 21:58	33676 GD	$58.700	Efectivo		2000	Andrés 	Reaño y Gamboa	esquina	11 6662-7247	1 CHEESE SIMPLE SIN BACON 1 CHEESE DOBLE SIN BACON	3-4			DaVinci
+24/05/2026 22:02	33677 GD	$59.840	MP		1800	Elías Morales 	Zeppelin 3560	entre salvigny y santa Catalina	1169413490		2-3			DaVinci
+24/05/2026 22:02	33678 EO	$27.400	Efectivo		1000	Rocío Amaya	Zeppelin 4805	las flores y el resero 	54 9 3544 62-0532		0-1			DaVinci
+24/05/2026 22:04	33679 GD	$31.400	Efectivo		2000	Ayelen 	las flores 2355 	Entre Gamboa y la fuente	11 2474-0020		3-4	X	GD	DaVinci
+24/05/2026 22:05	33680 EO	$15.000	Efectivo		0	carla	retira	.	11 7367-9460		Retira			DaVinci
+24/05/2026 22:05	33681 GD	$31.700	Efectivo		2000	Ayelen 	las flores 2355 	Entre Gamboa y la fuente	11 2474-0020		3-4			DaVinci
+24/05/2026 22:07	33682 GD	$32.670	MP		1500	renata molina	Tinogasta 5292	entre cazón y caderón	11 6241-9160		1-2			DaVinci
+24/05/2026 22:08	33683 GD	$31.900	MP		1500	Zoe Camoriano	Juan bautista justo 4208	entre reaño y raulies	1135251392		1-2			DaVinci
+24/05/2026 22:09	33684 GD	$29.200	Efectivo		0	Ariel Palavesino 	retira	x	11 3900-6095	1 CARAMEL DOBLE SIN BACON 1 CHEESE DOBLE SIN BACON	Retira			DaVinci
+24/05/2026 22:10	33685 EO	$20.020	MP		1500	Ezequiel Fernando	Vidal 5248	russo y cazón 	 11 3775-8427		1-2			DaVinci
+24/05/2026 22:12	33686 GD	$29.200	Efectivo		0	Nahuel	retira	x	11 6598-4312		Retira			DaVinci
+24/05/2026 22:15	33687 GD	$31.200	Efectivo		1800	Emanuel Cabral 	Reaño 3149	Olivieri y la bastilla	1141902888		2-3			DaVinci
+24/05/2026 22:17	33688 GD	$30.250	MP		0	brenda	retira	x	1141935642	1 CHEESE SIMPLE SIN BACON	Retira			DaVinci
+24/05/2026 22:19	33689 EO	$51.400	Efectivo		1500	Jaquelina	Davinci 2948	pedir ubi	11 2539-3070	1 CHEESE SIMPLE SIN BACON	1-2			DaVinci
+24/05/2026 22:23	33690 GD	$16.280	MP		1800	Walter	Acassuso 4970	entre carcaraña y resero	11 5601-7664		2-3			DaVinci
+24/05/2026 22:27	33691 EO	$16.500	MP		1800	Rocio	Carcaraña 2870	 alagon y Acassuso	1135056544		2-3			DaVinci
+24/05/2026 22:28	33692 GD	$21.300	Efectivo		2000	Axel	Salvigny 3923	entre icalma y Juan b. Justo	11 5583-6720	1 TASTY TRIPLE SIN LECHUGA Y SIN TOMATE	3-4			DaVinci
+24/05/2026 22:31	33693 GD	$26.500	Efectivo		1500	Camila encina	Santos dumont 4964 	entre el resero y besares 	1126935339		1-2			DaVinci
+24/05/2026 22:35	33694 GD	$32.100	Efectivo		2700	Wilson delvalle 	Alagon	entre Antequera y andonaegui esquina	11 3124-4468		4-5			DaVinci
+24/05/2026 22:37	33695 GD	$35.300	Efectivo		2700	axel	sobre alegria	entre hualfin y gamboa	11 2545-1712		4-5			DaVinci
+24/05/2026 22:38	33696 GD	$29.400	Efectivo		0	ariel policia	retira	x	x		Retira	X	GD	DaVinci
+24/05/2026 22:41	33697 GD	$30.000	Efectivo		1000	Alberto  portillo	Ranqueles 4085	Manzana 216 casa 37 barrio fecovima	11 5914-2993		0-1			DaVinci
+24/05/2026 22:41	33698 EO	$17.270	MP		1000	Bianca Juan	Da vinci 4859	Entre ruta 3 y Santos Dumon	11 6439-7905		0-1			DaVinci
+24/05/2026 22:42	33699 GD	$30.140	MP		1000	Florencia	Celestino Vidal 4751	entre da Vinci y las Flores	11 2608-5585		0-1			DaVinci
+24/05/2026 22:43	33700 GD	$31.000	Efectivo		2000	maia	Riglos 2833	entre Alagon y Lavalleja	11 5029-2227		3-4			DaVinci
+24/05/2026 22:54	33701 GD	$18.370	MP		0	brenda	retira	x	1141935642		Retira			DaVinci
+24/05/2026 22:57	33702 EO	$19.500	Efectivo		1500	Vanessa Luca	pedir ubi	Fila 7 casa 27 esquina besares	11 6053-7645		1-2			DaVinci
+24/05/2026 23:02	33703 GD	$41.800	MP		1500	Nahuel Villarroel 	Rocamora 3527	entre calles son zinny y vírgenes	1172162001		1-2			DaVinci
+24/05/2026 23:02	33704 EO	$18.200	Efectivo		2000	Damián cruz	Recuero 5661 	Valentín Gómez y Carlos encina 	1133713645		3-4			DaVinci
+24/05/2026 23:03	33705 GD	$36.740	MP		2000	camila zarza 	urdaneta 3898	entre virgenes y juan b justo	1130975278		3-4			DaVinci
+24/05/2026 23:05	33706 GD	$45.320	MP		1800	Morena 	santos dumont 5654	entre  Riglos y cobo	11 6255-0412		2-3			DaVinci
+24/05/2026 23:06	33707 GD	$37.200	Efectivo		1800	Facundo Barreto 	Rio cuarto 4405	entre Zeppelin y tino gasta	1135754669		2-3			DaVinci
+24/05/2026 23:11	33708 GD	$46.000	Efectivo		1800	Gabriel Ferrari 	Alagón 5356	entre Donizetti y Russo	1161386940		2-3			DaVinci
+24/05/2026 23:13	33709 GD	$30.600	Efectivo		0	Braian moreyra	retira	x	1169307293	1 BURGER FAN SIMPLE SIN CHEDDAR	Retira			DaVinci
+24/05/2026 23:16	33710 GD	$19.500	Efectivo		1500	Brian Carreño	Raulies 3768	entre Vírgenes y Urdaneta	1133275537		1-2			DaVinci
+24/05/2026 23:20	33711 GD	$33.220	MP		0	Luis 	retira	x	11 3488-9870	LA CHEESE BURGUER SIN EXTRA CHEDDAR VA CON LAS PAPAS DORADAS	Retira			DaVinci
+24/05/2026 23:23	33712 EO	$22.220	MP		1800	Zerda Nicolás	El resero 5481	Víctor Martinez y Martín coronado 	11 2509-4918		2-3			DaVinci
+24/05/2026 23:25	33713 GD	$20.700	Efectivo		2000	erika	cazon 2720	entre alagon y aguapey	11 3907-4385	1 BURGER FAN DOBLE PONERLE UNA SOLO FETA DE CHEDDAR NO ESTRELLITA	3-4			DaVinci
+24/05/2026 23:30	33714 GD	$33.000	MP		1800	Jorge	vuelta de rocha 3112	y la bastilla	11 6468-2175		2-3	X	GD	DaVinci
+24/05/2026 23:31	33715 EO	$26.400	Efectivo		0	sebas	espera afuera	.	.		Retira			DaVinci
+24/05/2026 23:32	33716 GD	$35.200	Efectivo		1500	Reinoso Giuliana 	Voissin 4787	entre davinci y colegiales	11 3683-0628	1 TASTY DOBLE SIN LECHUGA Y SIN TOMATE	1-2			DaVinci
+24/05/2026 23:34	33717 EO	$26.200	Efectivo		0	romeo	retira	.	11 7215-5112		Retira	X	GD	DaVinci
+24/05/2026 23:37	33718 GD	$51.500	Efectivo		1500	Cecilia	Rocamora 3770	Urdaneta y virgenes	11 6373-3867		1-2			DaVinci
+24/05/2026 23:39	33719 GD	$21.300	Efectivo		2000	Florencia Ojeda 	Alagon 5685	entre cobo y doblas	1154734535		3-4			DaVinci
+24/05/2026 23:41	33720 EO	$32.450	MP		1800	milagros acosta	alagon 4206	17 de febrero y río cuarto	11 2706-5229		2-3			DaVinci
+24/05/2026 23:45	33721 GD	$49.500	MP		1800	Jorge	vuelta de rocha 3112	y la bastilla	11 6468-2175		2-3			DaVinci
+24/05/2026 23:47	33722 EO	$19.700	Efectivo		2700	Alexander Muñoz	Armonia  2950	Luján y Alagón	11 6321-2959		4-5			DaVinci
+24/05/2026 23:51	33723 GD	$31.200	Efectivo	$32.000	1800	Leydi Ortiz 	Buseo 3196	pedir ubi	1134245125		2-3			DaVinci
+24/05/2026 23:55	33724 GD	$15.950	MP		0	Quiroga milagros 	retira	x	1136771133		Retira			DaVinci
+24/05/2026 23:56	33725 EO	$28.820	MP		0	romeo	.	.	.		Retira			DaVinci
+25/05/2026 19:26	33726 EO	$82.940	MP		1500	Florencia Tolosa	Vírgenes 5480	echaurri y donizetti	1176662327		1-2			DaVinci
+25/05/2026 19:29	33727 EO	$30.800	MP		1500	Joseline Olguera.	Urdaneta 4458	 rocamora y fajardo.	11 2359-9250	1 CHEESE SIMPLE SIN CHEDDAR 	1-2			DaVinci
+25/05/2026 19:32	33728 GD	$31.240	MP		2000	Gisela Rojas        21hs	Olivieri 3110	entre av.Luro y Olivieri	11 44069511 		3-4			DaVinci
+25/05/2026 19:34	33729 EO	$27.900	Efectivo		0	mili	espera afura	-	1170592364		Retira			DaVinci
+25/05/2026 19:41	33730 GD	$32.900	Efectivo		1500	Solange Berdun	raulies 3551	entre zinny y ortega	1132490222		1-2			DaVinci
+25/05/2026 19:45	33731 EO	$14.700	Efectivo		1500	mercelo  21hs	Vidal 4983	 resero esquina carcaraña	11 6969-5939		1-2			DaVinci
+25/05/2026 19:47	33732 GD	$33.900	Efectivo		1500	Juliana 	Cayetano cazón 4478	íbera y zeppelin	 11 2188-8056		1-2			DaVinci
+25/05/2026 19:57	33733 GD	$45.100	MP		1800	Rocio	Donizetti 2975	entre Luján y acassuso	11 6579-1121	2 CHEESE SIMPLE SIN BACON	2-3			DaVinci
+25/05/2026 20:11	33734 GD	$33.200	Efectivo		1500	florencia	Juan b justo 4250 	entre raulies y reaño	1122457130		1-2			DaVinci
+25/05/2026 20:13	33735 GD	$18.500	Efectivo		1800	Ludmila Paz	Cayetano cazon 3170	entre OLIVIERI Y LA BASTILLA	1136670103		2-3			DaVinci
+25/05/2026 20:19	33736 GD	$42.900	Efectivo		2000	Andrés 	Reaño y Gamboa	esquina	11 6662-7247	1 BURGER FAN SIMPLE SIN MOSTAZA 1 CHEESE SIMPLE SIN BACON 1 ALIOLI DOBLE SIN BACON	3-4			DaVinci
+25/05/2026 20:22	33737 EO	$17.700	Efectivo		2000	priscila     21:30	Alagon 5674	cobo y doblas	11 6099-9943		3-4	X	GD	DaVinci
+25/05/2026 20:22	33738 GD	$14.700	Efectivo		0	Aaron	retira	.	.		Retira			DaVinci
+25/05/2026 20:25	33739 GD	$30.700	Efectivo		0	Dani	retira	x	11 2511-2544		Retira			DaVinci
+25/05/2026 20:26	33740 GD	$16.170	MP		1500	bianca oyola	rocamora 3519	entre zinny y rocamora	1162680951		1-2			DaVinci
+25/05/2026 20:31	33741 GD	$44.700	Efectivo		3000	Juana	juan peña 2824	Juan peña esquina omar torres y ascas	11 2362-2816		5-6			DaVinci
+25/05/2026 20:35	33742 GD	$18.370	MP		2000	Diego escobar 	Marcelo gamboa 4952	Colegiales y besares	11 3184-2124		3-4			DaVinci
+25/05/2026 20:42	33743 EO	$16.000	Efectivo		2000	Leti Ferreira	La bastilla 3551	 Salvigny y santa Catalina	11 3907-5863		3-4			DaVinci
+25/05/2026 20:42	33744 GD	$29.300	Efectivo		1800	Evelyn 	Rodney 4547	entre tinogasta y ruta 3	11 5657-7300		2-3			DaVinci
+25/05/2026 20:45	33745 GD	$30.500	Efectivo		1500	Nahuel	Las flores 3251	Olivieri y sequeira	11 2823-9429		1-2			DaVinci
+25/05/2026 20:48	33746 GD	$47.630	MP		1800	Gabriel	Reaño 2670	entre Larraya y Lavalleja	11 3574-5451		2-3			DaVinci
+25/05/2026 20:52	33747 GD	$14.700	Efectivo		0	Lucas Falleau	retira	x	1155627266		Retira			DaVinci
+25/05/2026 20:57	33748 GD	$17.930	MP		1800	Micaela	Huemul 3535	Salvigny y Santa Catalina	11 2778-9940		2-3			DaVinci
+25/05/2026 20:59	33749 GD	$29.000	Efectivo		0	Enzo	retira	x	11 2846-1458		Retira			DaVinci
+25/05/2026 21:01	33750 GD	$32.670	MP		0	Malvina bertoglio       21:50hs	retira	x	1149275468		Retira			DaVinci
+25/05/2026 21:01	33751 EO	$32.000	Efectivo		1800	Matias yñiguez 	Encina 4449 	fajardo y rocamora 	11 2657-8921	1 CHEESE SIMPLE SIN BACON	2-3			DaVinci
+25/05/2026 21:07	33752 GD	$32.450	MP		2000	Gómez candela 	Rodney y Aguapey 4348	esquina	1134847990	1 CHEESE SIMPLE SIN CHEDDAR Y SIN BACON	3-4			DaVinci
+25/05/2026 21:08	33753 GD	$14.700	Efectivo		1500	karen	urdaneta 4964	entre resero y carcaraña	11 5495-1816		1-2			DaVinci
+25/05/2026 21:12	33754 GD	$19.700	Efectivo		2000	Priscila          21:30	Alagon 5674	entre cobo y doblas	11 6099-9943		3-4			DaVinci
+25/05/2026 21:15	33755 EO	$38.060	MP		2000	Sasha Silveira	Capitán Parodi 6227	 ancon y apipe 	11 5118-5115		3-4			DaVinci
+25/05/2026 21:17	33756 GD	$56.900	Efectivo		1500	Camila 	Ruiz de los llanos 5009	entre Carcaraña y cazón	11 3257-1895		1-2			DaVinci
+25/05/2026 21:24	33757 EO	$16.000	Efectivo		1000	Mauro	Rocamora 4182	huemul y montgolfier 	11 3234-1273		0-1			DaVinci
+25/05/2026 21:25	33758 GD	$34.400	Efectivo		0	More 	retira	x	11 6125-5343		Retira			DaVinci
+25/05/2026 21:26	33759 GD	$18.000	Efectivo		1800	Daniela 	Olivieri 4199	entre recuero y reaño	11 2280-1108		2-3			DaVinci
+25/05/2026 21:29	33760 GD	$38.720	MP		1500	Tiziano	Juan b justo 4208	entre rauliet y reaño	11 5593-0823		1-2			DaVinci
+25/05/2026 21:35	33761 GD	$85.700	Efectivo	$80.000	1500	Candela Chercuitte	Donizetti 4251	entre Icalma y huemul	11 2293-9203	2 CHEESE SIMPLE SIN BACON	1-2			DaVinci
+25/05/2026 21:36	33762 EO	$18.600	Efectivo		1800	Uma 	juan bautista justo 3824	 rocha y riso patrón	11 2313-2831		2-3			DaVinci
+25/05/2026 21:42	33763 EO	$35.640	MP		1500	Ariel Adrian oliva	Leonardo davinci 3253	Olivieri y Sequeira 	1130496117		1-2			DaVinci
+25/05/2026 21:43	33764 GD	$33.000	MP		1000	Camila castillo 	Del tejar 4478	entre tinogasta y Zeppelin	11 5729-6805		0-1			DaVinci
+25/05/2026 21:48	33765 GD	$44.990	MP		1000	Daniel Rios	Leonardo Da Vinci 4424	Entre Zeppelin e Ibera 	1157416651		0-1			DaVinci
+25/05/2026 21:50	33766 EO	$40.480	MP		1800	Daniela acosta 	Luján 4970	 carcaraña y resero 	1133833053		2-3			DaVinci
+25/05/2026 21:52	33767 GD	$33.400	Efectivo		1500	Sofía cordero 	Doblas 4447	Entre íbera y zeppelin	1134629025	1 BLT SIMPLE SIN LECHUGA Y SIN BACON 1 BLT DOBLE SIN LECHUGA Y SIN BACON	1-2			DaVinci
+25/05/2026 21:54	33768 GD	$30.900	Efectivo		1500	Giselle Caballero 	Montgolfier 5109 fila10 casa23	entre besares y calderon	1140856846	1 CRISPY DOBLE SIN BACON	1-2			DaVinci
+25/05/2026 21:56	33769 GD	$73.590	MP		2000	Agustin	santa catalina 3837	entre juan b justo y urdaneta	11 2398-6972		3-4			DaVinci
+25/05/2026 21:57	33770 GD	$22.220	MP		5500	Ezequiel	Dragones 4401	esquina Sáenz	11 2742-5146		7-8			DaVinci
+25/05/2026 21:58	33771 GD	$32.400	Efectivo		0	Alex	retira	x	11 2473-6111		Retira			DaVinci
+25/05/2026 22:03	33772 GD	$33.400	Efectivo		0	matias perez	retira	x	11 5830-9606		Retira			DaVinci
+25/05/2026 22:07	33773 GD	$38.830	MP		1500	Erik  	Cazón 3866 	Entre Virgenes y urdaneta 	11 6272-7456	1 CHEESE DOBLE SIN BACON	1-2			DaVinci
+25/05/2026 22:10	33774 GD	$45.800	Efectivo		1800	joel	Alagon 5322	Entre Federico Russo y donizzeti	11 5619-3744		2-3			DaVinci
+25/05/2026 22:12	33775 GD	$14.800	Efectivo		1800	Antonella	Rio cuarto 3130	entre la bastilla y lavallol	11 3182-4935		2-3			DaVinci
+25/05/2026 22:18	33776 GD	$16.700	Efectivo		0	paola	retira	x	11 5138-1400		Retira			DaVinci
+25/05/2026 22:20	33777 GD	$33.200	Efectivo		0	nico policia           ult hs	x	x	x		Retira	X	GD	DaVinci
+25/05/2026 22:22	33778 GD	$38.610	MP		0	Axel 	retira	x	11 4928-2629		Retira			DaVinci
+25/05/2026 22:23	33779 GD	$16.000	Efectivo		1500	Araujo tamara	Las flores 3156	entre olivieri y la bastilla	1168706187		1-2			DaVinci
+25/05/2026 22:26	33780 EO	$21.450	MP		1500	Delfina Fernando 	Malthust 5060 	besares y resero	1138311369		1-2			DaVinci
+25/05/2026 22:26	33781 GD	$18.150	MP		1500	Daniel gramajo	Sequeira 5139	entre cazon y besares	11 5348-3466		1-2			DaVinci
+25/05/2026 22:32	33782 EO	$8.000	Efectivo		0	eliii	  ultima hora	.	.		Retira			DaVinci
+25/05/2026 22:33	33783 GD	$14.500	Efectivo		0	Sabrina Chavez	retira	x	11 2368-1414		Retira			DaVinci
+25/05/2026 22:35	33784 GD	$21.560	MP		1800	Micaela larrosa	Leonardo Da vinci 5519	entre encinas y Martín coronado	1134327919		2-3			DaVinci
+25/05/2026 22:36	33785 GD	$47.850	MP		0	ivan	retira	x	11 7187-3280		Retira			DaVinci
+25/05/2026 22:43	33786 GD	$48.510	MP		1500	Bruno caballero 	Besares 4200 casa 93	en la calle cortada	54 9 2246 58-7173		1-2			DaVinci
+25/05/2026 22:45	33787 GD	$34.200	Efectivo		1800	Thiago	Risso Patron 2900	entre la bastilla y Luján	1133448949		2-3			DaVinci
+25/05/2026 22:48	33788 GD	$28.500	Efectivo		1000	Selena gonzalez	Resero 4263	entre huemul y mongolfier	1166682938		0-1			DaVinci
+25/05/2026 22:49	33789 GD	$29.200	Efectivo		0	Milagros Jaime 	retira	x	11 5014-2570		Retira			DaVinci
+25/05/2026 22:57	33790 GD	$18.000	Efectivo		0	nico	retira	x	11 5914-7189		Retira			DaVinci
+25/05/2026 22:58	33791 EO	$15.000	Efectivo		0	santino	espera afuera	,	.		Retira			DaVinci
+25/05/2026 23:01	33792 GD	$34.320	MP		2000	Alexis Lopez	Larsen 5150	entre russo y  cazon	1135250499		3-4			DaVinci
+25/05/2026 23:09	33793 GD	$17.200	Efectivo		2700	Walkiria 	Pedro obligado 5475	entre bs as y echaurri	11 5164-3349		4-5	X	GD	DaVinci
+25/05/2026 23:13	33794 GD	$17.700	Efectivo		2700	Walkiria 	Pedro obligado 5475	entre bs as y echaurri	11 5164-3349		4-5			DaVinci
+25/05/2026 23:16	33795 EO	$46.750	MP		0	lourdes	espera afuera	.	1176445059		Retira			DaVinci
+25/05/2026 23:17	33796 GD	$19.300	Efectivo		2000	dylan	Coronel ramos 2842	ante esquina alagon	11 6251-2008	1 BIG GARDEN DOBLE SIN PEPINO	3-4			DaVinci
+25/05/2026 23:23	33797 EO	$14.500	Efectivo		0	enzo	retira	.	11 2846-1458		Retira			DaVinci
+25/05/2026 23:28	33798 EO	$17.000	Efectivo		0	santi	ult hora	.	.		Retira			DaVinci
+25/05/2026 23:29	33799 GD	$29.000	Efectivo		0	Elian Quevedo	retira	x	11 5055-9689		Retira			DaVinci
+25/05/2026 23:31	33800 GD	$31.200	Efectivo		2000	Leydi	Buseo 3196	pedir ubi	11 3424-5125		3-4			DaVinci
+25/05/2026 23:54	33801 GD	$20.680	MP		1800	Alan Zarate 	Carcaraña 2750	entre alagon y aguapey	11 5609-9458		2-3			DaVinci
+27/05/2026 19:25	33802 GD	$39.490	MP		1800	Kevin	las flores 2610	las flores esquina la valleja y los ceibos	11 6474-1746		2-3			DaVinci
+27/05/2026 19:31	33803 GD	$21.200	Efectivo		2000	Nahuel aguirre	Hualfin 4883 	entre las flores y da vinci	1155612164		3-4			DaVinci
+27/05/2026 20:18	33804 GD	$15.950	MP		1500	Romina Ajalla	Reaño 3733	entre virgenes y urdaneta	1.551.762.179		1-2			DaVinci
+27/05/2026 20:19	33805 EO	$14.700	Efectivo		0	Aaron	retira	-	-		Retira			DaVinci
+27/05/2026 20:51	33806 GD	$39.800	Efectivo		1500	juan	el resero 4720	entre santos dumont e inca	11 7135-7553		1-2			DaVinci
+27/05/2026 21:12	33807 EO	$15.200	Efectivo	$5.500	0	Alejo	retira	-	-		Retira			DaVinci
+27/05/2026 21:16	33808 EO	$16.000	Efectivo		1000	Laura               22HS	Huemul 4898	 las flores y el resero	1140851927		0-1			DaVinci
+27/05/2026 21:46	33809 GD	$34.320	MP		1500	Sergio 	El Resero 3450	entre Rufino Ortega y Antonio Zinny	11 2158-0712		1-2			DaVinci
+27/05/2026 21:51	33810 EO	$33.700	Efectivo		1800	Franco	Clemente onelli 5550 	estrellas cobo y echaurri	 11 3156-9382		2-3			DaVinci
+27/05/2026 21:56	33811 EO	$16.400	Efectivo		0	Gabirel 	espera afuera 	-	-		Retira			DaVinci
+27/05/2026 22:16	33812 EO	$20.020	MP		1500	Tiara	Besares y ruta 3	-	 11 6491-1224		1-2	X	EO	DaVinci
+27/05/2026 22:22	33813 EO	$18.200	Efectivo		1500	Tiara	Besares y ruta 3	-	11 6491-1224		1-2			DaVinci
+27/05/2026 22:48	33814 GD	$18.200	Efectivo		2000	Evelyn valdez	Larraya 4853	entre colegiales y el recero	11 5338-8266		3-4			DaVinci
+27/05/2026 22:56	33815 GD	$15.500	Efectivo		1000	Milena centurión 	Huemul 5225	entra calderon y besares	11 4187-8240		0-1			DaVinci
+27/05/2026 23:25	33816 GD	$33.200	Efectivo		0	nico policia       	ULT HS	x	x		Retira	X	GD	DaVinci
+28/05/2026 19:20	33817 EO	$49.500	MP		0	matias	retira    21hs	-	-		Retira			DaVinci
+28/05/2026 19:23	33818 EO	$26.400	MP		0	Sofia coronel	retira	-	-		Retira			DaVinci
+28/05/2026 19:23	33818 GD	$28.600	MP		2000	Pamela	apipe 4748	entre Jorge newbery y ruta21	11 4086-6372		3-4			DaVinci
+28/05/2026 19:28	33819 GD	$39.000	Efectivo		0	ROMINA CATALAN      21:30	retira	x	54 9 11 3209-4529		Retira	X	GD	DaVinci
+28/05/2026 19:28	33820 EO	$24.000	Efectivo		0	Alan	RETIRA    21HS 	-	-		Retira			DaVinci
+28/05/2026 19:29	33821 GD	$15.000	Efectivo		0	Vanesa	retira	x	11 5953-0557		Retira			DaVinci
+28/05/2026 19:31	33822 EO	$27.000	Efectivo		2000	valentina	llerena 3334 	 beethoven y garcia merou.	11 5751-5545		3-4			DaVinci
+28/05/2026 19:34	33823 GD	$25.500	Efectivo		1500	Micaela 	El resero 5335	entre watt y rui de los llanos	11 3233-1517		1-2			DaVinci
+28/05/2026 19:36	33824 GD	$25.500	Efectivo		1500	Juliana	Cayetano cazón 4478	entre íbera y zeppelin	11 2188-8056		1-2			DaVinci
+28/05/2026 19:36	33825 EO	$13.800	Efectivo		1800	nahiara         21:30hs	juan llerena 5361	pedro russo y donizetti	 11 4161-2529		2-3			DaVinci
+28/05/2026 19:39	33826 EO	$45.000	Efectivo		0	Agustina 	retira 	--	-		Retira			DaVinci
+28/05/2026 19:40	33827 EO	$2.000	Efectivo		0	AGUSTINA 	RETIRA	-	-	TOTAL : 47.000	Retira			DaVinci
+28/05/2026 19:41	33828 GD	$16.500	Efectivo		1500	sofia	cayetano cazón 3249	entre olivieri y sequeira	11 6282-1665		1-2			DaVinci
+28/05/2026 19:45	33829 GD	$28.050	MP		1500	Camila agüero	Las flores 4752	entre inca y doumont 	1143949404		1-2			DaVinci
+28/05/2026 19:45	33830 EO	$39.500	Efectivo		1500	Natasha         21HS	Cayetano Cazón 3375 	Ortega y Sequeira 	 11 2383-2011		1-2			DaVinci
+28/05/2026 19:46	33831 GD	$13.800	Efectivo		1800	Johanna natale 	ancon 4637	entre jorge newbery y tinogasta	1162275619		2-3			DaVinci
+28/05/2026 19:47	33832 EO	$51.480	MP		1800	Mene Andrea	Risso patrón 3262	Sequeira y Olivieri	1126110170		2-3			DaVinci
+28/05/2026 19:49	33833 EO	$16.500	MP		0	 Damaris Presentado	retira	-	-		Retira			DaVinci
+28/05/2026 19:49	33834 GD	$31.500	Efectivo		1500	Jana 	Leonardo da Vinci 5394	entre watt y ruiz de los llanos	11 3876-7398		1-2			DaVinci
+28/05/2026 19:50	33835 EO	$38.000	Efectivo		2000	Mia	colegiales 5890	comodoro py y Pedro obligado	11 3313-0296		3-4	X	GD	DaVinci
+28/05/2026 19:52	33836 EO	$26.000	Efectivo		2000	Mia	colegiales 5890 	comodoro py y Pedro obligado	-		3-4			DaVinci
+28/05/2026 19:53	33837 GD	$16.800	Efectivo		1800	Sofia Gimenez        21.30	Víctor Martínez 4880	entre Resero y Colegiales	1136129588		2-3			DaVinci
+28/05/2026 19:54	33838 EO	$28.500	Efectivo		0	Camila 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 19:55	33839 EO	$16.170	MP		0	leticia	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 19:57	33840 GD	$15.000	Efectivo		0	Urriaga Gabriela 	retira	x	11 7826-6131		Retira			DaVinci
+28/05/2026 19:58	33841 EO	$33.000	MP		0	gustavo	espera afuera	-	-		Retira			DaVinci
+28/05/2026 20:00	33842 GD	$32.000	Efectivo		2000	dylan          21:30	ñorquin 5043	entre besares y colegiales	11 7066-0335		3-4			DaVinci
+28/05/2026 20:01	33843 GD	$39.000	Efectivo		0	Abigail palomo        22hs	retira	x	11 2788-6591		Retira			DaVinci
+28/05/2026 20:02	33844 EO	$25.800	Efectivo		1800	Sofia farias      21HS	huemul 3549 	 salvigni y santa catalina 	11 3904-1325		2-3			DaVinci
+28/05/2026 20:04	33845 GD	$44.550	MP		1500	brenda coria	Capitan parodi 5497	entre echaurri y donicetti 	1139574260		1-2			DaVinci
+28/05/2026 20:05	33846 EO	$36.000	Efectivo		0	Luciana	retira	-	-		Retira			DaVinci
+28/05/2026 20:06	33847 GD	$17.500	Efectivo		5500	NOELIA	patagonia 760	entre gral rivas y dragones	x		7-8	X	GD	DaVinci
+28/05/2026 20:10	33848 GD	$25.500	Efectivo		1500	Solange berdun	Raulies 3551	entre ortega y zinny	1132490222		1-2			DaVinci
+28/05/2026 20:10	33849 EO	$49.800	Efectivo		0	lucas 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 20:12	33850 GD	$54.000	Efectivo		0	ROMINA CATALAN        21:30	retira	x	11 3209-4529		Retira			DaVinci
+28/05/2026 20:12	33851 EO	$48.000	Efectivo		0	Francisco	esperan afuera 	.	.		Retira			DaVinci
+28/05/2026 20:16	33852 GD	$17.500	Efectivo		0	Gisella Bordon	retira	x	11 6166-3078		Retira			DaVinci
+28/05/2026 20:16	33853 EO	$30.000	Efectivo		0	luis 	retira	-	-		Retira	X	GD	DaVinci
+28/05/2026 20:17	33854 GD	$42.130	MP		2000	Solange             21:30	Las flores 2341	entre gamboa y de la fuente	11 7064-3570		3-4			DaVinci
+28/05/2026 20:21	33855 GD	$28.380	MP		1800	Milagros Estigarribia	matias 5790	entre riglos y cespedes	1138126051		2-3			DaVinci
+28/05/2026 20:26	33856 GD	$18.150	MP		1500	gimenez nazareno 	celestino vidal 5024	esquina carcaraña	11 7623 6340		1-2			DaVinci
+28/05/2026 20:26	33857 EO	$30.000	Efectivo		0	Tobias 	espeera afuera 	-	-	2 cheese dobles sin cheddar 	Retira			DaVinci
+28/05/2026 20:27	33858 GD	$29.000	Efectivo		2000	Alexis	cespedes 2615 	entre larraya y Lavalleja	11 2243-0290		3-4			DaVinci
+28/05/2026 20:29	33859 EO	$27.000	Efectivo		0	Rubén 	retira	.	.		Retira			DaVinci
+28/05/2026 20:29	33860 GD	$55.000	Efectivo		1500	Jana 	Juan Bautista Justo 4335 	entre Raulies y Fajardo	11 3876-7398		1-2			DaVinci
+28/05/2026 20:31	33861 EO	$14.700	Efectivo		2700	Giselle	Barrio Walsh M1 L107	-	11 2696-3628		4-5			DaVinci
+28/05/2026 20:31	33862 GD	$29.200	Efectivo		1500	Ludmila	Donizetti 4538	Esquina petirrojo Deptos mano izquierd	11 3461-8468		1-2			DaVinci
+28/05/2026 20:33	33863 GD	$38.000	Efectivo		2000	Ivan Gonzalez 	Andrade 3722 	entre urdaneta y virgenes	1126774981		3-4	X	GD	DaVinci
+28/05/2026 20:35	33864 EO	$48.000	Efectivo		0	Charo Benítez 	Espera afuera	-	-		Retira			DaVinci
+28/05/2026 20:35	33865 EO	$33.000	MP		0	luis 	retira	-	-		Retira			DaVinci
+28/05/2026 20:36	33866 GD	$15.500	Efectivo		1500	Maria	Leonardo Da Vinci 5431	entre Ruiz de los llanos y víctor martinez 	11 3702-1439		1-2			DaVinci
+28/05/2026 20:37	33867 EO	$28.000	Efectivo		0	Nazareno 	retira	-	-		Retira			DaVinci
+28/05/2026 20:37	33867 GD	$17.700	Efectivo		2700	Abigail	la bastilla 4759	Entre calles las flores y davinci	11 3054-9410		4-5			DaVinci
+28/05/2026 20:40	33868 GD	$17.800	Efectivo		1800	milena 	cayetano cazón 3191	entre labastilla y lavallol	11 2588-8216	1 CHEESE SIMPLE SIN CHEDDAR	2-3			DaVinci
+28/05/2026 20:41	33869 EO	$49.000	Efectivo		1000	Jana Rodríguez 	Rocamora 4237	Huemul y Montgolfier 	11 6017-8284		0-1			DaVinci
+28/05/2026 20:43	33870 EO	$33.000	MP		0	Gabriel	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 20:44	33871 EO	$30.000	Efectivo		0	Cintia espindola	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 20:46	33872 EO	$39.000	Efectivo		0	Joaquin benitez	espera afuera	-	-		Retira			DaVinci
+28/05/2026 20:47	33873 EO	$48.000	Efectivo		0	Carla ceseres	espera afuera 	-	1131043003		Retira			DaVinci
+28/05/2026 20:47	33874 GD	$28.800	Efectivo		1800	Sergio	felipe lavallol 4190	esquina reaños	11 7361-2631		2-3			DaVinci
+28/05/2026 20:48	33875 EO	$31.500	Efectivo		1500	Hernan 	davinci 3480	esq zinni	1157544902		1-2			DaVinci
+28/05/2026 20:50	33876 EO	$48.000	Efectivo		0	Darian 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 20:50	33877 GD	$61.500	Efectivo		1500	Laura            22hs	Urdaneta 4871	entre las flores y resero	11 3189-6290		1-2			DaVinci
+28/05/2026 20:53	33878 EO	$24.400	Efectivo		0	German	retira	-	-		Retira			DaVinci
+28/05/2026 20:54	33879 GD	$24.400	%	$20.000	0	Roman Araujo 	retira	x	11 2593-3863		Retira	X	GD	DaVinci
+28/05/2026 20:57	33880 GD	$24.000	Efectivo		0	maria gimenez	retira	x	1148893102		Retira	X	GD	DaVinci
+28/05/2026 20:58	33881 EO	$30.000	Efectivo		0	Ricardo 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 21:00	33882 EO	$24.000	Efectivo		0	gabriel 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 21:02	33883 EO	$30.000	Efectivo		0	kevin 	espera afuera 	.	.		Retira			DaVinci
+28/05/2026 21:04	33884 EO	$30.000	Efectivo		0	lucas	espera afuera	-	1168752605		Retira			DaVinci
+28/05/2026 21:06	33885 GD	$16.800	Efectivo		1800	Micaela Perez	Raulies 2862	entre Alagón y Aguapey	11 6844-6305		2-3			DaVinci
+28/05/2026 21:09	33886 EO	$32.540	%	$20.000	0	SEBASTIAN 	ESPERA AFUERA 	-	-	LAS 2 SIN BACON	Retira			DaVinci
+28/05/2026 21:09	33887 GD	$18.150	MP		1500	Ruben         22hs	Zinny 4393	esquina fajardo	11 3592-7787		1-2			DaVinci
+28/05/2026 21:10	33888 EO	$15.000	Efectivo		0	AGUSTINA	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 21:12	33889 EO	$52.300	Efectivo		0	BENJAMIN	ESPERA AFUERA 	.	.		Retira			DaVinci
+28/05/2026 21:13	33890 EO	$49.000	Efectivo		1000	Bruno	montgolfier 4191	esq fajardo	112869401		0-1			DaVinci
+28/05/2026 21:15	33891 GD	$18.150	MP		1500	Celeste	Sixto Fajardo 3510	Entre Ortega y zinny	11 2450-6981		1-2	X	GD	DaVinci
+28/05/2026 21:16	33892 EO	$13.500	Efectivo		1500	ulises	Colegiales 4872	colectora ruta 3e inca	1169067315		1-2			DaVinci
+28/05/2026 21:17	33893 EO	$49.170	MP		0	BRANDON	RETIRA 	-	1157285799	1 CHEESE SIMPLE SIN CHEDDAR	Retira			DaVinci
+28/05/2026 21:20	33894 EO	$50.820	MP		0	camir acosta	espera afuera 	-	-		Retira	X	GD	DaVinci
+28/05/2026 21:21	33895 EO	$26.400	MP		0	braian 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 21:21	33895 GD	$25.800	Efectivo		1800	Nancy Marecos	de la fuente y raulies  2393	esquina	11 2562-1147		2-3			DaVinci
+28/05/2026 21:22	33896 EO	$42.570	MP		0	johana 	espera afuera 	.	.		Retira			DaVinci
+28/05/2026 21:23	33897 EO	$28.200	Efectivo		0	Dani 	espera afuera	-	-		Retira			DaVinci
+28/05/2026 21:24	33898 EO	$12.000	Efectivo		0	Sofia 	espera afuera	-	-		Retira			DaVinci
+28/05/2026 21:24	33899 GD	$15.000	Efectivo		0	Sebastián	retira	x	11 3428-2727		Retira	X	GD	DaVinci
+28/05/2026 21:25	33900 EO	$15.000	Efectivo		0	SEBASTIAN	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 21:25	33901 EO	$39.000	Efectivo		0	MATIAS PAREDES	ESPERA AFUERA	-	-		Retira			DaVinci
+28/05/2026 21:26	33902 EO	$29.000	Efectivo		0	KEVIN	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 21:26	33903 GD	$31.350	MP		1000	Carola Rosales 	Rocamora 4290 	Entre zeppelin y mongolfier 	1125863689		0-1			DaVinci
+28/05/2026 21:28	33904 EO	$39.600	MP		0	CAMIR ACOSTA 	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 21:32	33905 EO	$30.000	Efectivo		0	DAVID 	ESPERA AFUERA 	.	.		Retira			DaVinci
+28/05/2026 21:35	33906 EO	$38.400	Efectivo		0	aaron	espera afuera	-	-		Retira	X	GD	DaVinci
+28/05/2026 21:37	33907 GD	$16.800	Efectivo		1800	Nancy Marecos	de la fuente y raulies  2393	esquina	11 2562-1147		2-3	X	GD	DaVinci
+28/05/2026 21:38	33908 EO	$53.400	Efectivo		0	lucas 	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 21:38	33909 GD	$14.300	MP		1000	mariano sanabria	las flores 4690	entre santos dumont y tinogasta	1171174355		0-1	X	GD	DaVinci
+28/05/2026 21:39	33910 EO	$42.000	Efectivo		0	alexis	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 21:40	33911 EO	$28.700	Efectivo		0	CELESTE 	ESPERA AFUERA 	-	-	CHEESE DOBLE SIN BACON	Retira	X	EO	DaVinci
+28/05/2026 21:42	33912 EO	$30.200	Efectivo		1500	CELESTE 	ZEPPELIN 5575	DOBLAS Y RIGLOS	1158797665	CHEESE SIN BACON	1-2			DaVinci
+28/05/2026 21:43	33913 GD	$25.800	Efectivo		1800	leti	la bastilla 3551	Entre santa catalina y Salvigny 	11 3907-5863		2-3			DaVinci
+28/05/2026 21:44	33914 EO	$32.670	MP		0	GUSTAVO 	ESPERA AFUERA	-	-		Retira			DaVinci
+28/05/2026 21:46	33915 EO	$33.000	MP		0	ZOE	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 21:46	33916 GD	$28.700	Efectivo		2700	Celeste 	Carolina González y cobo	Manzana 6 casa 58 	11 5386-7418		4-5			DaVinci
+28/05/2026 21:47	33917 EO	$45.000	Efectivo		0	CRISTOFER	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 21:49	33918 GD	$31.000	Efectivo		2000	Doris	Colegiales 2449	entre larsen y lanza	11 3648-9417		3-4	X	GD	DaVinci
+28/05/2026 21:49	33919 EO	$39.240	%	$30.000	0	AARON	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 21:50	33920 GD	$26.000	Efectivo		2000	Doris	Colegiales 2449	entre larsen y lanza	11 3648-9417		3-4			DaVinci
+28/05/2026 21:50	33921 EO	$25.400	%	$10.000	0	EZEQUIEL	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 21:51	33922 GD	$56.870	MP		1000	xoana	ranqueles 4056	entre icalma y huemul	11 3659-2839		0-1	X	GD	DaVinci
+28/05/2026 21:53	33923 EO	$39.600	MP		0	ezequiel zarate 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 21:54	33924 EO	$39.000	Efectivo		0	nacho	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 21:55	33925 GD	$28.600	MP		2000	ezequiel ramos	colegiales 2482	entre Lanza Y De La Fuente	11 6490-3408		3-4	X	GD	DaVinci
+28/05/2026 21:58	33926 GD	$16.000	Efectivo		1000	tamara	del tejar 3883 	entre urdaneta y virgenes	11 2301-2375		0-1			DaVinci
+28/05/2026 21:59	33927 EO	$18.150	MP		1500	lili	keynes 5175	russo y besares	-		1-2			DaVinci
+28/05/2026 22:01	33928 GD	$49.800	Efectivo		1800	Sol Machin	Echaurri 3884	entre Vírgenes y urdaneta	1168609258		2-3			DaVinci
+28/05/2026 22:03	33929 GD	$24.000	Efectivo		0	Ludmila	retira	x	11 3064-7147		Retira	X	GD	DaVinci
+28/05/2026 22:03	33930 EO	$24.000	Efectivo		0	Kiara 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 22:04	33931 EO	$15.000	Efectivo		0	jano 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 22:07	33932 GD	$16.000	Efectivo		1000	Daiana fernandez 	retira	x	1155268522		0-1			DaVinci
+28/05/2026 22:10	33933 GD	$28.600	MP		2000	Lucas	Antequera 4735	entre Jorge newbery y ruta 21	11 3912-5463		3-4	X	GD	DaVinci
+28/05/2026 22:10	33934 EO	$34.000	Efectivo		1800	Matias yñiguez 	Encina 4449 	 fajardo y rocamora 	 11 2657-8921	CHEESE SIMPLES SIN BACON	2-3			DaVinci
+28/05/2026 22:11	33935 GD	$27.800	Efectivo		1800	luca	Riglos 5148	entre salado y voissin	11 3099-0534		2-3			DaVinci
+28/05/2026 22:13	33936 GD	$36.300	MP		3000	Naira García 	Estanislao del campo 6127	entre López may y murguiondo 	11 62369818 		5-6	X	GD	DaVinci
+28/05/2026 22:13	33936 EO	$12.000	Efectivo		0	BIANCA 	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 22:15	33937 GD	$43.000	Efectivo		1800	Daniela	Olivieri 4199	entre recuero y reaño	11 2280-1108		2-3			DaVinci
+28/05/2026 22:16	33938 EO	$30.900	Efectivo		1500	FRANCO	VIRGENES 5368	RUSSO Y DONIZETTI	1160171373		1-2			DaVinci
+28/05/2026 22:18	33939 GD	$18.150	MP		1500	Matias	la empresa 96	x	11 2496-2508		1-2	X	GD	DaVinci
+28/05/2026 22:20	33940 EO	$32.340	MP		1500	Franco	del tejar 3128 	 Olivieri y la bastilla	11 3702-6615		1-2			DaVinci
+28/05/2026 22:22	33941 EO	$26.400	MP		0	Nelson	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 22:23	33942 GD	$127.270	MP		1000	Tiziano Ayala 	Rocamora 4290	entre mongoflier y zeppelin	11 5736-1495		0-1	X	GD	DaVinci
+28/05/2026 22:25	33943 GD	$28.380	MP		1800	leo	Acassusso 5481	entré donizeti y echaurri	11 5851-9484		2-3			DaVinci
+28/05/2026 22:26	33944 GD	$39.000	Efectivo		0	Joaquín Domínguez 	retira	x	1155683612		Retira			DaVinci
+28/05/2026 22:29	33945 EO	$29.000	Efectivo		0	lorenzo	retira	retira	1168707503		Retira			DaVinci
+28/05/2026 22:31	33946 EO	$29.500	Efectivo		0	martina	espera afuera	<	1124740032	paga 12.0000	Retira	X	GD	DaVinci
+28/05/2026 22:33	33947 GD	$27.000	Efectivo		1000	Florencia 	Celestino Vidal 4751	entre da Vinci y las Flores	11 2608-5585		0-1			DaVinci
+28/05/2026 22:34	33948 GD	$16.800	Efectivo		1800	Lionel	Del tejar 5427	Entre ruiz de los llanos y Víctor martinez	11 4928-4683		2-3			DaVinci
+28/05/2026 22:37	33949 GD	$39.930	MP		2700	Alex	Riglos 5959 	Finochetto y pedro obligado	1135653615		4-5			DaVinci
+28/05/2026 22:41	33950 GD	$18.150	MP		1500	Zoe Camoriano 	Juan b justo 4208	entre reaño y raulies	1135251392		1-2			DaVinci
+28/05/2026 22:43	33951 EO	$15.000	Efectivo		0	Damian	 espera afuera 	-	-		Retira			DaVinci
+28/05/2026 22:47	33952 GD	$15.000	Efectivo		3000	juana chenaut	leonardo da vinci 6570	Entre chopin y garzon	11 3373-1453		5-6			DaVinci
+28/05/2026 22:49	33953 EO	$16.500	Efectivo		1500	Gonzalo	Ortega 5011	 Carcarañá y Besares	11 6140-3118		1-2			DaVinci
+28/05/2026 22:49	33954 GD	$18.150	MP		4500	Danila	monasterio 240	entre cepeda y sanabria	11 3383-2659	2 PILETAS DE CHEDDAR Y BACON SIN CARGO	6-7			DaVinci
+28/05/2026 22:52	33955 EO	$19.250	MP		0	 Camila Almirón 	retira	-	-		Retira			DaVinci
+28/05/2026 22:57	33956 GD	$37.950	MP		1000	Roxana 	Del tejar 4522	entre dumont y Tinogasta	11 3781-5525	1 DOBLE LA CUARTO SIN CEBOLLA	0-1			DaVinci
+28/05/2026 22:58	33957 EO	$46.600	Efectivo		0	ricardo 	espera afuera 	-	-		Retira	X	GD	DaVinci
+28/05/2026 22:59	33958 EO	$51.260	MP		0	Ricardo	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 22:59	33959 GD	$38.700	Efectivo		0	Ludmila	retira	x	11 3064-7147		Retira	X	GD	DaVinci
+28/05/2026 23:01	33960 GD	$29.700	Efectivo		0	ludmila	retira	xc	11 3064-7147		Retira			DaVinci
+28/05/2026 23:03	33961 EO	$26.400	MP		0	hernan	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 23:03	33962 EO	$15.000	Efectivo		0	franco 	espera afuera	-	-		Retira			DaVinci
+28/05/2026 23:05	33963 EO	$29.550	%	$29.000	0	martina	-	-	-	-	Retira			DaVinci
+28/05/2026 23:06	33964 EO	$16.500	MP		0	dylan	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 23:08	33965 EO	$39.600	MP		0	eduardo	espera afuera	-	-		Retira			DaVinci
+28/05/2026 23:09	33966 GD	$34.600	Efectivo		1800	aaron	Risso patrón 4516	entre ruta 3 y tinogasta	11 5804-8209		2-3	X	GD	DaVinci
+28/05/2026 23:09	33967 EO	$42.900	MP		0	faviola	.espera afuera 	.	.		Retira			DaVinci
+28/05/2026 23:10	33968 GD	$30.200	Efectivo		1800	Ayelen azul	Echaurri 5081	entre salado y fardman	11 6022-8394		2-3			DaVinci
+28/05/2026 23:11	33969 EO	$41.250	MP		0	Jimena 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 23:17	33970 EO	$28.050	MP		1500	Michelle	Sixto Fajardo 4563 	dumont y tinogasta 	11 2591-5006		1-2			DaVinci
+28/05/2026 23:19	33971 GD	$32.340	MP		0	aylen mercado	retira	x	11 2357-3813		Retira			DaVinci
+28/05/2026 23:21	33972 GD	$39.800	Efectivo		1800	Marcela Garcete 	Ipela 4948	entre resero y carcaraña	11 4947-1024		2-3			DaVinci
+28/05/2026 23:22	33973 EO	$29.370	MP		0	Sabrina	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 23:24	33974 GD	$73.590	MP		1000	santino	Huemul 5225	entre calderon y besares	11 5095-3920		0-1			DaVinci
+28/05/2026 23:27	33975 EO	$24.000	Efectivo		0	romina	espera afuera	-	-		Retira			DaVinci
+28/05/2026 23:27	33976 GD	$34.660	%	$34.000	1800	aaron	Risso patrón 4516	entre ruta 3 y tinogasta 	11 5804-8209		2-3			DaVinci
+28/05/2026 23:29	33977 EO	$14.700	Efectivo		0	Augusto	espera afuera	-	-		Retira			DaVinci
+28/05/2026 23:30	33978 GD	$26.700	Efectivo		2700	Diego	Carolina gonzalez y cobo	Manzana 6 casa 58 	11 3783-6960		4-5	X	GD	DaVinci
+28/05/2026 23:33	33979 EO	$37.700	Efectivo		1800	Acosta Luciana 	Luján 4970 	 carcaraña y resero 	1133833053		2-3			DaVinci
+28/05/2026 23:34	33980 GD	$45.540	MP		0	fer	retira	x	11 7187-3280		Retira			DaVinci
+28/05/2026 23:34	33981 EO	$30.500	Efectivo		4500	Mailen Cano	Santa rosa 6208	esquina zufriategüi	1153466941		6-7			DaVinci
+28/05/2026 23:36	33982 EO	$26.400	MP		0	sofia 	espera afuera 	-	-		Retira			DaVinci
+28/05/2026 23:40	33983 EO	$26.950	MP		0	nico delivery	-ult hs	-	-		Retira			DaVinci
+28/05/2026 23:42	33984 EO	$25.000	Efectivo		0	carlos 	ult hs	-	-		Retira			DaVinci
+28/05/2026 23:44	33985 EO	$15.000	Efectivo		0	mauricio 	espera afuera	-	-		Retira			DaVinci
+28/05/2026 23:45	33986 GD	$36.080	MP		1800	Gómez candela 	Rodney y Aguapey 4348	esquina	11 3484-7990		2-3	X	GD	DaVinci
+28/05/2026 23:46	33987 EO	$17.000	Efectivo		2000	Ezequiel 	Cayetano cazon 2720 	 aguapey  alagon 	 11 6954-7130		3-4			DaVinci
+28/05/2026 23:46	33987 GD	$33.880	MP		1800	gomez candela	rodney y aguapey 4348	esquina	11 3484-7990		2-3			DaVinci
+28/05/2026 23:47	33988 GD	$41.250	MP		1500	Macarena Rios 	Besares 4495	entre ibera y zeppelin	11 7116-3668		1-2			DaVinci
+28/05/2026 23:48	33989 EO	$16.170	MP		0	Alan 	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 23:49	33990 GD	$14.000	Efectivo		0	iara	retira	x	11 3925-0835		Retira			DaVinci
+28/05/2026 23:50	33991 EO	$26.400	MP		0	SOFIA 	ESPERA AFUERA 	-	-		Retira			DaVinci
+28/05/2026 23:50	33992 GD	$29.400	Efectivo		0	ariel policia	ult hs	x	x		Retira	X	GD	DaVinci
+28/05/2026 23:51	33993 EO	$29.370	MP		2700	Diego	Carolina gonzalez y cobo 	Manzana 6 casa 58 	11 3783-6960		4-5			DaVinci
+28/05/2026 23:55	33994 GD	$25.500	Efectivo		1500	Florencia Ávila 	Colegiales 5195	entre fardman y voissin	1158665834		1-2			DaVinci
+28/05/2026 23:56	33995 EO	$15.000	Efectivo		0	MISAEL	ULT HS	-	-		Retira			DaVinci
+28/05/2026 23:57	33996 GD	$19.000	Efectivo		0	isaac atp     	ult hs 	x	x		Retira			DaVinci
+29/05/2026 0:02	33997 EO	$33.880	MP		1800	Yandel 	alagon 5322	-	11 2505-8316		2-3	X	GD	DaVinci
+29/05/2026 0:05	33998 GD	$27.000	Efectivo		1000	Florencia gonzalez 	Rocamora 3946	Entre Vidal y icalma	1135803216		0-1			DaVinci
+29/05/2026 0:05	33999 EO	$30.800	Efectivo		1800	Yandel 	alagon 5322	-	11 2505-8316		2-3	X	GD	DaVinci
+29/05/2026 0:07	34000 EO	$49.800	Efectivo		1800	Nahiara silvero	martin coronado 4367	 fajardo y raulies	11 2743-2985		2-3			DaVinci
+29/05/2026 0:07	34001 GD	$24.000	Efectivo		0	Kevin Costa	retira	x	11 2340-1978		Retira			DaVinci
+29/05/2026 0:09	34002 GD	$16.170	MP		1500	Francis Contreras 	Resero 3414	entre: ortega y zequeira	1168171689		1-2			DaVinci
+29/05/2026 0:18	34003 GD	$27.800	Efectivo		1800	Joel 	Federico Russo y donizzeti	Entre alagon 5322	11 5619-3744		2-3	X	GD	DaVinci
+29/05/2026 0:19	34004 EO	$34.700	Efectivo		1800	Miguel 	Riglos 3866	Vírgenes y Urdaneta 	11 6102-2314		2-3			DaVinci
+29/05/2026 0:20	34005 GD	$31.680	MP		1800	Wendy Gómez	riglos 3106 	entre Labastilla y Llerena	1135592868		2-3			DaVinci
+29/05/2026 0:28	34006 GD	$30.300	Efectivo		1800	Joel 	Federico Russo y donizzeti	Entre alagon 5322	11 5619-3744		2-3			DaVinci
+29/05/2026 0:29	34007 EO	$13.500	Efectivo		1500	Brisa Bravo	Juan Bautista Justo 5478	Entre echaurri y donizetti 	1121687471		1-2			DaVinci
+29/05/2026 0:32	34008 GD	$16.500	MP		0	Sergio	retira	x	11 2546-7331		Retira			DaVinci
+29/05/2026 0:38	34009 EO	$29.370	MP		2700	Melany Panigutti 	Federico russo 1506	Entre calle spilimbergos	11 2257-6287		4-5			DaVinci
+29/05/2026 19:19	34010 GD	$19.000	Efectivo		0	maru	retira	X	1131000445		Retira			DaVinci
+29/05/2026 19:41	34011 EO	$14.300	MP		1000	mariano sanabria	 las flores 4690 	santos dumont y tinogasta 	1171174355		0-1			DaVinci
+29/05/2026 19:43	34012 EO	$29.000	Efectivo		0	Alan	RETIRA     21:30HS	-	-		Retira			DaVinci
+29/05/2026 19:45	34013 EO	$26.700	Efectivo		2700	Ximena       22HS	Manuel arias 4195	 esquina Montgolfier 	11 5705-7825	almacén de la esquina	4-5			DaVinci
+29/05/2026 19:47	34014 EO	$31.800	Efectivo		1800	Sebastián Cid	Los ceibos 2655	aguapey y la valleja	11 5465-5439		2-3			DaVinci
+29/05/2026 19:50	34015 EO	$33.900	Efectivo		2000	Susana	hualfin 4883	las flores y davinci 	11 4979-3073		3-4			DaVinci
+29/05/2026 19:53	34016 EO	$32.700	Efectivo		2700	Jesus 	Monte egmont 4812 	psaje las flores y las flores.	11 7131-8917		4-5			DaVinci
+29/05/2026 19:55	34017 EO	$16.200	Efectivo		1500	Gonzalo	Urdaneta 5226 	 Russo y cazon	11 5816-4121		1-2			DaVinci
+29/05/2026 19:56	34018 GD	$50.490	MP		1500	Katherine          21:30	Tinogasta 5278	entre Federico russo y cazon	11 2751-6608		1-2			DaVinci
+29/05/2026 19:58	34019 EO	$14.850	MP		1500	Antonella 	Cazón 3550 	zinny / ortega 	11 7228-5505		1-2			DaVinci
+29/05/2026 20:00	34020 GD	$32.340	MP		0	Mica Chaparro	retira	x	11 2394-4060		Retira			DaVinci
+29/05/2026 20:01	34021 EO	$27.500	MP		1000	Edith	Fajardo 4179	huemul y montgolfie	11 6309-3353		0-1	X	EO	DaVinci
+29/05/2026 20:03	34022 GD	$13.500	Efectivo		1500	Agustina 	bonpland 4020	entre recuero y rio cuarto	11 5755-2374		1-2			DaVinci
+29/05/2026 20:03	34023 EO	$31.900	MP		2000	Daiana	Da Vinci 2433	 esquina De la Fuente	11 6448-2443		3-4			DaVinci
+29/05/2026 20:04	34024 GD	$14.000	Efectivo		2000	martina	alagon 6113	entre achega y alegria	11 2697-1329		3-4			DaVinci
+29/05/2026 20:08	34025 GD	$24.700	Efectivo		1800	Ulises	rodney 4059	entre icalma y huemul	11 3203-1165		2-3			DaVinci
+29/05/2026 20:09	34026 EO	$25.000	Efectivo		1000	Edith	Fajardo 4179	huemul y montgolfier.	11 6309-3353		0-1			DaVinci
+29/05/2026 20:15	34027 GD	$16.800	Efectivo		1800	Daiana	acassuso 3980 	entre riso patrón y río cuarto	11 6484-4765		2-3			DaVinci
+29/05/2026 20:17	34028 GD	$28.500	Efectivo		1500	Yanina ibanez	fajardo 3833	entre Urdaneta y Juan b justo	1168070434		1-2			DaVinci
+29/05/2026 20:19	34029 GD	$16.000	Efectivo		1000	maia corvalán	icalma 5023	entre besares y carcaraña 	1168794669		0-1			DaVinci
+29/05/2026 20:21	34030 GD	$60.500	MP		1000	Matías Amaya           22hs	las flores 4371	entre Zeppelin y mogolfiel	11 7020-2125		0-1			DaVinci
+29/05/2026 20:23	34031 GD	$16.500	MP		0	Luis Zabala	retira	x	11 5591-6632		Retira			DaVinci
+29/05/2026 20:34	34032 GD	$16.000	Efectivo		1000	Tatiana 	Barrio fecoo m214 c21	Entre Icalma y Vidal	11 6957-5804		0-1			DaVinci
+29/05/2026 20:35	34033 EO	$34.600	Efectivo		1800	ROXANA QUIROGA	LUJAN 5347 	fEDERICO RUSSO Y DONIZETTI	11 3049-1611		2-3			DaVinci
+29/05/2026 20:37	34034 GD	$39.160	MP		4500	Sebastián Hipólito 	Totoral 113	entre piogana y Sanabria	1155058970		6-7			DaVinci
+29/05/2026 20:38	34035 EO	$17.000	Efectivo		0	marina	espera afuera	.	.		Retira			DaVinci
+29/05/2026 20:39	34036 EO	$27.000	Efectivo		0	thiago	.	.	1168452758		Retira			DaVinci
+29/05/2026 20:39	34036 GD	$16.170	MP		1500	Tania	leonardo da vinci 3242	entre sequeira  y Olivieri	11 6998-2163		1-2			DaVinci
+29/05/2026 20:43	34037 EO	$13.500	Efectivo		1500	Lautaro	El resero 3730	 virgenes y urdaneta 	11 5903-1370		1-2			DaVinci
+29/05/2026 20:45	34038 GD	$72.600	MP		1500	Cintia Hours	Lavallol 4990	Entre resero y carcarañaz 	1167984643	1 CARAMEL DOBLE SIN CHEDDAR	1-2			DaVinci
+29/05/2026 20:46	34039 GD	$41.580	MP		1800	Marisa Aragon	Olivieri 4077	entre recuero y río cuarto	11-3413-8552 		2-3			DaVinci
+29/05/2026 20:47	34040 GD	$18.480	MP		1800	Denise	Rio cuarto 3160	entre olivieri y lavallol	1128378189		2-3	X	EO	DaVinci
+29/05/2026 20:48	34041 EO	$37.400	Efectivo		2000	Priscila	Alagon 5674	cobo y doblas	11 6099-9943		3-4			DaVinci
+29/05/2026 20:48	34042 GD	$18.480	MP		1800	Candela coronel 	Recuero 3132	entre olivieri y la bastilla	1125220221		2-3			DaVinci
+29/05/2026 20:49	34043 GD	$17.600	MP		1000	Mariano Frette 	Santos Dumont 4808	esquina las flores	1133117647		0-1			DaVinci
+29/05/2026 20:55	34044 GD	$28.800	Efectivo		1800	Hector pacheco 	Lujan 4980	Entre carcaraña y el resero	11 3043-5742		2-3			DaVinci
+29/05/2026 20:57	34045 EO	$18.200	Efectivo		1800	Mia Arana	Cayetano Cazón 3190 	 LaVallol y Llerena 	11 6837-5061		2-3			DaVinci
+29/05/2026 20:59	34046 GD	$53.800	Efectivo		1800	Matías Rodríguez 	Las flores 2676	entre Juan la valleja y la ralla	11 2566-9855	2 CHEESE DOBLE SIN CHEDDAR 	2-3			DaVinci
+29/05/2026 21:00	34047 EO	$33.400	Efectivo		1500	Eduardo 	ortega 4839	Resero y Las flores	11 6616-3268		1-2	X	EO	DaVinci
+29/05/2026 21:01	34048 GD	$16.500	Efectivo		1500	Camila encina	Santos dumont 4965 	entre el resero y besares	1126935339		1-2			DaVinci
+29/05/2026 21:02	34049 GD	$13.800	Efectivo		1800	valentin	juan bautista justo 3824	entre rocha y riso patron	11 6783-3763		2-3			DaVinci
+29/05/2026 21:03	34050 EO	$29.370	MP		2700	maia bogado	olivieri 2445	 lopez de vega y zarate	1124001804		4-5			DaVinci
+29/05/2026 21:06	34051 GD	$13.800	Efectivo		1800	Antonella	Rio cuarto 3130	entre la bastilla y lavallol	11 3182-4935		2-3			DaVinci
+29/05/2026 21:07	34052 EO	$48.700	Efectivo		2000	Andrés	Reaño y Gamboa 	pedir ubi	 11 6662-7247	1 CHEESE SIMPLE SIN BACON 1 CHEESE DOBLE SIN BACON	3-4			DaVinci
+29/05/2026 21:07	34053 GD	$38.390	MP		1500	sofia 	vidal 5598 	entro cobo y echuari	11 5600-9811		1-2			DaVinci
+29/05/2026 21:10	34054 GD	$38.390	MP		1000	Manuel vera	Las flores 4468	entre tinogasta y Zeppelin	1176239424		0-1			DaVinci
+29/05/2026 21:10	34055 EO	$31.000	Efectivo		1000	Florencia 	Celestino Vidal 4805 	esquina Las Flores (portón gris)	11 2608-5585		0-1			DaVinci
+29/05/2026 21:13	34056 GD	$45.600	Efectivo		1500	Valentina Quintana	Reaño 182	pedir ubi	1123142164		1-2			DaVinci
+29/05/2026 21:15	34057 GD	$19.030	MP		3000	sabrina	suarez 314	entre carrizo y pascua	11 2850-5982		5-6			DaVinci
+29/05/2026 21:15	34058 GD	$28.050	MP		0	Agostina crespo	retira	x	11 3337-0054		Retira			DaVinci
+29/05/2026 21:16	34059 EO	$13.000	Efectivo		1000	gabriela	mongolfier y da vinci	remiseria	11 3257-9775		0-1	X	EO	DaVinci
+29/05/2026 21:17	34060 GD	$14.850	MP		1500	Quiroga Jimena 	leonardo Da vinci 3253	entre Olivieri y Sequeira	1140673368		1-2			DaVinci
+29/05/2026 21:18	34061 GD	$16.500	Efectivo		1500	lucas	sequeira 5044	entre besares y carcaraña	11 7142-7478		1-2			DaVinci
+29/05/2026 21:19	34062 EO	$25.000	Efectivo		1000	 gabriela	mongolfier y da vinci	remiseria	11 3257-9775		0-1			DaVinci
+29/05/2026 21:20	34063 GD	$31.000	Efectivo		1000	benjamin	leonardo da vinci 3835	entre Juan b justo y urdaneta	11 6166-3634		0-1			DaVinci
+29/05/2026 21:20	34064 EO	$12.000	Efectivo		0	Agustin arce 	retira	-	-		Retira			DaVinci
+29/05/2026 21:23	34065 EO	$30.000	Efectivo		0	Nicolas	espera afuera	-	-		Retira			DaVinci
+29/05/2026 21:25	34066 EO	$37.500	Efectivo		1500	Brenda	Rufino ortega 4832 	 el resero y las flores 	1141935642		1-2			DaVinci
+29/05/2026 21:28	34067 GD	$17.000	Efectivo		2000	leti	la bastilla 3551	Santa Catalina y Salvigny	11 3907-5863		3-4			DaVinci
+29/05/2026 21:29	34068 GD	$13.800	Efectivo		1800	Matías Rodríguez	Las flores 2676 	entre Juan la valleja y la ralla	1125669855		2-3			DaVinci
+29/05/2026 21:30	34069 EO	$40.000	Efectivo		1000	Pedro molina	Montgolfier 5180 	 besares y calderon	1140968806		0-1			DaVinci
+29/05/2026 21:33	34070 EO	$32.780	MP		1800	 Nicolas	Zinny 5265 	cazón y calderon 	11 6845-9747	1 CHEESE DOBLE SIN BACON	2-3			DaVinci
+29/05/2026 21:34	34071 GD	$48.000	Efectivo		1000	Lucas Fernandes 	Huemul y Raulies 4200	garita de policia esquina	1154216966	1 TASTY SIN BACON Y TOMATE 2 CHEESE SIMPLE SIN BACON	0-1			DaVinci
+29/05/2026 21:36	34072 EO	$33.000	Efectivo		1800	Santino Rivero 	Severo García de Sequeira	 Cazón y Federico Pedro ruso 	11 6677-6981		2-3			DaVinci
+29/05/2026 21:37	34073 GD	$15.000	Efectivo		1000	Tomas 	Sixto fajardo 4081	entre icalma y vidal	11 6534-6779	1 CHEESE DOBLE SIN BACON	0-1			DaVinci
+29/05/2026 21:43	34074 GD	$43.500	Efectivo		1500	Agustin	Voissin 4946	Entre manuel besares y carcaraña	11 5525-6050	2 CHEESE SIMPLE SIN BACON 1 CHEESE DOBLE SIN BACON	1-2			DaVinci
+29/05/2026 21:45	34075 EO	$46.700	Efectivo		1800	PABLO	 Francisco Echaurri 2921	 acasuso y alagón	11 3469-4751		2-3			DaVinci
+29/05/2026 21:46	34076 GD	$16.500	Efectivo		1500	kiara guerra	el resero 4938	farmand y colectora	1130402033		1-2			DaVinci
+29/05/2026 21:48	34077 GD	$29.700	MP		0	Magali	retira	x	11 6476-5365		Retira	X	EO	DaVinci
+29/05/2026 21:48	34078 EO	$15.000	Efectivo		0	Fernanda 	retira	.	11 6352-0115		Retira			DaVinci
+29/05/2026 21:51	34079 GD	$41.900	Efectivo		1500	ludmila	sixto fajardo 4753	entre santo dumont y ruta 3	11 5914-3125	1 BURGER FAN SIMPLE SIN ADEREZOS 1 BLT SIMPLE SIN CHEDDAR Y SIN BACON	1-2			DaVinci
+29/05/2026 21:53	34080 EO	$17.050	MP		1500	Evelyn	las flores 3251 	Sequeira y olivieri	11 3897-4434		1-2			DaVinci
+29/05/2026 21:54	34081 GD	$34.980	MP		1800	Olivera mara 	Olivieri 5282 	Russo y cazón 	1153767419		2-3			DaVinci
+29/05/2026 21:55	34082 GD	$17.270	MP		1000	Ramiro 	Tinogasta 4450	entre Sixto Fajardo y rocamora	11 6824-6252		0-1			DaVinci
+29/05/2026 21:57	34083 GD	$15.000	Efectivo		0	Abril selva 	retira	x	1151118891		Retira			DaVinci
+29/05/2026 21:58	34084 EO	$54.900	Efectivo		1500	maxi	Ruiz de lo llano 4685	davinci y del tejar	11 6408-1569		1-2	X	EO	DaVinci
+29/05/2026 22:00	34085 GD	$28.500	Efectivo		1800	valentina	olivieri 3724	entre rodney y Rocha	11 6975-7284		2-3			DaVinci
+29/05/2026 22:02	34086 EO	$30.900	Efectivo		1500	maxi	Ruiz de lo llano 4685	entre davinci y del tejar	 11 6408-1569		1-2			DaVinci
+29/05/2026 22:09	34087 EO	$43.000	Efectivo		1000	Dario Machado	Vidal 4751	las flores y davinci 	11 6045-3745		0-1			DaVinci
+29/05/2026 22:14	34088 GD	$30.000	Efectivo		0	Lucia Araoz 	retira	x	1158492791		Retira			DaVinci
+29/05/2026 22:15	34089 EO	$15.180	MP		1800	Agustina	Federico Pedro russo 3316	Ortega y Sequeira	11 3208-3797		2-3	X	EO	DaVinci
+29/05/2026 22:17	34090 EO	$43.900	Efectivo		1500	 Diego	Ortega 4650	del tejar y davinci	11 3078-4409		1-2			DaVinci
+29/05/2026 22:17	34091 GD	$24.000	Efectivo		0	rodrigo jofre	retira	x	1150943153		Retira			DaVinci
+29/05/2026 22:19	34092 EO	$15.000	Efectivo		0	Hugo	espera afuera	x	1171711474		Retira			DaVinci
+29/05/2026 22:20	34093 GD	$25.500	Efectivo		1500	Luz	las flores 3277	entre olivieri y sequeira	11 5630-5736		1-2			DaVinci
+29/05/2026 22:22	34094 GD	$31.500	Efectivo		1000	vanesa lucca	Fila 7 casa 27	esquina Besares	esquina Besares		0-1			DaVinci
+29/05/2026 22:22	34095 EO	$15.000	Efectivo		0	sebastian	espera afuera	.	1126222532		Retira			DaVinci
+29/05/2026 22:23	34096 GD	$31.200	Efectivo		1800	florencia	alagon 3828	entre  vuelta de rocha y rizo patron	11 2588-4627		2-3			DaVinci
+29/05/2026 22:27	34097 GD	$16.800	Efectivo		1800	Moreno Claudio 	Echaurri 2959	Luján y acassuso	1153464235		2-3			DaVinci
+29/05/2026 22:27	34098 EO	$28.500	Efectivo		2000	Dylan sanchez	Larraya 4289	 recuero y rodney.	1131435612		3-4			DaVinci
+29/05/2026 22:29	34099 GD	$25.500	Efectivo		1500	eric	zinny 4801	Entre colegiales y la flores esquina	11 2256-2413		1-2			DaVinci
+29/05/2026 22:32	34100 GD	$14.700	Efectivo		2700	Silvana	Juan peña 2824	Acásuso esquina Omar torre	11 6267-3081		4-5			DaVinci
+29/05/2026 22:36	34101 GD	$13.500	Efectivo		1500	iara ibalo	int fed pedro russo 4986	Entre cazón y fournier kiosko 24hs	1130448244		1-2			DaVinci
+29/05/2026 22:40	34102 EO	$16.800	Efectivo		1800	Nadia Galeano 	Celestino Vidal 6250	ancon y apipe 	11 3504-6239		2-3			DaVinci
+29/05/2026 22:40	34103 GD	$27.900	Efectivo		1500	ariana	donizetti 4251	entre icalma y huemul	11 6629-7764		1-2			DaVinci
+29/05/2026 22:42	34104 GD	$17.820	MP		1500	Alejandro	Sequeira 4652 	entre Davinci y Del Tejar	11 6470-9115		1-2			DaVinci
+29/05/2026 22:46	34105 EO	$68.200	MP		1000	franco cabrera	fajardo 4158	huemul y mognofiel	.		0-1			DaVinci
+29/05/2026 22:47	34106 GD	$17.380	MP		1500	Fernán Oroño	Fournier 5336	entre Russo y Donizetti	11 3590-6431		1-2			DaVinci
+29/05/2026 22:48	34107 GD	$41.100	Efectivo		1500	Juana Benítez	Cazón 3249	entre Olivieri y Zequeira	1122501489		1-2			DaVinci
+29/05/2026 22:52	34108 GD	$28.000	Efectivo		0	Tati 	retira	x	11 6102-0345		Retira			DaVinci
+29/05/2026 22:55	34109 GD	$41.800	MP		2000	Ludmila	Hualfin 5024 	Entre cazón y besares 	11 5509-1857		3-4			DaVinci
+29/05/2026 22:55	34110 EO	$18.480	MP		1800	agustina	Federico Pedro russo 3316 	Ortega y Sequeira	 11 3208-3797		2-3			DaVinci
+29/05/2026 22:57	34111 GD	$17.500	Efectivo		1500	Julio fredes	Rufino Ortega y Carcarañá	justo la esquina	11 5379-8732		1-2			DaVinci
+29/05/2026 22:58	34112 GD	$32.700	Efectivo		1800	Camila	Ruiz de los llanos 5009	entre carcaraña y cazón	11 3257-1895		2-3			DaVinci
+29/05/2026 23:00	34113 GD	$16.500	Efectivo		1500	Luana Valenzuela 	Lujan 4690	entre davinci y del tejar	11 4062-2097		1-2			DaVinci
+29/05/2026 23:04	34114 GD	$16.000	Efectivo		1000	Mauro	Rocamora 4182	entre huemul y montgolfier	11 3234-1273		0-1			DaVinci
+29/05/2026 23:06	34115 GD	$15.700	Efectivo		1000	ludmila	rocamora 4171	entre huemul e icalma	11 5165-5390		0-1			DaVinci
+29/05/2026 23:09	34116 GD	$18.200	Efectivo		1500	Nahiara Aguirre 	Juan Bautista justo 4441	entre sixto Fajardo y rocamora	11 5617-2277		1-2			DaVinci
+29/05/2026 23:11	34117 GD	$18.480	MP		1800	aimara benitez	tinogasta 6482	entre antequera y apipe	1162557055		2-3			DaVinci
+29/05/2026 23:11	34118 EO	$15.000	Efectivo		0	tomas	espera afuera	.	1123390601		Retira			DaVinci
+29/05/2026 23:13	34119 GD	$17.600	MP		1500	Ludmila Maldonado	Jorge newbery 5035	entre el resero y besares	1151172730		1-2			DaVinci
+29/05/2026 23:18	34120 EO	$12.000	Efectivo		0	nico delivery	.	.	.		Retira			DaVinci
+29/05/2026 23:21	34121 GD	$33.700	Efectivo		1800	josefina 	Luján 4467	entre raulies y raulies	11 2552-7836		2-3			DaVinci
+29/05/2026 23:22	34122 GD	$20.240	MP		0	Johanna Ramírez 	retira	x	11 5311-3843		Retira			DaVinci
+29/05/2026 23:27	34123 GD	$34.870	MP		1000	Gonzalo Vega	Celestino Vidal 4967	entre Resero y Carcaraña	11 3458-9460		0-1			DaVinci
+29/05/2026 23:32	34124 GD	$34.320	MP		1800	Nataly	colegiales 5631	entre Luis viales e ipela	11 6901-1733		2-3			DaVinci
+29/05/2026 23:33	34125 EO	$31.500	%	$15.000	0	luis 	espera afuera 	-	-		Retira			DaVinci
+29/05/2026 23:34	34126 GD	$14.300	MP		1000	Jeremías Zárate.	Leonardo da Vinci 3807	esquina urdaneta	1122541200		0-1			DaVinci
+29/05/2026 23:38	34127 GD	$33.200	Efectivo		0	nico policia       	ult hs	x	x		Retira	X	GD	DaVinci
+29/05/2026 23:43	34128 GD	$75.800	Efectivo		2000	Camila Mansilla 	Lavalleja 5189	entre cazón y besares	1125223433		3-4			DaVinci
+29/05/2026 23:48	34129 GD	$19.140	MP		1000	Santiago 	Urdaneta 4689 	entre del tejar y davinci 	11 6442-1312		0-1			DaVinci
+29/05/2026 23:49	34130 GD	$34.200	Efectivo		1500	Hernán  	Sev García de Sequiera 4681	entre da vinci y Del Tejar 	11 3314-6801		1-2			DaVinci
+29/05/2026 23:51	34131 GD	$16.500	Efectivo		1500	Jorgelina 	Cobo 4279	Huemul y icalma	11 7640-0279		1-2			DaVinci
+29/05/2026 23:57	34132 EO	$12.000	Efectivo		0	nico	espera afuera	.	.		Retira			DaVinci
+30/05/2026 19:42	34133 EO	$19.690	MP		2700	Torres katherine 	José Raúl González 250 	 manzana 6 casa 18 	1134641198		4-5			DaVinci
+30/05/2026 19:44	34134 EO	$16.500	Efectivo		2000	Benitez Sonia	 larraya 5057	entre carcarañas y besares	11 3497-3519	SIN BACON	3-4			DaVinci
+30/05/2026 19:46	34135 EO	$32.200	Efectivo		2000	Ada luz 	Luján 5910 	 cepedes y Luján 	1125354270		3-4			DaVinci
+30/05/2026 19:48	34136 GD	$29.500	Efectivo		0	romina corvalan	retira	x	1158722896		Retira			DaVinci
+30/05/2026 19:49	34137 GD	$32.200	Efectivo		1500	Hugo diaz 	Juan b justo 5468	entre Donizetti y echaurri	1130990054		1-2			DaVinci
+30/05/2026 19:54	34138 GD	$43.600	Efectivo		1000	Facundo Del Valle	Raulies 4156	entre Icalma y huemul (pedir ubi)	1133161309	1 ALIOLI DOBLE SIN CHEDDAR	0-1			DaVinci
+30/05/2026 19:57	34139 GD	$18.150	MP		1500	Fernán Oroño	Fournier 5336	entre Russo y Donizetti	11 3590-6431		1-2			DaVinci
+30/05/2026 19:59	34140 GD	$18.500	Efectivo		3000	oriana lara 	del tejar 6898	entre marcos paz y santo tome	1133371081		5-6			DaVinci
+30/05/2026 20:01	34141 EO	$17.700	Efectivo		1500	Thiago Martínez	Cobo 4383	 mongolfier y zeppelin	1171459683		1-2			DaVinci
+30/05/2026 20:06	34142 EO	$27.000	Efectivo		0	luciano	retira	x	1137975639		Retira			DaVinci
+30/05/2026 20:09	34143 GD	$33.400	Efectivo		0	fran	retira	x	11 2168-8202		Retira			DaVinci
+30/05/2026 20:15	34144 GD	$17.300	Efectivo		1800	Aurora	Cayetano donizetti 4770	entre inca y Jorge newberry	11 2739-0188	1 pollo crispy lech y tom sin cheddar y sin bacon	2-3			DaVinci
+30/05/2026 20:21	34145 GD	$16.500	Efectivo		1500	micaela paz	Cayetano donizetti 4444	entre iberá y zeppelin	1126456592		1-2			DaVinci
+30/05/2026 20:22	34146 EO	$80.300	Efectivo		0	flor	espera afuera 	.	1125352208	 TODAS LASHAMBURGUESAS SIN BACON	Retira			DaVinci
+30/05/2026 20:28	34147 GD	$20.020	MP		1800	juan rios	Sev García de Sequeira 5289	entre Calderón y cazón	1130907306		2-3			DaVinci
+30/05/2026 20:45	34148 GD	$31.900	MP		1500	Matías beltran	El resero 3560	entre zinny y Ortega	11 4037-4804		1-2			DaVinci
+30/05/2026 20:46	34149 GD	$19.700	Efectivo		1500	Aron	urdaneta 4421	entre sixto fajardo y rocamora	11 2534-0349		1-2			DaVinci
+30/05/2026 20:48	34150 GD	$20.000	Efectivo		2000	Leti	la bastilla 3551	Entre santa catalina y Salvigny 	11 3907-5863		3-4			DaVinci
+30/05/2026 20:49	34151 GD	$33.220	MP		1000	Celeste Mohr	el resero 3996 	entre vidal y juanbjuato	11 7362-4282		0-1			DaVinci
+30/05/2026 20:49	34151 EO	$52.360	MP		1500	morena corvalan	 barrio fecovima 	manzana 182b casa 23	1154024045	1 TASTY DOBLE SIN LECHUGA	1-2	X	GD	DaVinci
+30/05/2026 20:51	34152 EO	$47.600	Efectivo		1500	morena corvalan 	barrio fecovima 	manzana 182b casa 23	1154024045		1-2			DaVinci
+30/05/2026 20:54	34153 GD	$17.000	Efectivo		2000	alexis	lujan 6100	entre ancon y almagro	11 5020-3629		3-4			DaVinci
+30/05/2026 20:56	34154 GD	$33.000	MP		1800	Katherine Domínguez 	Santa Catalina 4056	entre huemul e icalma 	1130416687		2-3			DaVinci
+30/05/2026 20:58	34155 EO	$50.160	MP		2000	Britez Antonela	reaño 2755	Lavalleja y aguapey	1159674259	MANDAR MAYONESA 	3-4			DaVinci
+30/05/2026 20:59	34156 GD	$33.440	MP		1000	Alan	Rocamora 4445	entre zeppelin y ibera	1138966910		0-1			DaVinci
+30/05/2026 20:59	34157 GD	$18.200	Efectivo		1800	Elias	Castañon 4600	entre da vinci y del tejar	11 7828-3859		2-3			DaVinci
+30/05/2026 21:02	34158 EO	$39.600	Efectivo		0	miguel	espera afuera	.	1127310129		Retira			DaVinci
+30/05/2026 21:04	34159 GD	$37.510	MP		1500	daiana echavarria	Del tejar 3374	entre Ortega y Sequeira	1130786137	1 BLT TRIPLE SIN LECHUGA	1-2			DaVinci
+30/05/2026 21:06	34160 EO	$35.600	Efectivo		4500	 Lorenzo Proverbio 	Saenz 3153 	 Luro y Andrade	11 3422-8094		6-7			DaVinci
+30/05/2026 21:08	34161 GD	$37.620	MP		3000	Oriana Jara	Conde 5374	entre libres y universidad	11 5374-4499		5-6			DaVinci
+30/05/2026 21:09	34162 GD	$30.900	Efectivo		1500	Fabiana Erica 	Reaño 3956	entre Juan b justo y Vidal 	11 5386-5906		1-2			DaVinci
+30/05/2026 21:09	34163 EO	$49.280	MP		1800	Ignacio        22HS	juan fran echaurri 3307	oliveri y ortega.	11 3166-1126		2-3			DaVinci
+30/05/2026 21:11	34164 EO	$35.000	Efectivo		0	Pablo	retira         22:20hs	-	-		Retira			DaVinci
+30/05/2026 21:11	34165 GD	$35.000	Efectivo		0	Pablo        22:20	retira	x	11 2707-8706		Retira	X	GD	DaVinci
+30/05/2026 21:13	34166 EO	$32.900	Efectivo		1500	Juliana 	Cayetano cazón 4478	 íbera y zeppelin	11 2188-8056		1-2			DaVinci
+30/05/2026 21:15	34167 EO	$16.200	Efectivo		1500	 Diana	zinny 4570	 rocamora y del tejar	11 3153-9764		1-2			DaVinci
+30/05/2026 21:16	34168 EO	$18.150	MP		1800	Florencia	Recuero 5555	encina y orliz 	1159144555		2-3			DaVinci
+30/05/2026 21:17	34169 GD	$47.080	MP		1800	tamara servin	alagon 4206	entre alagon y rio cuarto	11 5147-4914		2-3			DaVinci
+30/05/2026 21:18	34170 GD	$51.200	Efectivo		2000	valentina	salvigny 3835	entre Urdaneta y Juan b justo	11 6011-6667		3-4			DaVinci
+30/05/2026 21:20	34171 GD	$51.200	Efectivo		4500	Micaela Freire	Carlos Casares 4873	entre fardman y fournier	11 3486-4581	1 BIG GARDEN DOBLE SIN CEBOLLA	6-7			DaVinci
+30/05/2026 21:21	34172 EO	$21.780	MP		1800	Daniela 	 Larraya 5279	cazón y calderon	 11 6235-5667		2-3			DaVinci
+30/05/2026 21:22	34173 GD	$32.400	Efectivo		1500	Godoy Solange	Olivieri 4877	entre el resero y las flores	1164753190		1-2			DaVinci
+30/05/2026 21:29	34174 GD	$29.500	Efectivo		1500	Nicolas	Zinny 5265	entre cazón y calderon	11 6845-9747	1 CHEESE DOBLE SOLO CHEDDAR	1-2			DaVinci
+30/05/2026 21:37	34175 GD	$34.200	Efectivo		1000	jonathan	del tejar 4514	Santos dumont e íbera	11 7015-4001		0-1			DaVinci
+30/05/2026 21:39	34176 EO	$17.050	MP		1000	Rocío González 	el resero 4263 	huemul y Montgolfier	1123677324		0-1			DaVinci
+30/05/2026 21:40	34177 GD	$16.000	Efectivo		1500	Liliana Ojeda	Cobo 4300	entre montgolfier y zepelín	11 5871-5204		1-2			DaVinci
+30/05/2026 21:43	34178 GD	$20.680	MP		1800	lautaro yegros	Slavigny 3097	entre lavallos y la bastilla	1151391540		2-3			DaVinci
+30/05/2026 21:44	34179 EO	$14.500	Efectivo		0	aylen zaquilan	retira	.	11 5745-7105		Retira			DaVinci
+30/05/2026 21:46	34180 GD	$36.740	MP		1500	rocco santillan	Russo 4775	entre inca y newbery	1134657628		1-2			DaVinci
+30/05/2026 21:47	34181 GD	$48.840	MP		0	Kiara rojo sagasta 	retira	x	11 6721-4696		Retira	X	EO	DaVinci
+30/05/2026 21:48	34182 GD	$32.670	MP		0	Kiara rojo sagasta 	retira	x	11 6721-4696		Retira			DaVinci
+30/05/2026 21:52	34183 GD	$59.900	Efectivo		1500	fiorella	santos dumont 4521	entre rocamora y del tejar	11 2534-0539		1-2			DaVinci
+30/05/2026 21:53	34184 GD	$31.900	Efectivo		2700	valentin	echeverria 2935	entre lujan y llerena	11 3257-0942		4-5			DaVinci
+30/05/2026 21:54	34185 GD	$27.900	Efectivo		0	christian cantero	retira	x	1154780954		Retira	X	EO	DaVinci
+30/05/2026 21:56	34186 EO	$48.290	MP		0	Romina	retira	,	11 3403-5722		Retira			DaVinci
+30/05/2026 21:56	34187 GD	$32.340	MP		1000	leandro 	montgofiel 4844	entre resero y las flores	11 5773-5911		0-1			DaVinci
+30/05/2026 21:57	34188 GD	$17.820	MP		1500	Lucila Cejas	fardman 4723	Da vinci y colegiales	1139513772		1-2			DaVinci
+30/05/2026 21:59	34189 GD	$33.400	Efectivo		2700	Diego	Carolina gonzalez y cobo	Manzana 6 casa 58 	11 3783-6960		4-5			DaVinci
+30/05/2026 21:59	34190 EO	$16.800	Efectivo		1800	Martín     10:30	Acassuso 4975	Resero y carcaraña	11 6057-4680		2-3			DaVinci
+30/05/2026 22:05	34191 EO	$16.700	Efectivo		1500	SILVIO LESCANO	RAULIES 3850	JUAN B JUSTO Y URDANETA 	1157575748		1-2			DaVinci
+30/05/2026 22:05	34192 GD	$37.300	Efectivo		1800	agustina tolic	ruiz de los llanos 5247	entre cazón y federico russo	11 2618-6314		2-3			DaVinci
+30/05/2026 22:09	34193 GD	$31.700	Efectivo		1000	ariel	el resero 4316	entre montgolfier y zepellin	11 2729-9329	1 CHEESE DOBLE SIN BACON	0-1			DaVinci
+30/05/2026 22:11	34194 EO	$45.700	Efectivo		1800	mora	 risso patron 4524	jusn manuel de rosas y tinogasta	11 2514-9845		2-3			DaVinci
+30/05/2026 22:11	34195 GD	$32.000	Efectivo		2000	milagros Piazza 	federico baez 5675	entre bavio y 2 de abril	11 7363-6972		3-4			DaVinci
+30/05/2026 22:13	34196 GD	$13.000	Efectivo		0	Pablo 	retira	x	11 3005-5427		Retira			DaVinci
+30/05/2026 22:15	34197 EO	$33.400	Efectivo		1500	Pamela Leiva 	El resero 4547	 dumont y tinogasta 	1160295941		1-2			DaVinci
+30/05/2026 22:15	34198 GD	$30.400	Efectivo		1000	erica	Del tejar 4749	entre ruta 3 y santos dumont	11 2248-2088		0-1			DaVinci
+30/05/2026 22:17	34199 EO	$31.100	Efectivo		0	jorge	espera afuera	.	1139052165		Retira			DaVinci
+30/05/2026 22:18	34200 GD	$29.400	Efectivo		1500	Christian Cantero	sev garcia de sequeira 5141	entre cazon y besares	1154780954		1-2			DaVinci
+30/05/2026 22:22	34201 GD	$32.670	MP		2000	Fiamma	Int Federico pedro russo 5982	entre pedro m obligado y zufriategui	11 3772-1268		3-4			DaVinci
+30/05/2026 22:24	34202 EO	$17.820	MP		1500	 lautaro arrua	sixto fajardo 3692	esquina virgenes 	11 5484-3259		1-2			DaVinci
+30/05/2026 22:26	34203 GD	$16.700	Efectivo		2000	Alexis Doctorovich	Esteban echeverria 3085	entre echeverria y lavallol	1140246540		3-4			DaVinci
+30/05/2026 22:29	34204 GD	$34.700	Efectivo		1500	Kiki	Iberá 5528	entre cobo y echaurri	11 4187-1323		1-2			DaVinci
+30/05/2026 22:32	34205 EO	$15.500	Efectivo		0	emanuel cejas	RETIRA	.	11 3047-3720	CHEESE DOBLE SIN BACON	Retira	X	EO	DaVinci
+30/05/2026 22:35	34206 EO	$15.950	MP		0	gise	espera afuera	.	1140310514		Retira			DaVinci
+30/05/2026 22:35	34207 GD	$44.800	Efectivo		1800	Miguel 	el resero 2790	entre alagon y aguapey	11 6962-8085		2-3			DaVinci
+30/05/2026 22:36	34208 GD	$90.600	Efectivo		0	brenda	retira	x	11 2464-3665		Retira			DaVinci
+30/05/2026 22:38	34209 GD	$15.950	MP		0	vanesa arce	retira	x	1163098750		Retira			DaVinci
+30/05/2026 22:39	34210 GD	$32.100	Efectivo		2700	Nicolas	Virreyes 6343	entre pareja y lopez may	11 7038-3564	2 BLT DOBLE SIN BACON	4-5			DaVinci
+30/05/2026 22:40	34211 EO	$14.300	MP		0	Luis Zabala	RETIRA	.	1155916633		Retira			DaVinci
+30/05/2026 22:43	34212 GD	$50.160	MP		1500	Bruno caballero	Besares 4200	casa 93 en la calle cortada 	54 9 2246 58-7173		1-2			DaVinci
+30/05/2026 22:46	34213 GD	$122.430	MP		1800	zahira aria	doblas 4434	entre zepelín y iberá	11 5863-1832		2-3			DaVinci
+30/05/2026 22:47	34214 EO	$2.200	MP		0	gise	.	.	.		Retira			DaVinci
+30/05/2026 22:50	34215 GD	$43.600	Efectivo		1000	gabriela	remiseria de la esquina	x	11 3257-9775		0-1	X	EO	DaVinci
+30/05/2026 22:51	34216 EO	$31.400	Efectivo		2000	Nahuel Aguilar 	Salvigny 5398	squina Victor Martínez 	11 3467-7371		3-4			DaVinci
+30/05/2026 22:53	34217 GD	$16.200	Efectivo		1500	Erik  	Cazón 3866 	Entre Virgenes y urdaneta 	11 6272-7456		1-2			DaVinci
+30/05/2026 22:55	34218 EO	$43.600	Efectivo		1000	 gabriela	remiseria la esquina	.	11 3257-9775		0-1	X	EO	DaVinci
+30/05/2026 22:55	34219 GD	$18.150	MP		1800	Nicolas rodriguez	Raulies 3388	entre ortega y sequeira	1161981856		2-3			DaVinci
+30/05/2026 22:58	34220 GD	$44.460	%	$35.000	1000	gabriela	remiseria de la esquina	x	11 3257-9775		0-1	X	EO	DaVinci
+30/05/2026 23:02	34221 GD	$34.900	Efectivo		1500	Marcos	zinny 5048	entre carcaraña y besares	11 5736-5654		1-2			DaVinci
+30/05/2026 23:02	34222 EO	$31.000	Efectivo		0	emanuel cejas	retira	-	-		Retira			DaVinci
+30/05/2026 23:07	34223 GD	$29.480	MP		1800	aru	alegria 3766	entre apipe y antequera	1160258925		2-3			DaVinci
+30/05/2026 23:09	34224 GD	$31.900	Efectivo		2700	Luana	Juan Manuel de rosas 10653	Estanislado del campo y ascasubi	11 3908-4377		4-5			DaVinci
+30/05/2026 23:11	34225 GD	$29.400	Efectivo		0	ariel policia	retira	x	x		Retira	X	GD	DaVinci
+30/05/2026 23:15	34226 EO	$18.900	Efectivo		2700	Bautista palavecino 	San matias 5350	pedir ubi	1153754088		4-5			DaVinci
+30/05/2026 23:15	34227 GD	$49.070	%	$39.500	1000	gabriela	remiseria de la esquina	x	11 3257-9775	mandar mayonesa	0-1			DaVinci
+30/05/2026 23:17	34228 EO	$15.400	MP		1000	Agustina Ibarra 	Coronel Icalma 4872 	las Flores y el resero	1551410438		0-1			DaVinci
+30/05/2026 23:21	34229 EO	$28.400	Efectivo		2000	Sofia Gonzalez 	Monte egmont 5233	Federico russo y cazón	1165459739		3-4			DaVinci
+30/05/2026 23:22	34230 GD	$18.150	MP		2000	Florencia Noemí Larrea	La bastilla y apipe	esquina	11 5470-1150		3-4			DaVinci
+30/05/2026 23:22	34231 EO	$16.170	MP		1500	Camila 	 Ruiz de los llanos 5009 	esquina carcaraña 	11 3257-1895		1-2			DaVinci
+30/05/2026 23:23	34232 GD	$14.500	Efectivo		1500	Gonzalo	Rufino Ortega 5011	entre carcaraña y besares	11 6140-3118		1-2			DaVinci
+30/05/2026 23:27	34233 GD	$27.500	MP		1800	Ulises	rodney 4059	entre icalma y huemul	11 3203-1165		2-3			DaVinci
+30/05/2026 23:28	34234 EO	$30.600	Efectivo		2700	Gustavo	Virgenes 2838	Estanislao del campo y Ascasubi	11 6238-9029		4-5			DaVinci
+30/05/2026 23:28	34235 GD	$33.770	MP		1500	Nahuel Villarroel 	Rocamora 3527	entre calles son zinny y vírgenes	1172162001		1-2			DaVinci
+30/05/2026 23:29	34236 GD	$20.570	MP		1500	natasha	Cayetano Cazón 3375	entre Ortega y Sequeira 	11 2383-2011		1-2			DaVinci
+30/05/2026 23:29	34237 EO	$27.400	Efectivo		1000	Johanna romero	Raulies 21,	 esquina icalma	1123062936	SIN ADEREZOS LAS 2	0-1			DaVinci
+30/05/2026 23:33	34238 GD	$16.200	Efectivo		1500	Emanuel	besares 4200	c86, m132  entre zepelín y mongotfiel	11 5739-5417		1-2			DaVinci
+30/05/2026 23:33	34239 EO	$35.860	MP		1500	Franco rojas 	Vírgenes 4489	rocamora y fajardo	1135860594		1-2			DaVinci
+30/05/2026 23:37	34240 EO	$31.200	Efectivo		1800	Kevin montero	Las flores 2950	Luján y acassuso	11 6790-4691		2-3			DaVinci
+30/05/2026 23:41	34241 EO	$34.540	MP		2000	Lopez Valentino 	Luro 3258 	sequeira y olivieri 	11 2838-6790		3-4			DaVinci
+30/05/2026 23:42	34242 GD	$33.660	MP		2700	Daiana Muñoz 	Hilario ascasubi 4062	entre Lira y Vidal 	1171635016		4-5			DaVinci
+30/05/2026 23:49	34243 EO	$40.370	MP		2000	David almada	Besares 1855	monte egmont y spilimbergo 	11 7893-8695		3-4			DaVinci
+30/05/2026 23:52	34244 GD	$30.700	Efectivo		1500	fabrizio oroño	fournier 5336	entre calderon y donicetti	1159232076		1-2			DaVinci
+30/05/2026 23:52	34245 EO	$17.000	Efectivo		2000	Florencia Ojeda	Alagon 5685	cobo y doblas	1154734535		3-4			DaVinci
+30/05/2026 23:54	34246 GD	$53.130	MP		2700	Thiago Gauna	zufriategui 5757 	doblas y riglos	1161581985		4-5			DaVinci
+30/05/2026 23:58	34247 GD	$17.600	MP		1500	Uriel santiesteban	Jorge newbery 5031	 resero y besares	1158130098		1-2			DaVinci
+31/05/2026 19:14	34248 GD	$33.900	Efectivo		1500	Carolina santoro	Echaurri 4379 	Entre zepelin y mongofiel 	1167372877		1-2			DaVinci
+31/05/2026 19:16	34249 GD	$16.170	MP		0	martin	espera afuera	x	1161189937		Retira	X	GD	DaVinci
+31/05/2026 19:25	34250 EO	$34.100	MP		1800	Kevin	las flores 2610	esquina la valleja y los ceibos	11 6474-1746		2-3			DaVinci
+31/05/2026 19:27	34251 GD	$32.340	MP		0	martin	espera afuera	-	-		Retira			DaVinci
+31/05/2026 19:28	34252 EO	$30.000	Efectivo		0	adrian	espera afuera	.	.		Retira			DaVinci
+31/05/2026 19:33	34253 GD	$20.200	Efectivo		2700	matias	carolina gonzalez 60	barrio walsh mz 5 casa 12	11 5830-9606		4-5			DaVinci
+31/05/2026 19:33	34253 EO	$47.000	Efectivo		1500	Celina	Echaurri y juan b justo	cancha alumni   pedir ubi	11 3133-2595		1-2			DaVinci
+31/05/2026 19:43	34254 EO	$33.440	MP		1000	Carina yapura	Mongolfiel 4595	pedir ubi	11 2596-3066		0-1			DaVinci
+31/05/2026 19:48	34255 GD	$33.600	Efectivo		2700	axel	sobre alegria	entre hualfin y gamboa	11 2545-1712		4-5			DaVinci
+31/05/2026 19:49	34256 GD	$18.150	MP		1800	Andrés Gomez	Matias 5744	entre riglos y doublas 	1138588109		2-3			DaVinci
+31/05/2026 19:50	34257 EO	$20.900	MP		1800	Alicia Luna	Salvigny 4592	pedir ubi	1131585650		2-3			DaVinci
+31/05/2026 19:50	34258 GD	$18.200	Efectivo		1000	silvia sarasua	flores 3928	esquina Urdaneta	1158797779		0-1	X	GD	DaVinci
+31/05/2026 19:52	34259 GD	$46.400	Efectivo		2000	Tomás Petersen	Echaurri 2991 	entre Luján y Acassuso	1167896519		3-4			DaVinci
+31/05/2026 19:55	34260 EO	$36.740	MP		0	tayra fasanaro	retira	.	1141586342		Retira			DaVinci
+31/05/2026 19:59	34261 GD	$57.750	MP		1800	leandro billordo	silvino olivieri 5380	entre Russo y Donizetti	11 6194-7453		2-3			DaVinci
+31/05/2026 20:03	34262 EO	$50.600	MP		1800	Ailen escalada	Huemul 3371	garcia merou y beethoven	11 5623-2016		2-3			DaVinci
+31/05/2026 20:05	34263 GD	$60.900	Efectivo		2700	Yanina ferrer 	San matias 5316	calderon y como	1122601361	1 CHEESE SIMPLE SIN BACON 1 CHEESE TRIPLE SIN CHEDDAR	4-5			DaVinci
+31/05/2026 20:06	34264 EO	$32.450	MP		0	lorna mantello	retira	.	1138339185		Retira	X	GD	DaVinci
+31/05/2026 20:07	34265 GD	$29.500	Efectivo		0	lorna mantello	retira	x	1138339185		Retira	X	GD	DaVinci
+31/05/2026 20:08	34266 GD	$37.840	MP		0	Melany	retira	x	11 3628-1695		Retira			DaVinci
+31/05/2026 20:10	34267 GD	$19.140	MP		1000	marcelo	huemul 4855	entre flores y resero	11 4167-3110		0-1			DaVinci
+31/05/2026 20:10	34268 EO	$16.720	MP		2000	Agustina     21:30	Luján 5792	Coronel Ramos y Gonzalo doblas	11 3421-9939	SIN CEBOLLA	3-4			DaVinci
+31/05/2026 20:11	34269 GD	$29.700	MP		1000	aldana coman	sixto fajardo 4049	entre vidal e icalma	1132120868		0-1			DaVinci
+31/05/2026 20:12	34270 GD	$21.890	MP		1500	zoe	cayetano cazón 4574	entre dumont y tinogasta	11 3689-7050		1-2			DaVinci
+31/05/2026 20:13	34271 GD	$53.350	MP		1500	Diana molina	Iberá 5550	entre cobo y echaurri	1126341133		1-2			DaVinci
+31/05/2026 20:15	34272 GD	$34.320	MP		1800	Antonella	recuero 5566	entre encina y orlitz	11 7362-1075		2-3			DaVinci
+31/05/2026 20:16	34273 GD	$31.000	Efectivo		0	Lucas Vilchez	retira	x	1120151050		Retira			DaVinci
+31/05/2026 20:19	34274 EO	$17.200	Efectivo		2700	Belu benitez	larraya 6385 	apipe y antequera	1165604136		4-5			DaVinci
+31/05/2026 20:20	34275 GD	$42.500	Efectivo		0	lorna mantello	retira	x	11 3833-9185		Retira			DaVinci
+31/05/2026 20:21	34276 GD	$32.500	Efectivo		1800	Candela 	Donizetti 2947	entre acassuso y alagon	11 3187-0148		2-3			DaVinci
+31/05/2026 20:23	34277 GD	$29.040	MP		0	Valeria Araceli Correa	retira	x	1144303932		Retira	X	GD	DaVinci
+31/05/2026 20:24	34278 GD	$33.440	MP		0	valeria araceli correa	retira	x	1144303932		Retira			DaVinci
+31/05/2026 20:26	34279 GD	$19.900	Efectivo		1500	Damian	Zinny 4876	entre el reseros y las flores	1131310033		1-2			DaVinci
+31/05/2026 20:27	34280 GD	$66.700	Efectivo		1500	Nicolás Alvarez	Celestino Vidal 5181	Entre cazón y besares	1141451238		1-2			DaVinci
+31/05/2026 20:30	34281 GD	$17.600	MP		1500	ALBERTO	barrio fecovima	manzana 182B casa núm 8	11 3300-9055		1-2			DaVinci
+31/05/2026 20:32	34282 GD	$40.700	Efectivo		1800	leandro garcia      22:15	El ceibo 2935	entre Acassuso y Lujan	11 2389-4646		2-3			DaVinci
+31/05/2026 20:32	34283 EO	$31.000	Efectivo		1800	iara	 soldado fajardo 5432 	ruiz de los llanos y victor martinez,	11 7142-0998		2-3			DaVinci
+31/05/2026 20:37	34284 EO	$43.400	Efectivo		1000	Kevin Ponce   21:15	Montgolfier 4480	rocamora y Sixto Fajardo 	11 2355-5687		0-1			DaVinci
+31/05/2026 20:42	34285 EO	$4.510	MP		0	tayra	.	.	.		Retira			DaVinci
+31/05/2026 20:45	34286 EO	$34.200	Efectivo		1800	Lucas	Larraya 4761	el ceibo y las flores 	11 7067-1164		2-3			DaVinci
+31/05/2026 20:51	34287 GD	$34.400	Efectivo		1800	priscila mischuk	Acassuso 5000	entre el resero y carcaraña	1136017071		2-3			DaVinci
+31/05/2026 20:52	34288 EO	$44.000	Efectivo		1500	 Cecilia	Rocamora 3770	urdaneta y vírgenes	11 6373-3867		1-2			DaVinci
+31/05/2026 20:52	34289 GD	$30.700	Efectivo		1500	erik	cazon 3866	Entre Virgenes y urdaneta 	11 6272-7456	1 CHEESE DOBLE SIN BACON	1-2			DaVinci
+31/05/2026 20:54	34290 GD	$27.900	Efectivo		1500	tiziano castro	urdaneta 4423	entre rocamora y sixto fajardo	11 2172-9779	1 CARAMEL SIMPLE SIN CHEDDAR	1-2			DaVinci
+31/05/2026 20:55	34291 GD	$47.400	Efectivo		2000	melany bernal	Pedro miguel obligado 5332	entre calderón y donizzeti	1125480719		3-4			DaVinci
+31/05/2026 20:55	34292 EO	$30.700	Efectivo		0	dani         22:00	retira	.	11 2511-2544		Retira			DaVinci
+31/05/2026 20:58	34293 GD	$47.900	Efectivo		1500	Fernando torres	Zeppelin 5511	entre echaurri y j cobo	11 7131-7984		1-2			DaVinci
+31/05/2026 20:58	34294 GD	$36.200	Efectivo		1800	Luca	Celestino vidal 6080 	entre cespedes y alegria	11 6237-9329		2-3			DaVinci
+31/05/2026 21:00	34295 GD	$17.600	MP		1500	Heredia Valeria	Las flores 3537	entre zinni y Ortega	1136882146		1-2			DaVinci
+31/05/2026 21:03	34296 GD	$27.200	Efectivo		1000	Débora	rocamora 4155	Entrecalles Huemul y Montgolfier	11 6488-7903		0-1			DaVinci
+31/05/2026 21:07	34297 GD	$31.200	Efectivo		1500	David	Jorge newvery 5079	Entre el resero y Besares	11 2644-1609		1-2			DaVinci
+31/05/2026 21:08	34298 GD	$16.300	Efectivo		1800	romina	ortega 3931	entre risso patrón y río cuarto 	11 3286-6216		2-3			DaVinci
+31/05/2026 21:09	34299 GD	$44.440	MP		1000	lucia rodriguez	Las flores 4586	entre Ibera y tinogasta	11-6881-7476		0-1			DaVinci
+31/05/2026 21:09	34300 EO	$29.400	Efectivo		0	nancy	espera afuera	.	.		Retira			DaVinci
+31/05/2026 21:11	34301 GD	$57.200	Efectivo		1800	nadia Lopez	intendente russo 3150	entre olivieri y la vallol	1135172162		2-3			DaVinci
+31/05/2026 21:12	34302 GD	$16.700	Efectivo		2000	Diego escobar 	Marcelo gamboa 4952	Colegiales y besares	11 3184-2124		3-4	X	GD	DaVinci
+31/05/2026 21:14	34303 EO	$34.300	Efectivo		1500	juan	resero 4720	inca y santos dumont	11 7135-7553		1-2			DaVinci
+31/05/2026 21:16	34304 GD	$29.400	Efectivo		0	Leandro policia	ult hs	x	11 2600-8458		Retira	X	GD	DaVinci
+31/05/2026 21:17	34305 GD	$34.650	MP		1500	Yesica González	Ruiz de los llanos 4861	entre colegiales y el resero	11 5153-4646		1-2			DaVinci
+31/05/2026 21:18	34306 GD	$31.200	Efectivo		2000	Diego escobar 	Marcelo gamboa 4952	Colegiales y besares	11 3184-2124		3-4			DaVinci
+31/05/2026 21:19	34307 EO	$15.000	Efectivo		1800	Rocio	Carcaraña 2870 	alagon y Acassuso	1135056544		2-3			DaVinci
+31/05/2026 21:22	34308 GD	$30.000	Efectivo		1000	Ulises	tinogasta 4470 	Entre Sixto Fajardo y rocamora 	11 2722-2461	2 CHEESE DOBLE SIN BACON	0-1			DaVinci
+31/05/2026 21:24	34309 GD	$16.000	Efectivo		1500	Nadia	Manzana 198 A casa 20	e icalma (rejas blancas) pedir ubi	11 5338-4205		1-2			DaVinci
+31/05/2026 21:24	34310 EO	$33.500	Efectivo		2000	Martina Segovia 	Mércalo Gamboa 5256	ederico russo y cazón	11 2755-8034		3-4			DaVinci
+31/05/2026 21:28	34311 GD	$33.100	Efectivo		0	sebastian fernandes	retira	x	1126517346		Retira			DaVinci
+31/05/2026 21:29	34312 EO	$32.890	MP		2000	-Edgardo Alfonso 	-Hospital Nestor Kirchner.	J. M de Rosas y Estanislao del campo.	1144090790	(Guardia adultos)	3-4			DaVinci
+31/05/2026 21:30	34313 GD	$63.000	Efectivo		1000	Benjamín	Leonardo Da vinci 3835	entre Juan b justo y urdaneta	11 6166-3634	4 CHEESE DOBLE SIN BACON	0-1			DaVinci
+31/05/2026 21:31	34314 GD	$18.000	Efectivo		1800	Alexis  	Cascada 4357	entre Riglos y montgofiel	11 5717-5049		2-3	X	GD	DaVinci
+31/05/2026 21:33	34315 GD	$20.000	Efectivo		1800	Alexis  	Cascada 4357	entre Riglos y montgofiel	11 5717-5049		2-3			DaVinci
+31/05/2026 21:34	34316 EO	$33.990	MP		1500	elias	 voissin 4595	Por santa monica    PEDIR UBI	11 3845-1496		1-2	X	GD	DaVinci
+31/05/2026 21:37	34317 EO	$30.900	Efectivo		1500	elias	voissin 4595	Por santa monica   PEDIR UBI	11 3845-1496		1-2			DaVinci
+31/05/2026 21:41	34318 EO	$17.930	MP		1800	valentin	Leonardo davinci 2380	delafuente y gamboa	11 4167-6370		2-3			DaVinci
+31/05/2026 21:42	34319 GD	$60.100	Efectivo		0	benito	retira	x	x		Retira			DaVinci
+31/05/2026 21:45	34320 GD	$42.200	Efectivo		1500	Karina Torres	Llerena 4835	entre las flores y colegiales	11 5107-3678	2 CHEESE SIMPLE SIN BACON	1-2			DaVinci
+31/05/2026 21:53	34321 EO	$16.400	Efectivo		0	gonzalo	espera afuera	.	1133372388		Retira			DaVinci
+31/05/2026 21:57	34322 GD	$191.100	Efectivo		4500	Sebastián Hipólito 	Barragán 4440	entre tinogasta y posamay	Barragán 4440		6-7			DaVinci
+31/05/2026 21:59	34323 GD	$54.890	MP		4500	Jonathan 	monasterio 240 	entre Cepeda y Sanabria	11 5880-0942		6-7			DaVinci
+31/05/2026 22:03	34324 EO	$32.340	MP		1500	Daniel gramajo	Severo garcia sequeira 5139	besares y cazon	 11 5348-3466	1 CARAMEL SIMPLE SIN BACON	1-2			DaVinci
+31/05/2026 22:04	34325 GD	$16.700	Efectivo		1500	Karen Licitra 	Leonardo Da vinci 3512	entre zinny y Ortega 	1168791035		1-2			DaVinci
+31/05/2026 22:05	34326 EO	$23.650	MP		1500	Zoe Camoriano	Juan b justo 4208	reaño y raulies 	1135251392		1-2			DaVinci
+31/05/2026 22:07	34327 GD	$26.200	Efectivo		0	Elizabeth 	retira	x	11 5375-5088		Retira			DaVinci
+31/05/2026 22:09	34328 GD	$30.900	Efectivo		1500	luz	las flores 3277	entre olivieri y sequeira	11 5630-5736		1-2			DaVinci
+31/05/2026 22:15	34329 GD	$16.500	MP		1800	Ludmila	risso patron 3350 	rufino ortega y sev gar de  sequeira	11 3781-4938		2-3			DaVinci
+31/05/2026 22:15	34330 EO	$28.200	Efectivo		1800	Rocío Amaya	Montgolfier 3859	vuelta de rocha y risso patrón 	3544620532		2-3			DaVinci
+31/05/2026 22:15	34330 GD	$43.900	Efectivo		1500	Diego	Ortega 4650	Entre del tejar y davinci	11 3078-4409		1-2			DaVinci
+31/05/2026 22:19	34331 GD	$32.200	Efectivo		1800	Franco	Clemente onelli 5550	entre cobo y echaurri	11 3156-9382		2-3			DaVinci
+31/05/2026 22:22	34332 EO	$14.500	Efectivo		0	Sebastián Hipólito 	Barragán 4440	tinogasta y posamay 	1155058970		Retira			DaVinci
+31/05/2026 22:22	34333 GD	$31.200	Efectivo		1800	milena	las flores 3035	entre llerena y lujan	11 2588-8216		2-3			DaVinci
+31/05/2026 22:24	34334 GD	$32.120	MP		0	Baltazar Sayavedra 	retira	x	1157473497		Retira			DaVinci
+31/05/2026 22:26	34335 GD	$66.000	MP		0	Brian 	retira	x	11 5127-9091		Retira			DaVinci
+31/05/2026 22:33	34336 GD	$35.500	Efectivo		2700	Lautaro cardozo 	Alegria 	entre walfin y gamboa	1130085031		4-5			DaVinci
+31/05/2026 22:34	34337 GD	$31.000	Efectivo		1500	Florencia barrientos 	Juan bautista justo 4250	entre raulies y reaño	1122457130		1-2			DaVinci
+31/05/2026 22:35	34338 EO	$33.990	MP		1500	Daniel 	 voissin 4579	 santa Mónica y del tejar	11 3904-0419		1-2			DaVinci
+31/05/2026 22:36	34339 GD	$18.700	MP		2000	Luis Maximiliano 	Juan c Llerena 5771	entre coronel ramos y doblas	1162641349		3-4			DaVinci
+31/05/2026 22:38	34340 GD	$20.020	MP		1800	matias miranda	lanza 4802	esquina los ceibos	1165980621		2-3			DaVinci
+31/05/2026 22:43	34341 GD	$14.700	Efectivo		0	aaron	retira	x	11 5496-0492		Retira			DaVinci
+31/05/2026 22:44	34342 EO	$28.500	Efectivo		1000	Rocío González 	 el resero 4263 	huemul y Montgolfier 	1123677324		0-1			DaVinci
+31/05/2026 22:57	34343 GD	$31.240	MP		1000	Marlene veronica Escobar	manzana 224 casa 24	entre huemul y montgofield	11 2882-0076	1 BLT SIMPLE SIN CHEDDAR Y SIN BACON	0-1			DaVinci
+31/05/2026 22:58	34344 EO	$18.370	MP		2000	Ayelen 	flores 2355 	Gamboa y la fuente	11 2474-0020		3-4			DaVinci
+31/05/2026 22:59	34345 GD	$30.700	Efectivo		1500	Franco maidana	Tinogasta 5226	Tinogasta 5226	11 5973-1059		1-2	X	GD	DaVinci
+31/05/2026 23:03	34346 GD	$17.700	Efectivo		1000	Andrés Martínez 	Rocamora 4443 	Entre zeppelin y íbera 	1138593953		0-1	X	GD	DaVinci
+31/05/2026 23:05	34347 GD	$30.900	Efectivo		1500	Franco maidana	Tinogasta 5226	Entre galleros y cazon	11 5973-1059		1-2			DaVinci
+31/05/2026 23:10	34348 GD	$19.700	Efectivo		1000	Andrés Martínez 	Rocamora 4443 	Entre zeppelin y íbera 	1138593953		0-1			DaVinci
 														
 06/03/2026 15:52	1 DA	$12.600	Efectivo		0	PRUEBA					Retira	X	DA	Luro
 06/03/2026 15:54	2 VA	$12.600	Efectivo		0	PRUEBA					Retira	X	DA	Luro
@@ -35800,3 +36784,452 @@ TimeStamp	ID_NRO_TICKET	Total	Metodo Pago	MontoEfectivo %	Envio	Nombre	Direcció
 18/05/2026 0:37	1638 DA	$17.930	MP		1800	agustina	 beethoven 4770 	nca y furnier	11 3651-4955		2-3			Luro
 18/05/2026 0:48	1639 VA	$13.000	Efectivo		0	paula 	RETIRA	aa	11 5843-0696		Retira			Luro
 18/05/2026 1:12	1640 VA	$2.100	Efectivo		0	cristian delivery	a	bebida	aa		Retira			Luro
+20/05/2026 20:14	1641 VA	$19.800	MP		1800	Bastian 	Fournier 3430	beetoven y garcia merou	11 7106-0171		2-3			Luro
+20/05/2026 20:35	1642 VA	$32.000	Efectivo		2000	Leandro tolosa 	Vuelta de Rocha 4116	huemul e icalma	1127945633		3-4			Luro
+20/05/2026 21:03	1643 VA	$33.000	MP		0	leandro	espera afuera	garden	a	1 tasty sin bacon!!	Retira			Luro
+20/05/2026 21:34	1644 VA	$46.400	Efectivo		0	facundo	espera afuera	garden	a		Retira			Luro
+20/05/2026 21:45	1645 VA	$2.100	Efectivo		0	cristan delivery	bebida	a	a		Retira			Luro
+20/05/2026 21:53	1646 VA	$30.700	Efectivo		1500	Lucas Vázquez 	Inca 3112	luro y andrade	1157938573		1-2			Luro
+20/05/2026 22:03	1647 VA	$45.210	MP		0	diego	espera afuera	garden	1157995768		Retira			Luro
+20/05/2026 22:22	1648 VA	$70.070	MP		0	tomas	espera afuera	garden	a		Retira			Luro
+20/05/2026 22:46	1649 VA	$43.500	Efectivo		0	lautaro	espera afuera	garden	1131048471		Retira			Luro
+20/05/2026 23:03	1650 VA	$20.020	MP		2000	juanpi	 chopin 3649 	 rodney y salvigny	11 3057-5107		3-4			Luro
+20/05/2026 23:20	1651 VA	$46.700	Efectivo		1000	victor	marcecell local de celu	garden	11		0-1			Luro
+20/05/2026 23:25	1652 VA	$32.000	Efectivo		2000	doro	salvigny 4132	huemul y montgolfier	11 5476-5991		3-4			Luro
+21/05/2026 0:03	1653 VA	$19.250	MP		3000	nahuel	Alagón 4212	rio cuarto	11 6606-4593		5-6			Luro
+21/05/2026 0:30	1654 VA	$16.000	Efectivo		3000	gonza	ortega 5011	carcaraña y besares	 11 6140-3118		5-6			Luro
+21/05/2026 19:44	1655 VA	$14.500	Efectivo		1500	ornella	soberanía nacional 2876	ezeiza y ascasubi	11 6019-4406		1-2			Luro
+21/05/2026 20:56	1656 VA	$18.370	MP		0	alejo 	retira	garden	1165686594		Retira			Luro
+21/05/2026 21:01	1657 VA	$38.940	MP		0	angy  21.30hs	retira	garden	11 4027-5319		Retira			Luro
+21/05/2026 22:38	1658 VA	$19.500	Efectivo		1500	lucia cocina   23.45HS	recuero 5887	José hernandez y obligado	11 5331-3671	1 CHEESE DOBLE ES F-ONION	1-2			Luro
+21/05/2026 22:48	1659 VA	$44.400	Efectivo		0	melany	RETIRA	GARDEN	11 3135-1401		Retira			Luro
+21/05/2026 23:33	1660 VA	$14.700	Efectivo		0	joaquin	espera afuera	garden	1158252889		Retira	X	VA	Luro
+21/05/2026 23:36	1661 VA	$15.700	Efectivo		0	joaquin	espera afuera	a	1158252889		Retira			Luro
+21/05/2026 23:38	1662 VA	$18.000	Efectivo		2000	Angel	Voissin 867 	 torquins y bedoya	11 5009-1370		3-4			Luro
+21/05/2026 23:56	1663 VA	$1.200	Efectivo		0	nico cocina	a	a	a		Retira			Luro
+22/05/2026 0:29	1664 VA	$65.000	Efectivo		0	adrian	espera afuera	garden	a		Retira			Luro
+22/05/2026 19:20	1665 VA	$1.200	Efectivo		0	santi atp	bebida	aa	aa		Retira			Luro
+22/05/2026 19:47	1666 DA	$29.400	Efectivo		0	Julio Fredes	RETIRA	GARDEN	11 5379-8732		Retira			Luro
+22/05/2026 19:58	1667 VA	$15.400	MP		0	diego 	ESPERA AFUERA	AA	1154991304		Retira	X	DA	Luro
+22/05/2026 20:00	1668 DA	$30.900	Efectivo		1500	iara luna	Pedro M obligado 2317	Sudamerica e indonesia 	1151584999		1-2			Luro
+22/05/2026 20:02	1669 VA	$19.800	MP		0	diego 	ESPERA AFUERA	AA	1154991304		Retira			Luro
+22/05/2026 20:04	1670 VA	$26.400	Efectivo		0	YANINA	ESPERA AFUERA	GARDEN	1139473958		Retira			Luro
+22/05/2026 20:43	1671 DA	$33.000	Efectivo		2000	pri 21.00hs	cordero 4811	 fardman y fournier	 11 4197-9622		3-4			Luro
+22/05/2026 20:46	1672 VA	$29.200	Efectivo		1000	lucas	Andrade 5918  (depto 9)	 magnasco y soberania nacional	11 5260-0151		0-1			Luro
+22/05/2026 20:51	1673 VA	$33.000	MP		0	jesus	ESPERA AFUERA	AA	1154216186	AMBAS SIN CHEEDAR !! 	Retira			Luro
+22/05/2026 21:08	1674 DA	$22.000	MP		2000	agus onichan cocina 	martin coronado 4766	da vinci y colegiales	1170241806		3-4			Luro
+22/05/2026 21:09	1675 VA	$2.100	Efectivo		0	cristian 	bebida	aa	aa		Retira			Luro
+22/05/2026 21:34	1676 DA	$18.700	Efectivo		2000	doro	 salvigny 4132	huemul y montgolfier	11 5476-5991		3-4			Luro
+22/05/2026 21:36	1677 DA	$39.900	Efectivo		1800	Sofía Palermo 	Ruiz de los llanos 1851	santa rosa y mont	1131931626		2-3			Luro
+22/05/2026 21:39	1678 VA	$34.540	MP		2000	Tatiana Alonso	J. Manuel de rosas 10115	Zárate y Luis vernet.	1134633562		3-4			Luro
+22/05/2026 21:41	1679 DA	$17.500	Efectivo		3000	laura	Juan lavalleja 4335	Rodney y recuero	 11 6252-2868		5-6	X	DA	Luro
+22/05/2026 21:45	1680 VA	$44.100	Efectivo		1500	candela 	rodney 5752	Pedro Miguel obligado y jose hernandez	11 5640-7455		1-2			Luro
+22/05/2026 21:46	1681 DA	$29.700	Efectivo		0	matias	retira	garden	aa		Retira	X	DA	Luro
+22/05/2026 21:48	1682 VA	$14.500	Efectivo		0	nicolas	ESPERA AFUERA	AA	1126281291	SIN BACON 	Retira			Luro
+22/05/2026 21:56	1683 VA	$63.400	Efectivo		2000	Mansilla belen	Rocha 6492	garzon y chopin	1127466400	1 CHEESE DOBLE SOLO PAN Y CARNE !!	3-4			Luro
+22/05/2026 22:02	1684 VA	$56.700	Efectivo		3000	Laura 	Juan lavalleja 4335	 Rodney y recuero	11 6252-2868		5-6			Luro
+22/05/2026 22:05	1685 DA	$17.500	Efectivo		1800	camila	Fardman 1820	santa rosa y mont	11 2266-6358		2-3			Luro
+22/05/2026 22:11	1686 VA	$19.140	MP		1000	Santiago Ramírez 	Beethoven 5663	José Hernández y Valentín Gómez 	1131876569		0-1			Luro
+22/05/2026 22:16	1687 DA	$38.390	MP		2000	val 	olivieri 3140	 luro y andrade	11 3781-9879		3-4			Luro
+22/05/2026 22:19	1688 VA	$33.880	MP		1800	mauricio medina	encina 1308	el cerezo y esquiro	11 2741-5873	AMBAS SIN BACON !! 	2-3			Luro
+22/05/2026 22:30	1689 DA	$36.300	Efectivo		2000	Angel	voissin 867	torquins y bedoya	11 5009-1370		3-4			Luro
+22/05/2026 22:31	1690 VA	$7.000	Efectivo		0	valen atp 	a	a	a		Retira			Luro
+22/05/2026 22:34	1691 DA	$15.200	Efectivo		2000	electro isa	Beethoven 3350	Ortega y Sequeira 	11 6150-2569		3-4			Luro
+22/05/2026 22:44	1692 VA	$32.800	Efectivo		0	rocio	espera afuera	grden	a		Retira			Luro
+22/05/2026 22:51	1693 VA	$17.200	Efectivo		0	bren 	aa	aaa	aaa	CUARTO CON PEPINILLO 	Retira	X	DA	Luro
+22/05/2026 23:06	1694 VA	$19.950	%	$15.000	1500	lu de la cocina 	recuero 5887	jose hernandez y obligado 	aa		1-2			Luro
+23/05/2026 0:06	1695 DA	$32.500	Efectivo		3000	Ovejero camila	Torquinst 4732	dumont y Herrera	1156265963		5-6	X	DA	Luro
+23/05/2026 0:08	1696 VA	$29.200	Efectivo		0	tomas	ESPERA AFUERA	AA	AA	CHEESE SIN BACON 	Retira			Luro
+23/05/2026 0:11	1697 DA	$33.550	MP		3000	Iván 	 La bastilla 4450	 Fajardo y rocamora	 11 5734-4074		5-6			Luro
+23/05/2026 0:12	1698 VA	$36.500	Efectivo		3000	Ovejero camila	Torquinst 4732	 dumont y Herrera	1156265963		5-6			Luro
+23/05/2026 0:17	1699 VA	$54.100	Efectivo		2700	josefina 	Luján 4467	raulies y raulies	11 2552-7836		4-5	X	VA	Luro
+23/05/2026 0:20	1700 VA	$36.900	Efectivo		2700	josefina 	Luján 4467	 raulies y raulies	 11 2552-7836		4-5			Luro
+23/05/2026 0:23	1701 DA	$23.100	MP		3000	bian	rocamora 3519	zinny y virgenes	11 6268-0951		5-6			Luro
+23/05/2026 0:23	1702 VA	$18.000	Efectivo		1500	Gonzalo paludi	García merou 6078	soberanía nacional y López may 	11 5589-6116		1-2			Luro
+23/05/2026 0:30	1703 DA	$18.200	Efectivo		2000	Josue acosta	Watt 889	bedoya y torquinst	1157604241		3-4			Luro
+23/05/2026 0:38	1704 DA	$16.000	Efectivo		3000	gonzalo	 Ortega 5011	carcaraña y besares.	 11 6140-3118		5-6			Luro
+23/05/2026 0:51	1705 VA	$29.400	Efectivo		0	Lautaro 	ESPERA AFUERA	AA	AA		Retira			Luro
+23/05/2026 1:02	1706 VA	$14.300	MP		0	micaela 	RETIRA	AA	AA		Retira			Luro
+23/05/2026 19:30	1707 VA	$13.200	Efectivo		0	matias	ESPERA AFUERA	AA	1164356311		Retira			Luro
+23/05/2026 20:18	1708 DA	$38.000	Efectivo		2000	debo	Spiro 4873	colegiales y Carcarañá	11 6600-7911		3-4			Luro
+23/05/2026 20:32	1709 DA	$36.520	MP		2000	Dana Niro	andrade 4293	huemul y montgolfier 	1128552614	1 TASTY TRIPLE SIN LECHUGA Y SIN TOMATE 1 CHEESE DOBLE SOLO CHEDDAR SIN BACON	3-4			Luro
+23/05/2026 20:42	1710 VA	$22.500	Efectivo		1800	pedro 	Rocamora 5886	soldado fajardo y Del tejar	11 2253-8351		2-3			Luro
+23/05/2026 20:50	1711 DA	$56.700	%	$27.000	1800	estefi	 Andrade 6453	Garzón y Chassaing	11 3279-5713	1 CHEESE SIMPLE SOLO CHEDDAR SIN BACON	2-3	X	DA	Luro
+23/05/2026 20:51	1712 VA	$35.420	MP	$6.000	3000	nahuel 	Juan b justo 5458	echaurri ydonizetti 	11 5862-1482		5-6			Luro
+23/05/2026 20:55	1713 VA	$59.400	MP		1800	estefi 	Andrade 6453	Garzón y Chassaing	11 3279-5713	1 CHEESE SIMPLE SIN BACON !!	2-3			Luro
+23/05/2026 21:03	1714 VA	$64.570	MP		2000	dana 	andrade 4293	huemul y montgolfier 	1128552614	3 CHEESE DOBLE SIN BACON  1 BLT SIN CHEEDAR 	3-4			Luro
+23/05/2026 21:04	1715 DA	$18.370	MP		2000	doro	salvigny 4132	huemul y montgolfier	 11 5476-5991		3-4			Luro
+23/05/2026 21:10	1716 DA	$66.400	Efectivo		1800	Ariana Herrera	Ipela 4525	Rocamora y Del tejar 	1127976802		2-3			Luro
+23/05/2026 21:12	1717 VA	$68.640	MP		0	sara	ESPERA AFUERA	AA	1139356343		Retira			Luro
+23/05/2026 21:20	1718 VA	$39.820	MP		1800	bruno diaz 	Garcia merou 4859	fardman y fournier	11 2404-9446		2-3			Luro
+23/05/2026 21:22	1719 VA	$42.000	Efectivo		0	priscila 	ESPERA AFUERA	AA	1168725529	1 CHEESE DOBLE  SOLO CHEEDAR  1 CHEESE SIMPLE SOLO CHEEDAR 	Retira			Luro
+23/05/2026 21:26	1720 VA	$45.700	Efectivo		2000	Micaela frutos	Bompland 2995	echeverria y ascasubi	1159044601		3-4			Luro
+23/05/2026 21:40	1721 VA	$105.930	MP		0	jonatan 	ESPERA AFUERA	AA	1130079371		Retira			Luro
+23/05/2026 21:42	1722 DA	$16.200	Efectivo		1500	Lorena Bravo	Ruiz de los Llanos 2836	Ascassubi y Estanislao del Campo 	11 4028-2355 	1 burger fan sin bacon y 1 sola feta de cheddar	1-2			Luro
+23/05/2026 21:54	1723 VA	$38.400	Efectivo		5500	nahu 	luca patron 5281	calderon y cazón	 11 6769-0897		7-8			Luro
+23/05/2026 21:56	1724 VA	$20.200	Efectivo		1500	luna 	 garcia merou 5485	encina y martin coronado 	 11 4091-7529		1-2			Luro
+23/05/2026 21:59	1725 VA	$8.200	%	$6.000	0	valen atp 	aa	aaa	aaa		Retira			Luro
+23/05/2026 22:01	1726 DA	$32.450	MP		1800	agustin lobos	Manuel García 2352	Martin Zapata y sudamerica	11 2754-3069		2-3			Luro
+23/05/2026 22:13	1727 VA	$8.800	MP		0	agus cocina 	aaa	aa	aaa		Retira			Luro
+23/05/2026 22:18	1728 VA	$34.540	MP		2000	Leonel maldonado	Garcia merou 7531	estomba y garmendia	1128054858		3-4			Luro
+23/05/2026 22:21	1729 DA	$30.500	Efectivo		1500	Camila cisneros	Jose Hernandez 2433	Zapata y Lope de Vega	1125360667		1-2			Luro
+23/05/2026 22:25	1730 DA	$43.000	Efectivo		0	KARINA	RETIRA	GARDEN	 11 2740-6563	2 CHEESE SIMPLE SOLO CHEDDAR	Retira			Luro
+23/05/2026 22:27	1731 VA	$29.400	Efectivo		0	Diego 	RETIRA 	AA	11 3361-5182		Retira			Luro
+23/05/2026 23:16	1732 DA	$33.220	MP		1800	Lucia Ruiz	José Hernández 1747	Montt y Cordero	1169966401		2-3			Luro
+23/05/2026 23:20	1733 VA	$17.820	MP		1500	Nicolas ynfante	Echeverria 5135	watt y voissin	1561942044		1-2			Luro
+23/05/2026 23:32	1734 VA	$32.450	MP		0	Alejandra Soria 	RETIRA	aa	1132286704		Retira			Luro
+23/05/2026 23:37	1735 VA	$30.250	MP		0	sabrina	ESPERA AFUERA	AA	1139587349		Retira			Luro
+23/05/2026 23:47	1736 VA	$32.900	Efectivo		1500	Magali Niro 	Luis vernet 5541 	Martín coronado y Víctor Martínez 	1158085364		1-2			Luro
+23/05/2026 23:49	1737 DA	$17.270	MP		1000	guido	Valentin gomez 3447	merou y beethoven	11 2490-9202		0-1			Luro
+23/05/2026 23:54	1738 DA	$21.120	MP		4500	Jeremias rotela 	Hualfin 4733	davincii y las flores	1169593797		6-7			Luro
+24/05/2026 0:11	1739 VA	$17.600	MP		0	juan 	ESPERA AFUERA	AA	1161963203		Retira			Luro
+24/05/2026 20:04	1740 DA	$38.100	Efectivo		2000	benji	Soldado sosa 4385	zepellin y montgolfield	11 5116-4387		3-4	X	DA	Luro
+24/05/2026 20:12	1741 DA	$42.700	Efectivo		0	Micol Lagos	retira	GARDEN	1133389593		Retira			Luro
+24/05/2026 20:15	1742 VA	$40.500	Efectivo		2000	benja 	Soldado sosa 4385	zepellin y montgolfield	 11 5116-4387		3-4			Luro
+24/05/2026 20:23	1743 VA	$29.040	MP		0	alexis	ESPERA AFUERA	AA	1126087243		Retira			Luro
+24/05/2026 21:12	1744 VA	$34.300	%	$20.000	3000	ezequiel valdez	gobernador bruno zabala 5340	calderon y donizetti	11 5139-6234		5-6			Luro
+24/05/2026 21:19	1745 VA	$41.550	%	$30.000	0	jonas	ESPERA AFUERA	AA	A		Retira			Luro
+24/05/2026 21:19	1746 DA	$45.700	Efectivo		2000	Selene Santillán 	Vírgenes 2744	 Estanislao del campo y Luis vernet 	1138602255		3-4			Luro
+24/05/2026 21:20	1747 DA	$1.320	MP		0	nico cocina	a	aa	a		Retira			Luro
+24/05/2026 21:24	1748 DA	$56.400	Efectivo		1500	Juan López	Carlos Encina 2472	Zárate y zapata.	1164548565		1-2			Luro
+24/05/2026 21:36	1749 VA	$55.400	Efectivo		0	Lautaro 	ESPERA AFUERA	AA	1130793743	1 CHEESE SIN BACON NI CHEEDAR	Retira			Luro
+24/05/2026 21:39	1750 DA	$16.000	Efectivo		2000	 Victoria Fredes	Spiro 4727	da vinci y del tejar	1173691502		3-4			Luro
+24/05/2026 21:44	1751 VA	$40.100	Efectivo		1500	candela 	rodney 5752	Pedro Miguel obligado y jose hernandez	11 5640-7455		1-2			Luro
+24/05/2026 21:47	1752 VA	$17.600	MP		1500	Sofia Frias	Santa catalina 5627	Valentin gomez y José hernandez	11 7103-5959		1-2	X	DA	Luro
+24/05/2026 21:50	1753 VA	$20.240	MP		2000	Lucila Rodriguez	Jose Hernandez 5276	Calderón y Cazon	1125675509		3-4			Luro
+24/05/2026 21:52	1754 DA	$18.700	MP		1500	Oriana meneces 	ruis de los llanos 3983	risso patrón y recuero 	1139574578		1-2			Luro
+24/05/2026 21:55	1755 VA	$41.030	MP		0	kiara	ESPERA AFUERA	AA	AA		Retira			Luro
+24/05/2026 21:55	1756 DA	$48.100	Efectivo		2700	pamela	Juan Manuel de rosas 9167	juan grande garita	11 6760-8441	1 cheese doble sin cheddar	4-5			Luro
+24/05/2026 22:05	1757 VA	$13.000	Efectivo		0	fredy 	ESPÉRA AFUERA	A	1165664888		Retira			Luro
+24/05/2026 22:10	1758 VA	$18.150	MP		1500	Leonardo pinilla	Zarate 5376	entre what y victor martinez.	1169714054.		1-2			Luro
+24/05/2026 22:16	1759 DA	$25.850	MP		1500	Alan Bordon	Ascasubi 5264 	watt y ruiz de los llanos	1150515219		1-2			Luro
+24/05/2026 22:18	1760 VA	$51.260	MP		0	franco	ESPERA AFUERA	AA	1138645865		Retira			Luro
+24/05/2026 22:32	1761 VA	$34.400	Efectivo		2000	nataly	Pedro Miguel Obligado 5332	calderón de la barca y Donizetti	1165943940		3-4			Luro
+24/05/2026 22:35	1762 VA	$44.770	MP		1500	Abril mamani	Andrade 4854 	farman y founier	1144175685		1-2			Luro
+24/05/2026 22:36	1763 VA	$30.690	MP		0	agus cocina 	RETIRA	aa	aa		Retira			Luro
+24/05/2026 22:41	1764 VA	$30.200	Efectivo		2000	lucas	Eduardo saenz 3654	rodney y salvigni 	11 3249-1568		3-4			Luro
+24/05/2026 23:09	1765 DA	$29.400	Efectivo		1500	bazan	Salvigny 7370	consejal gomez y zelada	11 5591-7484		1-2			Luro
+24/05/2026 23:11	1766 DA	$32.800	Efectivo		1800	wandy	zelada 1876	zuviria y comodoro py	11 3683-2554		2-3			Luro
+24/05/2026 23:49	1767 VA	$16.000	Efectivo		1800	Nadina Sol 	Ipela 2074	 Soldado Sosa y Tres Cruces	1163246966		2-3			Luro
+25/05/2026 0:06	1768 VA	$30.200	Efectivo		3000	ludmila 	Pedro Russo 3308	Ortega esquina Sequeira 	11 7192-2572		5-6	X	DA	Luro
+25/05/2026 0:10	1769 VA	$26.700	Efectivo		3000	ludmila 	Pedro russo 3308	ortega esquina Sequeira	1171922572		5-6			Luro
+25/05/2026 0:17	1770 VA	$2.100	Efectivo		0	cristian 	$22	22	222		Retira			Luro
+25/05/2026 0:26	1771 DA	$34.200	Efectivo		0	mica agre	retira	garden	11 5418-2551		Retira			Luro
+25/05/2026 0:32	1772 DA	$30.700	Efectivo		0	loli	retira	garden	11 5903-8380		Retira			Luro
+25/05/2026 0:42	1773 VA	$35.640	MP		3000	Luis Cuello	Carcaraña 4083	 vidal e icalma	1159585905		5-6			Luro
+25/05/2026 0:50	1774 VA	$19.200	Efectivo		2700	zoe 	Rufino ortega 3854	risso patrón y vuelta de Rocha	11 3104-9124	SIN BACON!!	4-5			Luro
+25/05/2026 0:54	1775 VA	$18.000	Efectivo		3000	ailen 	Echaurri 4704	Newbery y Fournier 	11 2566-3055		5-6			Luro
+25/05/2026 0:59	1776 VA	$17.700	Efectivo		2700	bruno 	magnasco 6006	achega y alegria	11 7654-7732		4-5			Luro
+25/05/2026 19:15	1777 VA	$66.440	MP		2000	ceci 	honorio luque 5878	magnasco y Pedro obligado	11 6694-2985	1 CHEESE DOBLE SIN BACON 	3-4			Luro
+25/05/2026 19:46	1778 DA	$30.700	Efectivo		1500	Acosta Priscila 	García merou 5397	 Víctor Martínez y martin coronado.	1154183596		1-2			Luro
+25/05/2026 20:00	1779 VA	$37.290	MP		1500	Thomas Caneda	risso patron 5651	V. Gomez y J. Hernandez	1136912021		1-2			Luro
+25/05/2026 20:02	1780 VA	$82.060	MP		0	Nicolas	RETIRA	aa	11 5318-5402		Retira	X	DA	Luro
+25/05/2026 20:07	1781 VA	$74.600	Efectivo		0	nicolas 	RETIRA	aa	11 5318-5402		Retira			Luro
+25/05/2026 20:15	1782 VA	$31.200	Efectivo		2000	Micaela Gómez 	virgenes 3470	santa catalina y garcía merou	11 6108-0584		3-4			Luro
+25/05/2026 20:27	1783 VA	$36.190	MP		1500	lucas Ruiz	Ruiz de los llanos 3470	García merou y Bettoven 	11 2394-1673	1 BIG GARDEN SIN CEBOLLA BRUNOISE!!	1-2			Luro
+25/05/2026 20:33	1784 DA	$32.500	Efectivo		1800	Cristhian Torres 	Jose Hernandez 1864	Santa Rosa y Mont	1126544187	1 cheese simple solo cheddar!	2-3			Luro
+25/05/2026 20:40	1785 DA	$30.200	Efectivo		1000	GONZALO BALERIO	Carlos encinas 3261	ricardo Gutierrez y victor andrade 	11-3559-3238	1 CHEESE DOBLE SIN BACON	0-1			Luro
+25/05/2026 20:43	1786 DA	$32.900	Efectivo		1800	Evelin 	Piedra Buena 5295	esquina Jacobo Watt	11 3425-7236	1 ALIOLI DOBLE BASTANTE ALIOLI	2-3			Luro
+25/05/2026 20:44	1787 VA	$18.200	Efectivo		1800	Damian 	Garzón 3147	av Luro y Andrade	1158586019		2-3			Luro
+25/05/2026 20:58	1788 VA	$39.050	MP		1800	Carolina Hernández 	Estanislao del campo 6721 	Sáenz y Varela	1160307863		2-3			Luro
+25/05/2026 21:14	1789 DA	$31.200	Efectivo		1500	Martín Arancibia	Lopez may 3285	ricardo gutierrez y luque	1133207270		1-2			Luro
+25/05/2026 21:16	1790 VA	$32.000	Efectivo		2000	Gonzalo Olarte 	santa Catalina 7568	Garmendia y estomba 	1169257010		3-4			Luro
+25/05/2026 21:27	1791 VA	$16.200	Efectivo		1500	More	echeverría 4691	 entre jorge newbery y herrera	 11 2371-6621		1-2			Luro
+25/05/2026 21:35	1792 DA	$45.500	Efectivo		1800	Mariana Medina  23.20hs	Rocamora 5635	luis viale e ipela 	1159740851	1 tasty doble sin lechuga y tomate  PAPAS FRITAS SIN SAL	2-3			Luro
+25/05/2026 21:38	1793 VA	$32.120	MP		0	Lautaro 	ESPERA AFUERA	AA	1133809139		Retira			Luro
+25/05/2026 21:45	1794 DA	$18.000	Efectivo		1500	barbi	ascasubi 4974	fardman y salado	11 6202-5100		1-2			Luro
+25/05/2026 21:46	1795 VA	$31.350	MP		1500	Pilar Ponce 	Santa Catalina 5778	José Hernández y obligado 	1126885891		1-2			Luro
+25/05/2026 21:51	1796 VA	$41.700	Efectivo		2700	Axel palomino	Antonio zinny 4648	zinny y del tejar	1155931173		4-5			Luro
+25/05/2026 22:00	1797 VA	$16.300	Efectivo		1800	micaela 	Garcia Merou 4687	herrera y jorge newbery	1155943862	SIN BACON!!	2-3			Luro
+25/05/2026 22:13	1798 DA	$32.670	MP		0	dylan	retira	garden	11 6646-4514		Retira			Luro
+25/05/2026 22:29	1799 DA	$29.370	MP		3000	Abbruzzese Pilar	Coronel montt 2915	juan grande garita	1167207209		5-6			Luro
+25/05/2026 22:30	1800 VA	$37.510	MP		2000	Solange Maldonado 	Garcia merou 7547	 estomba y garmendia 	1126959593		3-4			Luro
+25/05/2026 22:31	1801 DA	$15.730	MP		1800	Carolina Infante 	Avenida Luro 6657 	varela y marcos paz	1132476194		2-3			Luro
+25/05/2026 22:40	1802 DA	$66.330	MP		1800	Niro Dana	andrade 4293 	 huemul y montgolfier 	1128552614	1 TASTY DOBLE SIN LECHUGA Y SIN TOMATE 3 CHEESE SIMPLE SIN BACON!!	2-3			Luro
+25/05/2026 22:41	1803 VA	$28.000	Efectivo		0	rodri 	RETIRA	AA	11 6020-2814	1 CHEESE SIN BACON 	Retira			Luro
+25/05/2026 22:48	1804 DA	$21.600	Efectivo		2700	melani	Tres cruces 4621	 herrera y jorge newvery	11 2858-2309		4-5			Luro
+25/05/2026 22:52	1805 VA	$29.200	Efectivo		1000	Guido	 valentin gomez 3447	 Garcia merou y Beethoven	11 2490-9202		0-1			Luro
+25/05/2026 23:01	1806 VA	$26.070	MP		0	Rocio	ESPERA AFUERA	AA	1166691230		Retira			Luro
+25/05/2026 23:26	1807 VA	$16.500	Efectivo		1800	Ezequiel savedra 	Raulies 3525	Valentín Gómez y encina	1176378090		2-3			Luro
+25/05/2026 23:40	1808 DA	$36.520	MP		1500	anto	 Olegario Andrade 5147	watt y voissin	11 2769-9492		1-2			Luro
+25/05/2026 23:47	1809 VA	$58.400	Efectivo		5500	elias 	intendente Pedro Russo2504	Larsen y lanza	11 3050-9937		7-8	X	DA	Luro
+25/05/2026 23:49	1810 VA	$7.700	MP		0	valen 	aa	aa	aa		Retira			Luro
+25/05/2026 23:59	1811 DA	$20.350	MP		1800	Federico villarreal	Watt 1672	cordero y Casares	1158655542		2-3	X	DA	Luro
+26/05/2026 0:04	1812 DA	$31.600	Efectivo		2700	Rocio parisi 	Barrio privado Juan grande 	garita	1127900934		4-5			Luro
+26/05/2026 0:10	1813 DA	$20.020	MP		1800	Federico villarreal	Watt 1672 	cordero y Casares	1158655542		2-3			Luro
+26/05/2026 0:38	1814 DA	$14.700	Efectivo		0	Lucas Peña	retira	garden	 11 6904-5289		Retira			Luro
+26/05/2026 0:41	1815 VA	$32.340	MP		0	mauro 	ESPERA AFUERA	AA	AA	1 CON CEBOLLA Y KETCHUP NOMAS	Retira			Luro
+27/05/2026 19:38	1816 VA	$18.900	Efectivo		2700	agustina 22.00hs	 valentin gomez 5988	achega cespedes	11 5455-2594		4-5			Luro
+27/05/2026 20:05	1817 VA	$35.310	MP		2700	Ezequiel Ibarra	Coronel Montt 3996 depto 1°G	Vidal y Ruta 3.	1122408357		4-5			Luro
+27/05/2026 20:41	1818 VA	$31.900	Efectivo		0	cristian	espera afuera	garden	a		Retira			Luro
+27/05/2026 20:48	1819 VA	$31.200	Efectivo		2000	Micaela Gómez 	Virgenes 3470	 santa catalina y garcía merou 	11 6108-0584		3-4			Luro
+27/05/2026 21:29	1820 VA	$31.200	Efectivo		2000	Nicolas Perez	Soberania Nacional 1729	Marquez y Cordero	1121932428	1 DOBLE CHEESE SIN BACON	3-4			Luro
+27/05/2026 21:58	1821 VA	$16.500	MP		0	ivan	espera afuera	garden	a		Retira			Luro
+27/05/2026 22:07	1822 VA	$8.800	MP		0	agus cc	c	c	c		Retira			Luro
+27/05/2026 22:29	1823 VA	$18.370	MP		2000	doro	salvigny 4132	huemul y montgolfier	 11 5476-5991		3-4			Luro
+27/05/2026 23:06	1824 VA	$27.400	Efectivo		0	iara	espera afuera	a	a		Retira			Luro
+27/05/2026 23:45	1825 VA	$20.020	MP		1500	ivan	 valentin gomez 2973	echeverria y ascasubi	11 6436-4994		1-2	X	VA	Luro
+27/05/2026 23:47	1826 VA	$18.370	MP		0	ivan	retira	garden	11 6436-4994		Retira			Luro
+28/05/2026 0:31	1827 VA	$19.470	MP		0	victor	espera afuera	a	a		Retira	X	VA	Luro
+28/05/2026 0:34	1828 VA	$22.770	MP		3000	victor	coronel montt 3078	ruta 3	11		5-6			Luro
+28/05/2026 0:37	1829 VA	$16.000	Efectivo		3000	gonzalo	 rufino Ortega 5011	carcaraña y besares.	11 6140-3118		5-6			Luro
+28/05/2026 0:50	1830 VA	$36.740	MP		0	matias	espera afuera	garden	a		Retira			Luro
+28/05/2026 19:22	1831 DA	$34.870	MP		0	Nahuel encinas	RETIRA	GARDEN	1131184676		Retira			Luro
+28/05/2026 19:22	1832 VA	$55.000	MP		2000	angel 	voissin 867	torquins y Bedoya	11 5009-1370		3-4			Luro
+28/05/2026 19:30	1833 DA	$15.400	MP		2000	Malena Rios 	Av luro 4218	lira y huemul	1167629440		3-4			Luro
+28/05/2026 19:41	1834 VA	$24.000	Efectivo		0	lucas	ESPERA AFUERA	AA	1117828057		Retira			Luro
+28/05/2026 19:47	1835 VA	$26.700	Efectivo		2700	Luz                                     21:00 hs 	Beethoven 3350	Ortega y Sequeira 	11 6150-2569		4-5			Luro
+28/05/2026 19:50	1836 DA	$16.500	MP		0	cristian	retira	garden	11 2648-7990		Retira			Luro
+28/05/2026 19:57	1837 VA	$18.150	MP		1500	silvina Ruiz 	Soberania Nacional 2876	 ezeiza y ascazubi	1117828057		1-2			Luro
+28/05/2026 19:58	1838 VA	$16.170	MP		0	fernando 	ESPERA AFUERA	AA	1125068807		Retira			Luro
+28/05/2026 20:02	1839 VA	$13.500	Efectivo		1500	Oriana meneces                  21:30 HS	Ruiz de los llanos 3983	risso patrón y recuero	11 3957-4578		1-2			Luro
+28/05/2026 20:04	1840 VA	$30.000	Efectivo		0	lucas 	ESPERA AFUERA	AA	1157656496		Retira			Luro
+28/05/2026 20:09	1841 VA	$24.000	Efectivo		0	david 	ESPERA AFUERA 	AA	1128256911		Retira			Luro
+28/05/2026 20:12	1842 DA	$48.000	Efectivo		0	charo olivia 20.45hs	retira	garden	11 5027-6815		Retira	X	DA	Luro
+28/05/2026 20:16	1843 VA	$46.100	Efectivo		2000	valentín vidarte	juan cruz varela 4595 	del tejar y rocamora 	1158639776		3-4			Luro
+28/05/2026 20:19	1844 VA	$36.000	Efectivo		0	martina espina	RETIRA 	Garden 	11 3090 2967		Retira			Luro
+28/05/2026 20:21	1845 VA	$34.320	MP		1800	Iara Luna                  21:00 HS 	Pedro M Obligado 2317	Sudamerica e indonesia 	1151584999		2-3			Luro
+28/05/2026 20:22	1846 DA	$31.900	MP		2000	Daniel Dominguez	Zeppelin 3412 	santa catalina y garcia merou	11 3010-2080		3-4	X	DA	Luro
+28/05/2026 20:27	1847 VA	$18.700	MP		2000	Dorothy 	salvigny 4132	huemul y mongofiel	11 5476-5991		3-4			Luro
+28/05/2026 20:27	1848 DA	$55.770	MP		0	mateo	retira	garden	11 3314-0869	1 CHEESE DOBLE SIN NADA SOLO PAN CARNE	Retira	X	DA	Luro
+28/05/2026 20:30	1849 DA	$28.600	MP		2000	Noel leis	Concejal gomez 3450 	garcia merou y santa catalina	1122377461		3-4			Luro
+28/05/2026 20:31	1850 DA	$50.700	Efectivo		0	mateo	RETIRA	GARDEN	11 3314-0869	1 CHEESE DOBLE SOLO CARNE Y PAN	Retira			Luro
+28/05/2026 20:31	1851 VA	$28.000	Efectivo		0	agostina 	ESPERA AFUERA	AA	AA		Retira			Luro
+28/05/2026 20:33	1852 VA	$24.000	Efectivo		0	Lucila 	ESPERA AFUERA	AA	1136654532		Retira			Luro
+28/05/2026 20:35	1853 VA	$16.500	MP		0	Thiago 	ESPERA AFUERA	A	1138575634		Retira			Luro
+28/05/2026 20:35	1854 DA	$36.520	MP		2000	Daniel Dominguez	Zeppelin 3412	santa catalina y garcia merou	1130102080		3-4			Luro
+28/05/2026 20:37	1855 VA	$37.840	MP		2000	santino 	Zinny 3391	García merou y bethoven	1151181239		3-4			Luro
+28/05/2026 20:38	1856 VA	$4.620	MP		0	morena 	ESPERA AFUERA	AA	AA		Retira			Luro
+28/05/2026 20:42	1857 DA	$30.690	MP		0	devo 21.20hs	retira	garden	11 6784-9259		Retira			Luro
+28/05/2026 20:42	1858 VA	$28.600	MP		2000	Rama Agüero             22.30 HS	 Esteban Echeverría 4135	 Icalma y lira	1165237342		3-4			Luro
+28/05/2026 20:45	1859 DA	$28.050	MP		1500	 lucas Ruiz	Ruiz de los llanos 3470	García merou y Bettoben	11 2394-1673		1-2	X	DA	Luro
+28/05/2026 20:46	1860 DA	$26.400	MP		0	 lucas Ruiz	retira	garden	11 2394-1673		Retira	X	DA	Luro
+28/05/2026 20:46	1860 VA	$36.630	MP		1800	Ariana Herrera	Ipela 4525	Rocamora y Del Tejar 	11 2797-6802		2-3			Luro
+28/05/2026 20:47	1861 VA	$6.400	%	$2.000	0	martina 	ESPERA AFUERA	AA	AA		Retira			Luro
+28/05/2026 20:49	1862 VA	$15.000	Efectivo		0	yesica	ESPERA AFUERA	AA	1131661913		Retira			Luro
+28/05/2026 20:51	1863 DA	$24.000	Efectivo		0	lucas ruiz	retira	garden	11 2394-1673		Retira			Luro
+28/05/2026 20:51	1864 VA	$79.300	Efectivo		0	Tobias	ESPERA AFUERA	AAA	1134681354		Retira			Luro
+28/05/2026 20:54	1865 VA	$18.150	MP		1500	Celeste Marcelo	Alfonso pareja 2530	Zárate y Zamudio	1159106254		1-2			Luro
+28/05/2026 20:59	1866 VA	$28.600	MP		2000	mayra	hucal 4184 	vidal y huemul 	1151501151		3-4			Luro
+28/05/2026 21:01	1867 DA	$18.700	MP		2000	melanie	Carlos Casares 5348 	watt y Ruiz de los llanos depto 12	11 6671-0256	2 simples cheese sin bacon	3-4			Luro
+28/05/2026 21:02	1868 VA	$44.440	MP		4500	dilan 	juan b justo 5468	echaurri y donizzetti	1123051408		6-7			Luro
+28/05/2026 21:05	1869 VA	$19.500	Efectivo		4500	mabel 	Cobo 3983	Juan b justo y Urdaneta	11 2620-2232		6-7			Luro
+28/05/2026 21:06	1870 DA	$34.320	MP		4500	Nahuel	Juan b justo 5458	 echaurri ydonizetti 	11 5862-1482		6-7			Luro
+28/05/2026 21:07	1871 VA	$32.340	MP		0	leila	ESPERA AFUERA	AA	1136373104		Retira			Luro
+28/05/2026 21:09	1872 VA	$16.800	Efectivo		1800	Daniel Ortiz 	Comodoro py 2158	Juan Cruz Varela y Victor Hugo	1158159101		2-3			Luro
+28/05/2026 21:10	1873 VA	$24.000	Efectivo		0	melody	ESPERA AFUERA	AA	1150137262		Retira			Luro
+28/05/2026 21:13	1874 VA	$77.440	MP		0	Micaela	RETIRA	AA	1154182551		Retira			Luro
+28/05/2026 21:15	1875 VA	$60.720	MP		1500	Luciana 	carlos encina 3394	esquina bethoven 	1166082493		1-2			Luro
+28/05/2026 21:17	1876 VA	$28.600	Efectivo		0	agustin 	ESPERA AFUERA	AA	1161341677		Retira			Luro
+28/05/2026 21:19	1877 DA	$44.880	MP		1800	Lucio Revainera	Fardman 3788	 Rodney y Risso patron	1169119922		2-3			Luro
+28/05/2026 21:19	1878 VA	$39.000	Efectivo		0	gonzalo 	ESPERA AFUERA	AA	1133731094		Retira			Luro
+28/05/2026 21:21	1879 VA	$24.000	Efectivo		0	samira	ESPERA AFUERA	AA	1160525835	1 CHEESE SOLO QUESO!! 	Retira			Luro
+28/05/2026 21:23	1880 VA	$28.000	Efectivo		0	Matias	ESPERA AFUERA	AA	1131409170		Retira			Luro
+28/05/2026 21:27	1881 VA	$33.000	MP		0	santiago	ESPERA AFUERA	AA	1151463285		Retira			Luro
+28/05/2026 21:31	1882 VA	$63.000	Efectivo		0	candela 	ESPERA AFUERA	AA	11 3493-8207	1 CHEESE SIMPLE SIN BACON !! 	Retira			Luro
+28/05/2026 21:31	1883 DA	$29.000	Efectivo		0	pablo	retira	garden	11 2740-6563		Retira			Luro
+28/05/2026 21:34	1884 VA	$28.710	MP		0	Cami 	ESPERA AFUERA	AA	1122900011	AMBAS SIN BACON 	Retira			Luro
+28/05/2026 21:35	1885 VA	$24.700	%	$17.000	0	Anibal 	ESPERA AFUERA	AA	1136296132		Retira			Luro
+28/05/2026 21:40	1886 VA	$28.050	MP		1500	sebastian 	ruiz de los llanos 3249	gutierrez y andrade	1125086086		1-2			Luro
+28/05/2026 21:43	1887 DA	$16.800	Efectivo		1800	giuliana	marcos paz 2452	olmos y zuloaga 	1123896295		2-3			Luro
+28/05/2026 21:46	1888 VA	$93.100	Efectivo		0	lauty juarez	RETIRA	aa	11 6372-9044		Retira			Luro
+28/05/2026 21:47	1889 DA	$96.360	MP		1800	Tatiana Alonso	Huemul 3026	 Echeverría y luro.	11 3463-3562		2-3			Luro
+28/05/2026 21:54	1890 VA	$38.060	MP		0	blas 	espera afuera	aa	aa		Retira			Luro
+28/05/2026 21:55	1891 DA	$31.600	Efectivo		2700	ro familia parisi	juan grande barrio privado	garita	11 2790-0934		4-5			Luro
+28/05/2026 21:57	1892 VA	$34.650	MP		1500	lautaro picon 	Ascasubi 5015	voissin y salado	11 5618-7901		1-2			Luro
+28/05/2026 22:00	1893 VA	$53.000	Efectivo		2000	Mansilla belen	Rocha 6492	garzon y chopin	1127466400	1 SOLO PAN Y CARNE 	3-4			Luro
+28/05/2026 22:02	1894 VA	$34.650	MP		1500	Santino 	rodney 5591	carlos encina y martin coronado	1139440961		1-2			Luro
+28/05/2026 22:04	1895 VA	$39.600	MP		0	anabella	ESPERA AFUERA	AA	1165290898		Retira			Luro
+28/05/2026 22:06	1896 DA	$21.890	MP		2700	Tomas Rodríguez	Zeppelin 370 	Luis settino y almeyra	11 4193-4179		4-5			Luro
+28/05/2026 22:07	1897 VA	$24.000	Efectivo		0	omar	ESPERA AFUERA	AA	1155992797		Retira			Luro
+28/05/2026 22:09	1898 VA	$20.200	Efectivo		0	nahiara	ESPERA AFUERA	aa	1127870493		Retira	X	DA	Luro
+28/05/2026 22:11	1899 DA	$41.580	MP		1800	Bianca cordoba	Valentin gomez 1816	montt y santa rosa	1137824544		2-3			Luro
+28/05/2026 22:12	1900 VA	$24.000	Efectivo	$24.000	0	bianca	ESPERA AFUERA	AA	1162686101		Retira			Luro
+28/05/2026 22:13	1901 VA	$16.000	Efectivo		0	Araceli 	ESPERA AFUERA	AA	1171432782		Retira			Luro
+28/05/2026 22:15	1902 VA	$16.500	Efectivo		0	Sofia 	ESPERA AFUERA	AA	1157816974		Retira			Luro
+28/05/2026 22:17	1903 VA	$33.200	Efectivo		1500	Lucia	av luro 5421	martin coronada y encina	1140939773		1-2			Luro
+28/05/2026 22:20	1904 VA	$16.500	MP		0	Ian 	ESPERA AFUERA	AA	1132050943		Retira			Luro
+28/05/2026 22:21	1905 VA	$54.800	Efectivo		0	Jorge	ESPERA AFUERA	AA	1144036660		Retira			Luro
+28/05/2026 22:25	1906 VA	$33.000	MP		0	belen 	ESPERA AFUERA	AA	1129134692		Retira			Luro
+28/05/2026 22:27	1907 VA	$37.500	Efectivo		1500	Fabri	Salvigny 5875	magnasco y pedro obligado	11 3933-3999		1-2			Luro
+28/05/2026 22:28	1908 DA	$22.000	MP		3000	Juana Barrios	Aguapey 2730	 luis vernet y estanislao del campo	1131019429		5-6	X	DA	Luro
+28/05/2026 22:33	1909 VA	$35.970	MP		0	dilan 	ESPERA AFUERA	AA	114637509		Retira			Luro
+28/05/2026 22:38	1910 DA	$31.900	MP		3000	Juana Barrios	aguapey 230	luis vernet y es, del campo	11 3101-9429		5-6			Luro
+28/05/2026 22:39	1911 VA	$24.000	Efectivo		0	Zahira Lopez	RETIRA	AA	11 3704-6512		Retira			Luro
+28/05/2026 22:41	1912 VA	$31.200	Efectivo		0	agustin 	ESPERA AFUERA	AA	1126981360		Retira			Luro
+28/05/2026 22:47	1913 VA	$18.700	Efectivo		0	NAHIARA	espera afuera	aa	aa		Retira			Luro
+28/05/2026 22:52	1914 VA	$13.200	MP		0	nicolas	ESPERA AFUERA	AA	1138500142	SIN BACON 	Retira			Luro
+28/05/2026 22:56	1915 VA	$38.500	MP		0	daira	ESPERA AFUERA	AA	1141586342		Retira			Luro
+28/05/2026 22:57	1916 DA	$24.000	Efectivo		0	Mara Espíndola	retira	garden	1164305569		Retira	X	DA	Luro
+28/05/2026 23:00	1917 VA	$24.000	Efectivo		0	luciano 	ESPERA AFUERA	AA	1127248187		Retira			Luro
+28/05/2026 23:07	1918 DA	$28.050	MP		1500	Camila paiz	Ipela 4878	estanislao del campo y luis vernet	11 5875-5182		1-2			Luro
+28/05/2026 23:07	1919 VA	$35.860	MP		0	lautaro 	ESPERA AFUERA	AA	1133809139		Retira			Luro
+28/05/2026 23:15	1920 DA	$4.000	Efectivo		0	zahira lopez	retira	a	a		Retira			Luro
+28/05/2026 23:19	1921 VA	$26.000	Efectivo		2000	gonzalo 	santa catalina 7568	coronel estomba y garmendia	1169257010		3-4			Luro
+28/05/2026 23:21	1922 VA	$30.000	Efectivo		0	sebastian 	ESPERA AFUERA	AA	1123235566		Retira	X	DA	Luro
+28/05/2026 23:21	1923 DA	$2.000	Efectivo		0	omar	espera afuera	a	a		Retira			Luro
+28/05/2026 23:21	1924 VA	$60.000	Efectivo		0	SEBASTIAN 	espera afuera	aa	1123235566		Retira			Luro
+28/05/2026 23:24	1925 VA	$26.700	Efectivo		0	oriana	ESPERA AFUERA	AA	1131675884		Retira			Luro
+28/05/2026 23:26	1926 VA	$30.000	Efectivo		0	Juan 	ESPERA AFUERA	AA	1157628892		Retira			Luro
+28/05/2026 23:31	1927 VA	$24.000	Efectivo		0	alan	espera afuera	a	a		Retira			Luro
+28/05/2026 23:38	1928 VA	$26.400	MP		0	luca	espera afuera	a	a		Retira			Luro
+28/05/2026 23:41	1929 VA	$36.000	Efectivo		0	jimena	ESPERA AFUERA	AA	1134421361		Retira			Luro
+28/05/2026 23:53	1930 DA	$34.900	Efectivo		2000	lu	Ricardo Gutierrez 6528	chassaing y marcos paz	11 5614-9731		3-4			Luro
+28/05/2026 23:55	1931 VA	$29.370	MP		2700	morena 	echaurri 5940	 luca y pedro obligado	11 6679-5969		4-5			Luro
+29/05/2026 0:02	1932 VA	$25.500	Efectivo		1500	fabri	Salvigny 5875	magnasco y pedro obligado	11 3933-3999		1-2			Luro
+29/05/2026 0:06	1933 VA	$29.400	Efectivo		0	belen 	honorio luque 6582	ezeiza y estanislao del campo	1528783467		Retira			Luro
+29/05/2026 0:07	1934 VA	$30.000	Efectivo		0	pablo 	ESPERA AFUERA	AA	1123876911		Retira			Luro
+29/05/2026 0:09	1935 DA	$15.000	Efectivo		0	lara	retira	garden	11 3028-2541		Retira			Luro
+29/05/2026 0:11	1936 VA	$15.000	Efectivo		0	Erica	ESPERA AFUERA	A	1123417747		Retira			Luro
+29/05/2026 0:13	1937 DA	$28.500	Efectivo		4500	Zoe Zarza	Echaurri 3950	 juan b justo y urdaneta	1132492795		6-7			Luro
+29/05/2026 0:16	1938 DA	$34.400	Efectivo		0	kiara	retira	garden	11 5657-7354		Retira			Luro
+29/05/2026 0:21	1939 DA	$14.700	Efectivo		2700	Micaela	Tarija 3568	salvigny y santa catalina	 11 5528-9400		4-5			Luro
+29/05/2026 0:22	1940 DA	$16.500	Efectivo		1500	Leandro	García merou 5054	 salado y voissin	11 3151-8741		1-2			Luro
+29/05/2026 0:23	1941 VA	$30.000	Efectivo		0	Leandro	García merou 5054	salado y voissin	11 3151-8741		Retira	X	DA	Luro
+29/05/2026 0:24	1942 VA	$15.000	Efectivo		0	marianela 	ESPERA AFUERA	AA	1136921657		Retira			Luro
+29/05/2026 0:25	1943 DA	$18.480	MP		1800	Luciana fredoloso 	Cordero 6534	soberanía nacional y Ramón freiré 	1158957550		2-3			Luro
+29/05/2026 0:27	1944 VA	$16.500	MP		0	andres	ESPERA AFUERA	AA	1137383813		Retira			Luro
+29/05/2026 0:27	1945 DA	$18.480	MP		1800	 Aime	hospital Nestor Kirchner	ruta 3	 11 5794-1314		2-3			Luro
+29/05/2026 0:29	1946 DA	$18.150	MP		1500	Camila paiz	Ipela 4878	luis vernet y estanislao del campo 	1158755182		1-2	X	DA	Luro
+29/05/2026 0:29	1947 VA	$5.060	MP		0	alan	ESPERA AFUERA	AA	AA		Retira			Luro
+29/05/2026 0:34	1948 VA	$10.120	MP		0	agustin 	ESPERA AFUERA	AA	AA		Retira			Luro
+29/05/2026 0:42	1949 DA	$24.000	Efectivo		0	sebastian	retira	garden	11 6533-0646		Retira			Luro
+29/05/2026 0:42	1950 VA	$2.300	Efectivo		0	Lucas delivery 	aa	aa	aa		Retira			Luro
+29/05/2026 0:44	1951 VA	$19.800	MP		0	lu de la cocinaaa!!!	aaa	aaa	aaaa		Retira			Luro
+29/05/2026 0:47	1952 VA	$6.600	MP		0	DIEGO	ESPERA AFUERA	AA	AA		Retira			Luro
+29/05/2026 0:48	1953 VA	$24.000	Efectivo		0	FIORELLA	ESPERA AFUERA	AA	1130544594		Retira			Luro
+29/05/2026 0:58	1954 DA	$26.700	Efectivo		2700	Romina López 	Rocamora 4443	Zeppelin y Iberá	1136317886		4-5			Luro
+29/05/2026 0:58	1955 VA	$26.400	MP		0	lauuu	ESPERA AFUERA	AA	AA		Retira			Luro
+29/05/2026 1:09	1956 VA	$12.000	Efectivo		0	cintia	ESPERA AFUERA	AA	1562554213		Retira			Luro
+29/05/2026 1:17	1957 VA	$19.250	MP		5500	agustin 	Salvigny 5282	esquina watt	11 6274-7602		7-8	X	DA	Luro
+29/05/2026 1:18	1958 VA	$16.500	MP		0	david	ESPERA AFUERA	AA	1158369204		Retira			Luro
+29/05/2026 1:21	1959 VA	$14.850	MP		1500	agustin 	salvigny 5282	sobre esquina watt	 11 2600-8652		1-2			Luro
+29/05/2026 1:22	1960 DA	$27.900	Efectivo		0	kiara	retira	garden	1156577354		Retira			Luro
+29/05/2026 1:23	1961 VA	$30.000	Efectivo		0	ailen 	RETIRA	aa	11 2566-3055		Retira	X	VA	Luro
+29/05/2026 1:48	1962 DA	$33.000	Efectivo		3000	ailen	 Echaurri 4704	 Newbery e inca 	11 2566-3055		5-6			Luro
+29/05/2026 19:46	1963 VA	$18.700	MP		2000	Doro 	salvigny 4132	huemul y mongofiel 	11 5476-5991		3-4			Luro
+29/05/2026 19:56	1964 VA	$32.700	Efectivo		2700	Lucas orcellet 	J.M.de rosas 9100	Cordero y coronel montt (torre1 4to D)	1153021174		4-5			Luro
+29/05/2026 19:59	1965 VA	$59.400	MP		0	Micaela Mena	RETIRA	garden 	11 7185-4627		Retira	X	DA	Luro
+29/05/2026 20:02	1966 VA	$12.000	Efectivo		0	claudia	ESPERA AFUERA	AA	1122379342		Retira			Luro
+29/05/2026 20:02	1967 DA	$54.000	Efectivo		0	Micaela Mena	retira	garden	 11 7185-4627		Retira			Luro
+29/05/2026 20:06	1968 VA	$18.150	MP		1500	Mai 	Repúblic de Indonesia 5785	Entre ipela y Valentin Gómez	11 6606-7786		1-2			Luro
+29/05/2026 20:28	1969 VA	$17.600	MP		0	mica	RETIRA	aa	11 7185-4627		Retira			Luro
+29/05/2026 20:45	1970 VA	$24.000	Efectivo		0	Fernanda Córdoba 	RETIRA	a	1121546179		Retira			Luro
+29/05/2026 20:51	1971 VA	$16.800	Efectivo		1800	Estefi                      22:00 HS	Chassaing 3285	Gutiérrez y Andrade	11 3279-5713		2-3			Luro
+29/05/2026 21:07	1972 DA	$26.700	Efectivo		2700	Mariana 	García merou 7531	estomba y garmendia 	11 5974-0851		4-5	X	DA	Luro
+29/05/2026 21:09	1973 VA	$12.000	Efectivo		0	milena 	ESPERA AFUERA	AA	1166787398		Retira			Luro
+29/05/2026 21:11	1974 DA	$24.000	Efectivo		0	Mariana 	retira	garden	 11 5974-0851		Retira			Luro
+29/05/2026 21:15	1975 VA	$53.700	Efectivo		0	Vanesa	ESPERA AFUERA	AA	1168036844		Retira			Luro
+29/05/2026 21:15	1976 VA	$4.100	Efectivo		0	VANESA	ESPERA AFUERA	AA	AA		Retira			Luro
+29/05/2026 21:27	1977 VA	$31.130	MP		0	juan 	ESPERA AFUERA	AA	112546748		Retira			Luro
+29/05/2026 21:28	1978 DA	$33.770	MP		1500	Veronica 	Avenida general rojo 3343	 beethoven y ricardo gutierrez 	11-5504-1624 		1-2	X	DA	Luro
+29/05/2026 21:30	1979 VA	$25.400	%	$10.000	0	Emanuel 	ESPERA AFUERA	AA	1154835267		Retira			Luro
+29/05/2026 21:33	1980 DA	$28.050	MP		1500	Veronica 	Avenida general rojo 3343	beethoven y ricardo gutierrez 	11-5504-1624		1-2			Luro
+29/05/2026 21:35	1981 VA	$4.400	MP		0	fernanda cordoba	ESPERA AFUERA	AA	AA		Retira			Luro
+29/05/2026 21:36	1982 DA	$31.900	MP		2000	Daniela Diaz 	Andrade 4293	Montgolfier y huemul	11 3190-1763	TODAS SOLO CHEDDAR	3-4	X	DA	Luro
+29/05/2026 21:38	1983 VA	$27.500	MP		0	luana 	ESPERA AFUERA	AA	1130251661	1 cheese doble sin bacon 	Retira			Luro
+29/05/2026 21:43	1984 VA	$34.540	MP		0	Micaela varas	RETIRA	garden 	1121688905		Retira			Luro
+29/05/2026 21:44	1985 DA	$31.400	%	$5.000	2000	Daniela Diaz	Andrade 4293	Montgolfier y huemul	11 3190-1763	todas solo cheddar	3-4			Luro
+29/05/2026 21:46	1986 VA	$32.700	Efectivo		2700	Rocio butte	La bastilla 3143	luro y andrade	1167489925		4-5			Luro
+29/05/2026 21:50	1987 DA	$34.980	MP		1800	dana niro 	andrade 4293	huemul y montgolfier 	1128552614	3 SIMPLE CHEESE SOLO CHEDDAR Y  1 SOLO PAN Y CARNE	2-3			Luro
+29/05/2026 21:50	1988 VA	$2.300	Efectivo		0	luana	ESPERA AFUERA	AA	QAAA		Retira			Luro
+29/05/2026 21:51	1989 VA	$2.300	Efectivo		0	Luana 	espera afuera	aa	aa		Retira			Luro
+29/05/2026 21:55	1990 VA	$17.050	MP		2000	anto 	santo tome 4850	colegiales y carcaraña	11 5937-3112		3-4			Luro
+29/05/2026 21:58	1991 VA	$24.000	Efectivo		0	Magui 	RETIRA	AA	11 6476-5365		Retira	X	DA	Luro
+29/05/2026 22:04	1992 DA	$14.000	Efectivo		2000	cami	Virgenes 372	rodney y Rocha	11 2683-7025		3-4			Luro
+29/05/2026 22:18	1993 VA	$15.180	MP		1800	Florencia Quiroga 	Inca 2888	ascasubi y Estanislao del campo 	1161818217		2-3			Luro
+29/05/2026 22:22	1994 VA	$17.820	MP		3000	Lucas Carrizo	fournier 6255	 almagro y ancon	11 3038-8132		5-6			Luro
+29/05/2026 22:32	1995 DA	$16.500	Efectivo		1500	Camila cisneros 	Jose hernandez 2433	 Zapata y Lope de Vega	1125360667		1-2			Luro
+29/05/2026 22:37	1996 VA	$16.500	MP		1800	Virginia Gill 	Beethoven 6342	 Spiro y Garzon	1133717959		2-3	X	DA	Luro
+29/05/2026 22:41	1997 VA	$15.000	Efectivo		1800	Virginia Gill 	Beethoven 6342	Spiro y Garzon	1133717959		2-3			Luro
+29/05/2026 22:47	1998 DA	$41.800	MP		2000	Junior Silva	Beethoven 3581	zinny y bonpland	1125246072		3-4			Luro
+29/05/2026 22:55	1999 DA	$18.700	MP		2000	Alarcón Mayra	Santa Catalina 6472	Spiro y Eugenio Garzón	1169534512		3-4			Luro
+30/05/2026 0:03	2000 VA	$16.200	Efectivo		0	agustin 	ESPERA AFUERA	AA	1137966460		Retira			Luro
+30/05/2026 0:16	2001 DA	$24.000	Efectivo		0	nico policia	retira	garden	aa		Retira	X	DA	Luro
+30/05/2026 0:26	2002 VA	$30.300	Efectivo		1800	magali carrasco	voissin 4321	 del tejar y fajardo	11 5561-9574		2-3			Luro
+30/05/2026 0:27	2003 VA	$15.000	Efectivo		0	Iara 	RETIRA	aa	11 3028-2541		Retira			Luro
+30/05/2026 0:39	2004 VA	$36.740	MP		0	Lenadro 	RETIRA	aa	11 2337-3182		Retira	X	VA	Luro
+30/05/2026 0:46	2005 VA	$40.480	MP		0	leandro 	RETIRA	AA	11 2337-3182		Retira			Luro
+30/05/2026 0:51	2006 VA	$16.700	Efectivo		0	alan 	ESPERA AFUERA	AA	1123915594		Retira			Luro
+30/05/2026 20:13	2007 VA	$12.500	Efectivo		0	Lu cocina 	RETIRA	AA	AA		Retira			Luro
+30/05/2026 20:35	2008 DA	$8.000	Efectivo		0	lucas delivery	a	a	a		Retira			Luro
+30/05/2026 20:51	2009 VA	$34.100	MP		2000	Catalina Avila	rio cuarto 4475	esquina Tinogasta	11 6713-5854		3-4			Luro
+30/05/2026 20:58	2010 VA	$13.500	Efectivo		0	jhon	ESPERA AFUERA	AA	1130205859		Retira			Luro
+30/05/2026 21:00	2011 VA	$59.300	Efectivo		0	gabi	ESPERA AFUERA	AA	1123344319		Retira			Luro
+30/05/2026 21:01	2012 DA	$30.700	Efectivo		1500	brenda	Luro 4841 puerta negra 	fardman y maiten (timbre blanco)	11 4470-0747		1-2			Luro
+30/05/2026 21:11	2013 DA	$16.300	Efectivo		1800	Santilli María	inca 2909	Ascasubi y Echeverría planta baja	11 6833-3232	1 CHEESE DOBLE SOLO CHEDDAR	2-3			Luro
+30/05/2026 21:13	2014 DA	$30.700	Efectivo		1000	GONZALO BALERIO	Carlos encinas 3261	ricardo Gutierrez y victor andrade 	11-3559-3238	1 TASTY DOBLE SIN LECHUGA	0-1			Luro
+30/05/2026 21:33	2015 VA	$48.700	Efectivo		1800	Tizi 	Valentin gomez 2041	soldado sosa y tres cruces	11 4191-4795		2-3			Luro
+30/05/2026 21:42	2016 VA	$34.100	Efectivo		1500	Malena	Sudamérica 5746	 Ipela y Valentin Gomez	11 6847-1484		1-2	X	DA	Luro
+30/05/2026 21:46	2017 VA	$33.550	MP		1500	Rodrigo Gomez 	Zarate 5773	obligado y josé hernández	1122795676		1-2			Luro
+30/05/2026 21:47	2018 DA	$39.100	Efectivo		1500	Malena	 Sudamérica 5746	Ipela y Valentin Gomez	 11 6847-1484		1-2			Luro
+30/05/2026 21:54	2019 VA	$36.410	MP		2000	Carolina 	Luis Viale 1286 	esquiro y Bedoya	1528502634		3-4			Luro
+30/05/2026 21:57	2020 DA	$31.900	MP		2000	angy	ipela 5124	cazón y Carcarañá	11 4027-5319		3-4			Luro
+30/05/2026 22:03	2021 VA	$31.900	MP		0	agustin 	ESPERA AFUERA	AA	1137966460	AMBAS SIN BACON 	Retira			Luro
+30/05/2026 22:12	2022 VA	$29.400	Efectivo		0	jonatan	ESPERA AFUERA	AA	1173641818		Retira			Luro
+30/05/2026 22:27	2023 VA	$7.700	MP		0	valen atp 	aa	aa	aa		Retira			Luro
+30/05/2026 22:29	2024 VA	$33.880	MP		1800	lautaro	Piedra buena 6446	Eugenio Garzón y Ricardo Gutierrez	11 5958-5867		2-3			Luro
+30/05/2026 22:31	2025 DA	$34.300	Efectivo		2000	alejandro	Garzón 4572	Fajardo y rocamora	11 2690-9756		3-4			Luro
+30/05/2026 22:31	2026 VA	$35.000	Efectivo		0	juli	ESPERA AFUERA	AA	1150566134		Retira			Luro
+30/05/2026 22:45	2027 DA	$41.360	MP		1800	Leandro Gonzalez Lopez	Ricardo Gutiérrez 6528	chassaing y Marcos Paz 	1158751122	1 CARAMEL TRIPLE SIN BACON	2-3			Luro
+30/05/2026 23:12	2028 VA	$16.300	Efectivo		1800	Mauri 	encina 1308	el cerezo y esquiro	11 2741-5873	SIN BACON 	2-3			Luro
+30/05/2026 23:28	2029 VA	$2.000	Efectivo		0	santino cargoso 	aa	aa	aaa		Retira			Luro
+30/05/2026 23:37	2030 DA	$8.000	Efectivo		0	delivery lucas	a	a	a		Retira			Luro
+30/05/2026 23:47	2031 VA	$2.300	Efectivo		0	lucas delivery 	aa	aaa	aaa		Retira			Luro
+30/05/2026 23:50	2032 DA	$35.420	MP		1500	Nicolas 	Repúblic de indonesia 5706	martin coronado e ipela	11 2336-5566		1-2	X	DA	Luro
+30/05/2026 23:56	2033 VA	$32.780	MP		1800	julieta 	 jorge newbery 3435	garcia merou y santa catalina	11 5936-7093		2-3			Luro
+30/05/2026 23:58	2034 DA	$39.050	MP		2000	Micaela ardían	Coronel Montt 4754	Jorge Newbery y Fournier	1131988624	1 CHEESE DOBLE SIN BACON Y CON PORCION DE PAPAS 	3-4			Luro
+31/05/2026 0:02	2035 VA	$32.400	Efectivo		3000	santino 	Huemul 5225	calderon y besares	11 5095-3920		5-6			Luro
+31/05/2026 0:25	2036 VA	$18.150	MP		1800	Camila Ramos	Echeverria 4550	Tinogasta y Dumont	1169342707		2-3			Luro
+31/05/2026 0:29	2037 DA	$31.500	Efectivo		0	tizzi	Av.luro 5550	porton negro	a	1 CHEESE DOBLE SIN BACON CON POCO KETCHUP	Retira	X	VA	Luro
+31/05/2026 0:53	2038 VA	$14.500	Efectivo		0	marcos	ESPERA AFUERA	AA	1124970876		Retira			Luro
+31/05/2026 0:54	2039 VA	$2.000	Efectivo		0	MARCOS	ESPERA AFUERA	AQA	AA		Retira			Luro
+31/05/2026 19:30	2040 DA	$15.000	Efectivo		1800	camila medina 20.30hs	Fardman 1820	santa rosa y montt	11 2266-6358		2-3			Luro
+31/05/2026 19:43	2041 VA	$31.900	MP		2000	Catalina 	rio cuarto 4475	esquina Tinogasta	11 6713-5854		3-4			Luro
+31/05/2026 19:53	2042 VA	$31.570	MP		0	ayelen 	ESPERA AFUERA	AA	1123861393		Retira			Luro
+31/05/2026 20:13	2043 DA	$32.000	Efectivo		2000	Micaela Gómez	Virgenes 3470	santa catalina y garcía merou 	11 6108-0584		3-4			Luro
+31/05/2026 20:15	2044 DA	$29.000	Efectivo		2000	Aldana insaurralde	López may 4050	risso patrón y rio cuarto 	1121848133	1 CARAMEL SIMPLE SIN BACON	3-4			Luro
+31/05/2026 20:33	2045 DA	$31.000	Efectivo		1800	melanie 21.30hs	Obligado 2283	lacar y Sudamérica	11 6671-0256		2-3	X	DA	Luro
+31/05/2026 20:33	2046 VA	$32.200	Efectivo		2700	Tatiana Alonso	Av.J.Manuel de rosas 10115	Zárate y Luis vernet.	1134633562		4-5			Luro
+31/05/2026 20:36	2047 VA	$20.020	MP		2000	Tomas 	Echeverría 3468	 bonpland y Ortega	1164859786		3-4			Luro
+31/05/2026 20:47	2048 VA	$26.700	Efectivo		0	thiago	ESPERA AFUERA	AA	1121746679		Retira			Luro
+31/05/2026 20:49	2049 DA	$31.000	Efectivo		2000	Luciano Vazquez	Zinny 3476	santa catalina y García merou 	1161313585		3-4			Luro
+31/05/2026 20:55	2050 DA	$45.500	Efectivo		1800	melanie 21.30hs	Obligado 2283	lacar y Sudamérica	11 6671-0256		2-3			Luro
+31/05/2026 21:03	2051 VA	$75.600	Efectivo		0	Leandro garcia 	RETIRA	aa	1137016802		Retira			Luro
+31/05/2026 21:07	2052 VA	$29.400	Efectivo		1500	Agustin 	Salvigny 7370	consejal gomez y zelada	11 5591-7484		1-2			Luro
+31/05/2026 21:08	2053 VA	$29.200	Efectivo		0	Cande	RETIRA	AA	11 3493-8207	1 CHEESE SIMPLE SIN BACON !! 	Retira			Luro
+31/05/2026 21:17	2054 VA	$33.800	Efectivo		1800	Tizi 	Valentin gomez 2041	soldado sosa y tres cruces	11 4191-4795		2-3	X	DA	Luro
+31/05/2026 21:18	2055 DA	$33.000	MP		2000	leo	Hilario Ascasubi 4052	vidal y lira	11 6624-9365		3-4	X	DA	Luro
+31/05/2026 21:20	2056 DA	$35.200	MP		2000	leo	ascasubi 4052	lira y vidal	11 6624-9365		3-4			Luro
+31/05/2026 21:20	2057 VA	$18.700	MP		2000	Doro 	salvigny 4132	entre huemul y mongofiel	11 5476-5991		3-4			Luro
+31/05/2026 21:37	2058 DA	$34.200	Efectivo		1500	tizi 	Valentin gomez 2041	soldado sosa y tres cruces	 11 4191-4795		1-2			Luro
+31/05/2026 21:38	2059 VA	$19.030	MP		1800	Eve	ipela 1785	esquina mont	11 5019-3033		2-3			Luro
+31/05/2026 21:41	2060 VA	$18.900	Efectivo		0	tomas	ESPERA AFUERA	AA	1136447862		Retira			Luro
+31/05/2026 21:56	2061 VA	$51.300	Efectivo		0	Ariana 	ESPERA AFUERA	AA	1156169324		Retira			Luro
+31/05/2026 22:07	2062 VA	$36.740	MP		0	melina	ESPERA AFUERA	AA	1127494423		Retira			Luro
+31/05/2026 22:33	2063 VA	$29.200	Efectivo		0	nahuel 	ESPERA AFUERA	AA	1127139707		Retira	X	DA	Luro
+31/05/2026 22:35	2064 VA	$31.700	Efectivo		0	Nahuel	ESPERA AFUERA	AA	1127139707		Retira			Luro
+31/05/2026 22:38	2065 DA	$17.600	MP		0	agus cocina	a	a	a		Retira			Luro
+31/05/2026 22:52	2066 DA	$18.200	Efectivo		1800	facundo	coronel isleño 1681	cordero y casares	11 5580-9760		2-3			Luro
+31/05/2026 22:55	2067 DA	$30.000	Efectivo		2000	karina	jose hernandez 5258 	calderon de la barca y cazon	1126608685	2 CHEESE SIMPLE SOLO CHEDDAR	3-4			Luro
+31/05/2026 23:07	2068 DA	$18.350	%	$9.000	3000	mica	Tarija 3568	salvigny y santa Catalina	11 5528-9400		5-6	X	DA	Luro
+31/05/2026 23:10	2069 VA	$14.500	Efectivo		0	BRENDA	ESPERA AFUERA	A	1166052935		Retira			Luro
+31/05/2026 23:12	2070 DA	$17.500	Efectivo		3000	mica	tarija 3568	salvigny y santa catalina	 11 5528-9400		5-6			Luro
+31/05/2026 23:12	2071 VA	$17.200	Efectivo		2700	Michelle	Sixto Fajardo 4563	dumont y tinogasta 	1125915006		4-5			Luro
+31/05/2026 23:18	2072 VA	$17.050	MP		1000	brisa gómez	magnasco 3075	entre luro y echeverría 	11 3852-0169		0-1			Luro
+31/05/2026 23:21	2073 VA	$45.600	Efectivo		3000	Yoana Gemelli	La bastilla y raulies	aa	1151475215		5-6			Luro
+31/05/2026 23:23	2074 VA	$14.500	Efectivo		0	jorge	ESPERA AFUERA	AA	1129052165		Retira			Luro
+31/05/2026 23:43	2075 VA	$19.700	Efectivo		2700	Walkiria	pedro obligado 5475	bs as y echaurei	11 5164-3349		4-5	X	DA	Luro
+31/05/2026 23:47	2076 VA	$22.000	Efectivo		2700	walkiria	pedro obligado 5475	 bs as y echaurei	11 5164-3349		4-5			Luro
+31/05/2026 23:51	2077 DA	$15.000	Efectivo		1800	Matias Lopez	Isleño 1681	Casares y Cordero	11 2464-0788		2-3	X	DA	Luro
+31/05/2026 23:51	2078 VA	$20.020	MP		1800	Gonzalo Díaz	Santa Mónica 5746	entre valentin gomez y jose hernandez 	11 5095-1103		2-3			Luro
+31/05/2026 23:54	2079 VA	$32.450	MP		0	maxi	ESPERA AFUERA	AA	1128826847	1 CHEESE SIN BACON !!	Retira			Luro
+31/05/2026 23:59	2080 DA	$16.200	Efectivo		1500	Gonzalo paludi	García merou 6078	soberania nacional y lopez may	1155896116		1-2			Luro
+01/06/2026 0:02	2081 VA	$28.200	Efectivo		1800	Matias Lopez 	Isleño 1681	entre Casares y Cordero	11 2464-0788		2-3			Luro
+01/06/2026 0:03	2082 VA	$35.420	MP		3000	Nahuel Villarroel 	Rocamora 3527 	zinny y vírgenes 	11 7216-2001		5-6			Luro
+01/06/2026 0:06	2083 VA	$53.790	MP		3000	Rodrigo	Rio cuarto 2846	entre alagon y río cuarto	11 3106-6472		5-6	X	DA	Luro
+01/06/2026 0:11	2084 VA	$31.790	%	$22.000	0	javier	ESPERA AFUERA	AA	111128579279		Retira			Luro
+01/06/2026 0:13	2085 VA	$2.200	MP		0	javier	ESPERA AFUERA	AA	AA		Retira			Luro
+01/06/2026 0:20	2086 DA	$54.340	MP		3000	Rodrigo	Rio cuarto 2846	alagon y río cuarto	11 3106-6472		5-6			Luro
+01/06/2026 0:31	2087 VA	$30.250	MP		0	micaela	ESPERA AFUERA	AA	1538528175		Retira			Luro
+01/06/2026 0:34	2088 DA	$17.000	Efectivo		0	santi delivery	retira	a	a	FRIED ONION TRIPLE	Retira			Luro

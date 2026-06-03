@@ -32,13 +32,6 @@ const Caja = () => {
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
     const metodoPago = watch("metodoPago");
 
-    const handleSelectDelivery = () => {
-        const firstDelivery = envios.find(env => !ENVIOS_LOCALES.includes(env.zona_envio));
-        if (firstDelivery) {
-            setValue("envio", JSON.stringify({ zona_envio: firstDelivery.zona_envio, costo_envio: firstDelivery.costo_envio }));
-        }
-    };
-
     const { userData } = useAuth();
     const [search, setSearch] = useState("");
 
@@ -285,13 +278,13 @@ const Caja = () => {
                                             <button
                                                 type="button"
                                                 className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? "btn-dark text-white" : "btn-outline-dark"}`}
-                                                onClick={handleSelectDelivery}
+                                                onClick={() => setValue("envio", "")}
                                             >
                                                 <i className="fa-solid fa-motorcycle me-1"></i> Delivery
                                             </button>
                                         </div>
 
-                                        {envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio)(<><AutocompleteGoogle
+                                        {envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio) && (<><AutocompleteGoogle
                                             value={watch("direccion")}
                                             onChange={({ direccion, latitud, longitud }) => {
                                                 setValue("direccion", direccion || "");
@@ -359,33 +352,24 @@ const Caja = () => {
 
                                     <div id="datos_pago">
                                         <div className="row p-0 m-auto">
-                                            <div className="col-3"></div>
-                                            <div className="col-4 d-flex align-items-center text-end">
+                                            <div className="col-2"></div>
+                                            <div className="col-5 d-flex align-items-center text-end">
                                                 <label className="form-label mb-0">Envío</label>
 
                                                 <select
-                                                    className={`form-control border-0 text-center ${ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? "pe-none bg-transparent" : ""}`}
+                                                    className={`form-control border-0 text-center ${ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? "p-0" : ""}`}
                                                     multiple={false}
+                                                    disabled={ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio)}
                                                     required
                                                     {...register("envio")}
                                                 >
-                                                    {ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? (
-                                                        <option value={JSON.stringify({ zona_envio: envioSeleccionado.zona_envio, costo_envio: 0 })}>
-                                                            {envioSeleccionado.zona_envio}
-                                                        </option>
-                                                    ) : (
-                                                        <>
-                                                            <option value="">....</option>
-                                                            {envios
-                                                                .filter(env => !ENVIOS_LOCALES.includes(env.zona_envio))
-                                                                .map(env => (
-                                                                    <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
-                                                                        {env.zona_envio}
-                                                                    </option>
-                                                                ))
-                                                            }
-                                                        </>
-                                                    )}
+                                                    <option value="">....</option>
+                                                    {envios.map(env => (
+                                                            <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
+                                                                {env.zona_envio}
+                                                            </option>
+                                                        ))
+                                                    }
                                                 </select>
                                                 :
                                             </div>

@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { collection, query, getDocs, updateDoc, doc, where, limit, serverTimestamp } from "firebase/firestore";
+import { collection, query, getDocs, doc, where, limit, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from 'sweetalert2';
 import { useAuth } from "../../../context/AuthContext";
 import moment from "moment";
 import { ESTADOS } from "../../../Utils/Constantes";
+import { getResumenOperation } from "../pos_hooks/useResumenDiario";
 
 const EliminarTickets = ({ isOpen, onClose }) => {
     const [pedido, setPedido] = useState(null);
@@ -72,7 +73,22 @@ const EliminarTickets = ({ isOpen, onClose }) => {
                     cajeroEliminaTimestamp: serverTimestamp(),
                 };
 
-                await updateDoc(pedidoRef, updateData);
+                if (pedido.cajeroID) {
+                    const { ref: resumenRef, stats } = getResumenOperation({
+                        metodoPago: pedido.metodoPago,
+                        total: pedido.total,
+                        montoEfectivo: pedido.montoEfectivo,
+                        descontar: true,
+                    });
+                    const batch = writeBatch(db);
+                    batch.update(pedidoRef, updateData);
+                    batch.set(resumenRef, stats, { merge: true });
+                    await batch.commit();
+                } else {
+                    const batch = writeBatch(db);
+                    batch.update(pedidoRef, updateData);
+                    await batch.commit();
+                }
 
                 // Actualizar el pedido local
                 setPedido(prev => prev ? { ...prev, estado: ESTADOS.ELIMINADO } : null);

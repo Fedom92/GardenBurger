@@ -239,6 +239,17 @@ const AuditoriaPedido = ({ pedidoId, isOpen, onClose }) => {
                                 ]}
                             />
 
+                            {/* 4b. ATP — atención al público */}
+                            <Paso
+                                icono="🪟"
+                                titulo="Entregado en mostrador"
+                                activo={!!p.atpTimestamp}
+                                campos={[
+                                    { label: "Atendido por", valor: p.atpCompletadoPor },
+                                    { label: "Fecha/hora",   valor: fmt(p.atpTimestamp) },
+                                ]}
+                            />
+
                             {/* 5. Delivery — asignación */}
                             <Paso
                                 icono="🛵"

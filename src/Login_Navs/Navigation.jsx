@@ -1,5 +1,5 @@
 import Nav from "./Nav";
-import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaPeopleCarry, FaHistory, FaChartBar, FaUserCog } from 'react-icons/fa';
+import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaPeopleCarry, FaHistory, FaChartBar, FaUserCog, FaStore } from 'react-icons/fa';
 import { useState, useEffect, createContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -102,6 +102,10 @@ const Navigation = () => {
 
                         <div className="sidebar-title">
                             <Link to="/gestion-cocina" className="text-decoration-none link-light"><Nav title="Cocina" Icon={FaHamburger} /></Link>
+                        </div>
+
+                        <div className="sidebar-title">
+                            <Link to="/gestion-atp" className="text-decoration-none link-light"><Nav title="Atención al Público" Icon={FaStore} /></Link>
                         </div>
 
                         <div className="sidebar">
