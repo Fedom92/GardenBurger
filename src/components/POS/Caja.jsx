@@ -218,7 +218,7 @@ const Caja = () => {
                     <div className="container mw-100 p-1">
                         <div
                             className="d-flex justify-content-start align-items-center">
-                            <h3>Sistema Caja</h3>
+                            <h3>Caja</h3>
                             <button
                                 className={`btn mx-2 btn-sm fw-bold mb-1 ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-warning text-white btn-blink' : 'btn-outline-secondary'}`}
                                 disabled={!tieneSolicitudesPendientes}
@@ -238,13 +238,13 @@ const Caja = () => {
                                     className="btn btn-sm btn-primary mx-2 fw-bold mb-1"
                                     onClick={() => setShowBuscarPedido(true)}
                                 >
-                                    <i className="fa fa-search"></i> Buscar Pedido <small className="fst-italic"> (F3)</small>
+                                    <i className="fa fa-search"></i> Buscar <small className="fst-italic"> (F3)</small>
                                 </button>
                                 <button
                                     className="btn btn-sm btn-danger mx-2 fw-bold mb-1"
                                     onClick={() => setShowEliminarTickets(true)}
                                 >
-                                    <i className="fa fa-trash"></i> Eliminar Ticket <small className="fst-italic"> (F4)</small>
+                                    <i className="fa fa-trash"></i> Eliminar <small className="fst-italic"> (F4)</small>
                                 </button>
                             </div>
                         </div>

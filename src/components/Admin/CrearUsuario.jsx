@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { collection, setDoc, doc, query, limit, getDocs, where, serverTimestamp } from "firebase/firestore";
-import { db, auth } from "../../firebaseConfig/firebase";
-import { createUserWithEmailAndPassword, updateCurrentUser } from "firebase/auth"
+import { db, firebaseConfig } from "../../firebaseConfig/firebase";
+import { initializeApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { useForm } from "react-hook-form";
@@ -42,7 +43,6 @@ const CrearUsuario = (props) => {
       return;
     }
 
-    const usuarioAnterior = auth.currentUser;
     const nuevoUsuario = {
       correo: data.correo,
       timestamp: serverTimestamp(),
@@ -52,11 +52,18 @@ const CrearUsuario = (props) => {
     };
 
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, data.correo, data.password);
+      // Usar una instancia secundaria para que Firebase no desloguee al administrador actual
+      const secondApp = initializeApp(firebaseConfig, "SecondApp");
+      const secondaryAuth = getAuth(secondApp);
 
+      const { user } = await createUserWithEmailAndPassword(secondaryAuth, data.correo, data.password);
+
+      // Usar 'db' de la app principal para guardar el registro
       await setDoc(doc(db, "usuarios", user.uid), nuevoUsuario);
-      await updateCurrentUser(auth, usuarioAnterior);
-      
+
+      // Cerrar la sesión del usuario recién creado en la app secundaria
+      await signOut(secondaryAuth);
+
       clearForm();
     } catch (error) {
       console.error("Error al agregar usuario: ", error);
