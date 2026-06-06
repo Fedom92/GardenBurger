@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { collection, query, where, onSnapshot, writeBatch, doc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, writeBatch, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
@@ -94,7 +94,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                 const nuevoEstado = (pedido.envio?.zona_envio === ENVIOS_LOCALES[0] || pedido.envio?.zona_envio === ENVIOS_LOCALES[1])
                     ? ESTADOS.ATP
                     : ESTADOS.DELIVERY;
-                batch.update(pedidoRef, { estado: nuevoEstado });
+                batch.update(pedidoRef, { estado: nuevoEstado, cocinaFinTimestamp: serverTimestamp() });
             });
 
             await batch.commit();

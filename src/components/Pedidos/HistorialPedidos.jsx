@@ -1,113 +1,73 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import "../../style/Main.css"
 import TablaGenerica from "../../Utils/TablaGenerica";
-import { Modal } from 'react-bootstrap';
 import { getRangoJornada } from "../../Utils/fechaComercial";
 import { ESTADOS } from "../../Utils/Constantes";
 import AuditoriaPedido from "./AuditoriaPedido";
+import moment from "moment";
+
+const { inicio: inicioJornada, fin: finJornada } = getRangoJornada();
+const toInputDate = (d) => moment(d).format("YYYY-MM-DD");
+
+const computeRango = (startStr, endStr) => {
+  const horaAbre = Number(process.env.REACT_APP_horaAbre) || 9;
+  const inicio = moment(startStr).set({ hour: horaAbre, minute: 0, second: 0, millisecond: 0 }).toDate();
+  const fin = moment(endStr).add(1, "day").set({ hour: 3, minute: 0, second: 0, millisecond: 0 }).toDate();
+  return { inicio, fin };
+};
 
 const HistorialPedidos = () => {
   const [pedidos, setPedidos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [modalShowVerNotas, setModalShowVerNotas] = useState([false, ""]);
-  const [auditoriaId, setAuditoriaId] = useState(null);
-  const { inicio, fin } = getRangoJornada();
+  const [auditoriaPedido, setAuditoriaPedido] = useState(null);
 
-  const pedidosCollection = useRef(query(collection(db, "pedidos"),
-    where("estado", "==", ESTADOS.FINAL),
-    where("timestamp", ">=", inicio),
-    where("timestamp", "<=", fin),
-    orderBy("timestamp", "desc")
-  ));
+  const [fechaInicioStr, setFechaInicioStr] = useState(toInputDate(inicioJornada));
+  const [fechaFinStr, setFechaFinStr] = useState(toInputDate(moment(finJornada).subtract(4, "hours")));
+  const [queryRange, setQueryRange] = useState({ inicio: inicioJornada, fin: finJornada });
 
-  const getPedidos = useCallback((snapshot) => {
-    const pedidosArray = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setPedidos(pedidosArray);
-    setIsLoading(false);
-  }, []);
+  const handleBuscar = () => setQueryRange(computeRango(fechaInicioStr, fechaFinStr));
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const pedidosSnapshot = await getDocs(pedidosCollection.current);
-        await getPedidos(pedidosSnapshot);
-      } catch (error) {
-        console.error('Error fetching data HistorialPedidos:', error);
-      }
-    };
-
-    fetchData();
-  }, [getPedidos]);
+    setIsLoading(true);
+    const q = query(
+      collection(db, "pedidos"),
+      where("estado", "==", ESTADOS.FINAL),
+      where("timestamp", ">=", queryRange.inicio),
+      where("timestamp", "<=", queryRange.fin),
+      orderBy("timestamp", "desc")
+    );
+    getDocs(q)
+      .then(snap => setPedidos(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+      .catch(err => console.error("Error HistorialPedidos:", err))
+      .finally(() => setIsLoading(false));
+  }, [queryRange]);
 
   const columnasPedidos = [
-    { columnasBasicas: ["codigo", "nombre", "direccion", "telefono", "total", "timestamp"] },
     {
-      accessorKey: "metodoPago",
-      header: "Método de Pago",
+      accessorKey: "timestamp",
+      header: "Hora",
       cell: ({ getValue }) => {
-        const metodo = getValue();
-        const colorClass = metodo === "MP" ? "text-primary" : metodo === "EFECTIVO" ? "text-success" : "text-warning";
-        return <span className={colorClass}>{metodo}</span>;
+        const ts = getValue();
+        return ts?.toDate ? moment(ts.toDate()).format("DD/MM/YY HH:mm") : "—";
       },
     },
+    { columnasBasicas: ["codigo", "total", "metodoPago", "nombre", "direccion", "telefono"] },
     {
       accessorKey: "envio",
       header: "Envío",
       cell: ({ getValue }) => {
         const envio = getValue();
-        return envio ? `${envio.zona_envio} - $${envio.costo_envio}` : "Sin envío";
+        return envio ? `$${envio.costo_envio}` : "—";
       },
     },
     {
-      accessorKey: "carrito",
-      header: "Productos",
-      cell: ({ getValue }) => {
-        const carrito = getValue();
-        if (!carrito || carrito.length === 0) return "Sin productos";
-
-        const totalProductos = carrito.reduce((sum, item) => sum + item.cantidad, 0);
-        return `${totalProductos} producto${totalProductos !== 1 ? 's' : ''}`;
-      },
-    },
-    {
-      accessorKey: "pagaCon",
-      header: "Paga Con",
-      cell: ({ getValue, row }) => {
-        const pagaCon = getValue();
-        const metodoPago = row.original.metodoPago;
-
-        if (metodoPago === "EFECTIVO" && pagaCon) {
-          const vuelto = pagaCon - row.original.total;
-          return (
-            <div>
-              <div>${pagaCon}</div>
-              {vuelto > 0 && <small className="text-success">Vuelto: ${vuelto}</small>}
-            </div>
-          );
-        }
-        return "-";
-      },
-    },
-    {
-      accessorKey: "observaciones",
-      header: "Observaciones",
-      cell: ({ getValue }) => {
-        const obs = getValue();
-        return obs ? (
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => setModalShowVerNotas([true, obs])}
-            title="Ver comentario"
-          >
-            <i className="fa-regular fa-comment"></i>
-          </button>
-        ) : "-";
-      },
+      accessorKey: "estado",
+      header: "Estado",
+      cell: ({ getValue }) => (
+        <span className="badge bg-secondary">{getValue()}</span>
+      ),
     },
     {
       id: "acciones",
@@ -116,7 +76,7 @@ const HistorialPedidos = () => {
         <button
           className="btn btn-outline-dark btn-sm"
           title="Ver auditoría"
-          onClick={() => setAuditoriaId(row.original.id)}
+          onClick={() => setAuditoriaPedido(row.original)}
         >
           <i className="fa-solid fa-magnifying-glass" />
         </button>
@@ -135,13 +95,29 @@ const HistorialPedidos = () => {
           <div className="container mw-100">
             <div className="row">
               <div className="col">
-                <br></br>
-                <div className="d-flex justify-content-between mt-3">
-                  <div
-                    className="d-flex justify-content-start align-items-center"
-                    style={{ maxHeight: "40px", marginLeft: "10px" }}
-                  >
-                    <h1>Historial de Pedidos</h1>
+                <br />
+                <div className="d-flex justify-content-between align-items-center mt-3 mb-3 flex-wrap gap-2">
+                  <h1 style={{ marginLeft: "10px", marginBottom: 0 }}>Historial de Pedidos</h1>
+                  <div className="d-flex align-items-center gap-2 flex-wrap">
+                    <label className="fw-semibold mb-0 small">Desde</label>
+                    <input
+                      type="date"
+                      className="form-control form-control-sm"
+                      style={{ width: "160px" }}
+                      value={fechaInicioStr}
+                      onChange={e => setFechaInicioStr(e.target.value)}
+                    />
+                    <label className="fw-semibold mb-0 small">Hasta</label>
+                    <input
+                      type="date"
+                      className="form-control form-control-sm"
+                      style={{ width: "160px" }}
+                      value={fechaFinStr}
+                      onChange={e => setFechaFinStr(e.target.value)}
+                    />
+                    <button className="btn btn-sm btn-dark" onClick={handleBuscar}>
+                      Buscar
+                    </button>
                   </div>
                 </div>
 
@@ -151,7 +127,7 @@ const HistorialPedidos = () => {
                   sortBy="timestamp"
                   ordenDescendente={true}
                   camposBusqueda={["codigo", "nombre", "direccion", "telefono"]}
-                  camposFiltros={["metodoPago"]}
+                  camposFiltros={["metodoPago", "estado"]}
                 />
               </div>
             </div>
@@ -159,34 +135,10 @@ const HistorialPedidos = () => {
         </div>
       )}
 
-      {modalShowVerNotas[0] && (
-        <Modal
-          show={modalShowVerNotas[0]}
-          size="md"
-          aria-labelledby="contained-modal-title-vcenter"
-          centered
-          onHide={() => setModalShowVerNotas([false, ""])}
-        >
-          <Modal.Header
-            closeButton
-            onClick={() => setModalShowVerNotas([false, ""])}
-          >
-            <Modal.Title>Comentarios</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <form>
-              <div className="row">
-                <p>{modalShowVerNotas[1]}</p>
-              </div>
-            </form>
-          </Modal.Body>
-        </Modal>
-      )}
-
       <AuditoriaPedido
-        pedidoId={auditoriaId}
-        isOpen={!!auditoriaId}
-        onClose={() => setAuditoriaId(null)}
+        pedido={auditoriaPedido}
+        isOpen={!!auditoriaPedido}
+        onClose={() => setAuditoriaPedido(null)}
       />
     </>
   );

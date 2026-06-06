@@ -1,9 +1,11 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, doc, query, getDocs, where, orderBy, serverTimestamp } from "firebase/firestore";
+import { collection, updateDoc, doc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, getDoc, increment } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
+import { getFechaComercial } from "../../Utils/fechaComercial";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
+import ModalPedidoDelivery from "./delivery_modales/ModalPedidoDelivery";
+import ModalMetricasDelivery from "./delivery_modales/ModalMetricasDelivery";
 import Swal from "sweetalert2";
 import moment from "moment";
 import { ESTADOS, SUBESTADOS_MOTODELIVERY } from "../../Utils/Constantes";
@@ -14,85 +16,48 @@ const JefeDeliverys = () => {
     const [pedidos, setPedidos] = useState([]);
     const [deliverys, setDeliverys] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [metricasDelivery, setMetricasDelivery] = useState({});
     const [showMetricas, setShowMetricas] = useState(false);
-    const [isAsignando, setIsAsignando] = useState(false);
+    const [metricasData, setMetricasData] = useState(null);
+    const [loadingMetricas, setLoadingMetricas] = useState(false);
+    const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
 
-    const pedidosCollection = useRef(query(collection(db, "pedidos"),
+    const pedidosCollection = useRef(query(
+        collection(db, "pedidos"),
         where("estado", "==", ESTADOS.DELIVERY),
         orderBy("timestamp", "asc")
     ));
     const deliverysCollection = useRef(query(collection(db, "deliverys"), where("activo", "==", true)));
 
-    const getPedidos = useCallback((snapshot) => {
-        const pedidosArray = snapshot.docs
-            .map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }))
-        setPedidos(pedidosArray);
-        setIsLoading(false);
-    }, []);
-
     const getDeliverys = useCallback((snapshot) => {
-        const deliverysArray = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }))
+        const deliverysArray = snapshot.docs
+            .map((doc) => ({ id: doc.id, ...doc.data() }))
             .sort((a, b) => a.nombre.localeCompare(b.nombre));
         setDeliverys(deliverysArray);
     }, []);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const pedidosSnapshot = await getDocs(pedidosCollection.current);
-                await getPedidos(pedidosSnapshot);
-
-                const deliverysSnapshot = await getDocs(deliverysCollection.current);
-                await getDeliverys(deliverysSnapshot);
-
-            } catch (error) {
-                console.error('Error fetching data Delivery:', error);
-            }
-        };
-
-        fetchData();
-    }, [getPedidos, getDeliverys]);
-
-
-    // Calcular métricas por delivery
-    useEffect(() => {
-        const metricas = {};
-        deliverys.forEach(delivery => {
-            const pedidosDelivery = pedidos.filter(pedido => pedido.deliveryAsignado === delivery.nombre);
-            const totalEfectivo = pedidosDelivery
-                .filter(p => p.metodoPago === "EFECTIVO")
-                .reduce((sum, p) => sum + p.total, 0);
-            const totalEnvios = pedidosDelivery
-                .reduce((sum, p) => sum + (p.envio?.costo_envio || 0), 0);
-
-            metricas[delivery.id] = {
-                nombre: delivery.nombre,
-                totalEfectivo,
-                totalEnvios,
-                cantidadPedidos: pedidosDelivery.length
-            };
+        setIsLoading(true);
+        const unsubscribe = onSnapshot(pedidosCollection.current, (snap) => {
+            setPedidos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            setIsLoading(false);
+        }, (error) => {
+            console.error('Error listener deliverys:', error);
+            setIsLoading(false);
         });
-        setMetricasDelivery(metricas);
-    }, [pedidos, deliverys]);
+
+        getDocs(deliverysCollection.current).then(snap => getDeliverys(snap));
+
+        return () => unsubscribe();
+    }, [getDeliverys]);
 
     const asignarDelivery = async (pedidoId, deliveryId) => {
-        setIsAsignando(true);
         try {
             const pedidoDoc = doc(db, 'pedidos', pedidoId);
             const deliverySel = deliverys.find(d => d.id === deliveryId);
-
             const updates = deliverySel
                 ? {
                     deliveryAsignado: deliverySel.nombre,
                     deliveryID: deliverySel.id,
-
                     gestorDelivery: userData.nombreCompleto,
                     gestorDeliveryID: userData.id,
                     gestorDeliveryTimestamp: serverTimestamp(),
@@ -100,28 +65,21 @@ const JefeDeliverys = () => {
                 : {
                     deliveryAsignado: "",
                     deliveryID: "",
-
                     gestorDelivery: "",
                     gestorDeliveryID: "",
                     gestorDeliveryTimestamp: null,
                 };
-
             await updateDoc(pedidoDoc, updates);
-
-            setPedidos(prevPedidos =>
-                prevPedidos.map(pedido =>
-                    pedido.id === pedidoId ? { ...pedido, ...updates } : pedido
-                )
-            );
+            // onSnapshot actualiza pedidos; actualizamos el modal para reflejar el cambio inmediatamente
+            setPedidoSeleccionado(prev => prev?.id === pedidoId ? { ...prev, ...updates } : prev);
         } catch (error) {
             console.error('Error asignando delivery:', error);
             Swal.fire('Error', 'No se pudo asignar el delivery', 'error');
-        } finally {
-            setIsAsignando(false);
         }
     };
 
-    const marcarEstado = async (pedidoId, nuevoEstado) => {
+    // pagoMonto viene del modal cuando el repartidor vuelve
+    const marcarEstado = async (pedidoId, nuevoEstado, pagoMonto = "") => {
         try {
             const pedido = pedidos.find(p => p.id === pedidoId);
             if (!pedido) return;
@@ -131,102 +89,96 @@ const JefeDeliverys = () => {
 
             if (nuevoEstado === SUBESTADOS_MOTODELIVERY.SALIDA) {
                 updates.deliverySalidaTimestamp = serverTimestamp();
+                await updateDoc(pedidoDoc, updates);
+                Swal.fire({ title: '¡Listo!', text: 'Repartidor en camino.', icon: 'success', timer: 1500, showConfirmButton: false });
+
             } else if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
                 updates.estado = ESTADOS.FINAL;
                 updates.deliveryFinTimestamp = serverTimestamp();
+                const monto = Number(pagoMonto);
+                if (!isNaN(monto) && monto > 0) {
+                    updates.pagoRepartidorCon = monto;
+                }
+
+                await updateDoc(pedidoDoc, updates);
+
+                // Persistir métricas en resumenDiario (no-blocking, secundario al pedido)
+                if (pedido.deliveryID) {
+                    try {
+                        const hoy = getFechaComercial();
+                        await updateDoc(doc(db, "resumenDiario", hoy), {
+                            [`deliverys.${pedido.deliveryID}.nombre`]: pedido.deliveryAsignado,
+                            [`deliverys.${pedido.deliveryID}.cantidadPedidos`]: increment(1),
+                            [`deliverys.${pedido.deliveryID}.totalMonto`]: increment(pedido.total || 0),
+                            [`deliverys.${pedido.deliveryID}.totalCobrado`]: increment(monto > 0 ? monto : 0),
+                        });
+                    } catch (e) {
+                        console.error('Error actualizando métricas delivery:', e);
+                    }
+                }
+
+                Swal.fire('¡Éxito!', 'Pedido entregado y finalizado.', 'success');
             }
 
-            await updateDoc(pedidoDoc, updates);
-
-            if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
-                setPedidos(prevPedidos => prevPedidos.filter(p => p.id !== pedidoId));
-                Swal.fire('¡Éxito!', 'Pedido entregado y finalizado con éxito.', 'success');
-            } else {
-                setPedidos(prevPedidos =>
-                    prevPedidos.map(p => p.id === pedidoId ? { ...p, ...updates } : p
-                    ));
-                Swal.fire('¡Éxito!', 'Estado de salida registrado.', 'success');
-            }
+            // onSnapshot remueve/actualiza el pedido automáticamente
+            setPedidoSeleccionado(null);
         } catch (error) {
             console.error('Error actualizando estado:', error);
             Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
         }
     };
 
+    const handleVerMetricas = async () => {
+        setLoadingMetricas(true);
+        try {
+            const hoy = getFechaComercial();
+            const snap = await getDoc(doc(db, "resumenDiario", hoy));
+            setMetricasData(snap.exists() ? (snap.data().deliverys || {}) : {});
+        } catch (e) {
+            console.error('Error cargando métricas:', e);
+            setMetricasData({});
+        } finally {
+            setLoadingMetricas(false);
+            setShowMetricas(true);
+        }
+    };
 
     const columnasPedidos = [
-        { columnasBasicas: ["codigo", "direccion", "total"] },
+        { columnasBasicas: ["codigo", "nombre", "total"] },
         {
             accessorKey: "timestamp",
             header: "Hora",
-            cell: ({ getValue }) => moment(getValue()?.toDate()).format("HH:mm")
+            cell: ({ getValue }) => moment(getValue()?.toDate()).format("HH:mm"),
         },
         {
             accessorKey: "envio.zona_envio",
-            header: "Zona Envío",
+            header: "Zona",
         },
         {
             accessorKey: "envio.costo_envio",
-            header: "Costo Envío",
+            header: "$ Envío",
         },
-
         {
             accessorKey: "metodoPago",
-            header: "Paga Con",
+            header: "Pago",
         },
         {
             accessorKey: "deliveryAsignado",
-            header: "Delivery Asignado",
-            cell: ({ getValue, row }) => {
-                const nombreAsignado = getValue();
-                const selectedId = deliverys.find(d => d.nombre === nombreAsignado)?.id || "";
-                return (
-                    <select
-                        className="form-select form-select-sm"
-                        value={selectedId}
-                        onChange={(e) => asignarDelivery(row.original.id, e.target.value)}
-                        disabled={isAsignando}
-                        title={isAsignando ? "Guardando..." : undefined}
-                    >
-                        <option value="">Sin asignar</option>
-                        {deliverys.map(delivery => (
-                            <option key={delivery.id} value={delivery.id}>
-                                {delivery.nombre}
-                            </option>
-                        ))}
-                    </select>
-                );
-            },
+            header: "Repartidor",
+            cell: ({ getValue }) => getValue() || <span className="text-muted fst-italic">Sin asignar</span>,
         },
         {
             id: "acciones",
             header: "Acciones",
-            cell: ({ row }) => {
-                const pedido = row.original;
-                const estadoDelivery = pedido.estadoDelivery || "";
-                const tieneAsignado = Boolean(pedido.deliveryAsignado);
-
-                return (
-                    <>
-                        <button
-                            className={`btn mx-1 ${estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA ? "btn-warning" : "btn-outline-warning"}`}
-                            title="MARCAR COMO SALIDA"
-                            onClick={() => marcarEstado(pedido.id, SUBESTADOS_MOTODELIVERY.SALIDA)}
-                            disabled={!tieneAsignado}
-                        >
-                            <i className="fa-solid fa-motorcycle"></i>
-                        </button>
-                        <button
-                            className={`btn mx-1 ${estadoDelivery === SUBESTADOS_MOTODELIVERY.FIN ? "btn-success" : "btn-outline-success"}`}
-                            title="MARCAR COMO VUELTA"
-                            onClick={() => marcarEstado(pedido.id, SUBESTADOS_MOTODELIVERY.FIN)}
-                            disabled={!tieneAsignado}
-                        >
-                            <i className="fa-solid fa-check"></i>
-                        </button>
-                    </>
-                );
-            },
+            cell: ({ row }) => (
+                <button
+                    className="btn btn-sm btn-outline-primary"
+                    title="Ver / Gestionar"
+                    onClick={() => setPedidoSeleccionado(row.original)}
+                >
+                    <i className="fa-solid fa-pen-to-square"></i>
+                </button>
+            ),
         },
     ];
 
@@ -241,24 +193,24 @@ const JefeDeliverys = () => {
                     <div className="container mw-100">
                         <div className="row">
                             <div className="col">
-                                <br></br>
+                                <br />
                                 <div className="d-flex justify-content-between mt-3">
                                     <div
                                         className="d-flex justify-content-start align-items-center"
                                         style={{ maxHeight: "40px", marginLeft: "10px" }}
                                     >
                                         <h1>Delivery</h1>
-                                    </div>
-                                    <div className="d-flex align-items-center">
                                         <button
-                                            className="btn btn-secondary btn-sm"
-                                            onClick={() => setShowMetricas(true)}
+                                        variant="primary"
+                                            className="btn-contorno m-1"
+                                            onClick={handleVerMetricas}
+                                            disabled={loadingMetricas}
                                         >
-                                            Ver métricas
+                                            {loadingMetricas ? "Cargando..." : "Ver métricas"}
                                         </button>
                                     </div>
-                                </div>
 
+                                </div>
 
                                 <TablaGenerica
                                     data={pedidos}
@@ -266,12 +218,10 @@ const JefeDeliverys = () => {
                                     sortBy="codigo"
                                     ordenDescendente={false}
                                     camposBusqueda={["codigo", "direccion", "nombre"]}
-                                    camposFiltros={["deliveryAsignado"]}
-                                    rowClassName={(row) => {
-                                        if (row.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA) return 'bg-warning';
-                                        if (row.estadoDelivery === SUBESTADOS_MOTODELIVERY.FIN) return 'bg-success';
-                                        return '';
-                                    }}
+                                    camposFiltros={["deliveryAsignado", "metodoPago"]}
+                                    rowClassName={(row) =>
+                                        row.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA ? 'bg-warning' : ''
+                                    }
                                 />
                             </div>
                         </div>
@@ -279,51 +229,24 @@ const JefeDeliverys = () => {
                 </div>
             )}
 
-            {/* Modal Métricas */}
-            {showMetricas && (
-                <div className="modal show" style={{ display: 'block' }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Métricas de Deliverys</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowMetricas(false)}></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="table-responsive">
-                                    <table className="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>Delivery</th>
-                                                <th className="text-end">Pedidos</th>
-                                                <th className="text-end">Efectivo</th>
-                                                <th className="text-end">Envíos</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {Object.values(metricasDelivery)
-                                                .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                                                .map((m, idx) => (
-                                                    <tr key={idx}>
-                                                        <td>{m.nombre}</td>
-                                                        <td className="text-end">{m.cantidadPedidos}</td>
-                                                        <td className="text-end">${m.totalEfectivo}</td>
-                                                        <td className="text-end">${m.totalEnvios}</td>
-                                                    </tr>
-                                                ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button className="btn btn-secondary" onClick={() => setShowMetricas(false)}>Cerrar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modal de gestión del pedido — key por id para resetear estado local al cambiar pedido */}
+            <ModalPedidoDelivery
+                key={pedidoSeleccionado?.id}
+                isOpen={Boolean(pedidoSeleccionado)}
+                pedido={pedidoSeleccionado}
+                deliverys={deliverys}
+                onClose={() => setPedidoSeleccionado(null)}
+                onAsignarDelivery={asignarDelivery}
+                onMarcarEstado={marcarEstado}
+            />
 
+            <ModalMetricasDelivery
+                isOpen={showMetricas}
+                onClose={() => setShowMetricas(false)}
+                metricasData={metricasData}
+            />
         </>
     );
-}
+};
 
 export default JefeDeliverys;

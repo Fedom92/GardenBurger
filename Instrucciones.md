@@ -1,7 +1,7 @@
 # GardenBurger — Instrucciones de Proyecto para Claude
 
 ## ¿Qué es esto?
-Sistema de gestión integral para una hamburguesería. Incluye punto de venta (POS), cocina, delivery, menú online para clientes y panel de administración. Es una SPA en React con Firebase como backend. Aún está pendiente el desarrollo de panel estadísticas, mapa interactivo de pedidos por direccion, cierre del día con los números de ventas/finanzas.
+Sistema de gestión integral para una hamburguesería. Incluye punto de venta (POS), cocina, delivery, menú online para clientes y panel de administración. Es una SPA en React con Firebase como backend.
 
 ---
 
@@ -14,10 +14,10 @@ Sistema de gestión integral para una hamburguesería. Incluye punto de venta (P
 - **SweetAlert2 (Swal)** para confirmaciones y alertas
 - **React Toastify** para notificaciones rápidas (éxito, error)
 - **React Hook Form** para formularios en general. Ej: Caja y CrearSolicitud
-- **Moment.js** para fechas y horas. DD/MM/YYYY
+- **Moment.js** para fechas y horas. Formato Predeterminado DD/MM/YYYY
 - **React Icons (FA)** para íconos en la navegación
 - **Google Maps / Places API** (`AutocompleteGoogle.jsx`, `GoogleMapsContext.jsx`)
-- **CSS variables** para colores del tema (definidas en `style/Main.css`)
+- **CSS variables** definidas en `style/Main.css`
 - **Bootstrap 5** vía CDN o npm (clases `d-flex`, `col-md-6`, etc.)
 
 ---
@@ -104,9 +104,10 @@ src/
 | `pedidos` | Pedidos creados, se pueden crear desde web pública (campo `origen`) o los cajeros directamente |
 | `productos` | Catálogo de productos con `visible`, `categoria`, `precio` |
 | `categorias` | Categorías ordenadas por `nroOrden` |
-| `clientes` | Registro de clientes para autocompletado en Caja |
+| `clientes` | Registro de clientes nuevos |
 | `deliverys` | Repartidores con campo `activo` |
 | `contadores` | Contadores para secuencias (ej: numeración de pedidos) |
+| `resumenDiario` | resumen de pedidos cobrados por medio de efectivo o tarjeta, para el cierre del turno |
 
 ### Función `getNextSequence(coleccion)`
 Genera IDs secuenciales incrementales via transacción Firestore. Se usa para el código del pedido: `${nuevoCodigo}-${userData.iniciales}`.
@@ -117,7 +118,7 @@ Genera IDs secuenciales incrementales via transacción Firestore. Se usa para el
 
 ```
 Caja crea pedido
-    estado: "CONFIRMADO" (efectivo) o "PENDIENTEMP" (MP), cuando es MP los cajeros deben cotejar en MercadoPago si fue realmente abonado y luego lo aprueban actualizando su estado a "CONFIRMADO"
+    estado: "CONFIRMADO" (efectivo) o "PENDIENTEMP" (MP). Cuando es MP los cajeros deben cotejar en su MercadoPago si fue realmente abonado y luego lo aprueban actualizando su estado a "CONFIRMADO"
         ↓
 Cocina: PedidosEspera (estado: "CONFIRMADO")
     → se seleccionan pedidos → se mandan a cocinar
@@ -126,11 +127,11 @@ Cocina: PedidosCocinando (estado: "COCINA")
     → se marcan como listos
         ↓
 ATP: ATP.jsx (estado: "ATP")
-    → cuando sale de cocina si el pedido tenía como zona_envio "Espera Afuera" o "Retira" se lo deriva a este componente de Atención al Público
+    → cuando sale de cocina solo si el pedido tenía como zona_envio "Espera Afuera" o "Retira" se lo deriva a Atención al Público
         ↓
-Delivery: Deliverys.jsx (estado: "DELIVERY")
-    → si el pedido tenía dirección, se lo deriva a este componente de Delivery
-    → se asigna repartidor → se marca cuando sale y vuelve marcandolo como entregado-> a futuro al historial de pedidos para estadísticas
+Delivery: JefeDeliverys.jsx (estado: "DELIVERY")
+    → si el pedido tenía dirección, se lo deriva a JefeDeliverys
+    → se asigna repartidor → se marca cuando sale y cuando vuelve. Una vez regresa el delivery se lo marca con Estado FINAL.
 ```
 
 ---
@@ -151,17 +152,17 @@ El `CartContext` es el estado central del menú online y tiene lógica compleja:
 - `CANTIDAD_CARNES` → mapea categorías a cantidad de medallones (para el contador de cocina)
 - `FLUJO_PUB_ESTADOS` → orden de estados para el menú público
 - `ESTADOS` → pipeline de estados
-- `SUBESTADOS_MOTODELIVERY` → pipeline de estados
+- `SUBESTADOS_MOTODELIVERY` → pipeline de subestados
 
 ---
 
 ## Componentes reutilizables clave
 
 ### `TablaGenerica`
-Tabla con búsqueda y ordenamiento. Recibe: `data`, `columns`, y callbacks opcionales.
+Tabla Estándar con búsqueda y ordenamiento. Recibe: `data`, `columns`, y otros parametros/callbacks opcionales.
 
 ### `AutocompleteGoogle`
-Input de dirección con Google Places. Escribe la dirección seleccionada en los campos `direccion`, `latitud`, `longitud` via `setValue` de react-hook-form.
+Input de dirección para desplegable de opciones con Google Places. Escribe la dirección seleccionada en los campos `direccion`, `latitud`, `longitud` via `setValue` de react-hook-form. Solo se trabaja 10 KM alrededor de la base central.
 
 ### `useCarrito`, `useCliente`, `useTraerDatos`, `usePendientes`, `useHorarioEspecial`
 Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `components/POS/pos_hooks/`.
@@ -170,9 +171,9 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 
 ## Estilos y diseño (De prefrencia estilo Negro y Blanco, excepto botones)
 
-- **Tema oscuro**: `--color-primario-normal: #272727`, `--color-primario-fuerte: #000000` (aun no implementado)
+- **Tema oscuro**: `--color-primario-normal: #272727`, `--color-primario-fuerte: #000000` (aun no definido)
 - **Sidebar**: colapsable en desktop, drawer en mobile (clase `mobile-open`)
-- Animaciones definidas en `Main.css` (ej: `EntradaDerechaAIzquierda`)
+- Estilos y Animaciones definidas en `Main.css`
 - En mobile hay un topbar fijo con el ícono `FaUserCog` que abre el menú
 - El layout usa Bootstrap grid (`col-md-*`) + flexbox custom
 
@@ -181,13 +182,13 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 ## Convenciones del código
 
 - Componentes en PascalCase, archivos `.jsx` para componentes con JSX, `.js` para contextos y hooks
-- Estado local con `useState`, efectos con `useEffect`, memoización con `useMemo`/`useCallback`
+- Estado local con `useState`, efectos con `useEffect`, memoización con `useMemo`/`useCallback`. React
 - Refs de Firestore queries dentro de `useRef` para evitar re-creación
-- `onSnapshot` para real-time (Cocina), `getDocs` para one-time (Delivery, Admin)
+- `onSnapshot` para real-time (solo donde se necesite ver flujo de pedidos), `getDocs` para one-time
 - Confirmaciones destructivas siempre con `Swal.fire` (no `window.confirm`)
 - Notificaciones rápidas con `toast` de react-toastify
 - Manejo de errores con `console.error` + `Swal` de error para el usuario
-- Formularios con `react-hook-form` en Caja y CrearSolicitud
+- Formularios con `react-hook-form`
 
 ---
 
@@ -204,12 +205,12 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 | `/gestion-cocina` | `Cocina` | Admin, Auth |
 | `/delivery-pedidos` | `Deliverys` | Admin, Auth |
 | `/gestion-deliverys` | `PersonalDeliverys` | Admin, Auth |
-| `/productos` | `Productos` | Admin |
-| `/clientes` | `Clientes` | Admin |
+| `/productos` | `Productos` | Admin - Colección Pública |
+| `/clientes` | `Clientes` | Admin - Colección Pública |
 | `/historial-pedidos` | `HistorialPedidos` | Admin |
 | `/admin` | `PanelAdmin` | Admin |
 | `/estadisticas-viejas` | `Estadisticas` | Admin |
-| `/gestion-atp` | `ATP` | Admin |
+| `/gestion-atp` | `ATP` | Admin, Auth |
 
 ---
 
@@ -217,12 +218,20 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 
 1. Al agregar una nueva ruta admin, seguir el patrón `<RequireAuth><RequireAdmin><Componente /></RequireAdmin></RequireAuth>` o recomendar el que se considere mejor
 2. Al crear un nuevo componente de ABM, tratar de usar `TablaGenerica` para la tabla
-3. Los estados de pedido deben coincidir exactamente con los strings de `ESTADOS`, `SUBESTADOS_MOTODELIVERY` y el orden definido en `FLUJO_PUB_ESTADOS` en Constantes.jsx
-4. El `getNextSequence` usa transacciones — no reemplazar por `getDocs` + incremento manual
+3. Los estados de pedido y su flujo están definidos en workflow.pdf. Sus valores de `ESTADOS`, `SUBESTADOS_MOTODELIVERY` y el orden definido para su visualización pública `FLUJO_PUB_ESTADOS` están en Constantes.jsx. 
+4. El `getNextSequence` para el código de ticket usa transacciones — no reemplazar por `getDocs` + incremento manual
 5. Firebase está configurado con `persistentLocalCache` para funcionar offline y para ahorrar operaciones de lectura
-6. Cosas pendientes para realizar:
-    - Dashboard con estadísticas
-    - Cierre del día con los números de ventas/finanzas
-    - Módulo de auditoría de movimientos por usuario según una orden realizada
-    - Mapa interactivo de pedidos por dirección leaflet
-7. Lo más importante de todo es tener en cuenta que Firebasee tiene grandes limitaciones de operaciones de lectura, por eso siempre trata de mantener una estructura o lógica que minimice la cantidad de consultas.
+6. Lo más importante de todo es tener en cuenta que Firebase tiene grandes limitaciones de operaciones de lectura, por eso siempre trata de mantener una estructura o lógica que minimice la cantidad de consultas.
+
+---
+
+## Pendientes
+
+Cosas pendientes para realizar:
+    - Actualizar módulo JefeDeliverys.jsx
+    - Panel o Dashboard con estadísticas (ya hay un componente modelo en Historicos/Estadisticas.jsx, el cual se usa para el Histórico)
+    - Terminar y Testear - Cierre del día con los números de ventas/finanzas y total de Combos
+    - Mapa interactivo de pedidos por dirección (leaflet)
+    - Definir manejo-lógica varias sucursales
+    - Finalizar Menú Público
+    - Hacer página "/" crearSolicitud? Luego revisar donde regidir para login.

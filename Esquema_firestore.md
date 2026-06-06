@@ -12,7 +12,8 @@ Pedidos creados desde la Caja interna.
   cocineroID: "uid_firebase",           // string, se agrega al pasar el pedido a COCINA
   cocinero: "Juan Díaz",                // string, se agrega al pasar el pedido a COCINA
   deliveryID: "uid_firebase",          // string, se agrega al asignar una persona DELIVERY
-  deliveryAsignado: "Nombre Delivery"  // string, se agrega al asignar una persona DELIVERY
+  deliveryAsignado: "Nombre Delivery", // string, se agrega al asignar una persona DELIVERY
+  pagoRepartidorCon: 1500,             // number: monto que entregó el cliente al repartidor (solo efectivo/mixto). Se graba al confirmar entrega.
   direccion: "Av. Corrientes 1234",   // string
   entreCalles: "Entre Callao y Pueyrredón", // string
   envio: {},                            // map de colección envios
