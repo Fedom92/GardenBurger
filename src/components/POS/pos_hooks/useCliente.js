@@ -24,8 +24,6 @@ const useCliente = () => {
                     direccion: clienteData.direccion || "",
                     entreCalles: clienteData.entreCalles || "",
                     telefono: clienteData.telefono,
-                    latitud: clienteData.latitud || "",
-                    longitud: clienteData.longitud || "",
                 });
             }
         });

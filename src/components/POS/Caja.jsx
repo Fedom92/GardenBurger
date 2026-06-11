@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
 import logoMP from '../../img/mercado-pago.webp';
-import AutocompleteGoogle from '../../Utils/AutocompleteGoogle';
 
 import PendientesMP from './pos_modales/Alertas/PendientesMP';
 import PendientesSolicitudes from './pos_modales/Alertas/PendientesSolicitudes';
@@ -26,7 +25,7 @@ import { ESTADOS, ENVIOS_LOCALES } from '../../Utils/Constantes';
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
-        defaultValues: { direccion: "", latitud: "", longitud: "", id: "" }
+        defaultValues: { direccion: "", id: "" }
     });
     const envioRaw = watch("envio");
     const envioSeleccionado = useMemo(() => envioRaw ? JSON.parse(envioRaw) : {}, [envioRaw]);
@@ -86,8 +85,6 @@ const Caja = () => {
                 cajeroTimestamp: serverTimestamp(),
                 nombre: data.nombre,
                 direccion: data.direccion,
-                latitud: data.latitud || "",
-                longitud: data.longitud || "",
                 entreCalles: data.entreCalles || "",
                 telefono: data.telefono,
                 observaciones: data.observaciones || "",
@@ -156,8 +153,6 @@ const Caja = () => {
     useEffect(() => {
         if (ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio)) {
             setValue("direccion", "");
-            setValue("latitud", "");
-            setValue("longitud", "");
             setValue("entreCalles", "");
         }
     }, [envioSeleccionado?.zona_envio, setValue]);
@@ -284,16 +279,8 @@ const Caja = () => {
                                             </button>
                                         </div>
 
-                                        {envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio) && (<><AutocompleteGoogle
-                                            value={watch("direccion")}
-                                            onChange={({ direccion, latitud, longitud }) => {
-                                                setValue("direccion", direccion || "");
-                                                setValue("latitud", latitud ?? "");
-                                                setValue("longitud", longitud ?? "");
-                                            }}
-                                            placeholder="Dirección (selecciona del listado)..."
-                                            required
-                                        />
+                                        {envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio) && (<>
+                                            <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Direccion..." autoComplete="off" required {...register("direccion")} />
                                             <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
                                         </>)}
                                         <textarea className="form-control" rows="2" placeholder="Observaciones..." autoComplete="off" {...register("observaciones")}></textarea>
@@ -365,10 +352,10 @@ const Caja = () => {
                                                 >
                                                     <option value="">....</option>
                                                     {envios.map(env => (
-                                                            <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
-                                                                {env.zona_envio}
-                                                            </option>
-                                                        ))
+                                                        <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
+                                                            {env.zona_envio}
+                                                        </option>
+                                                    ))
                                                     }
                                                 </select>
                                                 :

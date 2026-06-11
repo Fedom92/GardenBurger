@@ -1,5 +1,4 @@
 import Swal from "sweetalert2";
-import { ENVIOS_LOCALES } from "../../../Utils/Constantes";
 
 const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal }) => {
     if (data.telefono.length < 10) {
@@ -11,36 +10,6 @@ const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal }) => {
         });
         return false;
     }
-
-    if (!ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) && (!data.direccion || data.direccion.trim() === '')) {
-        Swal.fire({
-            title: 'Advertencia',
-            text: 'Selecciona una dirección del listado desplegable',
-            icon: 'warning',
-            confirmButtonColor: '#ffc107',
-        });
-        return false;
-    }
-
-    if (!ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) && (!data.latitud || !data.longitud)) {
-        Swal.fire({
-            title: 'Advertencia',
-            text: 'Debes seleccionar la dirección del listado (no escribir a mano)',
-            icon: 'warning',
-            confirmButtonColor: '#ffc107',
-        });
-        return false;
-    }
-
-    /*if (!data.telefono.startsWith('11') && !data.telefono.startsWith('23')) {
-        Swal.fire({
-            title: 'Advertencia',
-            text: 'El teléfono debe comenzar con 11 o 23',
-            icon: 'warning',
-            confirmButtonColor: '#ffc107',
-        });
-        return false;
-    }*/
 
     if (carrito.length === 0) {
         Swal.fire({

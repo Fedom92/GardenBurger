@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@react-google-maps/api": "^2.20.8",
     "@tanstack/react-table": "^8.21.3",
     "bootstrap": "^5.3.8",
     "crypto-js": "^4.2.0",

@@ -16,7 +16,6 @@ Sistema de gestión integral para una hamburguesería. Incluye punto de venta (P
 - **React Hook Form** para formularios en general. Ej: Caja y CrearSolicitud
 - **Moment.js** para fechas y horas. Formato Predeterminado DD/MM/YYYY
 - **React Icons (FA)** para íconos en la navegación
-- **Google Maps / Places API** (`AutocompleteGoogle.jsx`, `GoogleMapsContext.jsx`)
 - **CSS variables** definidas en `style/Main.css`
 - **Bootstrap 5** vía CDN o npm (clases `d-flex`, `col-md-6`, etc.)
 
@@ -33,10 +32,6 @@ Todas las vars empiezan con `REACT_APP_`:
 | `REACT_APP_rolBloq` | Rol de usuario bloqueado |
 | `REACT_APP_rolCaja` | Rol cajero (aún no implementado y habrá otros) |
 | `REACT_APP_recargoMP` | % de recargo para Mercado Pago (ej: `10`) |
-| `REACT_APP_GOOGLE_MAPS_API_KEY` | Api Key de Google Maps para desplegable de direcciones |
-| `REACT_APP_BASE_LATITUD` | latitud de la sucursal |
-| `REACT_APP_BASE_LONGITUD` | longitud de la sucursal |
-| `REACT_APP_MAXKM` | kilometraje de cobertura maxima alrededor (`10`) |
 | `REACT_APP_horaAbre, REACT_APP_horaCierre, REACT_APP_sucursal` | info de negocio |
 
 **Nunca hardcodear estos valores.** Siempre usar `process.env.REACT_APP_*`.
@@ -54,7 +49,6 @@ src/
 ├── context/
 │   ├── AuthContext.js              # useAuth() → { userData, login, logout }
 │   ├── CartContext.jsx             # CartProvider → todo el estado del carrito y modales
-│   └── GoogleMapsContext.jsx       # GoogleMaps API key provider
 ├── Login_Navs/
 │   ├── Login.jsx                   # Pantalla de login (pública)
 │   ├── Navigation.jsx              # Sidebar con menú (solo admins autenticados)
@@ -64,7 +58,7 @@ src/
 │   ├── Clientes/                   # ABM de clientes
 │   ├── Cocina/                     # Vista cocina: pedidos en espera y cocinando
 │   ├── Delivery/                   # Asignación de entregas + gestión de repartidores
-│   ├── Estadisticas/Historico/     # Dashboard con Google Sheets + charts
+│   ├── Estadisticas/Historico/     # Dashboard con Google Sheets + charts (Estadisticas sistema viejo)
 │   ├── Pedidos/                    # Historial de pedidos
 │   ├── POS/                        # Caja (punto de venta principal)
 │   │   ├── Caja.jsx                # Componente principal del POS
@@ -75,7 +69,6 @@ src/
 ├── Utils/
 │   ├── Constantes.jsx              # CATEGORIAS_HAMBURGUESA, FLUJO_PUB_ESTADOS, CANTIDAD_CARNES, ESTADOS, SUBESTADOS_MOTODELIVERY
 │   ├── TablaGenerica.jsx           # Tabla reutilizable con búsqueda y ordenamiento
-│   └── AutocompleteGoogle.jsx      # Input con autocompletado de direcciones Google
 └── style/
     └── Main.css                    # Estilos globales + CSS variables del tema
 ```
@@ -161,9 +154,6 @@ El `CartContext` es el estado central del menú online y tiene lógica compleja:
 ### `TablaGenerica`
 Tabla Estándar con búsqueda y ordenamiento. Recibe: `data`, `columns`, y otros parametros/callbacks opcionales.
 
-### `AutocompleteGoogle`
-Input de dirección para desplegable de opciones con Google Places. Escribe la dirección seleccionada en los campos `direccion`, `latitud`, `longitud` via `setValue` de react-hook-form. Solo se trabaja 10 KM alrededor de la base central.
-
 ### `useCarrito`, `useCliente`, `useTraerDatos`, `usePendientes`, `useHorarioEspecial`
 Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `components/POS/pos_hooks/`.
 
@@ -215,7 +205,7 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 ---
 
 ## Cosas a tener en cuenta al modificar
-
+0. Nunca tomes en cuenta los archivos en la carpet 'public'
 1. Al agregar una nueva ruta admin, seguir el patrón `<RequireAuth><RequireAdmin><Componente /></RequireAdmin></RequireAuth>` o recomendar el que se considere mejor
 2. Al crear un nuevo componente de ABM, tratar de usar `TablaGenerica` para la tabla
 3. Los estados de pedido y su flujo están definidos en workflow.pdf. Sus valores de `ESTADOS`, `SUBESTADOS_MOTODELIVERY` y el orden definido para su visualización pública `FLUJO_PUB_ESTADOS` están en Constantes.jsx. 
@@ -231,7 +221,7 @@ Cosas pendientes para realizar:
     - Actualizar módulo JefeDeliverys.jsx
     - Panel o Dashboard con estadísticas (ya hay un componente modelo en Historicos/Estadisticas.jsx, el cual se usa para el Histórico)
     - Terminar y Testear - Cierre del día con los números de ventas/finanzas y total de Combos
-    - Mapa interactivo de pedidos por dirección (leaflet)
-    - Definir manejo-lógica varias sucursales
+    - Definir manejo/lógica varias sucursales
     - Finalizar Menú Público
     - Hacer página "/" crearSolicitud? Luego revisar donde regidir para login.
+    -Ultimas Modifs

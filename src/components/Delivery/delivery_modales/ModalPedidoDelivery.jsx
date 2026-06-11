@@ -13,20 +13,9 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
     const salio = estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA;
     const tieneAsignado = Boolean(p.deliveryAsignado);
     const selectedDeliveryId = deliverys.find(d => d.nombre === p.deliveryAsignado)?.id || "";
-    const mapsLink = p.latitud && p.longitud
-        ? `https://www.google.com/maps/dir/?api=1&destination=${p.latitud},${p.longitud}`
-        : null;
-    const deliveryAsignadoObj = deliverys.find(d => d.id === p.deliveryID);
 
     const waClienteHref = p.telefono
         ? `https://api.whatsapp.com/send?phone=549${p.telefono}&text=${encodeURIComponent(`Tu pedido está en camino! 🛵`)}`
-        : null;
-
-    const textoWaRepartidor = mapsLink
-        ? `Pedido #${p.codigo} - ${p.nombre}\nDirección: ${p.direccion}\n${mapsLink}`
-        : `Pedido #${p.codigo} - ${p.nombre}\nDirección: ${p.direccion}`;
-    const waRepartidorHref = deliveryAsignadoObj?.telefono
-        ? `https://api.whatsapp.com/send?phone=549${deliveryAsignadoObj.telefono}&text=${encodeURIComponent(textoWaRepartidor)}`
         : null;
 
     return (
@@ -55,19 +44,6 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                         </p>
                         <p className="mb-1">
                             <strong>Dirección:</strong> {p.direccion || "—"}
-                            {tieneAsignado && mapsLink && (
-                                <button
-                                    className="btn btn-sm ms-2 py-0 px-1"
-                                    style={{ color: '#1a73e8' }}
-                                    title="Copiar link Google Maps"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(mapsLink);
-                                        toast.success("Link de Google Maps copiado");
-                                    }}
-                                >
-                                    <i className="fa-solid fa-map-location-dot"></i>
-                                </button>
-                            )}
                         </p>
                         {p.entreCalles && (
                             <p className="mb-1"><strong>Entre calles:</strong> {p.entreCalles}</p>
@@ -94,17 +70,6 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                     <div className="col-md-6 mb-2">
                         <div className="d-flex align-items-center gap-2 mb-1">
                             <label className="form-label fw-semibold mb-0">Asignar repartidor</label>
-                            {tieneAsignado && waRepartidorHref && (
-                                <a
-                                    href={waRepartidorHref}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="btn btn-success btn-sm py-0 px-1"
-                                    title="WhatsApp Repartidor"
-                                >
-                                    <i className="fa-brands fa-whatsapp"></i>
-                                </a>
-                            )}
                         </div>
                         <select
                             className="form-select"

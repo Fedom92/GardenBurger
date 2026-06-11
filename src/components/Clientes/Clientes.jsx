@@ -97,8 +97,6 @@ const Clientes = () => {
     const columnas = [
         { columnasBasicas: ["nombre", "telefono", "direccion"] },
         { accessorKey: "entreCalles", header: "Entre Calles" },
-        { accessorKey: "latitud", header: "Latitud" },
-        { accessorKey: "longitud", header: "Longitud" },
         {
             id: "acciones",
             header: "Acciones",

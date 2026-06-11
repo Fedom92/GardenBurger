@@ -14,8 +14,6 @@ const EditCliente = (props) => {
             direccion: cliente?.direccion || "",
             entreCalles: cliente?.entreCalles || "",
             telefono: cliente?.telefono || "",
-            latitud: cliente?.latitud || "",
-            longitud: cliente?.longitud || "",
         });
     }, [cliente, reset]);
 
@@ -29,8 +27,6 @@ const EditCliente = (props) => {
             direccion: data.direccion || clienteData.direccion,
             entreCalles: data.entreCalles || clienteData.entreCalles,
             telefono: data.telefono || clienteData.telefono,
-            latitud: data.latitud || clienteData.latitud,
-            longitud: data.longitud || clienteData.longitud,
         };
 
         await updateDoc(clienteRef, newData);
@@ -73,17 +69,6 @@ const EditCliente = (props) => {
                                 <div className="col-md-6 mb-3">
                                     <label className="form-label">Entre Calles</label>
                                     <input type="text" className="form-control" {...register("entreCalles")} />
-                                </div>
-                            </div>
-
-                            <div className="row">
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label">Latitud</label>
-                                    <input type="text" className="form-control" {...register("latitud")} />
-                                </div>
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label">Longitud</label>
-                                    <input type="text" className="form-control" {...register("longitud")} />
                                 </div>
                             </div>
 

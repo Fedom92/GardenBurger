@@ -20,8 +20,6 @@ Pedidos creados desde la Caja interna.
   estado: "PENDIENTE" | "CONFIRMADO" | "PENDIENTEMP" | "COCINA" | "DELIVERY" | "ENTREGADO" | "CANCELADO" | "ELIMINADO",
   gestorDelivery: "Nombre Gestor Delivery",                 // string, agrega datos del delivery gestor del pedido
   gestorDeliveryID: "uid_firebase",               // string, agrega datos del delivery gestor del pedido
-  latitud: "-34.6037",                // string
-  longitud: "-58.3816",               // string
   metodoPago: "EFECTIVO" | "MP" | "%", // "%" = pago dividido
   montoEfectivo: 0                     // number: se completa con monto efectivo solo si metodoPago === "%"
   nombre: "Carlos López",             // string: nombre del cliente
@@ -123,8 +121,6 @@ Pedidos creados desde la Caja interna.
   telefono: "1155556666",
   direccion: "Av. Corrientes 1234",
   entreCalles: "...",
-  latitud: -34.6037,
-  longitud: -58.3816
 }
 ```
 

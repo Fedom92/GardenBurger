@@ -16,8 +16,6 @@ const CrearCliente = (props) => {
             direccion: data.direccion,
             entreCalles: data.entreCalles || "",
             telefono: data.telefono,
-            latitud: data.latitud || "",
-            longitud: data.longitud || "",
         };
 
         const docRef = await addDoc(clientesCollection, nuevoCliente);
@@ -60,17 +58,6 @@ const CrearCliente = (props) => {
                                 <div className="col-md-6 mb-3">
                                     <label className="form-label">Entre Calles</label>
                                     <input type="text" className="form-control" {...register("entreCalles")} />
-                                </div>
-                            </div>
-
-                            <div className="row">
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label">Latitud</label>
-                                    <input type="text" className="form-control" {...register("latitud")} />
-                                </div>
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label">Longitud</label>
-                                    <input type="text" className="form-control" {...register("longitud")} />
                                 </div>
                             </div>
 
