@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
+import { sincronizarHoraServidor } from './Utils/fechaComercial';
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -27,6 +28,13 @@ import { PaginaDetalle } from './components/Solicitudes/PaginaDetalle.jsx';
 
 function App() {
   const { userData } = useAuth();
+
+  // Solo el personal logueado sincroniza: los visitantes públicos no gastan invocaciones
+  useEffect(() => {
+    if (userData) {
+      sincronizarHoraServidor();
+    }
+  }, [userData]);
 
   const RequireAuth = ({ children }) => {
     const location = useLocation();

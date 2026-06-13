@@ -8,17 +8,18 @@ import { ESTADOS } from "../../Utils/Constantes";
 import AuditoriaPedido from "./AuditoriaPedido";
 import moment from "moment";
 
-const { inicio: inicioJornada, fin: finJornada } = getRangoJornada();
 const toInputDate = (d) => moment(d).format("YYYY-MM-DD");
 
 const computeRango = (startStr, endStr) => {
-  const horaAbre = Number(process.env.REACT_APP_horaAbre) || 9;
+  const horaAbre = Number(process.env.REACT_APP_horaAbre);
+  const horaCierre = Number(process.env.REACT_APP_horaCierre);
   const inicio = moment(startStr).set({ hour: horaAbre, minute: 0, second: 0, millisecond: 0 }).toDate();
-  const fin = moment(endStr).add(1, "day").set({ hour: 3, minute: 0, second: 0, millisecond: 0 }).toDate();
+  const fin = moment(endStr).add(1, "day").set({ hour: horaCierre, minute: 0, second: 0, millisecond: 0 }).toDate();
   return { inicio, fin };
 };
 
 const HistorialPedidos = () => {
+  const [{ inicio: inicioJornada, fin: finJornada }] = useState(getRangoJornada);
   const [pedidos, setPedidos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [auditoriaPedido, setAuditoriaPedido] = useState(null);

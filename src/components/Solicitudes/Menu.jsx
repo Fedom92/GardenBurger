@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
+import { fetchMenuPublico } from "../../Utils/menuPublico";
 import 'moment/locale/es';
 import { Card } from "./Card.jsx"
 import logo from '../../img/logo_negro3.png';
@@ -39,12 +40,19 @@ const Menu = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await getData(productosCollection.current, setProductos);
-        await getData(categoriasCollection.current, setCategorias);
-        
-      } catch (error) {
-        alert("Error al cargar los datos.");
-        console.error("Error fetching data Menu:", error);
+        // JSON estático publicado desde Productos: cero lecturas de Firestore
+        const menu = await fetchMenuPublico();
+        setProductos(menu.productos);
+        setCategorias(menu.categorias);
+      } catch (errorMenu) {
+        console.warn("menu.json no disponible, fallback a Firestore:", errorMenu);
+        try {
+          await getData(productosCollection.current, setProductos);
+          await getData(categoriasCollection.current, setCategorias);
+        } catch (error) {
+          alert("Error al cargar los datos.");
+          console.error("Error fetching data Menu:", error);
+        }
       } finally {
         setLoading(false);
       }

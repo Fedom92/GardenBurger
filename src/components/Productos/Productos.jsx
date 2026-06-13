@@ -8,6 +8,7 @@ import "../../style/Main.css"
 import Swal from "sweetalert2";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import { useAuth } from "../../context/AuthContext";
+import { publicarMenu } from "../../Utils/menuPublico";
 
 const Productos = () => {
   const { userData } = useAuth();
@@ -20,6 +21,7 @@ const Productos = () => {
   const [modalShowCategorias, setModalShowCategorias] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
+  const [publicando, setPublicando] = useState(false);
 
   const productosCollection = useRef(query(collection(db, "productos"), orderBy("descripcion", "desc")));
   const categoriasCollection = useRef(query(collection(db, "categorias"), orderBy("nroOrden", "asc")));
@@ -159,6 +161,29 @@ const Productos = () => {
     setProductos((prevProductos) => prevProductos.filter((producto) => producto.id !== id));
   };
 
+  const handlePublicarMenu = async () => {
+    setPublicando(true);
+    try {
+      await publicarMenu();
+      Swal.fire({
+        title: '¡Éxito!',
+        text: 'Menú publicado. Los clientes ya ven la última versión.',
+        icon: 'success',
+        confirmButtonColor: '#198754'
+      });
+    } catch (error) {
+      console.error('Error publicando menú:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo publicar el menú. Intente de nuevo.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
+    } finally {
+      setPublicando(false);
+    }
+  };
+
   const columnasProductos = [
     { columnasBasicas: ["descripcion", "categoria", "precio"] },
     {
@@ -261,6 +286,16 @@ const Productos = () => {
                       onClick={() => setModalShowProducto(true)}
                     >
                       Agregar Producto
+                    </button>
+
+                    <button
+                      variant="secondary"
+                      className="btn-contorno m-1"
+                      onClick={handlePublicarMenu}
+                      disabled={publicando}
+                      title="Genera el menú que ven los clientes en la web"
+                    >
+                      {publicando ? "Publicando..." : "Publicar Menú"}
                     </button>
 
                     {mostrarAjustes && (

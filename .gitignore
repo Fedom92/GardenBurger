@@ -24,3 +24,10 @@ yarn-debug.log*
 yarn-error.log*
 *.zip
 *.rar
+
+.firebaserc
+firebase-debug.log
+firebase.json
+skills-lock.json
+functions/
+.agents

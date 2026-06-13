@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, runTransaction } from "firebase/firestore";
 import { getAuth, EmailAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
@@ -12,7 +13,14 @@ export const firebaseConfig = {
   appId: process.env.REACT_APP_appId,
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
+
+if (process.env.REACT_APP_gardenAppCheck) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(process.env.REACT_APP_gardenAppCheck),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
 
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({

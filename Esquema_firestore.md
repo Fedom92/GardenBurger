@@ -182,7 +182,11 @@ Usada por `useResumenDiario()`.
 ```
 
 
-## Reglas de Seguridad estbalecidas para el Cloud Firestore
+## Reglas de Seguridad establecidas para el Cloud Firestore
+
+> Nota: se eliminó `isBloqueado()` — su `get()` facturaba una lectura extra del doc de usuario
+> en cada operación. El bloqueo de usuarios queda solo del lado del cliente (AuthContext).
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -190,27 +194,22 @@ service cloud.firestore {
     match /pedidos/{document=**} {
       allow create: if esCreacionPublicaValida();
       allow read: if estaAutenticado() || esOrigenWeb();
-      allow update: if estaAutenticado() && !isBloqueado();
+      allow update: if estaAutenticado();
       allow delete: if false;
     }	
     
     match /productos/{document=**} {
       allow read: if true;
-      allow write: if estaAutenticado() && !isBloqueado();
+      allow write: if estaAutenticado();
     }
     
     match /categorias/{document=**} {
       allow read: if true;
-      allow write: if estaAutenticado() && !isBloqueado();
+      allow write: if estaAutenticado();
     }
         
     match /{document=**} {
-      allow read, write: if estaAutenticado() && !isBloqueado();
-    }
-    
-    function isBloqueado() {
-      let userDoc = get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
-      return userDoc != null && userDoc.rol == "Blo_JkR62qVmNz";
+      allow read, write: if estaAutenticado();
     }
     
     function esCreacionPublicaValida() {
@@ -218,7 +217,16 @@ service cloud.firestore {
       return data.origen == "WEB"
         && data.estado == "PENDIENTE"
         && data.keys().hasAll(["cliente", "carrito", "total", "estado", "origen", "clienteTimestamp"])
-        && !data.keys().hasAny(["cajeroID", "cocineroID", "deliveryID"]);
+        && !data.keys().hasAny(["cajeroID", "cocineroID", "deliveryID"])
+        && data.carrito is list
+        && data.carrito.size() > 0
+        && data.carrito.size() <= 50
+        && data.total is number
+        && data.total > 0
+        && data.total <= 1000000
+        && data.cliente.nombre is string && data.cliente.nombre.size() <= 100
+        && data.cliente.telefono is string && data.cliente.telefono.size() <= 20
+        && data.cliente.direccion is string && data.cliente.direccion.size() <= 200;
     }
     
     function esOrigenWeb() {
@@ -227,6 +235,26 @@ service cloud.firestore {
     
      function estaAutenticado() {
       return request.auth != null;
+    }
+  }
+}
+
+## Reglas de Seguridad para Storage
+
+> La carpeta `publico/` aloja `menu.json` (generado con el botón "Publicar Menú" de Productos).
+> Necesita lectura pública para que /menu lo consuma sin autenticación y sin lecturas de Firestore.
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /publico/{archivo} {
+      allow read: if true;
+      allow write: if request.auth != null && archivo == "menu.json";
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
