@@ -33,6 +33,8 @@ const Caja = () => {
 
     const { userData } = useAuth();
     const [search, setSearch] = useState("");
+    const [modoDelivery, setModoDelivery] = useState(false);
+    const mostrarDelivery = modoDelivery || (envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio));
 
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
@@ -148,6 +150,7 @@ const Caja = () => {
         resetCarrito();
         setMontoEfectivo(0);
         resetHorario();
+        setModoDelivery(false);
     }, [reset, resetCarrito, resetHorario]);
 
     useEffect(() => {
@@ -259,27 +262,36 @@ const Caja = () => {
                                             <button
                                                 type="button"
                                                 className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio === ENVIOS_LOCALES[1] ? "btn-dark text-white" : "btn-outline-dark"}`}
-                                                onClick={() => setValue("envio", JSON.stringify({ zona_envio: ENVIOS_LOCALES[1], costo_envio: 0 }))}
+                                                onClick={() => {
+                                                    setModoDelivery(false);
+                                                    setValue("envio", JSON.stringify({ zona_envio: ENVIOS_LOCALES[1], costo_envio: 0 }));
+                                                }}
                                             >
                                                 <i className="fa-solid fa-store me-1"></i> Espera Afuera
                                             </button>
                                             <button
                                                 type="button"
                                                 className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio === ENVIOS_LOCALES[0] ? "btn-dark text-white" : "btn-outline-dark"}`}
-                                                onClick={() => setValue("envio", JSON.stringify({ zona_envio: ENVIOS_LOCALES[0], costo_envio: 0 }))}
+                                                onClick={() => {
+                                                    setModoDelivery(false);
+                                                    setValue("envio", JSON.stringify({ zona_envio: ENVIOS_LOCALES[0], costo_envio: 0 }));
+                                                }}
                                             >
                                                 <i className="fa-solid fa-store me-1"></i> Retira
                                             </button>
                                             <button
                                                 type="button"
-                                                className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? "btn-dark text-white" : "btn-outline-dark"}`}
-                                                onClick={() => setValue("envio", "")}
+                                                className={`btn btn-sm btn-upload fw-bold ${mostrarDelivery ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                                onClick={() => {
+                                                    setModoDelivery(true);
+                                                    setValue("envio", "");
+                                                }}
                                             >
                                                 <i className="fa-solid fa-motorcycle me-1"></i> Delivery
                                             </button>
                                         </div>
 
-                                        {envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio) && (<>
+                                        {mostrarDelivery && (<>
                                             <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Direccion..." autoComplete="off" required {...register("direccion")} />
                                             <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
                                         </>)}

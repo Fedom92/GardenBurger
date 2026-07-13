@@ -1,39 +1,47 @@
 import React, { useState } from "react";
-import { collection, query, getDocs, where, limit, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, where, orderBy } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import moment from 'moment';
 import { ESTADOS, ENVIOS_LOCALES } from "../../../Utils/Constantes";
+import { quitarAcentos } from "../../../Utils/TablaGenerica";
+import { getRangoJornada } from "../../../Utils/fechaComercial";
+
+const CAMPOS_BUSQUEDA = ["telefono", "codigo", "direccion"];
 
 const BuscarPedido = ({ isOpen, onClose }) => {
     const [pedidos, setPedidos] = useState([]);
-    const [telefonoBuscar, setTelefonoBuscar] = useState("");
+    const [busqueda, setBusqueda] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [errorBusqueda, setErrorBusqueda] = useState("");
 
-    // Función para buscar pedidos por teléfono
+    // Función para buscar, entre los pedidos de hoy, por teléfono, código o dirección
     const buscarPedidos = async () => {
         setIsLoading(true);
         setErrorBusqueda("");
         setPedidos([]);
 
         try {
+            const { inicio, fin } = getRangoJornada();
             const pedidosCollection = collection(db, "pedidos");
             const q = query(
                 pedidosCollection,
-                where("telefono", "==", telefonoBuscar.trim()),
-                orderBy("timestamp", "desc"),
-                limit(10)
+                where("timestamp", ">=", inicio),
+                where("timestamp", "<=", fin),
+                orderBy("timestamp", "desc")
             );
 
             const querySnapshot = await getDocs(q);
+            const termino = quitarAcentos(busqueda.trim());
 
-            if (querySnapshot.empty) {
+            const pedidosEncontrados = querySnapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .filter(p => p.estado !== ESTADOS.FINAL && p.estado !== ESTADOS.WEB_PENDIENTE)
+                .filter(p => CAMPOS_BUSQUEDA.some(campo => quitarAcentos(String(p[campo] ?? "")).includes(termino)));
+
+            if (pedidosEncontrados.length === 0) {
                 setErrorBusqueda(`No se encontraron pedidos.`);
             } else {
-                const pedidosEncontrados = querySnapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(p => p.estado !== ESTADOS.WEB_PENDIENTE);
                 setPedidos(pedidosEncontrados);
             }
         } catch (error) {
@@ -47,7 +55,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
     // Limpiar el estado cuando se cierra el modal
     const handleClose = () => {
         setPedidos([]);
-        setTelefonoBuscar("");
+        setBusqueda("");
         setErrorBusqueda("");
         onClose();
     };
@@ -62,7 +70,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
         >
             <Modal.Header closeButton className="border-0 pb-0 pt-2 px-4">
                 <div>
-                    <Modal.Title className="fs-4 fw-bold text-dark">Buscar Pedidos por Teléfono...</Modal.Title>
+                    <Modal.Title className="fs-4 fw-bold text-dark">Buscar Pedidos</Modal.Title>
                 </div>
             </Modal.Header>
             <Modal.Body className="p-4">
@@ -74,28 +82,23 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                         <input
                             type="text"
                             className="form-control border-0 px-2"
-                            placeholder="Ej: 1155..."
-                            value={telefonoBuscar}
-                            onInput={(e) => {
-                                e.target.value = e.target.value.replace(/\D/g, '');
-                            }}
+                            placeholder="Teléfono, código o dirección..."
+                            value={busqueda}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !isLoading && telefonoBuscar.trim() && telefonoBuscar.length >= 4) {
+                                if (e.key === 'Enter' && !isLoading && busqueda.trim().length >= 3) {
                                     buscarPedidos();
                                 }
                             }}
-                            onChange={(e) => setTelefonoBuscar(e.target.value)}
+                            onChange={(e) => setBusqueda(e.target.value)}
                             disabled={isLoading}
                             autoComplete="off"
-                            minLength={10}
-                            maxLength={10}
                             style={{ boxShadow: 'none' }}
                         />
                         <button
                             className="btn btn-primary px-4 fw-bold"
                             type="button"
                             onClick={buscarPedidos}
-                            disabled={isLoading || !telefonoBuscar.trim() || telefonoBuscar.length < 4}
+                            disabled={isLoading || busqueda.trim().length < 3}
                             style={{ borderRadius: '0' }}
                         >
                             Buscar

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, getPaginationRowModel, flexRender } from "@tanstack/react-table";
 
-function quitarAcentos(str) {
+export function quitarAcentos(str) {
     if (!str) return "";
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
