@@ -33,7 +33,6 @@ const ResumenDiario = ({ isOpen, onClose, resumen, fecha, isLoading }) => {
                     <div className="text-center text-body-secondary py-5">
                         <i className="fa fa-chart-simple fa-4x mb-3 opacity-25"></i>
                         <h5 className="fw-semibold text-secondary">Todavía no hay movimientos</h5>
-                        <p className="text-muted">El resumen se crea con el primer pedido de la jornada.</p>
                     </div>
                 ) : (
                     <>

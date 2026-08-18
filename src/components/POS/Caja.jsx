@@ -271,7 +271,7 @@ const Caja = () => {
                                 <i className="fa fa-search"></i> Buscar Ticket<small className="fst-italic"> (F3)</small>
                             </button>
                             <button
-                                className="btn btn-sm btn-dark fw-bold"
+                                className="btn btn-sm btn-light fw-bold"
                                 onClick={verResumen}
                             >
                                 <i className="fa fa-chart-simple"></i> Ver Estadísticas <small className="fst-italic"> (F4)</small>
