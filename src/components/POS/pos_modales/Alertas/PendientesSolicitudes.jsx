@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, updateDoc, doc, onSnapshot, orderBy, serverTimestamp } from "firebase/firestore";
-import { db } from "../../../../firebaseConfig/firebase";
+import { query, where, updateDoc, onSnapshot, orderBy, serverTimestamp } from "firebase/firestore";
+import { colSucursal, docSucursal } from "../../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
@@ -8,9 +8,18 @@ import 'moment/locale/es';
 import { useAuth } from "../../../../context/AuthContext";
 import { ESTADOS } from "../../../../Utils/Constantes";
 
-const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
+// Busqueda de Google Maps por texto libre. Es una URL comun, no la API con key que se
+// saco del proyecto: no necesita SDK ni se factura. Google resuelve el texto como puede,
+// asi que una direccion mal escrita puede caer en otra ciudad sin avisar.
+const mapsHref = (direccion) =>
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`;
+
+const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
     const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    // Bloquea los botones mientras una accion esta en curso: sin esto se puede
+    // clickear varias veces y disparar la misma escritura de mas.
+    const [procesando, setProcesando] = useState(false);
     const { userData } = useAuth();
 
     // Cargar solicitudes cuando se abre el modal
@@ -20,7 +29,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
         setIsLoading(true);
         let initialLoad = true;
 
-        const solicitudesCollection = collection(db, "pedidos");
+        const solicitudesCollection = colSucursal("pedidos");
         const q = query(solicitudesCollection, where("estado", "==", ESTADOS.WEB_PENDIENTE), orderBy("clienteTimestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const solicitudes = snapshot.docs.map(doc => ({
@@ -50,16 +59,32 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
     }, [isOpen, onClose]);
 
 
-    const aprobarSolicitud = (solicitudId) => {
-        const solicitud = solicitudesPendientes.find(s => s.id === solicitudId);
+    // Una solicitud tiene un solo dueño: si la tomaran dos cajeros, los dos podrian
+    // guardar el pedido y el resumen del dia sumaria el mismo pedido dos veces.
+    // Deshabilita los botones de la tarjeta; el badge ya dice de quien es. El
+    // listener ya trae la asignacion, asi que no hace falta releer nada.
+    const esDeOtroCajero = (solicitud) =>
+        !!solicitud?.cajeroRevisaID && solicitud.cajeroRevisaID !== userData.id;
 
-        if (onAprobarSolicitud && solicitud) {
-            onAprobarSolicitud(solicitud);
+    const revisarSolicitud = async (solicitudId) => {
+        const solicitud = solicitudesPendientes.find(s => s.id === solicitudId);
+        if (!onRevisarSolicitud || !solicitud) return;
+        if (esDeOtroCajero(solicitud)) return;
+
+        setProcesando(true);
+        try {
+            // El modal lo cierra handleRevisarSolicitud, y solo si la asignacion se grabo.
+            await onRevisarSolicitud(solicitud);
+        } finally {
+            setProcesando(false);
         }
-        onClose();
     };
 
     const rechazarSolicitud = async (solicitudId) => {
+        const solicitud = solicitudesPendientes.find(s => s.id === solicitudId);
+
+        if (esDeOtroCajero(solicitud)) return;
+
         const result = await Swal.fire({
             title: '¿Estás seguro?',
             text: 'La solicitud será rechazada.',
@@ -72,8 +97,9 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
         });
 
         if (result.isConfirmed) {
+            setProcesando(true);
             try {
-                const solicitudRef = doc(db, "pedidos", solicitudId);
+                const solicitudRef = docSucursal("pedidos", solicitudId);
                 await updateDoc(solicitudRef, {
                     estado: ESTADOS.CANCELADO,
                     cajeroCancelaSolID: userData.id,
@@ -88,6 +114,8 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                     icon: 'error',
                     confirmButtonColor: '#dc3545',
                 });
+            } finally {
+                setProcesando(false);
             }
         }
     };
@@ -115,11 +143,40 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                             <div key={solicitud.id} className="col-md-6">
                                 <div className="card mb-1">
                                     <div className="card-header d-flex justify-content-between align-items-center">
-                                        <p className="mb-0">
-                                            <strong>Cliente:</strong> {solicitud.cliente?.nombre}
+                                        {/* Los accesos rapidos viven acá y no al lado de su dato: en el cuerpo
+                                            entran en media columna y le parten el renglon a la direccion. */}
+                                        <p className="mb-0 d-flex align-items-center gap-1">
+                                            <span><strong>Cliente:</strong> {solicitud.cliente?.nombre}</span>
+                                            <a
+                                                href={`https://api.whatsapp.com/send?phone=549${solicitud.cliente?.telefono}&text=Hola ${solicitud.cliente?.nombre}. `}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn btn-success btn-sm py-0 px-1 flex-shrink-0"
+                                                title={`Enviar WhatsApp`}
+                                            >
+                                                <i className="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                                            </a>
+                                            {solicitud.cliente?.opcion === "delivery" && solicitud.cliente?.direccion && (
+                                                <a
+                                                    href={mapsHref(solicitud.cliente.direccion)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-warning btn-sm py-0 px-1 flex-shrink-0"
+                                                    title={`Buscar Google Maps`}
+                                                >
+                                                    <i className="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+                                                </a>
+                                            )}
+                                            {solicitud.cajeroRevisaID && (
+                                                <span className="badge bg-warning text-dark ms-1">
+                                                    {solicitud.cajeroRevisaID === userData.id
+                                                        ? "Asignada a vos"
+                                                        : `Asignada a ${solicitud.cajeroRevisa}`}
+                                                </span>
+                                            )}
                                         </p>
                                         <small className="text-body-secondary">
-                                            {moment(solicitud.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
+                                            {moment(solicitud.clienteTimestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
                                         </small>
                                     </div>
                                     <div className="card-body h-auto">
@@ -178,12 +235,14 @@ const PendientesSolicitudes = ({ isOpen, onClose, onAprobarSolicitud }) => {
                                         <div className="d-flex gap-2">
                                             <button
                                                 className="btn btn-success btn-sm flex-fill"
-                                                onClick={() => aprobarSolicitud(solicitud.id)}
+                                                disabled={procesando || esDeOtroCajero(solicitud)}
+                                                onClick={() => revisarSolicitud(solicitud.id)}
                                             >
-                                                <i className="fa fa-check"></i> Aprobar
+                                                <i className="fa fa-check"></i> Revisar
                                             </button>
                                             <button
                                                 className="btn btn-danger btn-sm flex-fill"
+                                                disabled={procesando || esDeOtroCajero(solicitud)}
                                                 onClick={() => rechazarSolicitud(solicitud.id)}
                                             >
                                                 <i className="fa fa-times"></i> Rechazar

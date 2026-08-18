@@ -1,12 +1,14 @@
 import React from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
+import { useAuth } from "../../context/AuthContext";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 
 const CrearCliente = (props) => {
     const { onCreated, ...propsModal } = props;
     const { register, handleSubmit, reset } = useForm();
+    const { userData } = useAuth();
 
     const clientesCollection = collection(db, "clientes");
 
@@ -16,6 +18,8 @@ const CrearCliente = (props) => {
             direccion: data.direccion,
             entreCalles: data.entreCalles || "",
             telefono: data.telefono,
+            // Sucursal desde la que se dio de alta (vacío si lo creó un admin)
+            sucursal: userData?.sucursal || "",
         };
 
         const docRef = await addDoc(clientesCollection, nuevoCliente);

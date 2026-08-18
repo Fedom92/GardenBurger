@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal } from "react-bootstrap";
 import { addDoc, collection, doc, setDoc, deleteDoc, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase.js";
 import { useForm } from "react-hook-form";
 
+// ABM de zonas de envío. Colección global: las zonas las centraliza el admin
+// y son iguales para todas las sucursales.
 const Envios = ({ show, onHide }) => {
   const { register, handleSubmit, setValue, reset } = useForm();
 
@@ -12,30 +14,19 @@ const Envios = ({ show, onHide }) => {
   const [error, setError] = useState("");
 
   const enviosCollection = collection(db, "envios");
-  const enviosCollectionOrdenados = useRef(query(enviosCollection, orderBy("zona_envio")));
-
-  const getEnvios = useCallback((snapshot) => {
-    const enviosArray = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setEnvios(enviosArray);
-  }, []);
 
   useEffect(() => {
+    if (!show) return;
     const fetchData = async () => {
       try {
-        const enviosSnapshot = await getDocs(enviosCollectionOrdenados.current);
-        await getEnvios(enviosSnapshot);
-
+        const snapshot = await getDocs(query(collection(db, "envios"), orderBy("zona_envio")));
+        setEnvios(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
-        console.error('Error fetching data Categoría:', error);
+        console.error("Error fetching data Envíos:", error);
       }
     };
-
     fetchData();
-
-  }, [getEnvios]);
+  }, [show]);
 
   const envioExiste = (zona_envio) => {
     return envios.some(

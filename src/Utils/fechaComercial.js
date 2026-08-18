@@ -20,7 +20,22 @@ export const sincronizarHoraServidor = async () => {
     return offsetMs;
 };
 
-const ahoraServidor = () => moment(Date.now() + offsetMs);
+// Hora corregida por el offset del servidor. Todo lo que se grabe con una fecha
+// armada a mano tiene que salir de acá y no de new Date(): en el local hay PCs
+// con el reloj corrido.
+export const ahoraServidor = () => moment(Date.now() + offsetMs);
+
+export const HORA_CIERRE = Number(process.env.REACT_APP_horaCierre);
+
+// Jornada comercial a la que pertenece una fecha cualquiera: un pedido de las 00:30
+// es de la noche anterior. Version pura de getFechaComercial() para datos historicos,
+// donde la hora ya viene en el registro y no hace falta consultar al servidor.
+export const getJornadaDeFecha = (date) => {
+    const j = new Date(date);
+    if (j.getHours() < HORA_CIERRE) j.setDate(j.getDate() - 1);
+    j.setHours(0, 0, 0, 0);
+    return j;
+};
 
 export const getFechaComercial = () => {
     const ahora = ahoraServidor();

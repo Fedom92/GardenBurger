@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../firebaseConfig/firebase";
+import { auth, db, setSucursalStaff } from "../firebaseConfig/firebase";
 
 const AuthContext = createContext();
 
@@ -25,14 +25,21 @@ export function AuthContextProvider({ children }) {
 
   const fetchUserData = useCallback(async (user) => {
     try {
+      // Espera a que el ID token este resuelto: si no, la lectura sale sin
+      // credencial y la regla de usuarios la rechaza con permission-denied.
+      await user.getIdToken();
+
       const userDocRef = doc(db, "usuarios", user.uid);
       const userDocSnap = await getDoc(userDocRef);
       if (userDocSnap.exists()) {
         const data = userDocSnap.data();
-        if (data.rol === process.env.REACT_APP_rolBloq) {
+        // Respaldo del borrado real en Auth: cubre la ventana en que un token
+        // ya emitido sigue vigente. Los docs viejos sin el campo son activos.
+        if (data.activo === false) {
           await signOut(auth);
           return null;
         }
+        setSucursalStaff(data.sucursal);
         return data;
       }
     } catch (error) {
@@ -53,9 +60,11 @@ export function AuthContextProvider({ children }) {
           });
         } else {
           setUserData(null);
+          setSucursalStaff(null);
         }
       } else {
         setUserData(null);
+        setSucursalStaff(null);
       }
       setLoading(false);
     });

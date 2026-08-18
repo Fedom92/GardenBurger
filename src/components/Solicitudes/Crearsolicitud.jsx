@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from '../../context/CartContext.jsx'
 import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from "./Card.jsx";
 import { ModalHamburguesa } from "./ModalHamburguesa.jsx";
 import { ModalExtras } from "./ModalExtras.jsx";
@@ -16,6 +16,9 @@ import Footer from "./Footer";
 
 
 const CrearSolicitud = () => {
+  // Sucursal elegida por el cliente (viene en la URL, ej: /crear-solicitud/luro)
+  const { sucursal } = useParams();
+
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
 
@@ -49,7 +52,7 @@ const CrearSolicitud = () => {
   const comprar = (data) => {
     setProcesando(true);
 
-    const solicitudesRef = collection(db, "pedidos");
+    const solicitudesRef = collection(db, "sucursales", sucursal, "pedidos");
     const newDocRef = doc(solicitudesRef);
 
     const mensaje = `
@@ -63,7 +66,7 @@ const CrearSolicitud = () => {
         : `🏪 Retiro en local`}
 
     🔎 *Ver detalle pedido*
-    https://gardenburger.com.ar/ver-pedido/${newDocRef.id}
+    https://gardenburger.com.ar/ver-pedido/${sucursal}/${newDocRef.id}
     `;
 
     const mensajeCodificado = encodeURIComponent(mensaje.trim());
@@ -84,7 +87,7 @@ const CrearSolicitud = () => {
       .then(() => {
         vaciarCarrito();
         window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${mensajeCodificado}`, "_blank");
-        navigate(`/ver-pedido/${newDocRef.id}`);
+        navigate(`/ver-pedido/${sucursal}/${newDocRef.id}`);
       })
       .catch((error) => {
         console.error("Error al crear solicitud:", error);
@@ -146,7 +149,7 @@ const CrearSolicitud = () => {
 
         {carrito.length > 0 &&
           <div className="position-fixed bottom-0 end-0 z-2 m-3">
-            <a href='/crear-solicitud#finalizarCompra' className="text-white p-3">Ver pedido
+            <a href={`/crear-solicitud/${sucursal}#finalizarCompra`} className="text-white p-3">Ver pedido
               <i className="fa fa-arrow-down ms-2 animated-arrow" aria-hidden="true"></i>
             </a>
           </div>}
@@ -305,15 +308,11 @@ const CrearSolicitud = () => {
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
-                  <input type="text" id="telefono" maxLength={10} placeholder='Teléfono (sin 0 y sin 15)...' {...register("telefono", {
-                    required: "El teléfono es obligatorio",
-                    validate: value => value.startsWith('11') || value.startsWith('23') || "El teléfono debe comenzar con 11 o 23"
-                  })} required
+                  <input type="text" id="telefono" placeholder='Teléfono (sin 0 y sin 15)...' {...register("telefono")} required
                     onInput={(e) => {
                       e.target.value = e.target.value.replace(/\D/g, '');
                     }}
                   />
-                  {errors.telefono && <p style={{ color: 'red', margin: '0', textAlign: 'center' }}>{errors.telefono.message}</p>}
 
                   <div className="d-flex justify-content-around mt-2">
                     <div style={{ minWidth: "110px" }}>
@@ -394,7 +393,7 @@ const CrearSolicitud = () => {
                   <button className="btn btn-success" type="submit" disabled={procesando}>{procesando ? "Cargando..." : "Comprar"}</button>
                 </form>
               </div>
-              : <><p className='error'>Sin productos seleccionados.</p><a href='/crear-solicitud#HAMBURGUESAS'><p className='fw-bold'>Ir a inicio ↑↑↑</p></a></>}
+              : <><p className='error'>Sin productos seleccionados.</p><a href={`/crear-solicitud/${sucursal}#HAMBURGUESAS`}><p className='fw-bold'>Ir a inicio ↑↑↑</p></a></>}
           </div>
         </div>
       </main>

@@ -1,6 +1,7 @@
 import React from "react";
 import moment from "moment";
 import { Modal } from "react-bootstrap";
+import { getItemsCocina } from "./cocina_hooks/useItemsCocina";
 
 const VerPedidoModal = ({ pedido, onClose }) => {
     if (!pedido) return null;
@@ -9,7 +10,8 @@ const VerPedidoModal = ({ pedido, onClose }) => {
     const grupos = [];
     let grupoActual = null;
 
-    pedido.carrito.forEach(item => {
+    // Es la card expandida del mismo cocinero: tiene que mostrar lo mismo que la card.
+    getItemsCocina(pedido.carrito).forEach(item => {
         if (item.categoria !== 'EXTRA') {
             if (grupoActual) {
                 grupos.push(grupoActual);

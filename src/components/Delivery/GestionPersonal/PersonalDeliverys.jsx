@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, doc, query, getDocs, where } from "firebase/firestore";
-import { db } from "../../../firebaseConfig/firebase";
+import { updateDoc, query, getDocs, where } from "firebase/firestore";
+import { colSucursal, docSucursal } from "../../../firebaseConfig/firebase";
 import '../../../style/Main.css';
 import TablaGenerica from "../../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
@@ -14,7 +14,7 @@ const PersonalDeliverys = () => {
     const [delivery, setDelivery] = useState({});
     const [isLoading, setIsLoading] = useState(true);
 
-    const deliverysCollection = useRef(query(collection(db, "deliverys"), where("activo", "==", true)));
+    const deliverysCollection = useRef(query(colSucursal("deliverys"), where("activo", "==", true)));
 
     const getDeliverys = useCallback((snapshot) => {
         const deliverysArray = snapshot.docs
@@ -87,7 +87,7 @@ const PersonalDeliverys = () => {
     }
 
     const deleteDelivery = async (id) => {
-        const deliveryDoc = doc(db, "deliverys", id);
+        const deliveryDoc = docSucursal("deliverys", id);
         await updateDoc(deliveryDoc, { activo: false });
         setDeliverys((prevDeliverys) => prevDeliverys.filter((delivery) => delivery.id !== id));
     };

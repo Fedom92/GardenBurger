@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebaseConfig/firebase";
+import { fetchMenuPublico } from "../Utils/menuPublico";
 import { CATEGORIAS_HAMBURGUESA } from "../Utils/Constantes";
 
 export const CartContext = createContext();
@@ -59,6 +60,16 @@ export const CartProvider = ({ children }) => {
   const [bebidasDisponibles, setBebidasDisponibles] = useState([]);
 
   const obtenerCategorias = useCallback(async () => {
+    // JSON estático publicado desde Productos: cero lecturas de Firestore
+    try {
+      const menu = await fetchMenuPublico();
+      const categoriasDataOrdenada = [...menu.categorias]
+        .sort((a, b) => a.nroOrden - b.nroOrden);
+      setCategorias(categoriasDataOrdenada);
+      return categoriasDataOrdenada;
+    } catch (errorMenu) {
+      console.warn("menu.json no disponible, fallback a Firestore:", errorMenu);
+    }
     const categoriasRef = collection(db, "categorias");
     const categoriasSnapshot = await getDocs(categoriasRef);
     const categoriasDataOrdenada = categoriasSnapshot.docs
@@ -72,6 +83,14 @@ export const CartProvider = ({ children }) => {
   })
 
   const obtenerProductos = useCallback(async () => {
+    // JSON estático publicado desde Productos: cero lecturas de Firestore
+    try {
+      const menu = await fetchMenuPublico();
+      setProductos(menu.productos);
+      return menu.productos;
+    } catch (errorMenu) {
+      console.warn("menu.json no disponible, fallback a Firestore:", errorMenu);
+    }
     const productosRef = collection(db, "productos");
     const q = query(productosRef, where("visible", "==", true));
     const productosSnapshot = await getDocs(q);

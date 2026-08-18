@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../../firebaseConfig/firebase";
+import { addDoc, serverTimestamp } from "firebase/firestore";
+import { colSucursal } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
@@ -12,7 +12,7 @@ const CrearDelivery = (props) => {
     const { agregarDelivery, deliveryExiste, ...propsModal } = props;
     const [error, setError] = useState("");
 
-    const deliverysCollection = collection(db, "deliverys");
+    const deliverysCollection = colSucursal("deliverys");
 
     const guardarBD = async (data) => {
         if (deliveryExiste(data.dni)) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { collection, doc, deleteDoc, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
+import { fetchSucursales } from "../../Utils/sucursales";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
@@ -9,6 +10,7 @@ import EditCliente from "./EditCliente";
 
 const Clientes = () => {
     const [clientes, setClientes] = useState([]);
+    const [sucursales, setSucursales] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [modalShowCrear, setModalShowCrear] = useState(false);
     const [modalShowEditar, setModalShowEditar] = useState(false);
@@ -36,6 +38,10 @@ const Clientes = () => {
 
         fetchData();
     }, [getClientes]);
+
+    useEffect(() => {
+        fetchSucursales().then(setSucursales).catch(console.error);
+    }, []);
 
     const agregarClienteLocal = (nuevo) => {
         const nuevos = [...clientes, nuevo];
@@ -97,6 +103,11 @@ const Clientes = () => {
     const columnas = [
         { columnasBasicas: ["nombre", "telefono", "direccion"] },
         { accessorKey: "entreCalles", header: "Entre Calles" },
+        {
+            accessorKey: "sucursal",
+            header: "Sucursal",
+            cell: ({ getValue }) => sucursales.find((s) => s.id === getValue())?.nombre || getValue() || "—",
+        },
         {
             id: "acciones",
             header: "Acciones",

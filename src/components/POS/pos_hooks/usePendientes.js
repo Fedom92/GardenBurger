@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, limit, onSnapshot } from "firebase/firestore";
-import { db } from "../../../firebaseConfig/firebase";
+import { query, where, limit, onSnapshot } from "firebase/firestore";
+import { colSucursal } from "../../../firebaseConfig/firebase";
 import { ESTADOS } from "../../../Utils/Constantes";
 
 const usePendientes = () => {
@@ -8,14 +8,16 @@ const usePendientes = () => {
     const [tienePendientesMP, setTienePendientesMP] = useState(false);
 
     useEffect(() => {
+        const pedidosRef = colSucursal("pedidos");
+
         const unsubSolicitudes = onSnapshot(
-            query(collection(db, "pedidos"), where("estado", "==", ESTADOS.WEB_PENDIENTE), limit(1)),
+            query(pedidosRef, where("estado", "==", ESTADOS.WEB_PENDIENTE), limit(1)),
             (snap) => setTieneSolicitudesPendientes(!snap.empty),
             (err) => console.error("Error solicitudes:", err)
         );
 
         const unsubPedidos = onSnapshot(
-            query(collection(db, "pedidos"), where("estado", "==", ESTADOS.PENDIENTEMP), limit(1)),
+            query(pedidosRef, where("estado", "==", ESTADOS.PENDIENTEMP), limit(1)),
             (snap) => setTienePendientesMP(!snap.empty),
             (err) => console.error("Error Pendientes MP:", err)
         );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, doc, onSnapshot, updateDoc, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
-import { db } from "../../../../firebaseConfig/firebase";
+import { query, where, onSnapshot, updateDoc, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
+import { db, colSucursal, docSucursal } from "../../../../firebaseConfig/firebase";
 import { useAuth } from "../../../../context/AuthContext";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
@@ -19,7 +19,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
         setIsLoading(true);
         let initialLoad = true;
 
-        const pedidosCollection = collection(db, "pedidos");
+        const pedidosCollection = colSucursal("pedidos");
         const q = query(pedidosCollection, where("estado", "==", ESTADOS.PENDIENTEMP), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const pedidos = snapshot.docs.map(doc => ({
@@ -50,7 +50,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
 
     const aprobarPedido = async (pedidoId) => {
         try {
-            const pedidoRef = doc(db, "pedidos", pedidoId);
+            const pedidoRef = docSucursal("pedidos", pedidoId);
             await updateDoc(pedidoRef, {
                 estado: ESTADOS.CONFIRMADO,
                 cajeroApruebaMPID: userData.id,
@@ -82,7 +82,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
 
         if (result.isConfirmed) {
             try {
-                const pedidoRef = doc(db, "pedidos", pedidoId);
+                const pedidoRef = docSucursal("pedidos", pedidoId);
                 const pedido = pedidosPendientes.find(p => p.id === pedidoId);
 
                 const updateData = {
@@ -96,6 +96,8 @@ const PendientesMP = ({ isOpen, onClose }) => {
                     metodoPago: pedido.metodoPago,
                     total: pedido.total,
                     montoEfectivo: pedido.montoEfectivo,
+                    envio: pedido.envio,
+                    carrito: pedido.carrito,
                     descontar: true,
                 });
 

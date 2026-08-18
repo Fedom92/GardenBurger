@@ -1,6 +1,19 @@
 # GardenBurger — Esquema de datos Firestore
 
-## Colección: `pedidos`
+> **Multi-sucursal**: las colecciones operativas (`pedidos`, `resumenDiario`, `deliverys`, `contadores`) son **subcolecciones** de `sucursales/{id}/...`. Las globales (`productos`, `categorias`, `usuarios`, `clientes`, `sucursales`, `envios`) viven en la raíz.
+
+## Colección: `sucursales`
+Doc ID = slug usado en URLs públicas y paths (ej: `luro`). ABM en PanelAdmin → Sucursales.
+
+```js
+{
+  nombre: "Luro",
+  direccion: "Av. Luro 3300",
+  activa: true | false          // se desactiva en vez de borrar (conserva subcolecciones)
+}
+```
+
+## Subcolección: `sucursales/{id}/pedidos`
 Pedidos creados desde la Caja interna.
 
 ```js
@@ -101,19 +114,23 @@ Pedidos creados desde la Caja interna.
 ```
 
 ## Colección: `usuarios`
+Doc ID = uid de Firebase Auth. Alta y baja pasan por Cloud Functions (`crearUsuario` / `darDeBajaUsuario`).
 
 ```js
 {
   correo: "juan@example.com",
-  foto: "",
   nombreCompleto: "Juan Díaz",
-  rol: "ADMIN_ROL_VALUE"             // valor del rol asignado según env. Ejemplo REACT_APP_admin o REACT_APP_rolBloq, etc.
+  rol: "ADMIN_ROL_VALUE",            // valor del rol asignado según env. Ejemplo REACT_APP_admin, REACT_APP_cajero, etc.
+  sucursal: "luro",                  // slug de la sucursal donde opera (doc id de `sucursales`). Los admin pueden no tenerla.
   telefono: "1112345678",
+  activo: true | false,              // false = dado de baja: su cuenta de Auth fue borrada y el doc queda como histórico
+  bajaTimestamp: serverTimestamp(),  // solo en los dados de baja
   timestamp: serverTimestamp()
 }
 ```
 
 ## Colección: `clientes`
+Global: los clientes se comparten entre sucursales. Se dan de alta solos al cobrar en Caja (`useCliente`) o a mano desde la pantalla Clientes.
 
 ```js
 {
@@ -121,10 +138,11 @@ Pedidos creados desde la Caja interna.
   telefono: "1155556666",
   direccion: "Av. Corrientes 1234",
   entreCalles: "...",
+  sucursal: "luro",       // sucursal desde la que se dio de alta. "" si lo creó un admin (no tiene sucursal)
 }
 ```
 
-## Colección: `deliverys`
+## Subcolección: `sucursales/{id}/deliverys`
 
 ```js
 {
@@ -140,8 +158,8 @@ Pedidos creados desde la Caja interna.
 }
 ```
 
-## Colección: `contadores`
-Usada por `getNextSequence()`.
+## Subcolección: `sucursales/{id}/contadores`
+Usada por `getNextSequence()` — la numeración de tickets es por sucursal.
 
 ```js
 // Doc ID = nombre de la secuencia (ej: "pedidos")
@@ -150,8 +168,8 @@ Usada por `getNextSequence()`.
 }
 ```
 
-## Colección: `envios` (o parámetros de envío)
-Configurada desde `Admin/Parametros/Envios.jsx`.
+## Colección: `envios` (parámetros de envío)
+Global — las zonas las centraliza el admin desde `Admin/Parametros/Envios.jsx` y son iguales para todas las sucursales.
 
 ```js
 {
@@ -168,50 +186,80 @@ Configurada desde `Admin/Parametros/Envios.jsx`.
 }
 ```
 
-## Colección: `resumenDiario`
+## Subcolección: `sucursales/{id}/resumenDiario`
 Usada por `useResumenDiario()`.
 
 ```js
 //cada nuevo día se crea un nuevo documento con el id = fecha en formato dd-mm-aaaa
-//se suman los totales del día al generarse el pedido
+//se suman los totales del día al generarse el pedido (y se restan al anularlo)
 {
-  efectivo: 40000,
+  totalEfectivo: 40000,   // hasta ago-2026 este campo se llamaba `efectivo`
+  efectivoLocal: 15000,   // zonas de ENVIOS_LOCALES: cobrado en el mostrador
+  efectivoEnvio: 25000,   // el resto de las zonas: vuelve con el repartidor
   mp: 10000,
-  totalPedidos: 50000,
+  totalPedidos: 12,
+  totalCombos: 9,         // unidades, no renglones del carrito
+  deliverys: { ... }      // metricas por repartidor, las escribe JefeDeliverys
 }
+// efectivoLocal + efectivoEnvio === totalEfectivo
 ```
 
 
 ## Reglas de Seguridad establecidas para el Cloud Firestore
 
-> Nota: se eliminó `isBloqueado()` — su `get()` facturaba una lectura extra del doc de usuario
-> en cada operación. El bloqueo de usuarios queda solo del lado del cliente (AuthContext).
-
 rules_version = '2';
 
 service cloud.firestore {
-  match /databases/{database}/documents {    
-    match /pedidos/{document=**} {
-      allow create: if esCreacionPublicaValida();
-      allow read: if estaAutenticado() || esOrigenWeb();
-      allow update: if estaAutenticado();
-      allow delete: if false;
-    }	
-    
-    match /productos/{document=**} {
+
+  match /databases/{database}/documents {
+    // ── Sucursales ─────────────────────────────────────────────────────
+    // Metadata pública (selector de la web); edición solo staff
+    match /sucursales/{sucursal} {
+      allow read: if true;
+      allow write: if estaAutenticado();
+
+      // Pedidos: la web pública crea solicitudes validadas y
+      // solo lee pedidos de origen WEB (/ver-pedido)
+      match /pedidos/{pedido} {
+        allow read: if estaAutenticado() || esOrigenWeb();
+        allow create: if estaAutenticado() || esCreacionPublicaValida();
+        allow update: if estaAutenticado();
+        allow delete: if false;
+      }
+
+      // Colecciones operativas (resumenDiario, deliverys, contadores): solo staff.
+      // Excluye pedidos: las reglas se combinan con OR y este wildcard
+      // re-otorgaría el delete bloqueado arriba.
+      match /{coleccion}/{documento} {
+        allow read, write: if estaAutenticado() && coleccion != 'pedidos';
+      }
+    }
+
+
+    // Colecciones Públicas
+    match /productos/{producto} {
       allow read: if true;
       allow write: if estaAutenticado();
     }
-    
-    match /categorias/{document=**} {
+    match /categorias/{categoria} {
       allow read: if true;
       allow write: if estaAutenticado();
     }
-        
-    match /{document=**} {
+    match /envios/{envio} {
+      allow read: if true;
+      allow write: if estaAutenticado();
+    }
+
+    // Otras Colecciones
+    match /usuarios/{usuario} {
       allow read, write: if estaAutenticado();
     }
-    
+    match /clientes/{cliente} {
+      allow read, write: if estaAutenticado();
+    }
+
+
+    // Funciones Aux
     function esCreacionPublicaValida() {
       let data = request.resource.data;
       return data.origen == "WEB"
@@ -223,17 +271,14 @@ service cloud.firestore {
         && data.carrito.size() <= 50
         && data.total is number
         && data.total > 0
-        && data.total <= 1000000
-        && data.cliente.nombre is string && data.cliente.nombre.size() <= 100
-        && data.cliente.telefono is string && data.cliente.telefono.size() <= 20
-        && data.cliente.direccion is string && data.cliente.direccion.size() <= 200;
+        && data.total <= 1000000;
     }
-    
+
     function esOrigenWeb() {
       return resource.data.origen == "WEB";
     }
-    
-     function estaAutenticado() {
+
+    function estaAutenticado() {
       return request.auth != null;
     }
   }

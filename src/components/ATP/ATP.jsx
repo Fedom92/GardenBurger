@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { collection, query, where, onSnapshot, updateDoc, doc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { query, where, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
+import { colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { ESTADOS, ENVIOS_LOCALES } from "../../Utils/Constantes";
 import TablaGenerica from "../../Utils/TablaGenerica";
@@ -14,7 +14,7 @@ const ATP = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     const queryRef = useRef(
-        query(collection(db, "pedidos"), where("estado", "==", ESTADOS.ATP))
+        query(colSucursal("pedidos"), where("estado", "==", ESTADOS.ATP))
     );
 
     const handleSnapshot = useCallback((snapshot) => {
@@ -49,7 +49,7 @@ const ATP = () => {
         if (!result.isConfirmed) return;
 
         try {
-            await updateDoc(doc(db, "pedidos", pedido.id), {
+            await updateDoc(docSucursal("pedidos", pedido.id), {
                 estado: ESTADOS.FINAL,
                 atpCompletadoPor: userData.nombreCompleto,
                 atpCompletadoPorID: userData.id,
@@ -82,24 +82,24 @@ const ATP = () => {
                 const whatsappUrl = `https://api.whatsapp.com/send?phone=549${pedido.telefono}&text=${encodeURIComponent(`Hola ${pedido.nombre}, tu pedido #${pedido.codigo} está listo para retirar.`)}`;
 
                 return (
-                    <div className="d-flex gap-1">
+                    <div className="d-flex justify-content-center gap-1">
                         {esRetira && (
                             <a
                                 href={whatsappUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="btn btn-success btn-sm"
+                                className="btn btn-success"
                                 title="Contactar por WhatsApp"
                             >
-                                <i className="fa-brands fa-whatsapp"></i>
+                                Enviar <i className="fa-brands fa-whatsapp"></i>
                             </a>
                         )}
                         <button
-                            className="btn btn-dark btn-sm"
+                            className="btn-contorno"
                             onClick={() => marcarCompletado(pedido)}
                             title="Marcar como entregado"
                         >
-                            <i className="fa-solid fa-check me-1"></i> Completado
+                            <i className="fa-solid fa-check me-1"></i> Entregar
                         </button>
                     </div>
                 );
@@ -119,7 +119,7 @@ const ATP = () => {
                         <div className="row">
                             <div className="col">
                                 <br />
-                                <div className="d-flex justify-content-between mt-3">
+                                <div className="d-flex justify-content-between mt-4">
                                     <div
                                         className="d-flex justify-content-start align-items-center"
                                         style={{ maxHeight: "40px", marginLeft: "10px" }}

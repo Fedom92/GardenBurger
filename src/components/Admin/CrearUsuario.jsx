@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { collection, setDoc, doc, query, limit, getDocs, where, serverTimestamp } from "firebase/firestore";
-import { db, firebaseConfig } from "../../firebaseConfig/firebase";
-import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import React, { useState, useEffect } from "react";
+import { collection, query, getDocs, where } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { db, app } from "../../firebaseConfig/firebase";
+import { fetchSucursales } from "../../Utils/sucursales";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { useForm } from "react-hook-form";
@@ -11,16 +11,23 @@ const CrearUsuario = (props) => {
   const { register, handleSubmit, reset } = useForm();
   const { agregarusuario, ...propsModal } = props;
   const [error, setError] = useState('');
+  const [sucursales, setSucursales] = useState([]);
 
   const userCollection = collection(db, "usuarios");
+
+  useEffect(() => {
+    fetchSucursales().then(setSucursales).catch(console.error);
+  }, []);
 
   const validarInputs = async (data) => {
     if (!data.correo || !/@[^.]+\.com(\.\w+)?$/.test(data.correo)) {
       return "Correo electrónico inválido";
     }
 
-    const querySnapshot = await getDocs(query(userCollection, where("correo", "==", data.correo), limit(1)));
-    if (!querySnapshot.empty) {
+    // Solo cuenta como duplicado un usuario activo: los dados de baja conservan
+    // su correo y esa persona puede volver a darse de alta desde cero.
+    const querySnapshot = await getDocs(query(userCollection, where("correo", "==", data.correo)));
+    if (querySnapshot.docs.some((d) => d.data().activo !== false)) {
       return "El correo ya está registrado";
     }
 
@@ -43,33 +50,27 @@ const CrearUsuario = (props) => {
       return;
     }
 
-    const nuevoUsuario = {
-      correo: data.correo,
-      timestamp: serverTimestamp(),
-      nombreCompleto: data.nombreCompleto,
-      rol: data.rol,
-      telefono: data.telefono,
-    };
-
     try {
-      // Usar una instancia secundaria para que Firebase no desloguee al administrador actual
-      const secondApp = initializeApp(firebaseConfig, "SecondApp");
-      const secondaryAuth = getAuth(secondApp);
+      // Server-side (Cloud Function con Admin SDK): crea el Auth user y el
+      // doc en "usuarios" sin desloguear al admin actual ni depender de
+      // App Check en el cliente.
+      const crearUsuarioFn = httpsCallable(getFunctions(app), "crearUsuario");
+      const { data: nuevo } = await crearUsuarioFn({
+        correo: data.correo,
+        password: data.password,
+        nombreCompleto: data.nombreCompleto,
+        rol: data.rol,
+        telefono: data.telefono,
+        sucursal: data.sucursal,
+      });
 
-      const { user } = await createUserWithEmailAndPassword(secondaryAuth, data.correo, data.password);
-
-      // Usar 'db' de la app principal para guardar el registro
-      await setDoc(doc(db, "usuarios", user.uid), nuevoUsuario);
-
-      // Cerrar la sesión del usuario recién creado en la app secundaria
-      await signOut(secondaryAuth);
-
+      agregarusuario(nuevo);
       clearForm();
     } catch (error) {
       console.error("Error al agregar usuario: ", error);
       Swal.fire({
         title: '¡Error!',
-        text: 'Error al Crear Usuario. Cierra sesión, recarga e intente de nuevo.',
+        text: error.message || 'Error al Crear Usuario. Cierra sesión, recarga e intente de nuevo.',
         icon: 'error',
         confirmButtonColor: '#d33',
       });
@@ -121,13 +122,26 @@ const CrearUsuario = (props) => {
                     <option value={process.env.REACT_APP_cocina}>Cocina</option>
                     <option value={process.env.REACT_APP_delivery}>Delivery</option>
                     <option value={process.env.REACT_APP_contador}>Contador</option>
+                    <option value={process.env.REACT_APP_atp}>ATP</option>
                   </select>
                 </div>
               </div>
 
-              <div className="col-12 mb-2">
-                <label className="form-label">Email*</label>
-                <input type="email" className="form-control" autoComplete="off" required {...register("correo")} />
+              <div className="row">
+                <div className="col-6 mb-2">
+                  <label className="form-label">Email*</label>
+                  <input type="email" className="form-control" autoComplete="off" required {...register("correo")} />
+                </div>
+
+                <div className="col-6 mb-2">
+                  <label className="form-label">Sucursal*</label>
+                  <select className="form-control" multiple={false} style={{ height: "48px" }} required {...register("sucursal")}>
+                    <option value="">Selecciona una sucursal ....</option>
+                    {sucursales.map((s) => (
+                      <option key={s.id} value={s.id}>{s.nombre || s.id}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="row">

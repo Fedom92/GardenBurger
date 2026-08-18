@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
+import { useAuth } from "../../context/AuthContext";
+import { fetchSucursales } from "../../Utils/sucursales";
 import "../../style/Main.css"
 import TablaGenerica from "../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../Utils/fechaComercial";
@@ -19,10 +21,18 @@ const computeRango = (startStr, endStr) => {
 };
 
 const HistorialPedidos = () => {
+  const { userData } = useAuth();
+  const esAdmin = userData?.rol === process.env.REACT_APP_admin;
+
   const [{ inicio: inicioJornada, fin: finJornada }] = useState(getRangoJornada);
   const [pedidos, setPedidos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [auditoriaPedido, setAuditoriaPedido] = useState(null);
+
+  // El admin puede consultar cualquier sucursal; el staff solo la propia
+  const [sucursales, setSucursales] = useState([]);
+  const [sucursalSel, setSucursalSel] = useState("");
+  const sucursalActiva = esAdmin ? sucursalSel : userData?.sucursal;
 
   const [fechaInicioStr, setFechaInicioStr] = useState(toInputDate(inicioJornada));
   const [fechaFinStr, setFechaFinStr] = useState(toInputDate(moment(finJornada).subtract(4, "hours")));
@@ -31,9 +41,20 @@ const HistorialPedidos = () => {
   const handleBuscar = () => setQueryRange(computeRango(fechaInicioStr, fechaFinStr));
 
   useEffect(() => {
+    if (!esAdmin) return;
+    fetchSucursales()
+      .then((lista) => {
+        setSucursales(lista);
+        setSucursalSel((prev) => prev || lista[0]?.id || "");
+      })
+      .catch(console.error);
+  }, [esAdmin]);
+
+  useEffect(() => {
+    if (!sucursalActiva) return;
     setIsLoading(true);
     const q = query(
-      collection(db, "pedidos"),
+      collection(db, "sucursales", sucursalActiva, "pedidos"),
       where("estado", "==", ESTADOS.FINAL),
       where("timestamp", ">=", queryRange.inicio),
       where("timestamp", "<=", queryRange.fin),
@@ -43,7 +64,7 @@ const HistorialPedidos = () => {
       .then(snap => setPedidos(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
       .catch(err => console.error("Error HistorialPedidos:", err))
       .finally(() => setIsLoading(false));
-  }, [queryRange]);
+  }, [queryRange, sucursalActiva]);
 
   const columnasPedidos = [
     {
@@ -100,6 +121,21 @@ const HistorialPedidos = () => {
                 <div className="d-flex justify-content-between align-items-center mt-3 mb-3 flex-wrap gap-2">
                   <h1 style={{ marginLeft: "10px", marginBottom: 0 }}>Historial de Pedidos</h1>
                   <div className="d-flex align-items-center gap-2 flex-wrap">
+                    {esAdmin && (
+                      <>
+                        <label className="fw-semibold mb-0 small">Sucursal</label>
+                        <select
+                          className="form-select form-select-sm"
+                          style={{ width: "180px" }}
+                          value={sucursalSel}
+                          onChange={e => setSucursalSel(e.target.value)}
+                        >
+                          {sucursales.map(s => (
+                            <option key={s.id} value={s.id}>{s.nombre || s.id}</option>
+                          ))}
+                        </select>
+                      </>
+                    )}
                     <label className="fw-semibold mb-0 small">Desde</label>
                     <input
                       type="date"

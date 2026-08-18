@@ -1,11 +1,24 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { collection, orderBy, query, getDocs, updateDoc, doc } from "firebase/firestore";
-import { db, auth } from "../../firebaseConfig/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { db, app } from "../../firebaseConfig/firebase";
 import CrearUsuario from "./CrearUsuario";
 import Envios from "./Parametros/Envios";
+import Sucursales from "./Parametros/Sucursales";
+import { fetchSucursales } from "../../Utils/sucursales";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
+
+const NOMBRES_ROL = {
+  [process.env.REACT_APP_admin]: "Admin",
+  [process.env.REACT_APP_encargado]: "Encargado",
+  [process.env.REACT_APP_cajero]: "Cajero",
+  [process.env.REACT_APP_cocina]: "Cocina",
+  [process.env.REACT_APP_delivery]: "Delivery",
+  [process.env.REACT_APP_contador]: "Contador",
+  [process.env.REACT_APP_atp]: "ATP",
+};
 
 const PanelAdmin = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -14,28 +27,26 @@ const PanelAdmin = () => {
   const [modalShow, setModalShow] = useState(false);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
   const [modalShowEnvios, setModalShowEnvios] = useState(false);
+  const [modalShowSucursales, setModalShowSucursales] = useState(false);
+  const [sucursales, setSucursales] = useState([]);
 
   const [modalShowEditRol, setModalShowEditRol] = useState([false, ""]);
-  const [rol, setRol] = useState(false);
+  const [rol, setRol] = useState("");
+  const [sucursalUsuario, setSucursalUsuario] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
 
   const userCollection = useRef(query(collection(db, "usuarios"), orderBy("rol")));
 
   const getUsuarios = useCallback((snapshot) => {
-    const currentUserEmail = auth.currentUser?.email;
-
-    let usuariosArray = snapshot.docs;
-    if (currentUserEmail !== "test@hotmail.com") {
-      usuariosArray = usuariosArray.filter((doc) => {
-        return doc.data().rol !== process.env.REACT_APP_rolBloq;
-      });
-    }
-
-    const usuariosMapped = usuariosArray.map((doc) => ({
-      ...doc.data(),
-      id: doc.id,
-    }));
+    // Los dados de baja quedan como registro histórico (activo: false).
+    // Los docs viejos sin el campo se consideran activos.
+    const usuariosMapped = snapshot.docs
+      .filter((doc) => doc.data().activo !== false)
+      .map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
     setUsuarios(usuariosMapped);
     setIsLoading(false);
   }, []);
@@ -55,6 +66,10 @@ const PanelAdmin = () => {
     fetchData();
 
   }, [getUsuarios]);
+
+  useEffect(() => {
+    fetchSucursales().then(setSucursales).catch(console.error);
+  }, []);
 
   const searcher = (e) => {
     setSearch(e.target.value);
@@ -112,19 +127,30 @@ const PanelAdmin = () => {
   };
 
   const handleEditUsuario = async (id) => {
+    if (!sucursalUsuario) {
+      Swal.fire({ title: "Falta la sucursal", text: "Selecciona una sucursal para el usuario.", icon: "warning", confirmButtonColor: "#198754" });
+      return;
+    }
     const userDoc = doc(db, "usuarios", id);
-    await updateDoc(userDoc, { rol: rol });
+    await updateDoc(userDoc, { rol: rol, sucursal: sucursalUsuario });
     setUsuarios((prevUsuarios) =>
       prevUsuarios.map((usuario) =>
-        usuario.id === id ? { ...usuario, rol: rol } : usuario
+        usuario.id === id ? { ...usuario, rol: rol, sucursal: sucursalUsuario } : usuario
       )
     );
     handleCloseModal();
   };
 
+  const handleOpenEditModal = (usuario) => {
+    setModalShowEditRol([true, usuario]);
+    setRol(usuario.rol);
+    setSucursalUsuario(usuario.sucursal || "");
+  };
+
   const handleCloseModal = () => {
     setModalShowEditRol([false, ""]);
-    setRol("")
+    setRol("");
+    setSucursalUsuario("");
   };
 
   const agregarUsuario = (nuevaUsuario) => {
@@ -136,9 +162,10 @@ const PanelAdmin = () => {
   };
 
   const confirmeDelete = (e, id) => {
+    e.preventDefault();
     Swal.fire({
-      title: '¿Esta seguro de Eliminar al usuario?',
-      text: "No podrá revertir la accion",
+      title: '¿Dar de baja al usuario?',
+      text: "Perderá el acceso al sistema de forma definitiva. Si vuelve, habrá que crearlo de nuevo.",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#198754',
@@ -146,22 +173,33 @@ const PanelAdmin = () => {
       cancelButtonText: 'No'
     }).then((result) => {
       if (result.isConfirmed) {
-        disableUsuario(e, id)
-        Swal.fire({
-          title: '¡Eliminado!',
-          text: 'El Usuario ha sido borrado.',
-          icon: 'success',
-          confirmButtonColor: '#198754'
-        });
+        darDeBajaUsuario(id);
       }
     })
   }
 
-  const disableUsuario = async (e, id) => {
-    e.preventDefault();
-    const userDoc = doc(db, "usuarios", id);
-    await updateDoc(userDoc, { rol: process.env.REACT_APP_rolBloq });
-    setUsuarios((prevUsuarios) => prevUsuarios.filter((item) => item.id !== id));
+  const darDeBajaUsuario = async (id) => {
+    try {
+      // Server-side: borra la cuenta de Auth y marca el doc como inactivo
+      const darDeBajaFn = httpsCallable(getFunctions(app), "darDeBajaUsuario");
+      await darDeBajaFn({ uid: id });
+
+      setUsuarios((prevUsuarios) => prevUsuarios.filter((item) => item.id !== id));
+      Swal.fire({
+        title: '¡Listo!',
+        text: 'El usuario fue dado de baja.',
+        icon: 'success',
+        confirmButtonColor: '#198754'
+      });
+    } catch (error) {
+      console.error("Error al dar de baja al usuario: ", error);
+      Swal.fire({
+        title: '¡Error!',
+        text: error.message || 'No se pudo dar de baja al usuario.',
+        icon: 'error',
+        confirmButtonColor: '#d33',
+      });
+    }
   };
 
   function funcMostrarAjustes() {
@@ -221,6 +259,13 @@ const PanelAdmin = () => {
                           >
                             Envios
                           </button>
+                          <button
+                            variant="tertiary"
+                            className="btn-contorno m-1"
+                            onClick={() => setModalShowSucursales(true)}
+                          >
+                            Sucursales
+                          </button>
                         </div>
                       )}
                     </div>
@@ -246,6 +291,7 @@ const PanelAdmin = () => {
                         <th onClick={() => sorting("correo")}>Email</th>
                         <th onClick={() => sorting("telefono")}>Telefono</th>
                         <th onClick={() => sorting("rol")}>Rol</th>
+                        <th onClick={() => sorting("sucursal")}>Sucursal</th>
                         <th>Accion</th>
                       </tr>
                     </thead>
@@ -253,24 +299,19 @@ const PanelAdmin = () => {
                     <tbody>
                       {currentResults.map((usuario) => (
                         <tr key={usuario.id}
-                          className={usuario.rol === process.env.REACT_APP_rolBloq ? "deleted-row" : usuario.rol === process.env.REACT_APP_admin ? "admin-row" : ""}
+                          className={usuario.rol === process.env.REACT_APP_admin ? "admin-row" : ""}
                         >
                           <td> {usuario.nombreCompleto}</td>
                           <td> {usuario.correo} </td>
                           <td> {usuario.telefono} </td>
-                          <td>{usuario.rol === process.env.REACT_APP_admin ?
-                            'Admin' : usuario.rol === process.env.REACT_APP_encargado ?
-                              'Encargado' : usuario.rol === process.env.REACT_APP_cajero ?
-                                'Cajero' : usuario.rol === process.env.REACT_APP_cocina ?
-                                  'Cocina' : usuario.rol === process.env.REACT_APP_delivery ?
-                                    'Delivery' : usuario.rol === process.env.REACT_APP_contador ?
-                                      'Contador' : 'Bloqueado'}</td>
+                          <td>{NOMBRES_ROL[usuario.rol] || '—'}</td>
+                          <td>{sucursales.find((s) => s.id === usuario.sucursal)?.nombre || usuario.sucursal || "—"}</td>
                           <td>
                             {usuario.rol !== process.env.REACT_APP_admin && (
                               <>
                                 <button
                                   className="btn btn-success mx-1"
-                                  onClick={() => setModalShowEditRol([true, usuario])}
+                                  onClick={() => handleOpenEditModal(usuario)}
                                 >
                                   <i className="fa-solid fa-edit"></i>
                                 </button>
@@ -354,6 +395,13 @@ const PanelAdmin = () => {
       <Envios
         show={modalShowEnvios}
         onHide={() => setModalShowEnvios(false)} />
+
+      <Sucursales
+        show={modalShowSucursales}
+        onHide={() => {
+          setModalShowSucursales(false);
+          fetchSucursales().then(setSucursales).catch(console.error);
+        }} />
       {
         modalShowEditRol[0] && (
           <Modal
@@ -362,7 +410,7 @@ const PanelAdmin = () => {
             centered
           >
             <Modal.Header closeButton onClick={handleCloseModal}>
-              <Modal.Title>Editar Rol</Modal.Title>
+              <Modal.Title>Editar Usuario</Modal.Title>
             </Modal.Header>
             <Modal.Body>
               <form name="editarRol">
@@ -379,6 +427,21 @@ const PanelAdmin = () => {
                     <option value={process.env.REACT_APP_cocina}>Cocina</option>
                     <option value={process.env.REACT_APP_delivery}>Delivery</option>
                     <option value={process.env.REACT_APP_contador}>Contador</option>
+                    <option value={process.env.REACT_APP_atp}>ATP</option>
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label className="form-label">Sucursal*</label>
+                  <select
+                    value={sucursalUsuario}
+                    onChange={(e) => setSucursalUsuario(e.target.value)}
+                    className="form-control"
+                    multiple={false}
+                  >
+                    <option value="">Selecciona una sucursal ....</option>
+                    {sucursales.map((s) => (
+                      <option key={s.id} value={s.id}>{s.nombre || s.id}</option>
+                    ))}
                   </select>
                 </div>
                 <button

@@ -6,18 +6,18 @@ import { db } from "../../firebaseConfig/firebase";
 import whatsapp from "../../img/whatsapp.webp";
 import { FaCartPlus } from 'react-icons/fa';
 import { Link } from "react-router-dom";
-import { ESTADOS, FLUJO_PUB_ESTADOS, getCurrentStepIndex } from '../../Utils/Constantes.jsx';
+import { ESTADOS, ENVIOS_LOCALES, FLUJO_PUB_ESTADOS, getCurrentStepIndex } from '../../Utils/Constantes.jsx';
 import Footer from './Footer';
 
 export const PaginaDetalle = () => {
-  const { id } = useParams(); // ID de la URL
+  const { sucursal, id } = useParams(); // Sucursal e ID del pedido en la URL
   const [pedido, setPedido] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPedido = async () => {
       try {
-        const pedidoRef = doc(db, "pedidos", id);
+        const pedidoRef = doc(db, "sucursales", sucursal, "pedidos", id);
         const pedidoSnap = await getDoc(pedidoRef);
 
         if (pedidoSnap.exists()) {
@@ -33,7 +33,7 @@ export const PaginaDetalle = () => {
     };
 
     fetchPedido();
-  }, [id]);
+  }, [id, sucursal]);
 
   const enviarMensajeWSP = (() => {
     if (pedido?.mensajeWsp) {
@@ -44,6 +44,12 @@ export const PaginaDetalle = () => {
   const estado = pedido?.estado;
   const isCancelado = estado === ESTADOS.CANCELADO || estado === ESTADOS.ELIMINADO;
   const currentStep = getCurrentStepIndex(estado);
+
+  // Cocina rutea por envio.zona_envio, asi que esa es la fuente real; mientras el
+  // cajero no cargue el pedido, la unica pista es lo que eligio el cliente en la web.
+  const esRetiro = pedido?.envio
+    ? ENVIOS_LOCALES.includes(pedido.envio.zona_envio)
+    : pedido?.cliente?.opcion === ENVIOS_LOCALES[0];
 
   return (
     <div className='mainpageVP' >
@@ -76,7 +82,7 @@ export const PaginaDetalle = () => {
                     )}
 
                     <div className={`mb-1 ${esCompletado ? 'text-dark fw-bold' : 'text-secondary'}`}>
-                      <span className='fs-6 mx-2'>{paso}</span>
+                      <span className='fs-6 mx-2'>{esRetiro && paso === ESTADOS.DELIVERY ? "LISTO" : paso}</span>
                     </div>
 
                     <div className="position-relative bg-white" style={{ zIndex: 1, display: 'inline-block', padding: '0 10px' }}>
@@ -137,7 +143,7 @@ export const PaginaDetalle = () => {
 
             <div className='d-flex flex-column align-items-center text-center mt-3 mb-3 w-50 mx-auto'>
               <Link
-                to="/crear-solicitud"
+                to={`/crear-solicitud/${sucursal}`}
                 className="btn btn-primary fw-bold mt-3 mb-3 d-flex align-items-center justify-content-center gap-2"
               >
                 <FaCartPlus />

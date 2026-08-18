@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { getDoc, updateDoc, doc } from "firebase/firestore";
-import { db } from "../../../firebaseConfig/firebase";
+import { getDoc, updateDoc } from "firebase/firestore";
+import { docSucursal } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
@@ -28,7 +28,7 @@ const EditarDelivery = (props) => {
             return;
         }
 
-        const deliveryRef = doc(db, "deliverys", delivery.id);
+        const deliveryRef = docSucursal("deliverys", delivery.id);
         const deliveryDoc = await getDoc(deliveryRef);
         const deliveryData = deliveryDoc.data();
 

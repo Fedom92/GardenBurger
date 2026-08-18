@@ -37,7 +37,8 @@ const MiPerfil = () => {
         setCorreo(userData.correo);
         setTelefono(userData.telefono);
         setId(userDoc.id);
-        setFecha(moment(userData.timestamp?.toDate()).format("DD/MM/YYYY"))
+        // Sin el guard, un doc viejo sin timestamp muestra la fecha de hoy como alta.
+        setFecha(userData.timestamp?.toDate ? moment(userData.timestamp.toDate()).format("DD/MM/YYYY") : "—")
       }
       setIsLoading(false);
     }

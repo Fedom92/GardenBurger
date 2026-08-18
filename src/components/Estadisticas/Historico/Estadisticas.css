@@ -19,6 +19,9 @@
     padding-top: 30px;
     padding-bottom: 60px;
     overflow-x: hidden;
+    /* .App centra todo el texto de la app; acá las etiquetas quedaban centradas
+       sobre campos alineados a la izquierda. */
+    text-align: left;
 }
 
 /* Reseteo agresivo de bootstrap panels para el panel card */
@@ -53,6 +56,60 @@
     background: rgba(99, 102, 241, .15);
     color: #a5b4fc;
     border: 1px solid rgba(99, 102, 241, .3);
+}
+
+/* ── Filtros ───────────────────────────────────────────────────────────── */
+/* Una columna en celular y columnas parejas cuando entra: así los campos no
+   quedan de anchos distintos según el modo de fecha elegido. */
+.est-filtros {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: end;
+}
+
+@media (min-width: 768px) {
+    .est-filtros {
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    }
+}
+
+.est-filtro {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.est-filtro>label {
+    color: var(--text-sec);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+/* Fecha + hora: la fecha se estira, la hora se queda con lo justo. */
+.est-filtro-fecha {
+    display: flex;
+    gap: 6px;
+}
+
+.est-filtro-fecha input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.est-filtro-fecha select {
+    flex: 0 0 auto;
+    width: auto;
+}
+
+/* En Chrome el almanaque sólo se abre desde el ícono; el campo entero lo abre
+   por JS, así que el cursor tiene que acompañar. */
+.est-input[type="date"],
+.est-input[type="month"] {
+    cursor: pointer;
 }
 
 /* ── Inputs Custom ─────────────────────────────────────────────────────── */

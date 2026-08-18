@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { AuthContextProvider } from "./context/AuthContext";
 import moment from 'moment-timezone';
 import 'moment/locale/es';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -13,9 +12,8 @@ moment.tz.setDefault('America/Argentina/Buenos_Aires');
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
+// AuthContext ya no envuelve todo: vive dentro de App, solo sobre las rutas de staff.
 root.render(
-  <AuthContextProvider>
-      <App />
-  </AuthContextProvider>
+  <App />
 );
 

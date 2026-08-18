@@ -1,8 +1,10 @@
 import { useCallback } from "react";
 import { collection, query, where, limit, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
+import { useAuth } from "../../../context/AuthContext";
 
 const useCliente = () => {
+    const { userData } = useAuth();
 
     const buscarClientePorTelefono = useCallback(async (telefono) => {
         if (!telefono || telefono.length < 10) return null;
@@ -24,10 +26,11 @@ const useCliente = () => {
                     direccion: clienteData.direccion || "",
                     entreCalles: clienteData.entreCalles || "",
                     telefono: clienteData.telefono,
+                    sucursal: userData?.sucursal || "",
                 });
             }
         });
-    }, [buscarClientePorTelefono]);
+    }, [buscarClientePorTelefono, userData?.sucursal]);
 
     return {
         buscarClientePorTelefono,

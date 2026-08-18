@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { collection, query, where, onSnapshot, writeBatch, doc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { query, where, onSnapshot, writeBatch, serverTimestamp } from "firebase/firestore";
+import { db, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
 import VerPedidoModal from './VerPedidoModal';
 import moment from "moment";
 import { ENVIOS_LOCALES, ESTADOS } from "../../Utils/Constantes";
+import { getItemsCocina } from "./cocina_hooks/useItemsCocina";
 
 const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const { userData } = useAuth();
@@ -18,7 +19,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const [procesando, setProcesando] = useState(false);
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
 
-    const pedidosCollection = useRef(query(collection(db, "pedidos"),
+    const pedidosCollection = useRef(query(colSucursal("pedidos"),
         where("estado", "==", ESTADOS.COCINA),
         where("cocineroID", "==", userData.id)
     ));
@@ -90,7 +91,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
             const batch = writeBatch(db);
 
             pedidosCocinando.forEach(pedido => {
-                const pedidoRef = doc(db, "pedidos", pedido.id);
+                const pedidoRef = docSucursal("pedidos", pedido.id);
                 const nuevoEstado = (pedido.envio?.zona_envio === ENVIOS_LOCALES[0] || pedido.envio?.zona_envio === ENVIOS_LOCALES[1])
                     ? ESTADOS.ATP
                     : ESTADOS.DELIVERY;
@@ -163,8 +164,9 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
 
                         <div className="row row-col-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2">
                             {pedidosCocinando.map(pedido => {
-                                const productosVisibles = pedido.carrito.slice(0, 8);
-                                const hayMasProductos = pedido.carrito.length > 8;
+                                const itemsCocina = getItemsCocina(pedido.carrito);
+                                const productosVisibles = itemsCocina.slice(0, 8);
+                                const hayMasProductos = itemsCocina.length > 8;
 
                                 return (
                                     <div className="col" key={pedido.id}>
@@ -185,6 +187,9 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                                                         </div>
                                                     ))}
                                                 </div>
+                                                {itemsCocina.length === 0 && (
+                                                    <div className="text-muted small fst-italic">Sin items de cocina</div>
+                                                )}
                                                 {hayMasProductos && (
                                                     <div className="text-muted small fst-italic mt-1">Mas...</div>
                                                 )}

@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { useSheetData } from "./useGoogleSheets";
 import { CATEGORIAS_COMBOS } from "../../../Utils/Constantes";
+import { getJornadaDeFecha } from "../../../Utils/fechaComercial";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import "./Estadisticas.css";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const parseMoney = (str = "") =>
-    parseInt((str || "").replace(/[$.\\s]/g, ""), 10) || 0;
+    parseInt((str || "").replace(/[$.\s]/g, ""), 10) || 0;
 
 const parseDate = (str = "") => {
     if (!str) return null;
@@ -17,17 +18,40 @@ const parseDate = (str = "") => {
     return isNaN(d) ? null : d;
 };
 
+// Fecha del ticket, imputada a su jornada comercial: un pedido de las 00:30
+// pertenece a la noche anterior, igual que en el POS.
+const jornadaDe = (str = "") => {
+    const d = parseDate(str);
+    return d ? getJornadaDeFecha(d) : null;
+};
+
+// Ventana horaria que se repite cada jornada (19 → 02 cruza la medianoche).
+const enVentanaHoraria = (d, hIni, hFin) => {
+    const h = d.getHours();
+    return hIni <= hFin ? (h >= hIni && h < hFin) : (h >= hIni || h < hFin);
+};
+
 const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const MESES_CORTO = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
 const fmt$ = (n) => `$${Math.round(n).toLocaleString("es-AR")}`;
 const fmtN = (n) => Number(n).toLocaleString("es-AR");
 
-const comboKeys = CATEGORIAS_COMBOS.map(c => c.key);
+const norm = (str = "") => (str || "").trim().toUpperCase();
 
-const esComboConta = (v) =>
-    comboKeys.includes(v.categoria) &&
-    !(v.categoria === "CAJA PAPAS" && v.descripcion === "(porcion individual)");
+// Chrome abre el almanaque sólo al tocar el iconito. Con esto lo abre todo el campo.
+const abrirPicker = (e) => {
+    try { e.currentTarget.showPicker?.(); } catch { /* navegador sin showPicker */ }
+};
+
+const esCancelado = (p) => norm(p.cancelado) === "X";
+
+// La categoría se normaliza porque en los TSV viene con mayúsculas y espacios inconsistentes.
+// La descripción no: los `excludes` llevan el nombre textual del producto.
+const esComboConta = (v) => {
+    const combo = CATEGORIAS_COMBOS.find(c => c.key === norm(v.categoria));
+    return !!combo && !combo.excludes?.includes(v.descripcion);
+};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function KpiCard({ icon, label, value, sub, color = "#6366f1" }) {
@@ -125,36 +149,38 @@ export default function Estadisticas() {
 
     const años = useMemo(() => {
         const set = new Set(
-            pagos.map(p => { const d = parseDate(p.timestamp); return d?.getFullYear(); }).filter(Boolean)
+            pagos.map(p => jornadaDe(p.timestamp)?.getFullYear()).filter(Boolean)
         );
         return Array.from(set).sort((a, b) => b - a);
     }, [pagos]);
 
     // ── Aplicar filtros a pagos ──
+    // Todo se agrupa por jornada comercial: las fechas Desde/Hasta, Mes y Año se
+    // comparan contra la jornada del ticket, no contra su fecha calendario.
     const pagosFiltrados = useMemo(() => {
         return pagos.filter(p => {
             if (sucursal !== "TODAS" && (p.sucursal || "").trim() !== sucursal) return false;
             const d = parseDate(p.timestamp);
             if (!d) return false;
+            const j = getJornadaDeFecha(d);
             if (modoFecha === "rango") {
+                // Las horas definen una ventana nocturna que se repite cada jornada
+                // (19 → 02 = de las 19hs a las 2 de la mañana siguiente).
+                if (desdeHora !== "" && hastaHora !== "" &&
+                    !enVentanaHoraria(d, parseInt(desdeHora, 10), parseInt(hastaHora, 10))) return false;
                 if (desde) {
                     const [y, m, day] = desde.split("-");
-                    const dDesde = new Date(+y, +m - 1, +day);
-                    if (desdeHora) dDesde.setHours(parseInt(desdeHora, 10), 0, 0);
-                    if (d < dDesde) return false;
+                    if (j < new Date(+y, +m - 1, +day)) return false;
                 }
                 if (hasta) {
                     const [y, m, day] = hasta.split("-");
-                    const dHasta = new Date(+y, +m - 1, +day);
-                    if (hastaHora) dHasta.setHours(parseInt(hastaHora, 10), 59, 59);
-                    else dHasta.setHours(23, 59, 59);
-                    if (d > dHasta) return false;
+                    if (j > new Date(+y, +m - 1, +day)) return false;
                 }
             } else if (modoFecha === "mes") {
                 const [y, m] = mesSelec.split("-");
-                if (d.getFullYear() !== +y || d.getMonth() + 1 !== +m) return false;
+                if (j.getFullYear() !== +y || j.getMonth() + 1 !== +m) return false;
             } else if (modoFecha === "año") {
-                if (d.getFullYear() !== +añoSelec) return false;
+                if (j.getFullYear() !== +añoSelec) return false;
             }
             return true;
         });
@@ -162,21 +188,43 @@ export default function Estadisticas() {
 
     // ── Separar válidos / cancelados ──
     const ticketsCancelados = useMemo(() =>
-        pagosFiltrados.filter(p => (p.cancelado || "").toUpperCase() === "X"),
+        pagosFiltrados.filter(esCancelado),
         [pagosFiltrados]);
 
     const ticketsValidos = useMemo(() =>
-        pagosFiltrados.filter(p => (p.cancelado || "").toUpperCase() !== "X"),
+        pagosFiltrados.filter(p => !esCancelado(p)),
         [pagosFiltrados]);
 
     const ticketIdsValidos = useMemo(() =>
         new Set(ticketsValidos.map(p => p.nroTicket)),
         [ticketsValidos]);
 
+    // IDs que aparecen más de una vez en toda la planilla (p. ej. reutilizados
+    // después de anular un ticket). Se calcula sobre `pagos` entero porque la
+    // colisión existe aunque el filtro activo deje una sola de las filas a la vista.
+    const idsRepetidosEnPagos = useMemo(() => {
+        const vistos = new Set(), repetidos = new Set();
+        pagos.forEach(p => {
+            if (vistos.has(p.nroTicket)) repetidos.add(p.nroTicket);
+            else vistos.add(p.nroTicket);
+        });
+        return repetidos;
+    }, [pagos]);
+
+    const clavesValidas = useMemo(() =>
+        new Set(ticketsValidos.map(p => `${p.nroTicket}|${p.timestamp}`)),
+        [ticketsValidos]);
+
     // ── Ventas filtradas por tickets válidos ──
+    // El ID alcanza para cruzar, salvo cuando está repetido: ahí desempata el
+    // TimeStamp, si no el ticket vivo se llevaría también los ítems del anulado.
+    // No se usa el TimeStamp siempre porque hay líneas con la hora corrida
+    // respecto de su pago, y un cruce exacto las dejaría afuera.
     const ventasFiltradas = useMemo(() =>
-        ventas.filter(v => ticketIdsValidos.has(v.nroTicket)),
-        [ventas, ticketIdsValidos]);
+        ventas.filter(v => idsRepetidosEnPagos.has(v.nroTicket)
+            ? clavesValidas.has(`${v.nroTicket}|${v.timestamp}`)
+            : ticketIdsValidos.has(v.nroTicket)),
+        [ventas, ticketIdsValidos, idsRepetidosEnPagos, clavesValidas]);
 
     // ── KPIs financieros ──
     const totalEfectivo = useMemo(() =>
@@ -323,7 +371,7 @@ export default function Estadisticas() {
         [ventasFiltradas]);
 
     const promedioItems = ticketsValidos.length > 0
-        ? (ventasFiltradas.length / ticketsValidos.length).toFixed(1)
+        ? (stockTotal / ticketsValidos.length).toFixed(1)
         : "0";
 
     // ── Stock agrupado por descripción (No Bebidas y Bebidas) ──
@@ -352,10 +400,10 @@ export default function Estadisticas() {
         return Object.values(map).sort((a, b) => b.valor - a.valor);
     }, [ventasFiltradas]);
 
-    // ── Día de la semana ──
+    // ── Día de la semana (por jornada: un pedido de las 00:30 es de la noche anterior) ──
     const porDia = useMemo(() => {
         const map = Array(7).fill(0);
-        ticketsValidos.forEach(p => { const d = parseDate(p.timestamp); if (d) map[d.getDay()]++; });
+        ticketsValidos.forEach(p => { const j = jornadaDe(p.timestamp); if (j) map[j.getDay()]++; });
         return DIAS.map((label, i) => ({ label, valor: map[i] }));
     }, [ticketsValidos]);
 
@@ -382,10 +430,20 @@ export default function Estadisticas() {
             }
             map[zona] = (map[zona] || 0) + 1;
         });
-        const total = ticketsValidos.length || 1;
-        return Object.entries(map)
-            .map(([label, valor]) => ({ label, valor, pct: Math.round((valor / total) * 100) }))
-            .sort((a, b) => b.pct - a.pct);
+        // Denominador: sólo los tickets que efectivamente tienen zona. Y se reparten
+        // por resto mayor, si no los redondeos sueltos hacían que los % sumaran 101%.
+        const total = Object.values(map).reduce((s, v) => s + v, 0) || 1;
+        const filas = Object.entries(map)
+            .map(([label, valor]) => {
+                const exacto = (valor / total) * 100;
+                return { label, valor, pct: Math.floor(exacto), resto: exacto - Math.floor(exacto) };
+            })
+            .sort((a, b) => b.valor - a.valor);
+
+        let sobrante = 100 - filas.reduce((s, f) => s + f.pct, 0);
+        [...filas].sort((a, b) => b.resto - a.resto).forEach(f => { if (sobrante-- > 0) f.pct += 1; });
+
+        return filas.sort((a, b) => b.pct - a.pct);
     }, [ticketsValidos]);
 
     // ── Data para Recharts (Evolución) ──
@@ -404,10 +462,10 @@ export default function Estadisticas() {
             if (sucursal !== "TODAS" && (p.sucursal || "").trim() !== sucursal) return false;
             return (p.cancelado || "").toUpperCase() !== "X";
         }).forEach(p => {
-            const d = parseDate(p.timestamp);
-            if (!d) return;
-            const mesIdx = d.getMonth();
-            const year = d.getFullYear();
+            const j = jornadaDe(p.timestamp);
+            if (!j) return;
+            const mesIdx = j.getMonth();
+            const year = j.getFullYear();
 
             data[mesIdx][`${year}_tickets`] = (data[mesIdx][`${year}_tickets`] || 0) + 1;
             data[mesIdx][`${year}_monto`] = (data[mesIdx][`${year}_monto`] || 0) + parseMoney(p.total);
@@ -440,16 +498,12 @@ export default function Estadisticas() {
                 <div>
                     <h1 className="est-title fw-bolder mb-1">Estadísticas</h1>
                 </div>
-                {/*<div className="d-flex gap-2 flex-wrap">
-                    <span className="chip chip--green text-nowrap">{fmtN(ticketsValidos.length)} tickets válidos</span>
-                    <span className="chip chip--blue text-nowrap">{fmt$(totalCaja)} total</span>
-                </div>*/}
             </div>
 
             {/* ── Filtros ── */}
-            <div className="est-card p-3 mb-4 d-flex flex-column flex-md-row flex-wrap align-items-md-end gap-3 w-100">
-                <div className="d-flex flex-column flex-grow-1" style={{ minWidth: "140px", maxWidth: "250px" }}>
-                    <label className="text-secondary small fw-bold mb-1 text-uppercase" style={{ letterSpacing: "0.05em", fontSize: "0.75rem" }}>Ver por</label>
+            <div className="est-card est-filtros p-3 mb-4">
+                <div className="est-filtro">
+                    <label>Ver por</label>
                     <div className="mode-tabs d-flex rounded overflow-hidden">
                         {[["rango", "Rango"], ["mes", "Mes"], ["año", "Año"]].map(([val, lbl]) => (
                             <button key={val} className={`flex-fill py-1 px-2 fw-bold m-0 ${modoFecha === val ? "active" : ""}`} onClick={() => setModoFecha(val)}>{lbl}</button>
@@ -458,21 +512,21 @@ export default function Estadisticas() {
                 </div>
 
                 {modoFecha === "rango" && (<>
-                    <div className="d-flex flex-column flex-grow-1" style={{ minWidth: "200px" }}>
-                        <label className="text-secondary small fw-bold mb-1 text-uppercase" style={{ fontSize: "0.75rem" }}>Desde</label>
-                        <div className="d-flex gap-1">
-                            <input className="form-control form-control-sm est-input" type="date" value={desde} onChange={e => setDesde(e.target.value)} />
-                            <select className="form-select form-select-sm est-input w-auto" value={desdeHora} onChange={e => setDesdeHora(e.target.value)}>
+                    <div className="est-filtro">
+                        <label>Desde</label>
+                        <div className="est-filtro-fecha">
+                            <input className="form-control form-control-sm est-input text-center" type="date" value={desde} onClick={abrirPicker} onChange={e => setDesde(e.target.value)} />
+                            <select className="form-select form-select-sm est-input text-center" value={desdeHora} onChange={e => setDesdeHora(e.target.value)}>
                                 <option value="">Hora</option>
                                 {Array.from({ length: 24 }).map((_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}:00</option>)}
                             </select>
                         </div>
                     </div>
-                    <div className="d-flex flex-column flex-grow-1" style={{ minWidth: "200px" }}>
-                        <label className="text-secondary small fw-bold mb-1 text-uppercase" style={{ fontSize: "0.75rem" }}>Hasta</label>
-                        <div className="d-flex gap-1">
-                            <input className="form-control form-control-sm est-input" type="date" value={hasta} onChange={e => setHasta(e.target.value)} />
-                            <select className="form-select form-select-sm est-input w-auto" value={hastaHora} onChange={e => setHastaHora(e.target.value)}>
+                    <div className="est-filtro">
+                        <label>Hasta</label>
+                        <div className="est-filtro-fecha">
+                            <input className="form-control form-control-sm est-input text-center" type="date" value={hasta} onClick={abrirPicker} onChange={e => setHasta(e.target.value)} />
+                            <select className="form-select form-select-sm est-input text-center" value={hastaHora} onChange={e => setHastaHora(e.target.value)}>
                                 <option value="">Hora</option>
                                 {Array.from({ length: 24 }).map((_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}:00</option>)}
                             </select>
@@ -481,24 +535,24 @@ export default function Estadisticas() {
                 </>)}
 
                 {modoFecha === "mes" && (
-                    <div className="d-flex flex-column flex-grow-1" style={{ minWidth: "140px" }}>
-                        <label className="text-secondary small fw-bold mb-1 text-uppercase" style={{ fontSize: "0.75rem" }}>Mes</label>
-                        <input className="form-control form-control-sm est-input" type="month" value={mesSelec} onChange={e => setMesSelec(e.target.value)} />
+                    <div className="est-filtro">
+                        <label>Mes</label>
+                        <input className="form-control form-control-sm est-input text-center" type="month" value={mesSelec} onClick={abrirPicker} onChange={e => setMesSelec(e.target.value)} />
                     </div>
                 )}
 
                 {modoFecha === "año" && (
-                    <div className="d-flex flex-column flex-grow-1" style={{ minWidth: "140px" }}>
-                        <label className="text-secondary small fw-bold mb-1 text-uppercase" style={{ fontSize: "0.75rem" }}>Año</label>
-                        <select className="form-select form-select-sm est-input" value={añoSelec} onChange={e => setAñoSelec(e.target.value)}>
+                    <div className="est-filtro">
+                        <label>Año</label>
+                        <select className="form-select form-select-sm est-input text-center" value={añoSelec} onChange={e => setAñoSelec(e.target.value)}>
                             {años.map(a => <option key={a}>{a}</option>)}
                         </select>
                     </div>
                 )}
 
-                <div className="d-flex flex-column flex-grow-1 ms-md-auto" style={{ maxWidth: "200px" }}>
-                    <label className="text-secondary small fw-bold mb-1 text-uppercase text-md-end" style={{ letterSpacing: "0.05em", fontSize: "0.75rem" }}>Sucursal</label>
-                    <select className="form-select form-select-sm est-input" value={sucursal} onChange={e => setSucursal(e.target.value)}>
+                <div className="est-filtro">
+                    <label>Sucursal</label>
+                    <select className="form-select form-select-sm est-input text-center" value={sucursal} onChange={e => setSucursal(e.target.value)}>
                         {sucursales.map(s => <option key={s}>{s}</option>)}
                     </select>
                 </div>

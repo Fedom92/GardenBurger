@@ -28,11 +28,10 @@ Todas las vars empiezan con `REACT_APP_`:
 | Variable | Uso |
 |---|---|
 | `REACT_APP_apiKey` ... `REACT_APP_appId` | Config de Firebase |
-| `REACT_APP_admin` | Valor del rol administrador |
-| `REACT_APP_rolBloq` | Rol de usuario bloqueado |
+| `REACT_APP_admin` | Valor del rol administrador (debe coincidir con `ADMIN_ROL` de `functions/.env`) |
 | `REACT_APP_rolCaja` | Rol cajero (aún no implementado y habrá otros) |
 | `REACT_APP_recargoMP` | % de recargo para Mercado Pago (ej: `10`) |
-| `REACT_APP_horaAbre, REACT_APP_horaCierre, REACT_APP_sucursal` | info de negocio |
+| `REACT_APP_horaAbre, REACT_APP_horaCierre` | info de negocio |
 
 **Nunca hardcodear estos valores.** Siempre usar `process.env.REACT_APP_*`.
 
@@ -79,31 +78,56 @@ src/
 
 - `AuthContext` usa Firebase Auth + Firestore (`colección: "usuarios"`)
 - Al autenticarse, busca el doc del usuario en `/usuarios/{uid}` y carga su `rol`
-- Si el rol es `REACT_APP_rolBloq`, se hace signOut automáticamente
 - El `userData` disponible en toda la app tiene: `id`, `rol`, `nombreCompleto`, `iniciales`, y los demás campos del doc Firestore
+
+### Alta y baja de usuarios (Cloud Functions con Admin SDK)
+El cliente nunca crea ni borra cuentas de Auth: lo hace el backend, que valida contra `ADMIN_ROL` que quien llama sea admin.
+- **Alta**: callable `crearUsuario` — crea la cuenta de Auth y el doc `usuarios/{uid}` con `activo: true`.
+- **Baja**: callable `darDeBajaUsuario` — **borra la cuenta de Auth** (bloqueo real) y deja el doc con `activo: false` + `bajaTimestamp` como registro histórico. No se reactiva: si la persona vuelve, se crea de cero con un uid y un doc nuevos. No se puede dar de baja a un admin ni a uno mismo.
+- `AuthContext` desloguea a quien tenga `activo: false` como respaldo, mientras siga vigente un token ya emitido.
 
 ### Guards en App.js:
 - `RequireAuth`: redirige a `/` si no está autenticado
 - `RequireAdmin`: redirige a `/miPerfil` si no tiene rol admin
+- `RequireSucursal`: bloquea con un mensaje si el usuario no tiene `sucursal` asignada (las pantallas operativas leen `sucursales/{id}/...`). Acepta `permitirAdmin` para las pantallas que el admin sí puede usar eligiendo sucursal, como Historial de Pedidos
 - Hay ejemplos comentados para `RequireRole` (múltiples roles) y `RequireCocina` (rol específico)
+
+### Menú lateral por rol
+`MODULOS_POR_ROL` en `Login_Navs/Navigation.jsx` define qué items del sidebar ve cada rol; es el único lugar a tocar para cambiar la visibilidad. Es **cosmético**: evita ofrecer links que el usuario no puede usar, pero la barrera real siguen siendo los guards de arriba. Un rol que no figure en el mapa ve solo "Mi Perfil" y "Salir".
+
+El admin no navega las pantallas operativas (no tiene sucursal): ve Productos, Historial, Estadísticas, Clientes y Configuración. Cuando necesita datos de una sucursal, la pantalla ofrece un selector local (patrón de `HistorialPedidos.jsx`), sin sucursal activa global.
 
 ---
 
-## Colecciones Firestore
+## Colecciones Firestore — Multi-Sucursal
 
-| Colección | Descripción |
+El sistema es multi-sucursal dentro de **un solo proyecto Firebase**. Las colecciones operativas viven en subcolecciones `sucursales/{id}/...`; el catálogo y los datos de empresa son globales.
+
+| Globales (path raíz) | Por sucursal (`sucursales/{id}/...`) |
 |---|---|
-| `usuarios` | Usuarios del sistema con campo `rol` |
-| `pedidos` | Pedidos creados, se pueden crear desde web pública (campo `origen`) o los cajeros directamente |
-| `productos` | Catálogo de productos con `visible`, `categoria`, `precio` |
-| `categorias` | Categorías ordenadas por `nroOrden` |
-| `clientes` | Registro de clientes nuevos |
-| `deliverys` | Repartidores con campo `activo` |
-| `contadores` | Contadores para secuencias (ej: numeración de pedidos) |
-| `resumenDiario` | resumen de pedidos cobrados por medio de efectivo o tarjeta, para el cierre del turno |
+| `productos` (catálogo con `visible`, `categoria`, `precio`) | `pedidos` (web pública con campo `origen`, o cajeros) |
+| `categorias` (ordenadas por `nroOrden`) | `resumenDiario` (cierre del turno: totalEfectivo/efectivoLocal/efectivoEnvio/mp/totalPedidos/totalCombos) |
+| `usuarios` (campo `rol` + campo `sucursal`) | `deliverys` (repartidores con campo `activo`) |
+| `clientes` (compartidos entre sucursales) | `contadores` (secuencias de esa sucursal) |
+| `sucursales` (metadata: `nombre`, `direccion`, `activa`) | |
+| `envios` (zonas de reparto, iguales para todas las sucursales) | |
+
+### Cómo se scopea la sucursal — IMPORTANTE
+- **Staff**: helpers `colSucursal("pedidos")` / `docSucursal("pedidos", id)` de `firebaseConfig/firebase.js`. La sucursal (`userData.sucursal`, campo del doc de `usuarios`) la setea ÚNICAMENTE AuthContext al loguear con `setSucursalStaff()` y se limpia al desloguear. No interceptan los `collection`/`doc` estándar: son funciones con nombre propio.
+- **Web pública**: la sucursal viene en la URL (`/crear-solicitud/:sucursal`, `/ver-pedido/:sucursal/:id`) vía `useParams()` y el path se arma explícito: `collection(db, "sucursales", sucursal, "pedidos")`. Nunca usa los helpers.
+- **Guard**: las rutas operativas están envueltas en `RequireSucursal` (App.js) — un usuario sin `sucursal` ve un mensaje en vez de crashear. `/historial-pedidos` usa `permitirAdmin`: el admin entra sin sucursal y elige cuál consultar con un selector.
+
+Regla práctica: si un componente usa `pedidos`, `resumenDiario`, `deliverys` o `contadores`, usa `colSucursal`/`docSucursal` (staff) o el path explícito con la sucursal de la URL (público); las colecciones globales (`productos`, `categorias`, `usuarios`, `clientes`, `sucursales`, `envios`) van directo a la raíz con `collection(db, ...)`.
 
 ### Función `getNextSequence(coleccion)`
-Genera IDs secuenciales incrementales via transacción Firestore. Se usa para el código del pedido: `${nuevoCodigo}-${userData.iniciales}`.
+Genera IDs secuenciales incrementales via transacción Firestore (sobre `sucursales/{sucursal}/contadores` de la sucursal logueada, por lo que la numeración es por sucursal). Se usa para el código del pedido: `${nuevoCodigo}-${userData.iniciales}`.
+
+### Alta de una sucursal (sin tocar Firebase Console)
+1. PanelAdmin → ⚙ → "Sucursales": crear con nombre (el identificador slug se genera solo).
+2. Asignar usuarios a la sucursal (crear o editar desde PanelAdmin). Cada usuario opera SOLO su sucursal.
+3. Los links públicos quedan `gardenburger.com.ar/crear-solicitud/{slug}`.
+
+Nota: el super-admin gestiona sucursales, usuarios, productos y envíos (todo global); no navega las pantallas operativas. Puede consultar el Historial de Pedidos de cualquier sucursal con el selector. Un dashboard general cross-sucursal es tema futuro.
 
 ---
 
@@ -188,8 +212,9 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 |---|---|---|
 | `/` | `Login` | Público |
 | `/menu` | `Menu` | Público |
-| `/crear-solicitud` | `CrearSolicitud` | Público |
-| `/ver-pedido/:id` | `PaginaDetalle` | Público |
+| `/crear-solicitud` | `SeleccionSucursal` | Público — el cliente elige sucursal |
+| `/crear-solicitud/:sucursal` | `CrearSolicitud` | Público — sucursal precargada por URL |
+| `/ver-pedido/:sucursal/:id` | `PaginaDetalle` | Público |
 | `/miPerfil` | `MiPerfil` | Auth |
 | `/pedidos-caja` | `Caja` | Admin, Auth |
 | `/gestion-cocina` | `Cocina` | Admin, Auth |
@@ -209,19 +234,21 @@ Hooks extraídos de `Caja.jsx` para separar responsabilidades. Están en `compon
 1. Al agregar una nueva ruta admin, seguir el patrón `<RequireAuth><RequireAdmin><Componente /></RequireAdmin></RequireAuth>` o recomendar el que se considere mejor
 2. Al crear un nuevo componente de ABM, tratar de usar `TablaGenerica` para la tabla
 3. Los estados de pedido y su flujo están definidos en workflow.pdf. Sus valores de `ESTADOS`, `SUBESTADOS_MOTODELIVERY` y el orden definido para su visualización pública `FLUJO_PUB_ESTADOS` están en Constantes.jsx. 
-4. El `getNextSequence` para el código de ticket usa transacciones — no reemplazar por `getDocs` + incremento manual
+4. El `getNextSequence(sucursal, coleccion)` para el código de ticket usa transacciones — no reemplazar por `getDocs` + incremento manual
 5. Firebase está configurado con `persistentLocalCache` para funcionar offline y para ahorrar operaciones de lectura
 6. Lo más importante de todo es tener en cuenta que Firebase tiene grandes limitaciones de operaciones de lectura, por eso siempre trata de mantener una estructura o lógica que minimice la cantidad de consultas.
+7. Multi-sucursal: al crear un componente nuevo que use `pedidos`/`resumenDiario`/`deliverys`/`contadores`, usar `colSucursal`/`docSucursal` de `firebaseConfig/firebase.js` (staff) o el path explícito con la sucursal de la URL (público). Ver sección Colecciones.
+8. Las Security Rules están versionadas en `Esquema_firestore.md`.
 
 ---
 
 ## Pendientes
 
 Cosas pendientes para realizar:
-    - Actualizar módulo JefeDeliverys.jsx
     - Panel o Dashboard con estadísticas (ya hay un componente modelo en Historicos/Estadisticas.jsx, el cual se usa para el Histórico)
     - Terminar y Testear - Cierre del día con los números de ventas/finanzas y total de Combos
-    - Definir manejo/lógica varias sucursales
     - Finalizar Menú Público
     - Hacer página "/" crearSolicitud? Luego revisar donde regidir para login.
-    -Ultimas Modifs
+
+    - ~~Definir manejo/lógica varias sucursales~~ (hecho: subcolecciones `sucursales/{id}/...` + rutas explícitas con `userData.sucursal`)
+    - Dashboard general del super-admin con números de todas las sucursales (a futuro)

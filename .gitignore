@@ -32,3 +32,4 @@ firebase.json
 skills-lock.json
 functions/
 .agents
+.claude

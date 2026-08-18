@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, doc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, getDoc, increment } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, getDoc, increment } from "firebase/firestore";
+import { colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import { getFechaComercial } from "../../Utils/fechaComercial";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
@@ -22,11 +22,11 @@ const JefeDeliverys = () => {
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
 
     const pedidosCollection = useRef(query(
-        collection(db, "pedidos"),
+        colSucursal("pedidos"),
         where("estado", "==", ESTADOS.DELIVERY),
         orderBy("timestamp", "asc")
     ));
-    const deliverysCollection = useRef(query(collection(db, "deliverys"), where("activo", "==", true)));
+    const deliverysCollection = useRef(query(colSucursal("deliverys"), where("activo", "==", true)));
 
     const getDeliverys = useCallback((snapshot) => {
         const deliverysArray = snapshot.docs
@@ -52,7 +52,7 @@ const JefeDeliverys = () => {
 
     const asignarDelivery = async (pedidoId, deliveryId) => {
         try {
-            const pedidoDoc = doc(db, 'pedidos', pedidoId);
+            const pedidoDoc = docSucursal("pedidos", pedidoId);
             const deliverySel = deliverys.find(d => d.id === deliveryId);
             const updates = deliverySel
                 ? {
@@ -84,7 +84,7 @@ const JefeDeliverys = () => {
             const pedido = pedidos.find(p => p.id === pedidoId);
             if (!pedido) return;
 
-            const pedidoDoc = doc(db, 'pedidos', pedidoId);
+            const pedidoDoc = docSucursal("pedidos", pedidoId);
             const updates = { estadoDelivery: nuevoEstado };
 
             if (nuevoEstado === SUBESTADOS_MOTODELIVERY.SALIDA) {
@@ -106,7 +106,7 @@ const JefeDeliverys = () => {
                 if (pedido.deliveryID) {
                     try {
                         const hoy = getFechaComercial();
-                        await updateDoc(doc(db, "resumenDiario", hoy), {
+                        await updateDoc(docSucursal("resumenDiario", hoy), {
                             [`deliverys.${pedido.deliveryID}.nombre`]: pedido.deliveryAsignado,
                             [`deliverys.${pedido.deliveryID}.cantidadPedidos`]: increment(1),
                             [`deliverys.${pedido.deliveryID}.totalMonto`]: increment(pedido.total || 0),
@@ -132,7 +132,7 @@ const JefeDeliverys = () => {
         setLoadingMetricas(true);
         try {
             const hoy = getFechaComercial();
-            const snap = await getDoc(doc(db, "resumenDiario", hoy));
+            const snap = await getDoc(docSucursal("resumenDiario", hoy));
             setMetricasData(snap.exists() ? (snap.data().deliverys || {}) : {});
         } catch (e) {
             console.error('Error cargando métricas:', e);
