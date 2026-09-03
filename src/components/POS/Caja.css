@@ -1,0 +1,779 @@
+/* ── Caja / POS ───────────────────────────────────────────────────────────
+   Rediseño 2a de Claude Design. Todo va scopeado bajo #caja para no pisar el
+   resto de la app: Bootstrap sigue siendo global y las otras pantallas no se
+   enteran de esto.
+
+   De Bootstrap se usan solo utilidades de layout (d-flex, gap-*, overflow-auto…).
+   Los componentes con identidad visual (.btn, .card, .form-control) NO se usan
+   acá: traen colores, radios y padding que pelean con el diseño. */
+
+#caja {
+  /* Tokens del artboard 2a */
+  --pos-bg: #e9e9e6;
+  --pos-panel: #f4f4f2;
+  --pos-surface: #fff;
+  --pos-dark: #14161a;
+  --pos-chip: #242730;
+  --pos-key: #3b3f4a;
+  --pos-on-dark: #cfcfc8;
+  --pos-accent: #2f8f5b;
+  --pos-txt: #14161a;
+  --pos-txt-2: #55554e;
+  --pos-txt-3: #6b6b64;
+  --pos-muted: #8a8a83;
+  --pos-muted-2: #9a9a92;
+  --pos-border: #dededa;
+  --pos-border-2: #e6e6e2;
+  --pos-border-3: #ecece8;
+  --pos-nota-bg: #fdf9ee;
+  --pos-nota-border: #f0e4c8;
+  --pos-nota-label: #a98a45;
+  --pos-danger: #c1443b;
+  --pos-danger-border: #e6c9c7;
+
+  --pos-sans: 'Barlow', system-ui, -apple-system, sans-serif;
+  --pos-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* .mainpage es flex: sin esto el panel se encoge al ancho de su contenido y
+     queda una franja blanca a la derecha. min-width para que la grilla pueda
+     achicarse en vez de desbordar. */
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--pos-bg);
+  font-family: var(--pos-sans);
+  color: var(--pos-txt);
+  /* App.css trae el `.App { text-align: center }` que arrastra Create React App
+     y toda la Caja lo hereda. Se corta acá una vez, en vez de ir poniendo
+     text-start en cada texto. Los botones y selects no heredan (el navegador
+     los centra por su cuenta), asi que esos siguen declarandolo aparte. */
+  text-align: left;
+}
+
+/* ── Topbar ─────────────────────────────────────────────────────────────── */
+/* 50px y no los 46 del diseño: es el alto exacto del handle del sidebar
+   colapsado (6px padding + 40px de .profile + 4px). Con la barra más baja, el
+   logo le sobresalía por abajo y se leía como una pieza aparte. */
+.pos-topbar {
+  height: 50px;
+  flex-shrink: 0;
+  /* Negro del menú y no el #14161a del diseño: el logo del sidebar se apoya
+     sobre esta barra y con dos negros distintos se ve la costura. */
+  background: var(--color-menu, #000);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+/* Colapsado, el sidebar no es una columna: es el logo y la flecha flotando
+   fuera del flujo sobre la esquina superior izquierda del contenido. Hay que
+   reservarle el lugar o tapa el título y el avatar.
+   Misma reserva y misma media query que Main.css le hace a .search-bar: fuera
+   de ese rango el sidebar es un cajón deslizable y no hay nada que esquivar. */
+@media (min-width: 769px) and (min-height: 501px) {
+  .navigation.active~* .pos-topbar {
+    padding-left: 116px;
+  }
+}
+
+.pos-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--pos-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 13px/1 var(--pos-sans);
+  flex-shrink: 0;
+}
+
+.pos-title {
+  color: #fff;
+  font: 600 16px/1 var(--pos-sans);
+  flex-shrink: 0;
+}
+
+.pos-fkey {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pos-chip);
+  border: none;
+  border-radius: 5px;
+  padding: 5px 9px;
+  color: var(--pos-on-dark);
+  font: 500 13px var(--pos-sans);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pos-fkey:hover:not(:disabled) {
+  background: #2e323d;
+}
+
+/* Apagado, no invisible: el cajero tiene que ver que el acceso existe. */
+.pos-fkey:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.pos-fkey kbd {
+  font: 600 10px var(--pos-mono);
+  background: var(--pos-key);
+  color: var(--pos-on-dark);
+  border-radius: 3px;
+  padding: 2px 4px;
+}
+
+.pos-fkey-logo {
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* Punto indicador en vez del badge numérico del diseño: usePendientes usa
+   limit(1) a propósito y contar exigiría traerse todos los pendientes. */
+.pos-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d99b3f;
+  flex-shrink: 0;
+}
+
+/* Mercado Pago va en celeste y no en el ámbar de .btn-blink, que es el color de
+   las solicitudes: son dos avisos distintos y desde lejos hay que poder
+   distinguirlos. Es el mismo celeste que tenía el botón btn-info original.
+   Especificidad de tres clases para ganarle a .btn-blink de Main.css. */
+.pos-fkey.is-mp .pos-dot {
+  background: #0dcaf0;
+}
+
+.pos-fkey.is-mp.btn-blink {
+  box-shadow: 0 0 10px rgba(13, 202, 240, .6);
+}
+
+.pos-fkey.is-mp.btn-blink:hover {
+  box-shadow: 0 0 15px rgba(13, 202, 240, .8);
+}
+
+/* ── Fila principal ─────────────────────────────────────────────────────── */
+.pos-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.pos-row.is-left {
+  flex-direction: row-reverse;
+}
+
+/* ── Panel de productos ─────────────────────────────────────────────────── */
+.pos-panel-prod {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 0;
+  outline-offset: -6px;
+}
+
+.pos-panel-prod.is-drop {
+  outline: 2px dashed var(--pos-accent);
+}
+
+.pos-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--pos-surface);
+  border: 1px solid var(--pos-border);
+  border-radius: 7px;
+  padding: 0 12px;
+}
+
+.pos-search>span {
+  color: var(--pos-muted);
+  font-size: 16px;
+}
+
+.pos-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: 500 16px var(--pos-sans);
+  color: var(--pos-txt);
+}
+
+.pos-search kbd {
+  font: 600 10px var(--pos-mono);
+  background: #efefec;
+  color: var(--pos-muted);
+  border-radius: 3px;
+  padding: 3px 6px;
+}
+
+.pos-cats {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.pos-cat {
+  border: 1px solid var(--pos-border);
+  background: var(--pos-surface);
+  color: #44443e;
+  border-radius: 20px;
+  padding: 5px 13px;
+  font: 600 13px var(--pos-sans);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pos-cat:hover {
+  border-color: var(--pos-accent);
+}
+
+.pos-cat.is-on {
+  background: var(--pos-dark);
+  border-color: var(--pos-dark);
+  color: #fff;
+}
+
+.pos-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
+  gap: 8px;
+  align-content: start;
+  padding-bottom: 10px;
+}
+
+/* Toda la tarjeta agrega: el diseño saca el botón + de la esquina. */
+.pos-prod {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 96px;
+  box-sizing: border-box;
+  background: var(--pos-surface);
+  border: 1px solid var(--pos-border-2);
+  border-radius: 8px;
+  padding: 5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pos-prod:hover {
+  border-color: var(--pos-accent);
+  background: #fafcfa;
+}
+
+.pos-prod:active {
+  background: #eef3ef;
+}
+
+.pos-prod-img {
+  width: 86px;
+  height: 86px;
+  border-radius: 6px;
+  background-color: #eeeeea;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pos-prod-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Sin foto: rayado diagonal + la palabra "foto", como en el diseño. */
+.pos-prod-img.is-empty {
+  background-image: repeating-linear-gradient(45deg, #00000010 0 4px, #00000000 4px 8px);
+  font: 500 9px var(--pos-mono);
+  color: var(--pos-muted-2);
+}
+
+.pos-prod-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pos-prod-name {
+  font: 500 15px/1.2 var(--pos-sans);
+  color: var(--pos-txt);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pos-prod-price {
+  font: 600 14px var(--pos-mono);
+  color: var(--pos-accent);
+}
+
+/* ── Divisor arrastrable ────────────────────────────────────────────────── */
+.pos-divider {
+  width: 9px;
+  flex-shrink: 0;
+  background: var(--pos-panel);
+  border-left: 1px solid var(--pos-border);
+  border-right: 1px solid var(--pos-border);
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pos-divider span {
+  width: 3px;
+  height: 38px;
+  border-radius: 2px;
+  background: #cfcfc8;
+}
+
+.pos-divider.is-grabbing {
+  background: #eef3ef;
+}
+
+.pos-divider.is-grabbing span {
+  background: var(--pos-accent);
+}
+
+/* ── Ticket ─────────────────────────────────────────────────────────────── */
+.pos-ticket {
+  flex-shrink: 0;
+  background: var(--pos-surface);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pos-grip {
+  height: 20px;
+  flex-shrink: 0;
+  background: #fafaf8;
+  border-bottom: 1px solid #f0f0ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: grab;
+}
+
+.pos-grip:active {
+  cursor: grabbing;
+}
+
+.pos-grip span {
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  background: #d5d5cf;
+}
+
+.pos-cliente {
+  flex-shrink: 0;
+  padding: 9px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-bottom: 1px solid var(--pos-border-3);
+}
+
+/* Segmented control: reemplaza los <select> de envío y método de pago. */
+.pos-seg-group {
+  display: flex;
+  gap: 6px;
+}
+
+.pos-seg {
+  flex: 1;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-surface);
+  color: var(--pos-txt-2);
+  font: 600 13px var(--pos-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0 6px;
+}
+
+.pos-seg:hover:not(.is-on) {
+  border-color: var(--pos-muted);
+}
+
+.pos-seg.is-on {
+  background: var(--pos-dark);
+  border-color: var(--pos-dark);
+  color: #fff;
+}
+
+/* Inputs del ticket. No usan .form-control para no arrastrar el estilo de BS. */
+.pos-input {
+  min-width: 0;
+  box-sizing: border-box;
+  height: 34px;
+  border: 1px solid var(--pos-border);
+  border-radius: 6px;
+  padding: 0 10px;
+  font: 500 14px var(--pos-sans);
+  color: var(--pos-txt);
+  background: var(--pos-surface);
+}
+
+.pos-input:focus {
+  outline: none;
+  border-color: var(--pos-accent);
+}
+
+.pos-input.is-tel {
+  flex: 0 0 140px;
+  width: 140px;
+  font: 600 14px var(--pos-mono);
+}
+
+.pos-input.is-invalid-monto {
+  border-color: var(--pos-danger-border);
+}
+
+.pos-count {
+  flex-shrink: 0;
+  padding: 6px 14px 2px;
+  font: 600 11px var(--pos-mono);
+  letter-spacing: .1em;
+  color: var(--pos-muted-2);
+  text-transform: uppercase;
+}
+
+/* La lista es la única zona que scrollea: el total nunca se pierde de vista. */
+.pos-items {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 6px;
+}
+
+.pos-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+}
+
+.pos-item-qty {
+  width: 26px;
+  flex-shrink: 0;
+  text-align: center;
+  font: 600 14px var(--pos-mono);
+  color: var(--pos-txt);
+}
+
+.pos-item-name {
+  flex: 1;
+  min-width: 0;
+  font: 500 14.5px/1.2 var(--pos-sans);
+  color: var(--pos-txt);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ancho mínimo para que los importes formen una columna pareja: sin esto cada
+   monto se acomoda a su propio largo y "$400" no arranca donde "$10.900". */
+.pos-item-sub {
+  font: 600 14px var(--pos-mono);
+  color: var(--pos-txt);
+  flex-shrink: 0;
+  min-width: 4.75rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Adicionales ─────────────────────────────────────────────────────────
+   Cada extra es una fila con las MISMAS cuatro columnas que su producto, así
+   el precio y la ✕ quedan alineados. Lo que lo muestra colgando del principal
+   es la sangría y la itálica, no una estructura distinta. */
+.pos-item-grupo {
+  padding-bottom: 2px;
+}
+
+.pos-item.is-extra {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.pos-item.is-extra .pos-item-name {
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--pos-muted);
+  padding-left: 6px;
+}
+
+.pos-item.is-extra .pos-item-sub {
+  font-size: 12.5px;
+  color: var(--pos-muted);
+}
+
+.pos-item.is-extra .pos-item-qty {
+  font-size: 12px;
+  color: var(--pos-muted);
+}
+
+.pos-item-del {
+  border: none;
+  background: transparent;
+  color: var(--pos-danger);
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: .55;
+}
+
+.pos-item-del:hover {
+  opacity: 1;
+}
+
+.pos-vacio {
+  padding: 24px 14px;
+  text-align: center;
+  font: 500 13.5px var(--pos-sans);
+  color: var(--pos-muted-2);
+}
+
+/* ── Nota de observaciones ──────────────────────────────────────────────── */
+.pos-nota {
+  flex-shrink: 0;
+  margin: 0 14px 8px;
+  background: var(--pos-nota-bg);
+  border: 1px solid var(--pos-nota-border);
+  border-radius: 7px;
+  padding: 7px 10px;
+  display: flex;
+  /* Centrado: el lápiz y el chevron acompañan al textarea colapsado. Estaba
+     como utilidad de Bootstrap en el JSX, que gana por !important y hacía que
+     este archivo dijera flex-start mientras se renderizaba centrado. */
+  align-items: center;
+  gap: 8px;
+}
+
+.pos-nota-label {
+  font: 600 10px var(--pos-mono);
+  letter-spacing: .08em;
+  color: var(--pos-nota-label);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.pos-nota textarea {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  height: 20px;
+  min-height: 20px;
+  font: 500 13.5px/1.35 var(--pos-sans);
+  color: var(--pos-txt);
+  transition: height .12s ease-out;
+}
+
+.pos-nota textarea:focus {
+  height: 54px;
+}
+
+
+
+.pos-nota textarea::placeholder {
+  color: #b0a88f;
+}
+
+/* ── Bloque de cobro ────────────────────────────────────────────────────── */
+.pos-cobro {
+  flex-shrink: 0;
+  border-top: 1px solid var(--pos-border-3);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.pos-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Filas de desglose: envío, recargo MP, paga con, vuelto. */
+.pos-desglose {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font: 500 13px var(--pos-sans);
+  color: var(--pos-txt-3);
+}
+
+.pos-desglose>span:last-child {
+  font-family: var(--pos-mono);
+  font-weight: 600;
+  color: var(--pos-txt);
+}
+
+.pos-select {
+  flex: 1 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 32px;
+  border: 1px solid var(--pos-border);
+  border-radius: 6px;
+  padding: 0 8px;
+  font: 600 13px var(--pos-sans);
+  color: var(--pos-txt);
+  background: var(--pos-surface);
+  cursor: pointer;
+}
+
+.pos-select:focus {
+  outline: none;
+  border-color: var(--pos-accent);
+}
+
+/* "Paga con": mismo alto y borde que el select de envío, importe en mono a la
+   derecha. El campo no está en el diseño pero sin él validarPedido no deja
+   guardar un pedido en efectivo. */
+.pos-monto-input {
+  flex: 1 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 32px;
+  border: 1px solid var(--pos-border);
+  border-radius: 6px;
+  padding: 0 8px;
+  font: 600 13px var(--pos-mono);
+  text-align: right;
+  color: var(--pos-txt);
+  background: var(--pos-surface);
+}
+
+.pos-monto-input:focus {
+  outline: none;
+  border-color: var(--pos-accent);
+}
+
+.pos-monto-input.is-corto {
+  border-color: var(--pos-danger-border);
+  color: var(--pos-danger);
+}
+
+.pos-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 1px solid var(--pos-border-3);
+  padding-top: 6px;
+}
+
+.pos-total-label {
+  font: 700 24px/1 var(--pos-sans);
+  letter-spacing: -.01em;
+}
+
+.pos-total-monto {
+  font: 700 32px/1 var(--pos-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pos-btn-limpiar {
+  width: 96px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  border: 1px solid var(--pos-danger-border);
+  font: 600 15px var(--pos-sans);
+  cursor: pointer;
+}
+
+.pos-btn-crear {
+  flex: 1;
+  height: 46px;
+  border-radius: 7px;
+  border: none;
+  background: var(--pos-accent);
+  color: #fff;
+  font: 700 16px var(--pos-sans);
+  cursor: pointer;
+}
+
+.pos-btn-crear:hover:not(:disabled) {
+  background: #27794c;
+}
+
+.pos-btn-crear:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+.pos-btn-horario {
+  border-radius: 7px;
+  border: 1px solid var(--pos-border);
+  font: 600 13.5px var(--pos-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.pos-btn-horario.is-on {
+  border-color: var(--pos-dark);
+  color: var(--pos-txt);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+/* Con el sidebar desplegado y a media pantalla el ancho útil se achica mucho.
+   La grilla ya responde sola por el auto-fill; acá solo se recorta el chrome. */
+@media (max-width: 1100px) {
+  .pos-title {
+    display: none;
+  }
+
+  .pos-fkey span:not(.pos-dot) {
+    display: none;
+  }
+
+  .pos-search kbd {
+    display: none;
+  }
+}

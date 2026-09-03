@@ -6,6 +6,7 @@ import { useLocation } from "react-router-dom";
 import logo from "../../src/img/logo_negro_corto.webp";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
+import InsertarRegistros from "../Utils/InsertarRegistros";
 import "../style/Main.css";
 
 export const NavigationContext = createContext();
@@ -14,7 +15,9 @@ export const NavigationContext = createContext();
 // guards de App.js. Un rol que no figure acá ve únicamente Mi Perfil y Salir.
 const MODULOS_POR_ROL = {
     [process.env.REACT_APP_admin]: ["productos", "historial", "estadisticas", "clientes", "configuracion"],
-    [process.env.REACT_APP_encargado]: ["caja", "cocina", "atp", "deliverys", "historial"],
+    // "pruebas" es la herramienta de dev que inserta pedidos de ejemplo. Solo el
+    // encargado la ve; escribe pedidos reales y mueve el arqueo del día.
+    [process.env.REACT_APP_encargado]: ["caja", "cocina", "atp", "deliverys", "historial", "pruebas"],
     [process.env.REACT_APP_cajero]: ["caja", "historial"],
     [process.env.REACT_APP_cocina]: ["cocina"],
     [process.env.REACT_APP_delivery]: ["deliverys"],
@@ -212,6 +215,12 @@ const Navigation = () => {
                         ) : (
                             <div className="sidebar-title">
                                 <Link to="/miPerfil" className="text-decoration-none link-light"><Nav title="Mi Perfil" Icon={FaUser} /></Link>
+                            </div>
+                        )}
+                        {/*TODO: ELIMINAR PRUEBAS CUANDO SE IMPLEMENTE. RECORDAR ELIMINARLO DE TODOS LADOS*/}    
+                        {puedeVer("pruebas") && (
+                            <div className="sidebar-title px-3 pb-2">
+                                <InsertarRegistros />
                             </div>
                         )}
 

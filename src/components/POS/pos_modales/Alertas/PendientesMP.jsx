@@ -150,8 +150,17 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                     <div className="card-body h-auto">
                                         <div className="row">
                                             <div className="col-6">
-                                                <p className="mb-1">
-                                                    <strong>Cliente:</strong> {pedido.nombre}
+                                                <p className="mb-1 d-flex align-items-center gap-1">
+                                                    <span><strong>Cliente:</strong> {pedido.nombre}</span>
+                                                    <a
+                                                        href={`https://api.whatsapp.com/send?phone=549${pedido.telefono}&text=Hola ${pedido.nombre}. `}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="btn btn-success btn-sm py-0 px-1 flex-shrink-0"
+                                                        title={`Enviar WhatsApp`}
+                                                    >
+                                                        <i className="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                                                    </a>
                                                 </p>
                                                 <p className="mb-1">
                                                     <strong>Teléfono:</strong> {pedido.telefono}
@@ -180,16 +189,6 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                                 <p className="mb-1">
                                                     <strong>Total:</strong> ${pedido.total}
                                                 </p>
-                                                <div className="mt-2">
-                                                    <a
-                                                        href={`https://api.whatsapp.com/send?phone=549${pedido.telefono}&text=Hola ${pedido.nombre}. `}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="btn btn-success btn-sm w-75 fw-bold"
-                                                    >
-                                                        <i className="fa-brands fa-whatsapp fs-5 align-middle me-1"></i> Enviar WhatsApp
-                                                    </a>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>

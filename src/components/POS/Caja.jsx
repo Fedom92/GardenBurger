@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { serverTimestamp, writeBatch, doc, Timestamp, deleteField, getDoc } from "firebase/firestore";
 import { db, getNextSequence, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import '../../style/Main.css';
+import './Caja.css';
 import logoMP from '../../img/mercado-pago.webp';
 
 import PendientesMP from './pos_modales/Alertas/PendientesMP';
@@ -18,6 +19,7 @@ import usePendientes from './pos_hooks/usePendientes';
 import useCliente from './pos_hooks/useCliente';
 import useCarrito from './pos_hooks/useCarrito';
 import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
+import useTicketLayout from './pos_hooks/useTicketLayout';
 import validarPedido from './pos_hooks/validarPedido';
 import useRevisarSolicitud, { liberarSolicitud } from './pos_hooks/useRevisarSolicitud';
 import { getResumenOperation } from './pos_hooks/useResumenDiario';
@@ -28,6 +30,29 @@ import { ahoraServidor, getFechaComercial } from '../../Utils/fechaComercial';
 // de miles, que $77.000 no se confunda con $7.700.
 const fmtPesos = (n) => `$${Number(n || 0).toLocaleString("es-AR")}`;
 
+// Los EXTRA son filas hermanas en el carrito, pero el diseño los cuelga de su
+// producto. Se agrupa solo para mostrar: el array que se guarda no cambia.
+const agruparCarrito = (carrito) => {
+    const grupos = [];
+    let actual = null;
+
+    carrito.forEach((item) => {
+        if (item.categoria !== "EXTRA") {
+            if (actual) grupos.push(actual);
+            actual = { principal: item, extras: [] };
+        } else if (actual) {
+            actual.extras.push(item);
+        } else {
+            // Un extra suelto al principio del carrito no debería pasar, pero si
+            // pasa se muestra como línea propia en vez de desaparecer.
+            grupos.push({ principal: item, extras: [] });
+        }
+    });
+
+    if (actual) grupos.push(actual);
+    return grupos;
+};
+
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
         defaultValues: { direccion: "", id: "" }
@@ -37,6 +62,7 @@ const Caja = () => {
     const metodoPago = watch("metodoPago");
     // Seteado solo cuando el ticket vino de una solicitud web: cambia Limpiar por Cancelar.
     const idSolicitud = watch("id");
+    const pagaCon = watch("pagaCon");
 
     const { userData } = useAuth();
     const [search, setSearch] = useState("");
@@ -57,6 +83,8 @@ const Caja = () => {
     const [resumenDiario, setResumenDiario] = useState(null);
     const [cargandoResumen, setCargandoResumen] = useState(false);
 
+    const buscadorRef = useRef(null);
+
     const horarioEspecial = watch("horarioEspecial");
     const horaEspecial = horarioEspecial ? horarioEspecial.split(':')[0] : "20";
     const minutosEspecial = horarioEspecial ? horarioEspecial.split(':')[1] : "00";
@@ -67,8 +95,24 @@ const Caja = () => {
     const { carrito, setCarrito, handleAgregarAlCarrito, handleEliminarDelCarrito, resetCarrito, getResumen } = useCarrito({ envioSeleccionado, metodoPago, montoEfectivo, recargo });
     const { showHorarioEspecial, toggleHorarioEspecial, handleHoraEspecialChange, handleMinutosEspecialChange, resetHorario } = useHorarioEspecial({ setValue });
     const { handleRevisarSolicitud } = useRevisarSolicitud({ setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios });
+    const layout = useTicketLayout();
 
     const { totalBase, total: totalFinal, montoMPConRecargo } = getResumen;
+
+    const gruposCarrito = useMemo(() => agruparCarrito(carrito), [carrito]);
+    const unidades = useMemo(() => carrito.reduce((acum, p) => acum + (p.cantidad || 1), 0), [carrito]);
+
+    // Retira y Espera Afuera ya viven en los tres tabs de arriba: en el selector
+    // solo quedan las zonas de reparto.
+    const zonasReparto = useMemo(
+        () => envios.filter((e) => !ENVIOS_LOCALES.includes(e.zona_envio)),
+        [envios]
+    );
+
+    const productosFiltrados = useMemo(() => productos
+        .filter((p) => search ? p.descripcion?.toLowerCase().includes(search.toLowerCase()) : true)
+        .filter((p) => categoriaSeleccionada === "" || p.categoria === categoriaSeleccionada),
+        [productos, search, categoriaSeleccionada]);
 
     const guardarBD = async (data) => {
         if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal })) return;
@@ -154,8 +198,8 @@ const Caja = () => {
         setMontoEfectivo(0);
     }, [resetField, setMontoEfectivo]);
 
-    const handleMetodoPagoChange = (e) => {
-        const nuevoMetodo = e.target.value;
+    // Los tabs reemplazaron al <select>, asi que recibe el valor y no el evento.
+    const seleccionarMetodoPago = (nuevoMetodo) => {
         limpiarCamposMetodoPago();
         setValue("metodoPago", nuevoMetodo);
         setShowModalDividido(nuevoMetodo === "%");
@@ -224,6 +268,16 @@ const Caja = () => {
                     e.preventDefault();
                     verResumen();
                     break;
+                case '/': {
+                    // Atajo del diseño. No secuestra la barra mientras se escribe
+                    // en cualquier otro campo del ticket.
+                    const enCampo = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+                    if (!enCampo) {
+                        e.preventDefault();
+                        buscadorRef.current?.focus();
+                    }
+                    break;
+                }
                 case 'Escape':
                     cancelarTicket();
                     break;
@@ -236,6 +290,10 @@ const Caja = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [cancelarTicket, verResumen, tieneSolicitudesPendientes, tienePendientesMP]);
 
+    const esAfuera = envioSeleccionado?.zona_envio === ENVIOS_LOCALES[1];
+    const esRetira = envioSeleccionado?.zona_envio === ENVIOS_LOCALES[0];
+    const pagaConCorto = metodoPago === "EFECTIVO" && pagaCon > 0 && pagaCon < totalFinal;
+
     return (
         <>
             {isLoading ? (
@@ -243,341 +301,369 @@ const Caja = () => {
                     <span className="loader position-absolute start-50 top-50 mt-3"></span>
                 </div>
             ) : (
-                <div className="w-100" id="caja">
-                    <div className="search-bar">
-                        <h1 className="caja-titulo">Caja</h1>
+                <div id="caja">
+                    {/* Topbar: identidad + accesos F1..F4. Reemplaza a la barra
+                        negra anterior; el sidebar de la app sigue a la izquierda. */}
+                    <header className="pos-topbar">
+                        <span className="pos-title">Sistema Caja</span>
+                        <span className="pos-avatar">{userData?.iniciales?.charAt(0) || "?"}</span>
 
-                        {/* Accesos F1..F4 dentro de la barra: no ocupan una franja
-                            propia y ese alto se lo lleva el ticket. */}
-                        <div className="caja-header d-flex align-items-center gap-1">
-                            <button
-                                className={`btn btn-sm fw-bold ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-warning text-white btn-blink' : 'btn-outline-light'}`}
-                                disabled={!tieneSolicitudesPendientes}
-                                onClick={() => setShowPendientesSolicitudes(true)}
-                            >
-                                <i className="fa fa-list-check"></i> Ver Solicitudes <small className="fst-italic"> (F1)</small>
-                            </button>
-                            <button
-                                className={`btn btn-sm fw-bold ${tienePendientesMP && !showPendientesMP ? 'btn-info text-white btn-blink' : 'btn-outline-light'}`}
-                                disabled={!tienePendientesMP}
-                                onClick={() => setShowPendientesMP(true)}
-                            >
-                                <img src={logoMP} alt="MP" className="img-fluid" style={{ height: "1.1rem" }}></img> Pendientes MP <small className="fst-italic"> (F2)</small>
-                            </button>
-                            <button
-                                className="btn btn-sm btn-primary fw-bold"
-                                onClick={() => setShowBuscarPedido(true)}
-                            >
-                                <i className="fa fa-search"></i> Buscar Ticket<small className="fst-italic"> (F3)</small>
-                            </button>
-                            <button
-                                className="btn btn-sm btn-light fw-bold"
-                                onClick={verResumen}
-                            >
-                                <i className="fa fa-chart-simple"></i> Ver Estadísticas <small className="fst-italic"> (F4)</small>
-                            </button>
+                        <div className="flex-fill"></div>
+
+                        <button
+                            className={`pos-fkey ${tieneSolicitudesPendientes && !showPendientesSolicitudes ? 'btn-blink' : ''}`}
+                            disabled={!tieneSolicitudesPendientes}
+                            onClick={() => setShowPendientesSolicitudes(true)}
+                        >
+                            <kbd>F1</kbd><span>Solicitudes</span>
+                            {tieneSolicitudesPendientes && <span className="pos-dot"></span>}
+                        </button>
+                        <button
+                            className={`pos-fkey is-mp ${tienePendientesMP && !showPendientesMP ? 'btn-blink' : ''}`}
+                            disabled={!tienePendientesMP}
+                            onClick={() => setShowPendientesMP(true)}
+                        >
+                            <kbd>F2</kbd>
+                            <img src={logoMP} alt="" className="pos-fkey-logo" />
+                            <span>MP</span>
+                            {tienePendientesMP && <span className="pos-dot"></span>}
+                        </button>
+                        <button className="pos-fkey" onClick={() => setShowBuscarPedido(true)}>
+                            <kbd>F3</kbd><span>Buscar Tickets</span>
+                        </button>
+                        <button className="pos-fkey" onClick={verResumen}>
+                            <kbd>F4</kbd><span>Estadística</span>
+                        </button>
+                    </header>
+
+                    <div className={`pos-row ${layout.side === 'left' ? 'is-left' : ''}`} ref={layout.rowRef}>
+                        {/* Panel de productos. Es también la zona donde se suelta el
+                            ticket para mandarlo al otro lado. */}
+                        <section
+                            className={`pos-panel-prod ${layout.dragging ? 'is-drop' : ''}`}
+                            onDragOver={layout.onDragOver}
+                            onDrop={layout.onDrop}
+                        >
+                            <div className="pos-search">
+                                <span>⌕</span>
+                                <input
+                                    ref={buscadorRef}
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    type="text"
+                                    placeholder="Escribí para filtrar el menú…"
+                                    className="fst-italic text-secondary"
+                                />
+                                <kbd>/ para enfocar</kbd>
+                            </div>
+
+                            <div className="pos-cats">
+                                {categorias.map((categoria) => (
+                                    <button
+                                        key={categoria.id}
+                                        className={`pos-cat ${categoriaSeleccionada === categoria.nombre ? 'is-on' : ''}`}
+                                        onClick={() => setCategoriaSeleccionada(categoria.nombre)}
+                                    >
+                                        {categoria.nombre || "Todo"}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="pos-grid">
+                                {productosFiltrados.map((producto) => (
+                                    <button
+                                        key={producto.id}
+                                        className="pos-prod"
+                                        onClick={() => handleAgregarAlCarrito(producto)}
+                                    >
+                                        <div className={`pos-prod-img ${producto.imagen ? '' : 'is-empty'}`}>
+                                            {producto.imagen
+                                                ? <img src={producto.imagen} alt={producto.descripcion} />
+                                                : "foto"}
+                                        </div>
+                                        <div className="pos-prod-info">
+                                            <span className="pos-prod-name">{producto.descripcion}</span>
+                                            <span className="pos-prod-price">{fmtPesos(producto.precio)}</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+
+                        <div
+                            className={`pos-divider ${layout.grabbing ? 'is-grabbing' : ''}`}
+                            onMouseDown={layout.onResizeStart}
+                            onTouchStart={layout.onResizeStart}
+                            onDoubleClick={layout.onResetWidth}
+                            title="Arrastrá para repartir el ancho · doble clic para volver al mínimo"
+                        >
+                            <span></span>
                         </div>
 
-                        <input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            type="text"
-                            placeholder="Buscar Producto..."
-                        />
-                        <i className="fa-solid fa-magnifying-glass"></i>
-                    </div>
+                        <section className="pos-ticket" style={{ width: layout.width }}>
+                            <div
+                                className="pos-grip"
+                                draggable="true"
+                                onDragStart={layout.onDragStart}
+                                onDragEnd={layout.onDragEnd}
+                                title="Arrastrá para mover el ticket al otro lado"
+                            >
+                                <span></span><span></span>
+                            </div>
 
-                    {/* Fila principal: ticket a la izquierda, productos a la derecha */}
-                    <main className="row m-0 px-2" id="caja-main">
-                        <section className="col-4 p-0" id="ticket">
-                            <div className="card mb-1" id="datos_clientes">
-                                <input type="text" maxLength={10} className="form-control fs-6 p-1 mb-1" placeholder="Teléfono (sin 0 y sin 15)..." autoComplete="off" required {...register("telefono")}
-                                    onInput={(e) => {
-                                        e.target.value = e.target.value.replace(/\D/g, '');
-                                    }}
-                                />
-                                <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Nombre..." autoComplete="off" required {...register("nombre")} />
-
-                                <div className="btn-group w-100 mb-2" role="group">
+                            <div className="pos-cliente">
+                                <div className="pos-seg-group">
                                     <button
                                         type="button"
-                                        className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio === ENVIOS_LOCALES[1] ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                        className={`pos-seg ${esAfuera ? 'is-on' : ''}`}
                                         onClick={() => {
                                             setModoDelivery(false);
                                             setValue("envio", JSON.stringify({ zona_envio: ENVIOS_LOCALES[1], costo_envio: 0 }));
                                         }}
                                     >
-                                        <i className="fa-solid fa-store me-1"></i> Espera Afuera
+                                        Espera afuera
                                     </button>
                                     <button
                                         type="button"
-                                        className={`btn btn-sm btn-upload fw-bold ${envioSeleccionado?.zona_envio === ENVIOS_LOCALES[0] ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                        className={`pos-seg ${esRetira ? 'is-on' : ''}`}
                                         onClick={() => {
                                             setModoDelivery(false);
                                             setValue("envio", JSON.stringify({ zona_envio: ENVIOS_LOCALES[0], costo_envio: 0 }));
                                         }}
                                     >
-                                        <i className="fa-solid fa-store me-1"></i> Retira
+                                        Retira
                                     </button>
                                     <button
                                         type="button"
-                                        className={`btn btn-sm btn-upload fw-bold ${mostrarDelivery ? "btn-dark text-white" : "btn-outline-dark"}`}
+                                        className={`pos-seg ${mostrarDelivery ? 'is-on' : ''}`}
                                         onClick={() => {
                                             setModoDelivery(true);
                                             setValue("envio", "");
                                         }}
                                     >
-                                        <i className="fa-solid fa-motorcycle me-1"></i> Delivery
+                                        Delivery
                                     </button>
                                 </div>
 
-                                {mostrarDelivery && (<>
-                                    <input type="text" className="form-control fs-6 p-1 mb-1 none" placeholder="Direccion..." autoComplete="off" required {...register("direccion")} />
-                                    <input type="text" className="form-control fs-6 p-1 mb-1" placeholder="Entre Calles..." autoComplete="off" required {...register("entreCalles")} />
-                                </>)}
-                                <textarea className="form-control" rows="2" placeholder="Observaciones..." autoComplete="off" {...register("observaciones")}></textarea>
-                            </div>
-
-                            <hr className="m-0"></hr>
-
-                            <div className="card mt-2 mb-2" id="tabla_productos">
-                                <table className="table-hover shopping-cart-wrap">
-                                    <thead>
-                                        <tr>
-                                            <th className="col">N°</th>
-                                            <th className="col text-start">Item</th>
-                                            <th className="col">Subtotal</th>
-                                            <th className="col"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {carrito.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="4" className="text-center text-body-secondary">
-                                                    No hay productos
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            carrito.map((producto) => (
-                                                <tr key={producto.carritoItemId}>
-                                                    <td className="text-center">{producto.cantidad}</td>
-                                                    <td className="text-start">
-                                                        <p
-                                                            className={`title text-truncate mb-0 ${producto.categoria === "EXTRA" ? "fst-italic ps-2" : ""}`}>
-                                                            {producto.categoria === "EXTRA" && "-"}{producto.descripcion}
-                                                        </p>
-                                                    </td>
-                                                    <td className="text-center">
-                                                        <div className="price-wrap">
-                                                            <var className="price">${producto.subtotal}</var>
-                                                        </div>
-                                                    </td>
-                                                    <td className="text-center">
-                                                        <button
-                                                            className="btn text-danger p-0"
-                                                            onClick={() => handleEliminarDelCarrito(producto.carritoItemId)}
-                                                        >
-                                                            <i className="fa fa-circle-xmark fs-4"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <hr className="m-0"></hr>
-
-                            <div id="datos_pago">
-                                <label htmlFor="pago-envio">Envío</label>
-                                <div className="pago-valor">
-                                    <select
-                                        id="pago-envio"
-                                        className={`form-control border-0 text-center ${ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio) ? "p-0" : ""}`}
-                                        multiple={false}
-                                        disabled={ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio)}
+                                <div className="d-flex gap-2">
+                                    <input
+                                        type="text"
+                                        maxLength={10}
+                                        className="pos-input is-tel"
+                                        placeholder="Teléfono…"
+                                        autoComplete="off"
                                         required
-                                        {...register("envio")}
-                                    >
-                                        <option value="">....</option>
-                                        {envios.map(env => (
-                                            <option key={env.id} value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}>
-                                                {env.zona_envio}
-                                            </option>
-                                        ))
-                                        }
-                                    </select>
-                                    <span className="pago-monto">{fmtPesos(envioSeleccionado?.costo_envio)}</span>
+                                        {...register("telefono")}
+                                        onInput={(e) => { e.target.value = e.target.value.replace(/\D/g, ''); }}
+                                    />
+                                    <input
+                                        type="text"
+                                        className="pos-input flex-fill"
+                                        placeholder="Nombre…"
+                                        autoComplete="off"
+                                        required
+                                        {...register("nombre")}
+                                    />
                                 </div>
 
-                                <label htmlFor="pago-metodo">Método</label>
-                                <div className="pago-valor">
-                                    <select id="pago-metodo" className="form-control border-0 p-0 px-1 m-0" multiple={false} required {...register("metodoPago")} onChange={handleMetodoPagoChange}>
-                                        <option value="">....</option>
-                                        <option value="EFECTIVO">Efectivo</option>
-                                        <option value="MP">MP</option>
-                                        <option value="%">Dividido</option>
-                                    </select>
-                                    {metodoPago === "MP" && (<span className="pago-nota">Recargo {recargo}%</span>)}
+                                {mostrarDelivery && (
+                                    <div className="d-flex flex-column gap-2">
+                                        <input type="text" className="pos-input" placeholder="Dirección…" autoComplete="off" required {...register("direccion")} />
+                                        <input type="text" className="pos-input" placeholder="Entre calles…" autoComplete="off" required {...register("entreCalles")} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pos-count">
+                                {unidades} ítem{unidades === 1 ? '' : 's'} · {carrito.length} fila{carrito.length === 1 ? '' : 's'}
+                            </div>
+
+                            <div className="pos-items">
+                                {carrito.length === 0 ? (
+                                    <div className="pos-vacio">Sin productos cargados</div>
+                                ) : (
+                                    /* El extra es una fila propia con las mismas cuatro columnas
+                                       que el principal: así el precio y la ✕ caen alineados en
+                                       vez de quedar pegados al nombre. La sangría y la itálica
+                                       son las que lo muestran colgando de su producto. */
+                                    gruposCarrito.map((grupo) => (
+                                        <div className="pos-item-grupo" key={grupo.principal.carritoItemId}>
+                                            <div className="pos-item">
+                                                <span className="pos-item-qty">{grupo.principal.cantidad}</span>
+                                                <span className="pos-item-name">{grupo.principal.descripcion}</span>
+                                                <span className="pos-item-sub">{fmtPesos(grupo.principal.subtotal)}</span>
+                                                <button
+                                                    type="button"
+                                                    className="pos-item-del"
+                                                    title="Quitar uno"
+                                                    onClick={() => handleEliminarDelCarrito(grupo.principal.carritoItemId)}
+                                                >✕</button>
+                                            </div>
+
+                                            {grupo.extras.map((extra) => (
+                                                <div className="pos-item is-extra" key={extra.carritoItemId}>
+                                                    <span className="pos-item-qty">{extra.cantidad > 1 ? extra.cantidad : ''}</span>
+                                                    <span className="pos-item-name">— {extra.descripcion}</span>
+                                                    <span className="pos-item-sub">{fmtPesos(extra.subtotal)}</span>
+                                                    <button
+                                                        type="button"
+                                                        className="pos-item-del"
+                                                        title="Quitar adicional"
+                                                        onClick={() => handleEliminarDelCarrito(extra.carritoItemId)}
+                                                    >✕</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Observaciones como nota pegada al pie: siempre visible y
+                                sin competir con los datos del cliente. */}
+                            <div className="pos-nota">
+                                <span className="pos-nota-label"><i className="fa fa-pen-to-square"></i></span>
+                                <textarea
+                                    rows="1"
+                                    placeholder="Observaciones…"
+                                    autoComplete="off"
+                                    {...register("observaciones")}
+                                ></textarea>
+                            </div>
+
+                            <div className="pos-cobro">
+                                <div className="pos-seg-group">
+                                    <button type="button" className={`pos-seg ${metodoPago === 'EFECTIVO' ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago("EFECTIVO")}>Efectivo</button>
+                                    <button type="button" className={`pos-seg ${metodoPago === 'MP' ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago("MP")}>MP +{recargo}%</button>
+                                    <button type="button" className={`pos-seg ${metodoPago === '%' ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago("%")}>Dividido</button>
                                 </div>
 
-                                {metodoPago === "EFECTIVO" && (<>
-                                    <label htmlFor="pago-paga-con">Paga con</label>
-                                    <div className="pago-valor">
+                                {mostrarDelivery && (
+                                    <div className="pos-fila">
+                                        <select
+                                            className="pos-select"
+                                            value={envioRaw || ""}
+                                            onChange={(e) => setValue("envio", e.target.value)}
+                                        >
+                                            <option value="">Zona de envío…</option>
+                                            {zonasReparto.map((env) => (
+                                                <option
+                                                    key={env.id}
+                                                    value={JSON.stringify({ zona_envio: env.zona_envio, costo_envio: env.costo_envio })}
+                                                >
+                                                    {env.zona_envio}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <span className="pos-item-sub">{fmtPesos(envioSeleccionado?.costo_envio)}</span>
+                                    </div>
+                                )}
+
+                                {/* "Paga con" no estaba en el diseño, pero sin él
+                                    validarPedido no deja guardar un pedido en efectivo. */}
+                                {metodoPago === "EFECTIVO" && (
+                                    <div className="pos-fila">
+                                        <span className="pos-desglose flex-fill">Paga con</span>
                                         <input
-                                            id="pago-paga-con"
                                             type="number"
-                                            className="form-control border-0 bg-transparent pago-input"
+                                            className={`pos-monto-input ${pagaConCorto ? 'is-corto' : ''}`}
                                             autoComplete="off"
                                             min={0}
                                             placeholder="0"
                                             {...register("pagaCon", { valueAsNumber: true })}
                                         />
                                     </div>
-                                </>)}
+                                )}
+
+                                {metodoPago === "MP" && (
+                                    <div className="pos-desglose">
+                                        <span>Recargo MP {recargo}%</span>
+                                        <span>{fmtPesos(totalFinal - totalBase)}</span>
+                                    </div>
+                                )}
 
                                 {metodoPago === "%" && (<>
-                                    <label>Efectivo</label>
-                                    <div className="pago-valor">
-                                        <span className="pago-monto">{fmtPesos(montoEfectivo)}</span>
+                                    <div className="pos-desglose">
+                                        <span>Efectivo</span>
+                                        <span>{fmtPesos(montoEfectivo)}</span>
                                     </div>
-
-                                    <label>MP</label>
-                                    <div className="pago-valor">
-                                        <span className="pago-monto">{fmtPesos(montoMPConRecargo)}</span>
+                                    <div className="pos-desglose">
+                                        <span>MP</span>
+                                        <span>{fmtPesos(montoMPConRecargo)}</span>
                                     </div>
                                 </>)}
 
-                                {/* Separador propio: con el borde en las celdas la
-                                    línea salía cortada por el gap de la grilla. */}
-                                <div className="pago-separador"></div>
-
-                                <label className="pago-total">Total</label>
-                                <div className="pago-valor pago-total">
-                                    <span className="pago-monto">{fmtPesos(totalFinal)}</span>
+                                <div className="pos-total">
+                                    <span className="pos-total-label">Total</span>
+                                    <span className="pos-total-monto">{fmtPesos(totalFinal)}</span>
                                 </div>
-                            </div>
 
-                            <div className="row" id="acciones">
-                                    <div className="d-flex justify-content-center align-items-center gap-2 flex-wrap mb-1">
-                                        <button
-                                            title="(Esc)"
-                                            className="btn btn-danger"
-                                            type="reset"
-                                            onClick={() => { cancelarTicket() }}
-                                        >
-                                            {idSolicitud ? "Cancelar" : "Limpiar"} <i className="fas fa-trash-alt"></i>
-                                        </button>
-                                        <button
-                                            title="(ALT+ENTER)"
-                                            className="btn btn-success"
-                                            type="submit"
-                                            disabled={procesando}
-                                            onClick={() => handleSubmit(guardarBD)()}>
-                                            {procesando ? "Cargando..." : "Crear Pedido"} <i className="fas fa-burger"></i>
-                                        </button>
-                                    </div>
-
-                                    <div className="row">
-                                        <div className="d-flex justify-content-center align-items-center gap-2 mt-2">
-                                            <button
-                                                className={'btn btn-secondary'}
-                                                type="button"
-                                                onClick={toggleHorarioEspecial}
-                                            >
-                                                Horario Especial <i className="fa fa-clock"></i>
-                                            </button>
-                                            {showHorarioEspecial && (
-                                                <>
-                                                    <select
-                                                        className="form-control text-center"
-                                                        style={{ width: "80px" }}
-                                                        value={horaEspecial}
-                                                        onChange={(e) => handleHoraEspecialChange(e, minutosEspecial)}
-                                                    >
-                                                        <option value="20">20</option>
-                                                        <option value="21">21</option>
-                                                        <option value="22">22</option>
-                                                        <option value="23">23</option>
-                                                    </select>
-                                                    <span className="fw-bold">:</span>
-                                                    <select
-                                                        className="form-control text-center"
-                                                        style={{ width: "80px" }}
-                                                        value={minutosEspecial}
-                                                        onChange={(e) => handleMinutosEspecialChange(e, horaEspecial)}
-                                                    >
-                                                        <option value="00">00</option>
-                                                        <option value="15">15</option>
-                                                        <option value="30">30</option>
-                                                        <option value="45">45</option>
-                                                    </select>
-                                                </>
-                                            )}
-                                            <input
-                                                type="hidden"
-                                                {...register("horarioEspecial")}
-                                            />
-                                        </div>
-                                    </div>
+                                <div className="pos-actions">
+                                    <button
+                                        type="button"
+                                        title="Horario Especial"
+                                        className={`btn btn-warning pos-btn-horario`}
+                                        onClick={toggleHorarioEspecial}
+                                    >
+                                        <span>⏱</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        title="Limpiar (Esc)"
+                                        className="btn btn-danger pos-btn-limpiar"
+                                        onClick={() => { cancelarTicket() }}
+                                    >
+                                        {idSolicitud ? "Cancelar" : "Limpiar"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="pos-btn-crear"
+                                        disabled={procesando}
+                                        onClick={() => handleSubmit(guardarBD)()}
+                                    >
+                                        {procesando ? "Cargando..." : (
+                                            <>
+                                                Crear Pedido <i className="fas fa-burger"></i>
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
-                        </section>
 
-                        <section className="col-8 card" id="productos">
-                            <ul className="nav nav-pills nav-fill p-0 d-flex overflow-auto" role="tablist" style={{ whiteSpace: "nowrap", gap: "2px" }}>
-                                {categorias.map((categoria) => (
-                                    <li className="nav-item" key={categoria.id}>
-                                        <button
-                                            className={`d-flex justify-content-center align-items-center nav-link text-black lex-shrink-0 gap-1 p-1 ${categoriaSeleccionada === categoria.nombre ? "active" : ""}`}
-                                            onClick={() => setCategoriaSeleccionada(categoria.nombre)}
+                                {showHorarioEspecial && (
+                                    <div className="pos-fila">
+                                        <select
+                                            className="pos-select text-center"
+                                            value={horaEspecial}
+                                            onChange={(e) => handleHoraEspecialChange(e, minutosEspecial)}
                                         >
-                                            <i className="fa fa-tags" ></i> {categoria.nombre}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
+                                            <option value="20">20</option>
+                                            <option value="21">21</option>
+                                            <option value="22">22</option>
+                                            <option value="23">23</option>
+                                        </select>
+                                        <span className="fw-bold">:</span>
+                                        <select
+                                            className="pos-select text-center"
+                                            value={minutosEspecial}
+                                            onChange={(e) => handleMinutosEspecialChange(e, horaEspecial)}
+                                        >
+                                            <option value="00">00</option>
+                                            <option value="15">15</option>
+                                            <option value="30">30</option>
+                                            <option value="45">45</option>
+                                        </select>
+                                    </div>
+                                )}
 
-                            <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5">
-                                {productos
-                                    .filter((p) =>
-                                        search
-                                            ? p.descripcion?.toLowerCase().includes(search.toLowerCase())
-                                            : true
-                                    )
-                                    .filter(
-                                        (p) => categoriaSeleccionada === "" || p.categoria === categoriaSeleccionada
-                                    )
-                                    .map((producto) => (
-                                        <div className="p-0" key={producto.id}>
-                                            <button
-                                                onClick={() => handleAgregarAlCarrito(producto)}
-                                                className="card card-product h-100 d-flex flex-column justify-content-between"
-                                            >
-                                                <div className="img-wrap flex-grow-1 d-flex align-items-center justify-content-center">
-                                                    <img
-                                                        src={producto.imagen}
-                                                        alt={producto.descripcion}
-                                                        className="img-fluid w-75"
-                                                    />
-                                                </div>
-                                                <figcaption className="info-wrap">
-                                                    <p className="d-flex justify-content-center title lh-1 m-auto" style={{ fontSize: "0.8rem", minHeight: "1.5rem" }}>
-                                                        {producto.descripcion}
-                                                    </p>
-                                                    <div className="action-wrap">
-                                                        <div className="price-wrap h6 p-1 m-0">
-                                                            <span className="price-new">${producto.precio}</span>
-                                                        </div>
-                                                    </div>
-                                                </figcaption>
-                                            </button>
-                                        </div>
-                                    ))}
+                                {/* El envío y el método de pago se manejan con tabs, pero
+                                    siguen siendo campos del formulario: sin estos hidden
+                                    quedarían fuera de handleSubmit y validarPedido. */}
+                                <input type="hidden" {...register("envio")} />
+                                <input type="hidden" {...register("metodoPago")} />
+                                <input type="hidden" {...register("horarioEspecial")} />
                             </div>
                         </section>
-                    </main >
-                </div >
+                    </div>
+                </div>
             )}
 
             {/* Modal para método de pago dividido */}
