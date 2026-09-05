@@ -113,21 +113,43 @@ Pedidos creados desde la Caja interna.
 },
 ```
 
-## Colección: `usuarios`
-Doc ID = uid de Firebase Auth. Alta y baja pasan por Cloud Functions (`crearUsuario` / `darDeBajaUsuario`).
+## Colección: `usuarios` (empleados)
+**Todos los empleados viven acá**, tengan o no acceso al sistema. Se gestiona solo desde
+PanelAdmin.
+
+Doc ID = uid de Firebase Auth para los que tienen acceso; id automático para los que no.
 
 ```js
 {
-  correo: "juan@example.com",
+  // Todos
   nombreCompleto: "Juan Díaz",
+  dni: "37123123",
+  telefono: "1112345678",
+  domicilio: "Av. Corrientes 1234",
   rol: "ADMIN_ROL_VALUE",            // valor del rol asignado según env. Ejemplo REACT_APP_admin, REACT_APP_cajero, etc.
   sucursal: "luro",                  // slug de la sucursal donde opera (doc id de `sucursales`). Los admin pueden no tenerla.
-  telefono: "1112345678",
-  activo: true | false,              // false = dado de baja: su cuenta de Auth fue borrada y el doc queda como histórico
+  valorHora: 5000,                   // number: lo usa la liquidación de sueldos
+  activo: true | false,              // false = dado de baja; el doc queda como histórico
+  sinAcceso: true | false,           // true = empleado SIN cuenta de Auth (repartidores). No se loguea.
   bajaTimestamp: serverTimestamp(),  // solo en los dados de baja
-  timestamp: serverTimestamp()
+  timestamp: serverTimestamp(),
+
+  correo: "juan@example.com",        // solo si sinAcceso === false
+
+  // Solo rol delivery
+  marcaMoto: "Yamaha",
+  modeloMoto: "Fz",
+  colorMoto: "rojo",
+  patente: "AB123CD"
 }
 ```
+
+**Alta**: si tiene acceso, la Cloud Function `crearUsuario` crea la cuenta de Auth y devuelve el
+uid; el documento lo escribe el cliente con `setDoc`. Si no tiene acceso, es solo un `addDoc` y la
+Function no se llama.
+
+**Baja**: con acceso va por `darDeBajaUsuario` (borra la cuenta de Auth); sin acceso es un
+`updateDoc({ activo: false, bajaTimestamp })` — llamar a la Function con un uid inexistente falla.
 
 ## Colección: `clientes`
 Global: los clientes se comparten entre sucursales. Se dan de alta solos al cobrar en Caja (`useCliente`) o a mano desde la pantalla Clientes.
@@ -142,21 +164,13 @@ Global: los clientes se comparten entre sucursales. Se dan de alta solos al cobr
 }
 ```
 
-## Subcolección: `sucursales/{id}/deliverys`
+## ~~Subcolección: `sucursales/{id}/deliverys`~~ — EN DESUSO
 
-```js
-{
-  nombre: "Pedro Rodríguez",
-  telefono: "1166667777",
-  activo: true | false,
-  colorMoto: "rojo",
-  direccion: "Av. Corrientes 1234",
-  dni: "37123123",
-  marcaMoto: "Yamaha",
-  modeloMoto: "Fz",
-  patente: "AB123CD"
-}
-```
+Los repartidores se unificaron en `usuarios`, con `rol: delivery` y `sinAcceso: true`. Ya no se
+escribe ni se lee esta subcolección: `JefeDeliverys` consulta `usuarios` filtrando por sucursal,
+rol y `activo`.
+
+Si quedaran documentos viejos, se borran a mano desde la Consola. No hay migración automática.
 
 ## Subcolección: `sucursales/{id}/contadores`
 Usada por `getNextSequence()` — la numeración de tickets es por sucursal.
@@ -227,7 +241,7 @@ service cloud.firestore {
         allow delete: if false;
       }
 
-      // Colecciones operativas (resumenDiario, deliverys, contadores): solo staff.
+      // Colecciones operativas (envios, resumenDiario, deliverys, contadores): solo staff.
       // Excluye pedidos: las reglas se combinan con OR y este wildcard
       // re-otorgaría el delete bloqueado arriba.
       match /{coleccion}/{documento} {
@@ -251,8 +265,21 @@ service cloud.firestore {
     }
 
     // Otras Colecciones
+    // Empleados. Cualquier staff puede LEER (la Caja necesita nombres, el
+    // encargado la lista de su sucursal), pero escribir es SOLO del admin: un
+    // `write` abierto dejaba que un cajero se pusiera rol admin editando su
+    // propio documento desde la consola del navegador.
+    //
+    // Nadie edita su propio perfil: Mi Perfil es de solo lectura y si un dato
+    // está mal lo corrige el administrador. Lo único que el empleado cambia por
+    // su cuenta es la contraseña, y eso va por Auth, no por Firestore.
+    //
+    // El alta CON acceso la hace la Cloud Function con Admin SDK, que se saltea
+    // las reglas; este create cubre a los empleados sin acceso, que los escribe
+    // el cliente desde PanelAdmin.
     match /usuarios/{usuario} {
-      allow read, write: if estaAutenticado();
+      allow read: if estaAutenticado();
+      allow write: if esAdmin();
     }
     match /clientes/{cliente} {
       allow read, write: if estaAutenticado();
@@ -280,6 +307,19 @@ service cloud.firestore {
 
     function estaAutenticado() {
       return request.auth != null;
+    }
+
+    // OJO: el valor va literal. Las reglas no leen variables de entorno, así que
+    // esto tiene que coincidir a mano con REACT_APP_admin del cliente y con
+    // ADMIN_ROL de functions/.env. Si los tres no dicen lo mismo, el alta y la
+    // edición de empleados dejan de funcionar.
+    // El get() se factura como lectura. Es la ÚNICA lectura que agregan estas
+    // reglas: el resto de las funciones auxiliares solo miran request/resource,
+    // que ya vienen en el pedido y no cuestan nada. Y solo corre en escrituras
+    // sobre `usuarios`, que las hace el admin y son pocas por mes.
+    function esAdmin() {
+      return estaAutenticado()
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'PEGAR_ACA_EL_VALOR_DE_REACT_APP_admin';
     }
   }
 }

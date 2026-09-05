@@ -125,7 +125,7 @@ const HistorialPedidos = () => {
                       <>
                         <label className="fw-semibold mb-0 small">Sucursal</label>
                         <select
-                          className="form-select form-select-sm"
+                          className="form-select form-select-sm text-center"
                           style={{ width: "180px" }}
                           value={sucursalSel}
                           onChange={e => setSucursalSel(e.target.value)}
@@ -139,7 +139,7 @@ const HistorialPedidos = () => {
                     <label className="fw-semibold mb-0 small">Desde</label>
                     <input
                       type="date"
-                      className="form-control form-control-sm"
+                      className="form-control form-control-sm text-center"
                       style={{ width: "160px" }}
                       value={fechaInicioStr}
                       onChange={e => setFechaInicioStr(e.target.value)}
@@ -147,7 +147,7 @@ const HistorialPedidos = () => {
                     <label className="fw-semibold mb-0 small">Hasta</label>
                     <input
                       type="date"
-                      className="form-control form-control-sm"
+                      className="form-control form-control-sm text-center"
                       style={{ width: "160px" }}
                       value={fechaFinStr}
                       onChange={e => setFechaFinStr(e.target.value)}

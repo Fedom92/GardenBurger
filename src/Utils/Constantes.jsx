@@ -67,3 +67,19 @@ export const getCurrentStepIndex = (estado) => {
 };
 
 export const ENVIOS_LOCALES = ["Retira", "Espera Afuera"];
+
+// Roles a los que el alta de empleados les pide los datos de la moto. Se usa en
+// el formulario de creación y en el de edición, para no repetir la condición.
+export const ROLES_CON_MOTO = [process.env.REACT_APP_delivery];
+
+// Los roles se guardan con el valor de su variable de entorno, que no es
+// legible. Este mapa los traduce para mostrarlos en pantalla.
+export const NOMBRES_ROL = {
+  [process.env.REACT_APP_admin]: "Admin",
+  [process.env.REACT_APP_encargado]: "Encargado",
+  [process.env.REACT_APP_cajero]: "Cajero",
+  [process.env.REACT_APP_cocina]: "Cocina",
+  [process.env.REACT_APP_delivery]: "Delivery",
+  [process.env.REACT_APP_contador]: "Contador",
+  [process.env.REACT_APP_atp]: "ATP",
+};

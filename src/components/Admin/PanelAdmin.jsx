@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { collection, orderBy, query, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, orderBy, query, getDocs, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { db, app } from "../../firebaseConfig/firebase";
-import CrearUsuario from "./CrearUsuario";
+import { ROLES_CON_MOTO, NOMBRES_ROL } from "../../Utils/Constantes";
+import CrearEmpleado from "./CrearEmpleado";
 import Envios from "./Parametros/Envios";
 import Sucursales from "./Parametros/Sucursales";
 import { fetchSucursales } from "../../Utils/sucursales";
@@ -10,44 +11,37 @@ import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
 
-const NOMBRES_ROL = {
-  [process.env.REACT_APP_admin]: "Admin",
-  [process.env.REACT_APP_encargado]: "Encargado",
-  [process.env.REACT_APP_cajero]: "Cajero",
-  [process.env.REACT_APP_cocina]: "Cocina",
-  [process.env.REACT_APP_delivery]: "Delivery",
-  [process.env.REACT_APP_contador]: "Contador",
-  [process.env.REACT_APP_atp]: "ATP",
+const EDICION_VACIA = {
+  rol: "", sucursal: "", dni: "", domicilio: "", telefono: "", valorHora: 0,
+  marcaMoto: "", modeloMoto: "", colorMoto: "", patente: "",
 };
 
 const PanelAdmin = () => {
-  const [usuarios, setUsuarios] = useState([]);
+  const [empleados, setEmpleados] = useState([]);
   const [search, setSearch] = useState("");
   const [order, setOrder] = useState("ASC");
   const [modalShow, setModalShow] = useState(false);
-  const [mostrarAjustes, setMostrarAjustes] = useState(false);
   const [modalShowEnvios, setModalShowEnvios] = useState(false);
   const [modalShowSucursales, setModalShowSucursales] = useState(false);
   const [sucursales, setSucursales] = useState([]);
 
   const [modalShowEditRol, setModalShowEditRol] = useState([false, ""]);
-  const [rol, setRol] = useState("");
-  const [sucursalUsuario, setSucursalUsuario] = useState("");
+  const [edicion, setEdicion] = useState(EDICION_VACIA);
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const userCollection = useRef(query(collection(db, "usuarios"), orderBy("rol")));
+  const empleadosCollection = useRef(query(collection(db, "usuarios"), orderBy("rol")));
 
-  const getUsuarios = useCallback((snapshot) => {
+  const getEmpleados = useCallback((snapshot) => {
     // Los dados de baja quedan como registro histórico (activo: false).
     // Los docs viejos sin el campo se consideran activos.
-    const usuariosMapped = snapshot.docs
+    const empleadosMapped = snapshot.docs
       .filter((doc) => doc.data().activo !== false)
       .map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
-    setUsuarios(usuariosMapped);
+    setEmpleados(empleadosMapped);
     setIsLoading(false);
   }, []);
 
@@ -55,8 +49,8 @@ const PanelAdmin = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const usersSnapshot = await getDocs(userCollection.current);
-        await getUsuarios(usersSnapshot);
+        const empleadosSnapshot = await getDocs(empleadosCollection.current);
+        await getEmpleados(empleadosSnapshot);
 
       } catch (error) {
         console.error('Error fetching data Panel Admin:', error);
@@ -65,7 +59,7 @@ const PanelAdmin = () => {
 
     fetchData();
 
-  }, [getUsuarios]);
+  }, [getEmpleados]);
 
   useEffect(() => {
     fetchSucursales().then(setSucursales).catch(console.error);
@@ -92,14 +86,14 @@ const PanelAdmin = () => {
 
   let filteredResults = [];
   if (!search) {
-    filteredResults = usuarios;
+    filteredResults = empleados;
   } else {
-    filteredResults = usuarios.filter((dato) => {
-      const nombreCompletoSinAcentos = quitarAcentos(dato.nombreCompleto);
+    filteredResults = empleados.filter((dato) => {
+      // Con los repartidores adentro la colección es más heterogénea: cualquiera
+      // de estos campos puede faltar y `.toString()` sobre undefined revienta.
       const searchSinAcentos = quitarAcentos(search);
-      return (
-        nombreCompletoSinAcentos.includes(searchSinAcentos) ||
-        dato.telefono.toString().includes(searchSinAcentos)
+      return ["nombreCompleto", "telefono", "dni"].some((campo) =>
+        quitarAcentos(String(dato[campo] ?? "")).includes(searchSinAcentos)
       );
     });
   }
@@ -110,105 +104,128 @@ const PanelAdmin = () => {
   const currentResults = filteredResults.slice(startIndex, endIndex);
 
   const sorting = (col) => {
-    if (order === "ASC") {
-      const sorted = [...usuarios].sort((a, b) =>
-        a[col].toString() > b[col].toString() ? 1 : -1
-      );
-      setUsuarios(sorted);
-      setOrder("DSC");
-    }
-    if (order === "DSC") {
-      const sorted = [...usuarios].sort((a, b) =>
-        a[col].toString() < b[col].toString() ? 1 : -1
-      );
-      setUsuarios(sorted);
-      setOrder("ASC");
-    }
+    // `?? ""` porque no todos los empleados tienen todos los campos: un cajero no
+    // tiene patente y un repartidor viejo puede no tener valorHora.
+    const valor = (fila) => String(fila[col] ?? "");
+    const signo = order === "ASC" ? 1 : -1;
+    setEmpleados([...empleados].sort((a, b) =>
+      valor(a).localeCompare(valor(b), "es", { numeric: true }) * signo
+    ));
+    setOrder(order === "ASC" ? "DSC" : "ASC");
   };
 
-  const handleEditUsuario = async (id) => {
-    if (!sucursalUsuario) {
-      Swal.fire({ title: "Falta la sucursal", text: "Selecciona una sucursal para el usuario.", icon: "warning", confirmButtonColor: "#198754" });
+  const handleEditEmpleado = async (id) => {
+    if (!edicion.sucursal) {
+      Swal.fire({ title: "Falta la sucursal", text: "Selecciona una sucursal para el empleado.", icon: "warning", confirmButtonColor: "#198754" });
       return;
     }
-    const userDoc = doc(db, "usuarios", id);
-    await updateDoc(userDoc, { rol: rol, sucursal: sucursalUsuario });
-    setUsuarios((prevUsuarios) =>
-      prevUsuarios.map((usuario) =>
-        usuario.id === id ? { ...usuario, rol: rol, sucursal: sucursalUsuario } : usuario
+
+    // Los datos de la moto solo se guardan si el rol los usa: si alguien deja de
+    // ser repartidor, no tiene sentido que arrastre la patente.
+    const cambios = {
+      rol: edicion.rol,
+      sucursal: edicion.sucursal,
+      dni: edicion.dni,
+      domicilio: edicion.domicilio,
+      telefono: edicion.telefono,
+      valorHora: Number(edicion.valorHora) || 0,
+      ...(ROLES_CON_MOTO.includes(edicion.rol) ? {
+        marcaMoto: edicion.marcaMoto,
+        modeloMoto: edicion.modeloMoto,
+        colorMoto: edicion.colorMoto,
+        patente: edicion.patente,
+      } : {}),
+    };
+
+    await updateDoc(doc(db, "usuarios", id), cambios);
+    setEmpleados((prevEmpleados) =>
+      prevEmpleados.map((empleado) =>
+        empleado.id === id ? { ...empleado, ...cambios } : empleado
       )
     );
     handleCloseModal();
   };
 
-  const handleOpenEditModal = (usuario) => {
-    setModalShowEditRol([true, usuario]);
-    setRol(usuario.rol);
-    setSucursalUsuario(usuario.sucursal || "");
+  const handleOpenEditModal = (empleado) => {
+    setModalShowEditRol([true, empleado]);
+    setEdicion({
+      rol: empleado.rol || "",
+      sucursal: empleado.sucursal || "",
+      dni: empleado.dni || "",
+      domicilio: empleado.domicilio || "",
+      telefono: empleado.telefono || "",
+      valorHora: empleado.valorHora ?? 0,
+      marcaMoto: empleado.marcaMoto || "",
+      modeloMoto: empleado.modeloMoto || "",
+      colorMoto: empleado.colorMoto || "",
+      patente: empleado.patente || "",
+    });
   };
 
   const handleCloseModal = () => {
     setModalShowEditRol([false, ""]);
-    setRol("");
-    setSucursalUsuario("");
+    setEdicion(EDICION_VACIA);
   };
 
-  const agregarUsuario = (nuevaUsuario) => {
-    const nuevosUsuarios = [...usuarios, nuevaUsuario];
+  const setCampo = (campo) => (e) =>
+    setEdicion((prev) => ({ ...prev, [campo]: e.target.value }));
 
-    nuevosUsuarios.sort((a, b) => a.rol - b.rol);
+  const agregarEmpleado = (nuevoEmpleado) => {
+    const nuevosEmpleados = [...empleados, nuevoEmpleado];
 
-    setUsuarios(nuevosUsuarios);
+    nuevosEmpleados.sort((a, b) => a.rol - b.rol);
+
+    setEmpleados(nuevosEmpleados);
   };
 
-  const confirmeDelete = (e, id) => {
+  const confirmeDelete = (e, empleado) => {
     e.preventDefault();
     Swal.fire({
-      title: '¿Dar de baja al usuario?',
-      text: "Perderá el acceso al sistema de forma definitiva. Si vuelve, habrá que crearlo de nuevo.",
+      title: '¿Está seguro de eliminar?',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#198754',
-      confirmButtonText: 'Si',
-      cancelButtonText: 'No'
+      confirmButtonText: 'Aceptar',
+      cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        darDeBajaUsuario(id);
+        darDeBajaEmpleado(empleado);
       }
     })
   }
 
-  const darDeBajaUsuario = async (id) => {
+  const darDeBajaEmpleado = async (empleado) => {
     try {
-      // Server-side: borra la cuenta de Auth y marca el doc como inactivo
-      const darDeBajaFn = httpsCallable(getFunctions(app), "darDeBajaUsuario");
-      await darDeBajaFn({ uid: id });
+      if (empleado.sinAcceso) {
+        // No tiene cuenta de Auth: llamar a la Function fallaría con un uid que
+        // no existe. Alcanza con marcar el documento.
+        await updateDoc(doc(db, "usuarios", empleado.id), {
+          activo: false,
+          bajaTimestamp: serverTimestamp(),
+        });
+      } else {
+        // Server-side: borra la cuenta de Auth y marca el doc como inactivo
+        const darDeBajaFn = httpsCallable(getFunctions(app), "darDeBajaUsuario");
+        await darDeBajaFn({ uid: empleado.id });
+      }
 
-      setUsuarios((prevUsuarios) => prevUsuarios.filter((item) => item.id !== id));
+      setEmpleados((prevEmpleados) => prevEmpleados.filter((item) => item.id !== empleado.id));
       Swal.fire({
         title: '¡Listo!',
-        text: 'El usuario fue dado de baja.',
+        text: 'El empleado fue dado de baja.',
         icon: 'success',
         confirmButtonColor: '#198754'
       });
     } catch (error) {
-      console.error("Error al dar de baja al usuario: ", error);
+      console.error("Error al dar de baja al empleado: ", error);
       Swal.fire({
         title: '¡Error!',
-        text: error.message || 'No se pudo dar de baja al usuario.',
+        text: error.message || 'No se pudo dar de baja al empleado.',
         icon: 'error',
         confirmButtonColor: '#d33',
       });
     }
   };
-
-  function funcMostrarAjustes() {
-    if (mostrarAjustes) {
-      setMostrarAjustes(false);
-    } else {
-      setMostrarAjustes(true);
-    }
-  }
 
   return (
     <>
@@ -239,46 +256,33 @@ const PanelAdmin = () => {
                       style={{ maxHeight: "40px", marginLeft: "10px" }}
                     >
                       <h1>Panel Administrador</h1>
-                      <button
-                        className="btn mx-2 btn-sm"
-                        style={{ borderRadius: "5px" }}
-                        onClick={() => {
-                          funcMostrarAjustes(true);
-                        }}
-                      >
-                        <i className="fa-solid fa-gear"></i>
-                      </button>
-
-
-                      {mostrarAjustes && (
-                        <div>
-                          <button
-                            variant="tertiary"
-                            className="btn-contorno m-1"
-                            onClick={() => setModalShowEnvios(true)}
-                          >
-                            Envios
-                          </button>
-                          <button
-                            variant="tertiary"
-                            className="btn-contorno m-1"
-                            onClick={() => setModalShowSucursales(true)}
-                          >
-                            Sucursales
-                          </button>
-                        </div>
-                      )}
+                      <div>
+                        <button
+                          variant="tertiary"
+                          className="btn-contorno m-1 mx-2"
+                          onClick={() => setModalShowEnvios(true)}
+                        >
+                          Envios
+                        </button>
+                        <button
+                          variant="tertiary"
+                          className="btn-contorno m-1"
+                          onClick={() => setModalShowSucursales(true)}
+                        >
+                          Sucursales
+                        </button>
+                      </div>
                     </div>
 
                     <div className="d-flex justify-content-end">
                       <button
                         variant="primary"
-                        className="btn btn-contorno m-2"
+                        className="btn-contorno m-2"
                         onClick={() => {
                           setModalShow(true);
                         }}
                       >
-                        Agregar Usuario
+                        Agregar Empleado
                       </button>
                     </div>
                   </div>
@@ -292,33 +296,39 @@ const PanelAdmin = () => {
                         <th onClick={() => sorting("telefono")}>Telefono</th>
                         <th onClick={() => sorting("rol")}>Rol</th>
                         <th onClick={() => sorting("sucursal")}>Sucursal</th>
+                        <th onClick={() => sorting("valorHora")}>Valor Hora</th>
                         <th>Accion</th>
                       </tr>
                     </thead>
 
                     <tbody>
-                      {currentResults.map((usuario) => (
-                        <tr key={usuario.id}
-                          className={usuario.rol === process.env.REACT_APP_admin ? "admin-row" : ""}
+                      {currentResults.map((empleado) => (
+                        <tr key={empleado.id}
+                          className={empleado.rol === process.env.REACT_APP_admin ? "admin-row" : ""}
                         >
-                          <td> {usuario.nombreCompleto}</td>
-                          <td> {usuario.correo} </td>
-                          <td> {usuario.telefono} </td>
-                          <td>{NOMBRES_ROL[usuario.rol] || '—'}</td>
-                          <td>{sucursales.find((s) => s.id === usuario.sucursal)?.nombre || usuario.sucursal || "—"}</td>
+                          <td> {empleado.nombreCompleto}</td>
                           <td>
-                            {usuario.rol !== process.env.REACT_APP_admin && (
+                            {empleado.sinAcceso
+                              ? <span className="badge bg-secondary">Sin acceso</span>
+                              : (empleado.correo || "—")}
+                          </td>
+                          <td> {empleado.telefono} </td>
+                          <td>{NOMBRES_ROL[empleado.rol] || '—'}</td>
+                          <td>{sucursales.find((s) => s.id === empleado.sucursal)?.nombre || empleado.sucursal || "—"}</td>
+                          <td>{empleado.valorHora ? `$${Number(empleado.valorHora).toLocaleString("es-AR")}` : "—"}</td>
+                          <td>
+                            {empleado.rol !== process.env.REACT_APP_admin && (
                               <>
                                 <button
                                   className="btn btn-success mx-1"
-                                  onClick={() => handleOpenEditModal(usuario)}
+                                  onClick={() => handleOpenEditModal(empleado)}
                                 >
                                   <i className="fa-solid fa-edit"></i>
                                 </button>
 
                                 <button
                                   onClick={(e) => {
-                                    confirmeDelete(e, usuario.id);
+                                    confirmeDelete(e, empleado);
                                   }}
                                   className="btn btn-danger"
                                 >
@@ -334,7 +344,7 @@ const PanelAdmin = () => {
                 </div>
                 <div className="table__footer">
                   <div className="table__footer-left">
-                    Mostrando {startIndex + 1} - {Math.min(endIndex, usuarios.length)} de {usuarios.length}
+                    Mostrando {startIndex + 1} - {Math.min(endIndex, empleados.length)} de {empleados.length}
                   </div>
 
                   <div className="table__footer-right">
@@ -387,9 +397,9 @@ const PanelAdmin = () => {
         </div >
       )
       }
-      <CrearUsuario
+      <CrearEmpleado
         show={modalShow}
-        agregarusuario={agregarUsuario}
+        agregarempleado={agregarEmpleado}
         onHide={() => setModalShow(false)} />
 
       <Envios
@@ -406,50 +416,98 @@ const PanelAdmin = () => {
         modalShowEditRol[0] && (
           <Modal
             show={modalShowEditRol[0]}
+            size="lg"
             aria-labelledby="contained-modal-title-vcenter"
             centered
           >
             <Modal.Header closeButton onClick={handleCloseModal}>
-              <Modal.Title>Editar Usuario</Modal.Title>
+              <Modal.Title>Editar Empleado — {modalShowEditRol[1].nombreCompleto}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <form name="editarRol">
-                <div className="mb-2">
-                  <label className="form-label">Rol*</label>
-                  <select
-                    defaultValue={modalShowEditRol[1].rol}
-                    onChange={(e) => setRol(e.target.value)}
-                    className="form-control"
-                    multiple={false}
-                  >
-                    <option value={process.env.REACT_APP_encargado}>Encargado</option>
-                    <option value={process.env.REACT_APP_cajero}>Cajero</option>
-                    <option value={process.env.REACT_APP_cocina}>Cocina</option>
-                    <option value={process.env.REACT_APP_delivery}>Delivery</option>
-                    <option value={process.env.REACT_APP_contador}>Contador</option>
-                    <option value={process.env.REACT_APP_atp}>ATP</option>
-                  </select>
+              <form name="editarEmpleado">
+                <div className="row">
+                  <div className="col-md-6 mb-2">
+                    <label className="form-label">Rol*</label>
+                    <select
+                      value={edicion.rol}
+                      onChange={setCampo("rol")}
+                      className="form-control"
+                      multiple={false}
+                    >
+                      <option value={process.env.REACT_APP_encargado}>Encargado</option>
+                      <option value={process.env.REACT_APP_cajero}>Cajero</option>
+                      <option value={process.env.REACT_APP_cocina}>Cocina</option>
+                      <option value={process.env.REACT_APP_delivery}>Delivery</option>
+                      <option value={process.env.REACT_APP_contador}>Contador</option>
+                      <option value={process.env.REACT_APP_atp}>ATP</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6 mb-2">
+                    <label className="form-label">Sucursal*</label>
+                    <select
+                      value={edicion.sucursal}
+                      onChange={setCampo("sucursal")}
+                      className="form-control"
+                      multiple={false}
+                    >
+                      <option value="">Selecciona una sucursal ....</option>
+                      {sucursales.map((s) => (
+                        <option key={s.id} value={s.id}>{s.nombre || s.id}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div className="mb-2">
-                  <label className="form-label">Sucursal*</label>
-                  <select
-                    value={sucursalUsuario}
-                    onChange={(e) => setSucursalUsuario(e.target.value)}
-                    className="form-control"
-                    multiple={false}
-                  >
-                    <option value="">Selecciona una sucursal ....</option>
-                    {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>{s.nombre || s.id}</option>
-                    ))}
-                  </select>
+
+                <div className="row">
+                  <div className="col-md-4 mb-2">
+                    <label className="form-label">DNI</label>
+                    <input type="text" className="form-control" value={edicion.dni} onChange={setCampo("dni")} />
+                  </div>
+                  <div className="col-md-4 mb-2">
+                    <label className="form-label">Telefono</label>
+                    <input type="text" className="form-control" value={edicion.telefono} onChange={setCampo("telefono")} />
+                  </div>
+                  <div className="col-md-4 mb-2">
+                    <label className="form-label">Valor por hora ($)</label>
+                    <input type="number" min={0} className="form-control" value={edicion.valorHora} onChange={setCampo("valorHora")} />
+                  </div>
                 </div>
+
+                <div className="mb-2">
+                  <label className="form-label">Domicilio</label>
+                  <input type="text" className="form-control" value={edicion.domicilio} onChange={setCampo("domicilio")} />
+                </div>
+
+                {ROLES_CON_MOTO.includes(edicion.rol) && (
+                  <div className="row border-top pt-2 mt-1">
+                    <div className="col-12 mb-1">
+                      <span className="text-body-secondary small fw-bold text-uppercase">Datos de la moto</span>
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Patente</label>
+                      <input type="text" className="form-control" value={edicion.patente} onChange={setCampo("patente")} />
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Marca</label>
+                      <input type="text" className="form-control" value={edicion.marcaMoto} onChange={setCampo("marcaMoto")} />
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Modelo</label>
+                      <input type="text" className="form-control" value={edicion.modeloMoto} onChange={setCampo("modeloMoto")} />
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Color</label>
+                      <input type="text" className="form-control" value={edicion.colorMoto} onChange={setCampo("colorMoto")} />
+                    </div>
+                  </div>
+                )}
+
                 <button
-                  className="btn btn-success"
+                  className="btn btn-success mt-2"
                   type="submit"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleEditUsuario(modalShowEditRol[1].id)
+                    handleEditEmpleado(modalShowEditRol[1].id)
                   }}
                 >
                   Actualizar

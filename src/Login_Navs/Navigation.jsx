@@ -1,5 +1,5 @@
 import Nav from "./Nav";
-import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaPeopleCarry, FaHistory, FaChartBar, FaStore } from 'react-icons/fa';
+import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaHistory, FaChartBar, FaStore } from 'react-icons/fa';
 import { useState, useEffect, createContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -28,9 +28,7 @@ const Navigation = () => {
     const [isActive, setIsActive] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [openConfig, setOpenConfig] = useState(false);
-    const [openDeliverys, setOpenDeliverys] = useState(false);
     const [openEstadisticas, setOpenEstadisticas] = useState(false);
-    const [openHistorial, setOpenHistorial] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -71,9 +69,6 @@ const Navigation = () => {
         const rutasQueAbrenSubmenu = ["/miPerfil", "/admin"];
         setOpenConfig(rutasQueAbrenSubmenu.includes(location.pathname));
 
-        const rutasQueAbrenSubmenuDeliverys = ["/gestion-motodeliverys", "/jefe-deliverys"];
-        setOpenDeliverys(rutasQueAbrenSubmenuDeliverys.includes(location.pathname));
-
         const rutasQueAbrenSubmenuEstadisticas = ["/estadisticas-viejas"];
         setOpenEstadisticas(rutasQueAbrenSubmenuEstadisticas.includes(location.pathname));
 
@@ -82,9 +77,6 @@ const Navigation = () => {
         // o recargar la dejaba desplegada.
         const rutasConBarraColapsada = ["/estadisticas-viejas"];
         if (rutasConBarraColapsada.includes(location.pathname)) setIsActive(true);
-
-        const rutasQueAbrenSubmenuHistorial = ["/historial-pedidos"];
-        setOpenHistorial(rutasQueAbrenSubmenuHistorial.includes(location.pathname));
     }, [userData.rol, location.pathname]);
 
     // `isActive` es el colapso de la barra de escritorio, donde Nav dibuja sólo
@@ -148,17 +140,11 @@ const Navigation = () => {
                             </div>
                         )}
 
+                        {/* El alta de repartidores se mudó al PanelAdmin, así que el
+                            submenú quedó con un solo ítem y pasa a ser link directo. */}
                         {puedeVer("deliverys") && (
-                            <div className="sidebar">
-                                <div className={openDeliverys ? "sidebar-item open" : "sidebar-item"}>
-                                    <div className="sidebar-title link-light" onClick={() => setOpenDeliverys(prev => !prev)}>
-                                        <Nav title="Deliverys" Icon={FaMotorcycle} />
-                                    </div>
-                                    <div className="sidebar-content">
-                                        <Link to="/gestion-motodeliverys" className="text-decoration-none link-light"><Nav title="Gestion Personal" Icon={FaUsers} /></Link>
-                                        <Link to="/jefe-deliverys" className="text-decoration-none link-light"><Nav title="Entregas" Icon={FaPeopleCarry} /></Link>
-                                    </div>
-                                </div>
+                            <div className="sidebar-title">
+                                <Link to="/jefe-deliverys" className="text-decoration-none link-light"><Nav title="Deliverys" Icon={FaMotorcycle} /></Link>
                             </div>
                         )}
 
@@ -168,16 +154,10 @@ const Navigation = () => {
                             </div>
                         )}
 
+                        {/* Un solo destino: no tiene sentido un acordeón de un ítem. */}
                         {puedeVer("historial") && (
-                            <div className="sidebar">
-                                <div className={openHistorial ? "sidebar-item open" : "sidebar-item"}>
-                                    <div className="sidebar-title link-light" onClick={() => setOpenHistorial(prev => !prev)}>
-                                        <Nav title="Historial" Icon={FaHistory} />
-                                    </div>
-                                    <div className="sidebar-content">
-                                        <Link to="/historial-pedidos" className="text-decoration-none link-light"><Nav title="Pedidos" Icon={FaHistory} /></Link>
-                                    </div>
-                                </div>
+                            <div className="sidebar-title">
+                                <Link to="/historial-pedidos" className="text-decoration-none link-light"><Nav title="Historial" Icon={FaHistory} /></Link>
                             </div>
                         )}
 

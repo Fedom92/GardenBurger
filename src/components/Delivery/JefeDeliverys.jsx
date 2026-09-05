@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, getDoc, increment } from "firebase/firestore";
-import { colSucursal, docSucursal } from "../../firebaseConfig/firebase";
+import { collection, updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, getDoc, increment } from "firebase/firestore";
+import { db, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import { getFechaComercial } from "../../Utils/fechaComercial";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
@@ -26,7 +26,15 @@ const JefeDeliverys = () => {
         where("estado", "==", ESTADOS.DELIVERY),
         orderBy("timestamp", "asc")
     ));
-    const deliverysCollection = useRef(query(colSucursal("deliverys"), where("activo", "==", true)));
+    // Los repartidores viven en `usuarios` como cualquier otro empleado, con
+    // rol delivery y sin cuenta de Auth. El alta la hace el admin desde el
+    // PanelAdmin: acá solo se los lista para asignarlos a un pedido.
+    const deliverysCollection = useRef(query(
+        collection(db, "usuarios"),
+        where("sucursal", "==", userData.sucursal),
+        where("rol", "==", process.env.REACT_APP_delivery),
+        where("activo", "==", true)
+    ));
 
     const getDeliverys = useCallback((snapshot) => {
         const deliverysArray = snapshot.docs

@@ -12,7 +12,6 @@ import SeleccionSucursal from "./components/Solicitudes/SeleccionSucursal";
 import Menu from "./components/Solicitudes/Menu.jsx";
 import Caja from "./components/POS/Caja";
 import JefeDeliverys from "./components/Delivery/JefeDeliverys";
-import PersonalDeliverys from "./components/Delivery/GestionPersonal/PersonalDeliverys";
 import Clientes from "./components/Clientes/Clientes";
 import Cocina from "./components/Cocina/Cocina";
 import HistorialPedidos from "./components/Pedidos/HistorialPedidos";
@@ -52,7 +51,6 @@ function App() {
               <Route path="/estadisticas-viejas" element={<RequireAuth><RequireAdmin><Estadisticas /></RequireAdmin></RequireAuth>} />
 
               <Route path="/pedidos-caja" element={<RequireAuth><RequireSucursal><Caja /></RequireSucursal></RequireAuth>} />
-              <Route path="/gestion-motodeliverys" element={<RequireAuth><RequireSucursal><PersonalDeliverys /></RequireSucursal></RequireAuth>} />
               <Route path="/jefe-deliverys" element={<RequireAuth><RequireSucursal><JefeDeliverys /></RequireSucursal></RequireAuth>} />
               <Route path="/gestion-cocina" element={<RequireAuth><RequireSucursal><Cocina /></RequireSucursal></RequireAuth>} />
               <Route path="/historial-pedidos" element={<RequireAuth><RequireSucursal permitirAdmin><HistorialPedidos /></RequireSucursal></RequireAuth>} />

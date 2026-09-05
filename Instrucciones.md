@@ -107,8 +107,8 @@ El sistema es multi-sucursal dentro de **un solo proyecto Firebase**. Las colecc
 |---|---|
 | `productos` (catálogo con `visible`, `categoria`, `precio`) | `pedidos` (web pública con campo `origen`, o cajeros) |
 | `categorias` (ordenadas por `nroOrden`) | `resumenDiario` (cierre del turno: totalEfectivo/efectivoLocal/efectivoEnvio/mp/totalPedidos/totalCombos) |
-| `usuarios` (campo `rol` + campo `sucursal`) | `deliverys` (repartidores con campo `activo`) |
-| `clientes` (compartidos entre sucursales) | `contadores` (secuencias de esa sucursal) |
+| `usuarios` (**todos los empleados**, con `rol`, `sucursal`, `valorHora` y `sinAcceso`) | `contadores` (secuencias de esa sucursal) |
+| `clientes` (compartidos entre sucursales) | |
 | `sucursales` (metadata: `nombre`, `direccion`, `activa`) | |
 | `envios` (zonas de reparto, iguales para todas las sucursales) | |
 
