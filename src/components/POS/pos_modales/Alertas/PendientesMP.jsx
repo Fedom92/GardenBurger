@@ -7,11 +7,15 @@ import Swal from "sweetalert2";
 import moment from "moment";
 import { ESTADOS } from "../../../../Utils/Constantes";
 import { getResumenOperation } from "../../pos_hooks/useResumenDiario";
+import { useAccionUnica } from "../../../../Utils/useAccionUnica";
 
 const PendientesMP = ({ isOpen, onClose }) => {
     const { userData } = useAuth();
     const [pedidosPendientes, setPedidosPendientes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    // Aprobar y rechazar mueven el arqueo, y comparten el guard: mientras una
+    // corre, la otra no arranca.
+    const { procesando, ejecutar } = useAccionUnica();
 
     useEffect(() => {
         if (!isOpen) return;
@@ -48,7 +52,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
         return () => unsubscribe();
     }, [isOpen, onClose]);
 
-    const aprobarPedido = async (pedidoId) => {
+    const aprobarPedido = (pedidoId) => ejecutar(async () => {
         try {
             const pedidoRef = docSucursal("pedidos", pedidoId);
             await updateDoc(pedidoRef, {
@@ -66,56 +70,59 @@ const PendientesMP = ({ isOpen, onClose }) => {
                 confirmButtonColor: '#dc3545',
             });
         }
-    };
+    });
 
-    const rechazarPedido = async (pedidoId) => {
-        const result = await Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'El pedido será rechazado.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, rechazar',
-            cancelButtonText: 'Cancelar'
-        });
+    const rechazarPedido = (pedidoId) => ejecutar(async () => {
+        try {
+            const result = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: 'El pedido será rechazado.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, rechazar',
+                cancelButtonText: 'Cancelar'
+            });
 
-        if (result.isConfirmed) {
-            try {
-                const pedidoRef = docSucursal("pedidos", pedidoId);
-                const pedido = pedidosPendientes.find(p => p.id === pedidoId);
+            if (!result.isConfirmed) return;
 
-                const updateData = {
-                    estado: ESTADOS.CANCELADO,
-                    cajeroCancelaMPID: userData.id,
-                    cajeroCancelaMP: userData.nombreCompleto,
-                    cajeroCancelaMPTimestamp: serverTimestamp(),
-                };
+            // El listener pudo haberlo sacado de la lista mientras el Swal estaba
+            // abierto: sin esto, getResumenOperation descuenta con datos undefined.
+            const pedido = pedidosPendientes.find(p => p.id === pedidoId);
+            if (!pedido) return;
 
-                const { ref: resumenRef, stats } = getResumenOperation({
-                    metodoPago: pedido.metodoPago,
-                    total: pedido.total,
-                    montoEfectivo: pedido.montoEfectivo,
-                    envio: pedido.envio,
-                    carrito: pedido.carrito,
-                    descontar: true,
-                });
+            const pedidoRef = docSucursal("pedidos", pedidoId);
+            const updateData = {
+                estado: ESTADOS.CANCELADO,
+                cajeroCancelaMPID: userData.id,
+                cajeroCancelaMP: userData.nombreCompleto,
+                cajeroCancelaMPTimestamp: serverTimestamp(),
+            };
 
-                const batch = writeBatch(db);
-                batch.update(pedidoRef, updateData);
-                batch.set(resumenRef, stats, { merge: true });
-                await batch.commit();
-            } catch (error) {
-                console.error('Error rechazando el pedido:', error);
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Error al rechazar el pedido',
-                    icon: 'error',
-                    confirmButtonColor: '#dc3545',
-                });
-            }
+            const { ref: resumenRef, stats } = getResumenOperation({
+                metodoPago: pedido.metodoPago,
+                total: pedido.total,
+                montoEfectivo: pedido.montoEfectivo,
+                envio: pedido.envio,
+                carrito: pedido.carrito,
+                descontar: true,
+            });
+
+            const batch = writeBatch(db);
+            batch.update(pedidoRef, updateData);
+            batch.set(resumenRef, stats, { merge: true });
+            await batch.commit();
+        } catch (error) {
+            console.error('Error rechazando el pedido:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al rechazar el pedido',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+            });
         }
-    };
+    });
 
     return (
         <Modal
@@ -198,12 +205,14 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                             <button
                                                 className="btn btn-success btn-sm flex-fill"
                                                 onClick={() => aprobarPedido(pedido.id)}
+                                                disabled={procesando}
                                             >
                                                 <i className="fa fa-check"></i> Aprobar
                                             </button>
                                             <button
                                                 className="btn btn-danger btn-sm flex-fill"
                                                 onClick={() => rechazarPedido(pedido.id)}
+                                                disabled={procesando}
                                             >
                                                 <i className="fa fa-times"></i> Rechazar
                                             </button>

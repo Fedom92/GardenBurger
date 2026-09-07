@@ -18,10 +18,13 @@ const useCliente = () => {
         }
     }, []);
 
+    // Se dispara sin await desde guardarBD: el alta del cliente es secundaria al
+    // pedido. Sin catch, un fallo acá era una unhandled rejection y el alta se
+    // perdía sin dejar rastro en ningún lado.
     const guardarClienteSiNoExiste = useCallback((clienteData) => {
         buscarClientePorTelefono(clienteData.telefono).then(existente => {
             if (!existente) {
-                addDoc(collection(db, "clientes"), {
+                return addDoc(collection(db, "clientes"), {
                     nombre: clienteData.nombre || "",
                     direccion: clienteData.direccion || "",
                     entreCalles: clienteData.entreCalles || "",
@@ -29,7 +32,7 @@ const useCliente = () => {
                     sucursal: userData?.sucursal || "",
                 });
             }
-        });
+        }).catch(error => console.error("Error guardando el cliente:", error));
     }, [buscarClientePorTelefono, userData?.sucursal]);
 
     return {

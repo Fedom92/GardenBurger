@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { NOMBRES_ROL } from "../../Utils/Constantes";
+import { ROLES } from "../../Utils/Constantes";
 import EditClave from "./EditClave";
 import "../../style/Main.css"
 import moment from 'moment';
@@ -76,7 +76,7 @@ const MiPerfil = () => {
                     <Campo label="Telefono" valor={userData?.telefono} />
                     <Campo label="Domicilio" valor={userData?.domicilio} ancho="col-12" />
                     <Campo label="Correo Electronico" valor={userData?.correo} />
-                    <Campo label="Rol" valor={NOMBRES_ROL[userData?.rol]} />
+                    <Campo label="Rol" valor={ROLES[userData?.rol]?.nombre} />
                     <Campo label="Sucursal" valor={userData?.sucursal} />
                     <Campo label="Fecha de Alta" valor={fechaAlta} />
                   </div>

@@ -9,6 +9,7 @@ import { ESTADOS, ENVIOS_LOCALES } from "../../../Utils/Constantes";
 import { getResumenOperation } from "../pos_hooks/useResumenDiario";
 import { quitarAcentos } from "../../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../../Utils/fechaComercial";
+import { useAccionUnica } from "../../../Utils/useAccionUnica";
 
 const CAMPOS_BUSQUEDA = ["telefono", "codigo", "direccion"];
 
@@ -17,6 +18,8 @@ const BuscarPedido = ({ isOpen, onClose }) => {
     const [busqueda, setBusqueda] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [errorBusqueda, setErrorBusqueda] = useState("");
+    // Eliminar descuenta del arqueo; `isLoading` es del buscador y no cubre esto.
+    const { procesando: eliminando, ejecutar } = useAccionUnica();
     const { userData } = useAuth();
 
     // Función para buscar, entre los pedidos de hoy, por teléfono, código o dirección.
@@ -58,20 +61,20 @@ const BuscarPedido = ({ isOpen, onClose }) => {
     };
 
     // Función para eliminar pedido (cambiar estado a ELIMINADO)
-    const eliminarPedido = async (pedido) => {
-        const result = await Swal.fire({
-            title: '¿Estás seguro?',
-            text: `Se marcará el pedido ${pedido.codigo} como ELIMINADO`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        });
+    const eliminarPedido = (pedido) => ejecutar(async () => {
+        try {
+            const result = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: `Se marcará el pedido ${pedido.codigo} como ELIMINADO`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
 
-        if (result.isConfirmed) {
-            try {
+            if (result.isConfirmed) {
                 const pedidoRef = docSucursal("pedidos", pedido.id);
                 const updateData = {
                     estado: ESTADOS.ELIMINADO,
@@ -108,17 +111,17 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                     icon: 'success',
                     confirmButtonColor: '#198754',
                 });
-            } catch (error) {
-                console.error('Error eliminando pedido:', error);
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Error al eliminar el pedido',
-                    icon: 'error',
-                    confirmButtonColor: '#dc3545',
-                });
             }
+        } catch (error) {
+            console.error('Error eliminando pedido:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al eliminar el pedido',
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+            });
         }
-    };
+    });
 
     // Limpiar el estado cuando se cierra el modal
     const handleClose = () => {
@@ -249,6 +252,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                     <button
                                                         className="btn btn-danger btn-sm w-75 fw-bold"
                                                         onClick={() => eliminarPedido(pedido)}
+                                                        disabled={eliminando}
                                                     >
                                                         <i className="fa fa-trash me-1"></i> Eliminar Pedido
                                                     </button>

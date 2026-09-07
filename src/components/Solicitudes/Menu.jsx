@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { fetchMenuPublico } from "../../Utils/menuPublico";
+import { fmtPesos } from "../../Utils/formato";
 import 'moment/locale/es';
 import { Card } from "./Card.jsx"
 import logo from '../../img/logo_negro3.png';
@@ -102,7 +103,7 @@ const Menu = () => {
                       {categoriasEspeciales.map(cat =>
                         data.carnes_precios[cat] ? (
                           <span key={cat}>
-                            {cat}: ${data.carnes_precios[cat].toLocaleString("es-AR")}
+                            {cat}: {fmtPesos(data.carnes_precios[cat])}
                           </span>
                         ) : null
                       )}
@@ -126,7 +127,7 @@ const Menu = () => {
                       productosEnCategoria.map(prod => (
                         <div key={prod.id}>
                           {prod.ingredientes && <p className="desc_menu">{prod.ingredientes}</p>}
-                          <p>{prod.descripcion} ${prod.precio.toLocaleString("es-AR")}</p>
+                          <p>{prod.descripcion} {fmtPesos(prod.precio)}</p>
                         </div>
                       ))
                     ) : (

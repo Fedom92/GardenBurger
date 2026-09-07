@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { collection, orderBy, query, getDocs, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { db, app } from "../../firebaseConfig/firebase";
-import { ROLES_CON_MOTO, NOMBRES_ROL } from "../../Utils/Constantes";
+import { ROLES } from "../../Utils/Constantes";
+import { fmtPesos } from "../../Utils/formato";
 import CrearEmpleado from "./CrearEmpleado";
 import Envios from "./Parametros/Envios";
 import Sucursales from "./Parametros/Sucursales";
 import { fetchSucursales } from "../../Utils/sucursales";
+import TablaGenerica from "../../Utils/TablaGenerica";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
@@ -18,8 +20,6 @@ const EDICION_VACIA = {
 
 const PanelAdmin = () => {
   const [empleados, setEmpleados] = useState([]);
-  const [search, setSearch] = useState("");
-  const [order, setOrder] = useState("ASC");
   const [modalShow, setModalShow] = useState(false);
   const [modalShowEnvios, setModalShowEnvios] = useState(false);
   const [modalShowSucursales, setModalShowSucursales] = useState(false);
@@ -65,54 +65,15 @@ const PanelAdmin = () => {
     fetchSucursales().then(setSucursales).catch(console.error);
   }, []);
 
-  const searcher = (e) => {
-    setSearch(e.target.value);
-  };
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  function quitarAcentos(texto) {
-    return texto
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-  }
-
-  let filteredResults = [];
-  if (!search) {
-    filteredResults = empleados;
-  } else {
-    filteredResults = empleados.filter((dato) => {
-      // Con los repartidores adentro la colección es más heterogénea: cualquiera
-      // de estos campos puede faltar y `.toString()` sobre undefined revienta.
-      const searchSinAcentos = quitarAcentos(search);
-      return ["nombreCompleto", "telefono", "dni"].some((campo) =>
-        quitarAcentos(String(dato[campo] ?? "")).includes(searchSinAcentos)
-      );
-    });
-  }
-
-  const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentResults = filteredResults.slice(startIndex, endIndex);
-
-  const sorting = (col) => {
-    // `?? ""` porque no todos los empleados tienen todos los campos: un cajero no
-    // tiene patente y un repartidor viejo puede no tener valorHora.
-    const valor = (fila) => String(fila[col] ?? "");
-    const signo = order === "ASC" ? 1 : -1;
-    setEmpleados([...empleados].sort((a, b) =>
-      valor(a).localeCompare(valor(b), "es", { numeric: true }) * signo
-    ));
-    setOrder(order === "ASC" ? "DSC" : "ASC");
-  };
+  // El rol y la sucursal se guardan como valores crudos —el del .env y el slug—
+  // que no se pueden mostrar ni filtrar así. Se agregan sus versiones legibles
+  // como campos propios de la fila, y TablaGenerica los trata como cualquier otra
+  // columna: sin esto, el desplegable de filtro mostraría el valor crudo del rol.
+  const empleadosParaTabla = useMemo(() => empleados.map((e) => ({
+    ...e,
+    rolNombre: ROLES[e.rol]?.nombre || "—",
+    sucursalNombre: sucursales.find((s) => s.id === e.sucursal)?.nombre || e.sucursal || "—",
+  })), [empleados, sucursales]);
 
   const handleEditEmpleado = async (id) => {
     if (!edicion.sucursal) {
@@ -129,7 +90,7 @@ const PanelAdmin = () => {
       domicilio: edicion.domicilio,
       telefono: edicion.telefono,
       valorHora: Number(edicion.valorHora) || 0,
-      ...(ROLES_CON_MOTO.includes(edicion.rol) ? {
+      ...(ROLES[edicion.rol]?.llevaMoto ? {
         marcaMoto: edicion.marcaMoto,
         modeloMoto: edicion.modeloMoto,
         colorMoto: edicion.colorMoto,
@@ -227,6 +188,40 @@ const PanelAdmin = () => {
     }
   };
 
+  const columnasEmpleados = [
+    { accessorKey: "nombreCompleto", header: "Nombre Completo" },
+    {
+      accessorKey: "correo",
+      header: "Email",
+      cell: ({ row }) => row.original.sinAcceso
+        ? <span className="badge bg-secondary">Sin acceso</span>
+        : (row.original.correo || "—"),
+    },
+    { accessorKey: "telefono", header: "Telefono" },
+    { accessorKey: "rolNombre", header: "Rol" },
+    { accessorKey: "sucursalNombre", header: "Sucursal" },
+    {
+      accessorKey: "valorHora",
+      header: "Valor Hora",
+      cell: ({ getValue }) => (getValue() ? fmtPesos(getValue()) : "—"),
+    },
+    {
+      id: "acciones",
+      header: "Accion",
+      // Al admin no se lo edita ni se lo da de baja desde acá.
+      cell: ({ row }) => row.original.rol === process.env.REACT_APP_admin ? null : (
+        <>
+          <button className="btn btn-success mx-1" title="EDITAR" onClick={() => handleOpenEditModal(row.original)}>
+            <i className="fa-solid fa-edit"></i>
+          </button>
+          <button className="btn btn-danger" title="DAR DE BAJA" onClick={(e) => confirmeDelete(e, row.original)}>
+            <i className="fa-solid fa-trash"></i>
+          </button>
+        </>
+      ),
+    },
+  ];
+
   return (
     <>
       {isLoading ? (
@@ -235,16 +230,6 @@ const PanelAdmin = () => {
         </div>
       ) : (
         <div className="w-100">
-          <div className="search-bar">
-            <input
-              value={search}
-              onChange={searcher}
-              type="text"
-              placeholder="Buscar..."
-            />
-            <i className="fa-solid fa-magnifying-glass"></i>
-          </div>
-
           <div className="container mw-100">
             <div className="row">
               <div className="col mt-2">
@@ -287,110 +272,15 @@ const PanelAdmin = () => {
                     </div>
                   </div>
                 </div>
-                <div className="table__container">
-                  <table className="table__body">
-                    <thead>
-                      <tr>
-                        <th onClick={() => sorting("nombreCompleto")}>Nombre Completo</th>
-                        <th onClick={() => sorting("correo")}>Email</th>
-                        <th onClick={() => sorting("telefono")}>Telefono</th>
-                        <th onClick={() => sorting("rol")}>Rol</th>
-                        <th onClick={() => sorting("sucursal")}>Sucursal</th>
-                        <th onClick={() => sorting("valorHora")}>Valor Hora</th>
-                        <th>Accion</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {currentResults.map((empleado) => (
-                        <tr key={empleado.id}
-                          className={empleado.rol === process.env.REACT_APP_admin ? "admin-row" : ""}
-                        >
-                          <td> {empleado.nombreCompleto}</td>
-                          <td>
-                            {empleado.sinAcceso
-                              ? <span className="badge bg-secondary">Sin acceso</span>
-                              : (empleado.correo || "—")}
-                          </td>
-                          <td> {empleado.telefono} </td>
-                          <td>{NOMBRES_ROL[empleado.rol] || '—'}</td>
-                          <td>{sucursales.find((s) => s.id === empleado.sucursal)?.nombre || empleado.sucursal || "—"}</td>
-                          <td>{empleado.valorHora ? `$${Number(empleado.valorHora).toLocaleString("es-AR")}` : "—"}</td>
-                          <td>
-                            {empleado.rol !== process.env.REACT_APP_admin && (
-                              <>
-                                <button
-                                  className="btn btn-success mx-1"
-                                  onClick={() => handleOpenEditModal(empleado)}
-                                >
-                                  <i className="fa-solid fa-edit"></i>
-                                </button>
-
-                                <button
-                                  onClick={(e) => {
-                                    confirmeDelete(e, empleado);
-                                  }}
-                                  className="btn btn-danger"
-                                >
-                                  <i className="fa-solid fa-trash"></i>
-                                </button>
-                              </>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="table__footer">
-                  <div className="table__footer-left">
-                    Mostrando {startIndex + 1} - {Math.min(endIndex, empleados.length)} de {empleados.length}
-                  </div>
-
-                  <div className="table__footer-right">
-                    <span>
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        style={{ border: "0", background: "none" }}
-                      >
-                        &lt; Previo
-                      </button>
-                    </span>
-
-                    {[...Array(totalPages)].map((_, index) => {
-                      const page = index + 1;
-                      return (
-                        <span key={page}>
-                          <span
-                            onClick={() => handlePageChange(page)}
-                            className={page === currentPage ? "active" : ""}
-                            style={{
-                              margin: "2px",
-                              backgroundColor: page === currentPage ? "#003057" : "transparent",
-                              color: page === currentPage ? "#FFFFFF" : "#000000",
-                              padding: "4px 8px",
-                              borderRadius: "4px",
-                              cursor: "pointer"
-                            }}
-                          >
-                            {page}
-                          </span>
-                        </span>
-                      );
-                    })}
-
-                    <span>
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        style={{ border: "0", background: "none" }}
-                      >
-                        Siguiente &gt;
-                      </button>
-                    </span>
-                  </div>
-                </div>
+                <TablaGenerica
+                  data={empleadosParaTabla}
+                  columnas={columnasEmpleados}
+                  sortBy="nombreCompleto"
+                  ordenDescendente={false}
+                  camposBusqueda={["nombreCompleto", "telefono", "dni"]}
+                  camposFiltros={["rolNombre", "sucursalNombre"]}
+                  rowClassName={(fila) => fila.rol === process.env.REACT_APP_admin ? "admin-row" : ""}
+                />
               </div>
             </div>
           </div>
@@ -478,7 +368,7 @@ const PanelAdmin = () => {
                   <input type="text" className="form-control" value={edicion.domicilio} onChange={setCampo("domicilio")} />
                 </div>
 
-                {ROLES_CON_MOTO.includes(edicion.rol) && (
+                {ROLES[edicion.rol]?.llevaMoto && (
                   <div className="row border-top pt-2 mt-1">
                     <div className="col-12 mb-1">
                       <span className="text-body-secondary small fw-bold text-uppercase">Datos de la moto</span>

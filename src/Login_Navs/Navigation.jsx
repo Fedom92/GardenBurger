@@ -1,5 +1,5 @@
 import Nav from "./Nav";
-import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaHistory, FaChartBar, FaStore } from 'react-icons/fa';
+import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaHistory, FaChartBar, FaStore, FaClock, FaMoneyCheckAlt } from 'react-icons/fa';
 import { useState, useEffect, createContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -14,10 +14,10 @@ export const NavigationContext = createContext();
 // Qué módulos del menú ve cada rol. Es solo cosmético: la barrera real son los
 // guards de App.js. Un rol que no figure acá ve únicamente Mi Perfil y Salir.
 const MODULOS_POR_ROL = {
-    [process.env.REACT_APP_admin]: ["productos", "historial", "estadisticas", "clientes", "configuracion"],
+    [process.env.REACT_APP_admin]: ["productos", "historial", "estadisticas", "liquidacion", "clientes", "configuracion"],
     // "pruebas" es la herramienta de dev que inserta pedidos de ejemplo. Solo el
     // encargado la ve; escribe pedidos reales y mueve el arqueo del día.
-    [process.env.REACT_APP_encargado]: ["caja", "cocina", "atp", "deliverys", "historial", "pruebas"],
+    [process.env.REACT_APP_encargado]: ["caja", "cocina", "atp", "deliverys", "asistencias", "historial", "pruebas"],
     [process.env.REACT_APP_cajero]: ["caja", "historial"],
     [process.env.REACT_APP_cocina]: ["cocina"],
     [process.env.REACT_APP_delivery]: ["deliverys"],
@@ -151,6 +151,20 @@ const Navigation = () => {
                         {puedeVer("caja") && (
                             <div className="sidebar-title">
                                 <Link to="/pedidos-caja" className="text-decoration-none link-light"><Nav title="Caja" Icon={FaCashRegister} /></Link>
+                            </div>
+                        )}
+
+                        {/* Carga de horarios de la jornada. Solo el encargado. */}
+                        {puedeVer("asistencias") && (
+                            <div className="sidebar-title">
+                                <Link to="/asistencias" className="text-decoration-none link-light"><Nav title="Asistencias" Icon={FaClock} /></Link>
+                            </div>
+                        )}
+
+                        {/* Liquidación de horas por período. Solo el admin. */}
+                        {puedeVer("liquidacion") && (
+                            <div className="sidebar-title">
+                                <Link to="/liquidacion" className="text-decoration-none link-light"><Nav title="Liquidación" Icon={FaMoneyCheckAlt} /></Link>
                             </div>
                         )}
 

@@ -36,3 +36,5 @@ functions/
 
 PLAN A FUTURO.md
 InsertarRegistros.jsx
+# Config local de Obsidian (el vault de docs/ sí se versiona, su UI no)
+docs/.obsidian/

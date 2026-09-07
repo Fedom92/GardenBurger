@@ -17,11 +17,13 @@ import Cocina from "./components/Cocina/Cocina";
 import HistorialPedidos from "./components/Pedidos/HistorialPedidos";
 import Estadisticas from "./components/Estadisticas/Historico/Estadisticas";
 import ATP from "./components/ATP/ATP";
+import Asistencias from "./components/Asistencias/Asistencias";
+import LiquidacionAsistencias from "./components/Asistencias/LiquidacionAsistencias";
 import { PaginaDetalle } from './components/Solicitudes/PaginaDetalle.jsx';
 
 import { CartProvider } from './context/CartContext';
 import { AuthContextProvider } from "./context/AuthContext";
-import { RequireAuth, RequireSucursal, RequireAdmin, LayoutStaff } from './Login_Navs/RutasProtegidas';
+import { RequireAuth, RequireSucursal, RequireAdmin, RequireRole, LayoutStaff } from './Login_Navs/RutasProtegidas';
 import { ToastContainer } from 'react-toastify';
 
 function App() {
@@ -49,6 +51,7 @@ function App() {
               <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
               <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
               <Route path="/estadisticas-viejas" element={<RequireAuth><RequireAdmin><Estadisticas /></RequireAdmin></RequireAuth>} />
+              <Route path="/liquidacion" element={<RequireAuth><RequireAdmin><LiquidacionAsistencias /></RequireAdmin></RequireAuth>} />
 
               <Route path="/pedidos-caja" element={<RequireAuth><RequireSucursal><Caja /></RequireSucursal></RequireAuth>} />
               <Route path="/jefe-deliverys" element={<RequireAuth><RequireSucursal><JefeDeliverys /></RequireSucursal></RequireAuth>} />
@@ -56,6 +59,8 @@ function App() {
               <Route path="/historial-pedidos" element={<RequireAuth><RequireSucursal permitirAdmin><HistorialPedidos /></RequireSucursal></RequireAuth>} />
               <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />
               <Route path="/gestion-atp" element={<RequireAuth><RequireSucursal><ATP /></RequireSucursal></RequireAuth>} />
+              {/* Solo el encargado carga asistencias; el admin las ve y corrige desde /liquidacion */}
+              <Route path="/asistencias" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_encargado]}><RequireSucursal><Asistencias /></RequireSucursal></RequireRole></RequireAuth>} />
 
               <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
             </Route>

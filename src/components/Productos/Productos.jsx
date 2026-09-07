@@ -34,7 +34,6 @@ const Productos = () => {
       }))
       .sort((a, b) => a.descripcion.localeCompare(b.descripcion));
     setProductos(productosArray);
-    setIsLoading(false);
   }, []);
 
   const getCategorias = useCallback((snapshot) => {
@@ -62,6 +61,10 @@ const Productos = () => {
 
       } catch (error) {
         console.error('Error fetching data Productos:', error);
+      } finally {
+        // Antes esto vivía dentro de getProductos, o sea solo en el camino feliz:
+        // si Firestore fallaba, el loader giraba para siempre sin explicación.
+        setIsLoading(false);
       }
     };
 
@@ -133,8 +136,8 @@ const Productos = () => {
     );
   };
 
-  const confirmeDelete = (id) => {
-    Swal.fire({
+  const confirmeDelete = async (id) => {
+    const result = await Swal.fire({
       title: '¿Esta seguro?',
       text: "No podra revertir la accion",
       icon: 'warning',
@@ -142,24 +145,31 @@ const Productos = () => {
       confirmButtonColor: '#198754',
       confirmButtonText: 'Si',
       cancelButtonText: 'No'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        deleteProducto(id)
-        Swal.fire({
-          title: '¡Borrado!',
-          text: 'Producto eliminado.',
-          icon: 'success',
-          confirmButtonColor: '#198754'
-        });
-      }
-    })
-  }
+    });
 
-  const deleteProducto = async (id) => {
-    const productoDoc = doc(db, "productos", id);
-    await deleteDoc(productoDoc);
-    setProductos((prevProductos) => prevProductos.filter((producto) => producto.id !== id));
-  };
+    if (!result.isConfirmed) return;
+
+    // El Swal de éxito salía sin esperar el borrado y sin catch: decía "¡Borrado!"
+    // aunque hubiera fallado, y la fila desaparecía de la tabla igual.
+    try {
+      await deleteDoc(doc(db, "productos", id));
+      setProductos((prevProductos) => prevProductos.filter((producto) => producto.id !== id));
+      Swal.fire({
+        title: '¡Borrado!',
+        text: 'Producto eliminado.',
+        icon: 'success',
+        confirmButtonColor: '#198754'
+      });
+    } catch (error) {
+      console.error('Error eliminando producto:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo eliminar el producto.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
+    }
+  }
 
   const handlePublicarMenu = async () => {
     setPublicando(true);

@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal } from "react-bootstrap";
 
-const fmtPesos = (n) => `$${Number(n || 0).toLocaleString("es-AR")}`;
+import { fmtPesos } from "../../../Utils/formato";
 
 // Muestra el documento resumenDiario de la jornada en curso. Los datos los trae la Caja
 // con un getDoc al abrir: es una sola lectura y no hace falta que se actualice solo,

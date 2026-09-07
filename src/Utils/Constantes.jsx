@@ -68,18 +68,19 @@ export const getCurrentStepIndex = (estado) => {
 
 export const ENVIOS_LOCALES = ["Retira", "Espera Afuera"];
 
-// Roles a los que el alta de empleados les pide los datos de la moto. Se usa en
-// el formulario de creación y en el de edición, para no repetir la condición.
-export const ROLES_CON_MOTO = [process.env.REACT_APP_delivery];
+// Todo lo que se sabe de cada rol, en un solo lugar. Las claves son el valor
+// crudo de la variable de entorno, que es lo que se guarda en `usuarios.rol` y
+// no es legible.
+//
+// - `nombre`: cómo se muestra en pantalla.
+// - `rutaInicial`: dónde aterriza al iniciar sesión
+// - `llevaMoto` (opcional): si el alta y la edición le piden datos de la moto
 
-// Los roles se guardan con el valor de su variable de entorno, que no es
-// legible. Este mapa los traduce para mostrarlos en pantalla.
-export const NOMBRES_ROL = {
-  [process.env.REACT_APP_admin]: "Admin",
-  [process.env.REACT_APP_encargado]: "Encargado",
-  [process.env.REACT_APP_cajero]: "Cajero",
-  [process.env.REACT_APP_cocina]: "Cocina",
-  [process.env.REACT_APP_delivery]: "Delivery",
-  [process.env.REACT_APP_contador]: "Contador",
-  [process.env.REACT_APP_atp]: "ATP",
+export const ROLES = {
+  [process.env.REACT_APP_admin]: { nombre: "Admin", rutaInicial: "/productos" },
+  [process.env.REACT_APP_encargado]: { nombre: "Encargado", rutaInicial: "/pedidos-caja" },
+  [process.env.REACT_APP_cajero]: { nombre: "Cajero", rutaInicial: "/pedidos-caja" },
+  [process.env.REACT_APP_cocina]: { nombre: "Cocina", rutaInicial: "/gestion-cocina" },
+  [process.env.REACT_APP_delivery]: { nombre: "Delivery", rutaInicial: "/jefe-deliverys", llevaMoto: true },
+  [process.env.REACT_APP_atp]: { nombre: "ATP", rutaInicial: "/gestion-atp" },
 };

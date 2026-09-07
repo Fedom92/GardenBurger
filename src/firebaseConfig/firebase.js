@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
-import { initializeFirestore, memoryLocalCache, runTransaction, collection, doc } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, runTransaction, collection, doc } from "firebase/firestore";
 import { getAuth, EmailAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
@@ -33,13 +33,29 @@ if (process.env.REACT_APP_gardenAppCheck) {
   });
 }
 
-// Cache en memoria y no persistente: la persistencia multi-pestaña comparte una
-// sola capa de IndexedDB entre todas las pestañas del origen, y está pensada para
-// pestañas del MISMO usuario. Con browserSessionPersistence la sesión es por
-// pestaña, así que una pública anónima (/ver-pedido) convivía con la de Caja y las
-// lecturas del staff salían sin credencial.
+// Persistencia en IndexedDB, en modo UNA SOLA PESTAÑA. La distinción importa:
+//
+// El modo multi-pestaña elige una pestaña "primaria" que abre los streams de red
+// por todas las demás. Con browserSessionPersistence la sesión de Auth es por
+// pestaña, así que si la primaria era una pública anónima (/ver-pedido conviviendo
+// con la de Caja), las lecturas del staff salían con esa credencial y volvían
+// permission-denied. Por eso se había vuelto a memoria.
+//
+// En single-tab no hay primaria ni delegación: cada pestaña usa su propia conexión
+// y sus propias credenciales, así que ese problema no puede repetirse. La primera
+// pestaña que arranca Firestore se queda con IndexedDB y las siguientes caen solas
+// a caché de memoria con un warning en consola —comportamiento del SDK, no un error—
+// funcionando igual que antes de este cambio.
+//
+// Lo que gana: los onSnapshot persisten su resumeToken, así que al recargar el
+// servidor manda solo los cambios en lugar de la query entera. Ojo: getDocs SIEMPRE
+// consulta al servidor y se factura igual; para ahorrar ahí hay que pedir
+// explícitamente getDocsFromCache.
 export const db = initializeFirestore(app, {
-  localCache: memoryLocalCache(),
+  localCache: persistentLocalCache({
+    tabManager: persistentSingleTabManager({})
+    //persistentMultipleTabManager
+  }),
 });
 export const auth = getAuth();
 export const storage = getStorage(app);

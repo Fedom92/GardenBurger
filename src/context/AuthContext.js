@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db, setSucursalStaff } from "../firebaseConfig/firebase";
@@ -13,6 +13,13 @@ export function AuthContextProvider({ children }) {
 
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  // login() lee usuarios/{uid} y onAuthStateChanged dispara por ese mismo login y
+  // lo volvía a leer: 2 lecturas por inicio de sesión. Cuál de los dos llega
+  // primero no está garantizado, así que en vez de marcar "ya lo leí" se comparte
+  // la promesa en vuelo: el segundo en pedir se cuelga de la lectura del primero.
+  // Se descarta al resolverse, para que un login posterior vuelva a leer de verdad
+  // y siga viendo un `activo: false` puesto mientras tanto.
+  const lecturasEnVuelo = useRef(new Map());
 
   const getIniciales = (nombreCompleto) => {
     if (!nombreCompleto) return "";
@@ -23,29 +30,38 @@ export function AuthContextProvider({ children }) {
       .join("");
   };
 
-  const fetchUserData = useCallback(async (user) => {
-    try {
-      // Espera a que el ID token este resuelto: si no, la lectura sale sin
-      // credencial y la regla de usuarios la rechaza con permission-denied.
-      await user.getIdToken();
+  const fetchUserData = useCallback((user) => {
+    const enVuelo = lecturasEnVuelo.current.get(user.uid);
+    if (enVuelo) return enVuelo;
 
-      const userDocRef = doc(db, "usuarios", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists()) {
-        const data = userDocSnap.data();
-        // Respaldo del borrado real en Auth: cubre la ventana en que un token
-        // ya emitido sigue vigente. Los docs viejos sin el campo son activos.
-        if (data.activo === false) {
-          await signOut(auth);
-          return null;
+    const lectura = (async () => {
+      try {
+        // Espera a que el ID token este resuelto: si no, la lectura sale sin
+        // credencial y la regla de usuarios la rechaza con permission-denied.
+        await user.getIdToken();
+
+        const userDocRef = doc(db, "usuarios", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          // Respaldo del borrado real en Auth: cubre la ventana en que un token
+          // ya emitido sigue vigente. Los docs viejos sin el campo son activos.
+          if (data.activo === false) {
+            await signOut(auth);
+            return null;
+          }
+          setSucursalStaff(data.sucursal);
+          return data;
         }
-        setSucursalStaff(data.sucursal);
-        return data;
+      } catch (error) {
+        console.error("Error al obtener datos del usuario:", error);
       }
-    } catch (error) {
-      console.error("Error al obtener datos del usuario:", error);
-    }
-    return null;
+      return null;
+    })();
+
+    const conLimpieza = lectura.finally(() => lecturasEnVuelo.current.delete(user.uid));
+    lecturasEnVuelo.current.set(user.uid, conLimpieza);
+    return conLimpieza;
   }, []);
 
   useEffect(() => {

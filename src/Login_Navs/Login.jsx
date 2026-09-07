@@ -8,6 +8,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
 import "../style/Main.css";
 import { useAuth } from "../context/AuthContext";
+import { ROLES } from "../Utils/Constantes";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -30,7 +31,11 @@ const Login = () => {
     try {
       const data = await login(email, password);
       if (data) {
-        const from = location.state?.from?.pathname || '/productos';
+        // Si venía redirigido desde una ruta protegida, vuelve ahí. Si no, a la
+        // pantalla donde ese rol realmente trabaja.
+        const from = location.state?.from?.pathname
+          || ROLES[data.rol]?.rutaInicial
+          || "/miPerfil";
         navigate(from, { replace: true });
       }
     } catch (error) {

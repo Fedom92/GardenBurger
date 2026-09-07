@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, getDoc, increment } from "firebase/firestore";
+import { collection, updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, getDoc, increment, writeBatch } from "firebase/firestore";
 import { db, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import { getFechaComercial } from "../../Utils/fechaComercial";
 import '../../style/Main.css';
@@ -10,6 +10,7 @@ import Swal from "sweetalert2";
 import moment from "moment";
 import { ESTADOS, SUBESTADOS_MOTODELIVERY } from "../../Utils/Constantes";
 import { useAuth } from "../../context/AuthContext";
+import { useAccionUnica } from "../../Utils/useAccionUnica";
 
 const JefeDeliverys = () => {
     const { userData } = useAuth();
@@ -20,6 +21,9 @@ const JefeDeliverys = () => {
     const [metricasData, setMetricasData] = useState(null);
     const [loadingMetricas, setLoadingMetricas] = useState(false);
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
+    // Finalizar una entrega incrementa las métricas del repartidor: dos clicks
+    // suman dos veces. Asignar y marcar estado comparten el guard.
+    const { procesando, ejecutar } = useAccionUnica();
 
     const pedidosCollection = useRef(query(
         colSucursal("pedidos"),
@@ -36,10 +40,12 @@ const JefeDeliverys = () => {
         where("activo", "==", true)
     ));
 
+    // Los documentos de `usuarios` traen `nombreCompleto`, no `nombre`: la
+    // subcolección vieja `deliverys` usaba `nombre` y quedó la referencia colgada.
     const getDeliverys = useCallback((snapshot) => {
         const deliverysArray = snapshot.docs
             .map((doc) => ({ id: doc.id, ...doc.data() }))
-            .sort((a, b) => a.nombre.localeCompare(b.nombre));
+            .sort((a, b) => (a.nombreCompleto || "").localeCompare(b.nombreCompleto || ""));
         setDeliverys(deliverysArray);
     }, []);
 
@@ -58,13 +64,13 @@ const JefeDeliverys = () => {
         return () => unsubscribe();
     }, [getDeliverys]);
 
-    const asignarDelivery = async (pedidoId, deliveryId) => {
+    const asignarDelivery = (pedidoId, deliveryId) => ejecutar(async () => {
         try {
             const pedidoDoc = docSucursal("pedidos", pedidoId);
             const deliverySel = deliverys.find(d => d.id === deliveryId);
             const updates = deliverySel
                 ? {
-                    deliveryAsignado: deliverySel.nombre,
+                    deliveryAsignado: deliverySel.nombreCompleto,
                     deliveryID: deliverySel.id,
                     gestorDelivery: userData.nombreCompleto,
                     gestorDeliveryID: userData.id,
@@ -84,10 +90,10 @@ const JefeDeliverys = () => {
             console.error('Error asignando delivery:', error);
             Swal.fire('Error', 'No se pudo asignar el delivery', 'error');
         }
-    };
+    });
 
     // pagoMonto viene del modal cuando el repartidor vuelve
-    const marcarEstado = async (pedidoId, nuevoEstado, pagoMonto = "") => {
+    const marcarEstado = (pedidoId, nuevoEstado, pagoMonto = "") => ejecutar(async () => {
         try {
             const pedido = pedidos.find(p => p.id === pedidoId);
             if (!pedido) return;
@@ -108,22 +114,28 @@ const JefeDeliverys = () => {
                     updates.pagoRepartidorCon = monto;
                 }
 
-                await updateDoc(pedidoDoc, updates);
+                // El pedido y las métricas del repartidor van juntos: antes eran dos
+                // escrituras sueltas y la segunda tenía su propio catch que solo
+                // logueaba, así que un corte de red dejaba el pedido finalizado y la
+                // métrica perdida sin aviso. `set` con merge además crea el documento
+                // del resumen si todavía no existe, cosa que `updateDoc` no hace.
+                const batch = writeBatch(db);
+                batch.update(pedidoDoc, updates);
 
-                // Persistir métricas en resumenDiario (no-blocking, secundario al pedido)
                 if (pedido.deliveryID) {
-                    try {
-                        const hoy = getFechaComercial();
-                        await updateDoc(docSucursal("resumenDiario", hoy), {
-                            [`deliverys.${pedido.deliveryID}.nombre`]: pedido.deliveryAsignado,
-                            [`deliverys.${pedido.deliveryID}.cantidadPedidos`]: increment(1),
-                            [`deliverys.${pedido.deliveryID}.totalMonto`]: increment(pedido.total || 0),
-                            [`deliverys.${pedido.deliveryID}.totalCobrado`]: increment(monto > 0 ? monto : 0),
-                        });
-                    } catch (e) {
-                        console.error('Error actualizando métricas delivery:', e);
-                    }
+                    batch.set(docSucursal("resumenDiario", getFechaComercial()), {
+                        deliverys: {
+                            [pedido.deliveryID]: {
+                                nombre: pedido.deliveryAsignado || "",
+                                cantidadPedidos: increment(1),
+                                totalMonto: increment(pedido.total || 0),
+                                totalCobrado: increment(monto > 0 ? monto : 0),
+                            }
+                        }
+                    }, { merge: true });
                 }
+
+                await batch.commit();
 
                 Swal.fire('¡Éxito!', 'Pedido entregado y finalizado.', 'success');
             }
@@ -134,7 +146,7 @@ const JefeDeliverys = () => {
             console.error('Error actualizando estado:', error);
             Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
         }
-    };
+    });
 
     const handleVerMetricas = async () => {
         setLoadingMetricas(true);
@@ -246,6 +258,7 @@ const JefeDeliverys = () => {
                 onClose={() => setPedidoSeleccionado(null)}
                 onAsignarDelivery={asignarDelivery}
                 onMarcarEstado={marcarEstado}
+                procesando={procesando}
             />
 
             <ModalMetricasDelivery

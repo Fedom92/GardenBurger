@@ -3,7 +3,7 @@ import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { SUBESTADOS_MOTODELIVERY } from "../../../Utils/Constantes";
 
-const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDelivery, onMarcarEstado }) => {
+const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDelivery, onMarcarEstado, procesando = false }) => {
     const [pagoRepartidorInput, setPagoRepartidorInput] = useState(pedido?.pagoRepartidorCon || "");
 
     if (!pedido) return null;
@@ -12,7 +12,8 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
     const estadoDelivery = p.estadoDelivery || "";
     const salio = estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA;
     const tieneAsignado = Boolean(p.deliveryAsignado);
-    const selectedDeliveryId = deliverys.find(d => d.nombre === p.deliveryAsignado)?.id || "";
+    // Los repartidores salen de `usuarios`, donde el campo es `nombreCompleto`.
+    const selectedDeliveryId = deliverys.find(d => d.nombreCompleto === p.deliveryAsignado)?.id || "";
 
     const waClienteHref = p.telefono
         ? `https://api.whatsapp.com/send?phone=549${p.telefono}&text=${encodeURIComponent(`Tu pedido está en camino! 🛵`)}`
@@ -75,10 +76,11 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                             className="form-select"
                             value={selectedDeliveryId}
                             onChange={(e) => onAsignarDelivery(p.id, e.target.value)}
+                            disabled={procesando}
                         >
                             <option value="">Sin asignar</option>
                             {deliverys.map(d => (
-                                <option key={d.id} value={d.id}>{d.nombre}</option>
+                                <option key={d.id} value={d.id}>{d.nombreCompleto}</option>
                             ))}
                         </select>
                     </div>
@@ -107,6 +109,7 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                     <button
                         className="btn btn-warning"
                         onClick={() => onMarcarEstado(p.id, SUBESTADOS_MOTODELIVERY.SALIDA, "")}
+                        disabled={procesando}
                     >
                         <i className="fa-solid fa-motorcycle"></i> Marcar Salida
                     </button>
@@ -115,12 +118,16 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                     <button
                         className="btn btn-success"
                         onClick={() => {
-                            if (p.metodoPago === "EFECTIVO" && !pagoRepartidorInput) {
+                            // El campo se muestra para EFECTIVO y para el pago dividido,
+                            // así que el monto se exige en los dos: si no, un pago
+                            // dividido se cerraba sin registrar cuánto trajo el repartidor.
+                            if ((p.metodoPago === "EFECTIVO" || p.metodoPago === "%") && !pagoRepartidorInput) {
                                 toast.error("Ingresá el monto que pagó el cliente antes de confirmar.");
                                 return;
                             }
                             onMarcarEstado(p.id, SUBESTADOS_MOTODELIVERY.FIN, pagoRepartidorInput);
                         }}
+                        disabled={procesando}
                     >
                         <i className="fa-solid fa-check"></i> Confirmar Entrega
                     </button>

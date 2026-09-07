@@ -38,6 +38,16 @@ export const RequireSucursal = ({ children, permitirAdmin = false }) => {
     );
 };
 
+// Para pantallas de un rol puntual, no del admin ni de "cualquiera con sucursal".
+// Ej: /asistencias, que carga solo el encargado.
+export const RequireRole = ({ children, roles = [] }) => {
+    const { userData } = useAuth();
+    if (roles.includes(userData?.rol)) {
+        return children;
+    }
+    return <Navigate to="/miPerfil" replace />;
+};
+
 export const RequireAdmin = ({ children }) => {
     const { userData } = useAuth();
     if (userData?.rol === process.env.REACT_APP_admin) {
@@ -46,38 +56,6 @@ export const RequireAdmin = ({ children }) => {
         return <Navigate to="/miPerfil" />;
     }
 };
-
-/* Filtrar por rol específico
- const RequireCocina = ({ children }) => {
-   const { userData } = useAuth();
-   Reemplaza "COCINA" por el rol exacto de variables de entorno
-   if (userData?.rol === "COCINA") {
-     return children;
-   } else {
-     Si no tiene el rol, lo redirigimos a otra pantalla
-     return <Navigate to="/miPerfil" />;
-   }
- };
-Ejemplo: <Route path="/gestion-cocina" element={<RequireAuth><RequireCocina><Cocina /></RequireCocina></RequireAuth>} />*/
-
-/* Filtrar por MULTIPLES roles
- const RequireRole = ({ children, allowedRoles }) => {
-   const { userData } = useAuth();
-   if (allowedRoles.includes(userData?.rol)) {
-     return children;
-   } else {
-     return <Navigate to="/miPerfil" />;
-   }
- };
-
- Ejemplo:
- <Route path="/gastos" element={
-   <RequireAuth>
-     <RequireRole allowedRoles={[process.env.REACT_APP_admin, process.env.REACT_APP_rolCaja]}>
-       <Gastos />
-     </RequireRole>
-   </RequireAuth>
- } />*/
 
 // Envuelve la rama de staff. Es el único punto donde se sincroniza la hora del
 // servidor: los visitantes públicos no llegan acá y no gastan invocaciones.

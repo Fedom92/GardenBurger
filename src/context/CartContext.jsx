@@ -80,7 +80,7 @@ export const CartProvider = ({ children }) => {
       .sort((a, b) => a.nroOrden - b.nroOrden);
     setCategorias(categoriasDataOrdenada);
     return categoriasDataOrdenada;
-  })
+  }, [])
 
   const obtenerProductos = useCallback(async () => {
     // JSON estático publicado desde Productos: cero lecturas de Firestore
@@ -100,7 +100,7 @@ export const CartProvider = ({ children }) => {
     }));
     setProductos(productosData);
     return productosData;
-  })
+  }, [])
 
   // ========== FUNCIONES BÁSICAS DEL CARRITO (DEFINIR PRIMERO) ==========
   const agregarAlCarrito = useCallback((producto) => {

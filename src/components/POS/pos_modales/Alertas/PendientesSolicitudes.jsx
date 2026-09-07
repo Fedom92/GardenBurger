@@ -105,6 +105,12 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
                     cajeroCancelaSolID: userData.id,
                     cajeroCancelaSol: userData.nombreCompleto,
                     cajeroCancelaSolTimestamp: serverTimestamp(),
+                    // `timestamp` lo escribe Caja recién al confirmar el pedido, así
+                    // que una solicitud web rechazada antes de eso no lo tiene nunca
+                    // — y Firestore descarta de un filtro de rango todo documento al
+                    // que le falte el campo, con lo cual no aparecía en el Historial.
+                    // Se copia el del cliente para que quede en la jornada correcta.
+                    timestamp: solicitud.clienteTimestamp ?? serverTimestamp(),
                 });
             } catch (error) {
                 console.error('Error rechazando solicitud:', error);

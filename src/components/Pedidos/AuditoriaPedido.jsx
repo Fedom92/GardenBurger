@@ -14,6 +14,17 @@ const fmt = (ts) => {
     }
 };
 
+// Para la hora pactada alcanza con la hora: la fecha ya está en el bloque Creación.
+const fmtHora = (ts) => {
+    if (!ts) return null;
+    try {
+        const date = ts.toDate ? ts.toDate() : new Date(ts);
+        return moment(date).format("HH:mm");
+    } catch {
+        return null;
+    }
+};
+
 // ─── sub-componentes ─────────────────────────────────────────────────────────
 
 // Card individual — retorna null (sin col wrapper) si no hay datos
@@ -94,7 +105,10 @@ const AuditoriaPedido = ({ pedido: p, isOpen, onClose }) => {
                         { label: "Origen",       valor: [p.sucursal, p.origen].filter(Boolean).join(" - ") || null },
                         { label: "Dirección",    valor: [p.direccion, p.entreCalles].filter(Boolean).join(", ") || null },
                         { label: "Envío",        valor: p.envio?.zona_envio ? `${p.envio.zona_envio} | $${p.envio.costo_envio}` : null },
-                        { label: "Hora especial",valor: p.hora || null },
+                        // El campo es `esHorarioEspecial` (booleano) y la hora pactada
+                        // quedó en `timestamp`: `p.hora` nunca existió, así que esta
+                        // fila no se mostraba jamás.
+                        { label: "Hora especial",valor: p.esHorarioEspecial ? fmtHora(p.timestamp) : null },
                     ].map((f, i) => f.valor && (
                         <div key={i} className="col-6">
                             <span className="text-muted">{f.label}: </span>

@@ -25,10 +25,7 @@ import useRevisarSolicitud, { liberarSolicitud } from './pos_hooks/useRevisarSol
 import { getResumenOperation } from './pos_hooks/useResumenDiario';
 import { ESTADOS, ENVIOS_LOCALES } from '../../Utils/Constantes';
 import { ahoraServidor, getFechaComercial } from '../../Utils/fechaComercial';
-
-// Los montos del ticket se leen de un vistazo y a las apuradas: con separador
-// de miles, que $77.000 no se confunda con $7.700.
-const fmtPesos = (n) => `$${Number(n || 0).toLocaleString("es-AR")}`;
+import { fmtPesos } from '../../Utils/formato';
 
 // Los EXTRA son filas hermanas en el carrito, pero el diseño los cuelga de su
 // producto. Se agrupa solo para mostrar: el array que se guarda no cambia.
@@ -84,6 +81,7 @@ const Caja = () => {
     const [cargandoResumen, setCargandoResumen] = useState(false);
 
     const buscadorRef = useRef(null);
+    const resumenEnCurso = useRef(false);
 
     const horarioEspecial = watch("horarioEspecial");
     const horaEspecial = horarioEspecial ? horarioEspecial.split(':')[0] : "20";
@@ -216,6 +214,9 @@ const Caja = () => {
     // Una sola lectura al abrir, no un listener: el arqueo se mira al cierre del turno
     // y no necesita ir actualizandose solo mientras el modal esta abierto.
     const verResumen = useCallback(async () => {
+        // Sin esto, mantener F4 apretado dispara un getDoc por repetición de tecla.
+        if (resumenEnCurso.current) return;
+        resumenEnCurso.current = true;
         setCargandoResumen(true);
         setShowResumen(true);
         try {
@@ -225,6 +226,7 @@ const Caja = () => {
             console.error("Error cargando el resumen del dia:", error);
             setResumenDiario(null);
         } finally {
+            resumenEnCurso.current = false;
             setCargandoResumen(false);
         }
     }, []);
@@ -278,9 +280,35 @@ const Caja = () => {
                     }
                     break;
                 }
-                case 'Escape':
-                    cancelarTicket();
+                case 'Escape': {
+                    // Esc estaba atado a window y cancelaba el ticket siempre: cerrar
+                    // un modal o un Swal con Esc borraba el carrito cargado y encima
+                    // liberaba la solicitud. Con algo abierto, Esc es de ese algo.
+                    const hayAlgoAbierto = showPendientesMP || showPendientesSolicitudes
+                        || showModalDividido || showBuscarPedido || showResumen || Swal.isVisible();
+                    if (hayAlgoAbierto) break;
+
+                    // Con el ticket vacío no hay nada que perder y sigue siendo el
+                    // atajo rápido de siempre.
+                    if (carrito.length === 0) {
+                        cancelarTicket();
+                        break;
+                    }
+
+                    Swal.fire({
+                        title: '¿Cancelar el ticket?',
+                        text: 'Se va a vaciar el carrito cargado.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Sí, cancelar',
+                        cancelButtonText: 'Volver',
+                    }).then((result) => {
+                        if (result.isConfirmed) cancelarTicket();
+                    });
                     break;
+                }
                 default:
                     break;
             }
@@ -288,7 +316,9 @@ const Caja = () => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [cancelarTicket, verResumen, tieneSolicitudesPendientes, tienePendientesMP]);
+    }, [cancelarTicket, verResumen, tieneSolicitudesPendientes, tienePendientesMP,
+        carrito.length, showPendientesMP, showPendientesSolicitudes, showModalDividido,
+        showBuscarPedido, showResumen]);
 
     const esAfuera = envioSeleccionado?.zona_envio === ENVIOS_LOCALES[1];
     const esRetira = envioSeleccionado?.zona_envio === ENVIOS_LOCALES[0];

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from '../../context/CartContext.jsx'
-import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from "./Card.jsx";
@@ -21,6 +21,7 @@ const CrearSolicitud = () => {
 
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState("");
 
   const {
     carrito,
@@ -49,8 +50,9 @@ const CrearSolicitud = () => {
 
   const navigate = useNavigate();
 
-  const comprar = (data) => {
+  const comprar = async (data) => {
     setProcesando(true);
+    setErrorEnvio("");
 
     const solicitudesRef = collection(db, "sucursales", sucursal, "pedidos");
     const newDocRef = doc(solicitudesRef);
@@ -83,18 +85,31 @@ const CrearSolicitud = () => {
       mensajeWsp: mensajeCodificado
     }
 
-    setDoc(newDocRef, solicitud)
-      .then(() => {
-        vaciarCarrito();
-        window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${mensajeCodificado}`, "_blank");
-        navigate(`/ver-pedido/${sucursal}/${newDocRef.id}`);
-      })
-      .catch((error) => {
-        console.error("Error al crear solicitud:", error);
-      })
-      .finally(() => {
-        setProcesando(false);
-      })
+    try {
+      // La sucursal viene de la URL sin validar: /crear-solicitud/loquesea creaba
+      // una subcolección huérfana bajo un documento que no existe, y ese pedido no
+      // lo veía nadie. Una lectura de un solo documento, solo al confirmar.
+      const sucursalDoc = await getDoc(doc(db, "sucursales", sucursal));
+      if (!sucursalDoc.exists()) {
+        setErrorEnvio("La sucursal de este link no existe. Volvé a elegirla y armá el pedido de nuevo.");
+        return;
+      }
+
+      await setDoc(newDocRef, solicitud);
+
+      vaciarCarrito();
+      // Si el bloqueador de pop-ups lo corta, el pedido igual quedó guardado y la
+      // pantalla de detalle tiene su propio botón de WhatsApp como respaldo.
+      window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${mensajeCodificado}`, "_blank");
+      navigate(`/ver-pedido/${sucursal}/${newDocRef.id}`);
+    } catch (error) {
+      // Antes acá solo había un console.error: el cliente se quedaba mirando el
+      // formulario creyendo que había comprado, y el pedido no existía.
+      console.error("Error al crear solicitud:", error);
+      setErrorEnvio("No pudimos registrar tu pedido. Revisá tu conexión e intentá de nuevo.");
+    } finally {
+      setProcesando(false);
+    }
   }
 
   useEffect(() => {
@@ -391,6 +406,11 @@ const CrearSolicitud = () => {
                     </>
                   )}
                   <button className="btn btn-success" type="submit" disabled={procesando}>{procesando ? "Cargando..." : "Comprar"}</button>
+                  {errorEnvio && (
+                    <div className="alert alert-danger mt-3 mb-0" role="alert">
+                      <strong>Tu pedido no se registró.</strong> {errorEnvio}
+                    </div>
+                  )}
                 </form>
               </div>
               : <><p className='error'>Sin productos seleccionados.</p><a href={`/crear-solicitud/${sucursal}#HAMBURGUESAS`}><p className='fw-bold'>Ir a inicio ↑↑↑</p></a></>}

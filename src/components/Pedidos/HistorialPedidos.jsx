@@ -6,7 +6,6 @@ import { fetchSucursales } from "../../Utils/sucursales";
 import "../../style/Main.css"
 import TablaGenerica from "../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../Utils/fechaComercial";
-import { ESTADOS } from "../../Utils/Constantes";
 import AuditoriaPedido from "./AuditoriaPedido";
 import moment from "moment";
 
@@ -53,9 +52,14 @@ const HistorialPedidos = () => {
   useEffect(() => {
     if (!sucursalActiva) return;
     setIsLoading(true);
+    // Sin filtro de estado: el historial también es la herramienta para auditar
+    // cancelados y eliminados —quién los tocó y cuándo, con el botón de auditoría
+    // de cada fila—. El filtro "Estado" de la tabla, que antes era decorativo
+    // porque todas las filas eran ENTREGADO, ahora sirve para separarlos.
+    // Sacar la igualdad además elimina la necesidad del índice compuesto
+    // (estado + timestamp): queda un rango sobre timestamp con su orderBy.
     const q = query(
       collection(db, "sucursales", sucursalActiva, "pedidos"),
-      where("estado", "==", ESTADOS.FINAL),
       where("timestamp", ">=", queryRange.inicio),
       where("timestamp", "<=", queryRange.fin),
       orderBy("timestamp", "desc")

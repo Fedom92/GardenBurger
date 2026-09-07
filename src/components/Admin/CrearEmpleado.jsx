@@ -3,7 +3,7 @@ import { collection, query, getDocs, where, addDoc, serverTimestamp } from "fire
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { db, app } from "../../firebaseConfig/firebase";
 import { fetchSucursales } from "../../Utils/sucursales";
-import { ROLES_CON_MOTO } from "../../Utils/Constantes";
+import { ROLES } from "../../Utils/Constantes";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { useForm } from "react-hook-form";
@@ -25,7 +25,7 @@ const CrearEmpleado = (props) => {
 
   const sinAcceso = watch("sinAcceso");
   const rol = watch("rol");
-  const llevaMoto = ROLES_CON_MOTO.includes(rol);
+  const llevaMoto = !!ROLES[rol]?.llevaMoto;
 
   const userCollection = collection(db, "usuarios");
 
@@ -71,7 +71,7 @@ const CrearEmpleado = (props) => {
     activo: true,
     sinAcceso: !!data.sinAcceso,
     ...(data.sinAcceso ? {} : { correo: data.correo }),
-    ...(ROLES_CON_MOTO.includes(data.rol) ? {
+    ...(ROLES[data.rol]?.llevaMoto ? {
       marcaMoto: data.marcaMoto || "",
       modeloMoto: data.modeloMoto || "",
       colorMoto: data.colorMoto || "",
