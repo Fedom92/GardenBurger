@@ -38,13 +38,14 @@ ves una alternativa mejor, proponela. El detalle y el porqué están en el vault
 
 ## Cómo trabajar en este repo
 
-- **No correr `npm run build`** ni ningún build: la verificación es manual, del dueño. Para
-  chequear sintaxis alcanza `npx --no-install eslint <archivos>`.
+- Para verificaciones **No correr `npm run build`**, salvo pedido explícito. De necesitar un build pedir al usuario.
 - **No hacer commits, push ni operaciones de git** salvo pedido explícito.
-- **Sin configuración de infraestructura versionada**: no hay `firebase.json` ni archivos de
-  reglas. Las reglas se pegan a mano en la Consola; el texto está en
-  `docs/Reglas de seguridad.md`.
-- **Nada de over-engineering.** Se prefiere código explícito y directo antes que abstracciones.
+- **La config de Firebase se versiona, los secretos no.** `firebase.json`, `firestore.rules`,
+  `storage.rules` y `functions/src` están en el repo y se despliegan con `firebase deploy`. Los
+  `.env` (raíz y `functions/`) siguen ignorados. Los **índices no se declaran** en `firebase.json`,
+  a propósito: se manejan desde la Consola.
+- **El rol admin no se asigna desde la app.** Los administradores se crean a mano en la Consola de
+  Firebase, y ser admin se resuelve con un custom claim en el token, no con una lectura.
 - Tablas con `TablaGenerica`, montos con `fmtPesos`, confirmaciones destructivas con `Swal.fire`.
   Un `console.error` sin aviso visible al usuario cuenta como bug.
 - Los archivos son **CRLF**: cualquier patrón multilínea necesita `\r?\n`.

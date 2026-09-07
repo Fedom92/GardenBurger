@@ -9,6 +9,7 @@ import Envios from "./Parametros/Envios";
 import Sucursales from "./Parametros/Sucursales";
 import { fetchSucursales } from "../../Utils/sucursales";
 import TablaGenerica from "../../Utils/TablaGenerica";
+import InsertarRegistros from "../../Utils/InsertarRegistros";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
@@ -29,6 +30,7 @@ const PanelAdmin = () => {
   const [edicion, setEdicion] = useState(EDICION_VACIA);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [sincronizando, setSincronizando] = useState(false);
 
   const empleadosCollection = useRef(query(collection(db, "usuarios"), orderBy("rol")));
 
@@ -188,6 +190,36 @@ const PanelAdmin = () => {
     }
   };
 
+  // Reparte el custom claim `admin` según el rol de cada documento de `usuarios`.
+  // Se usa una vez como backfill y después cada vez que se crea un admin nuevo
+  // desde la Consola de Firebase, que es el único lugar donde se crean. El claim
+  // viaja en el token, así que no toma efecto hasta el próximo inicio de sesión.
+  const sincronizarPermisos = async () => {
+    if (sincronizando) return;
+    setSincronizando(true);
+    try {
+      const fn = httpsCallable(getFunctions(app), "sincronizarClaims");
+      const { data } = await fn({});
+      Swal.fire({
+        title: "Permisos sincronizados",
+        html: `Se actualizaron <b>${data.sincronizados}</b> empleados (${data.admins} con rol admin).`
+          + "<br/><br/>Los cambios toman efecto al <b>volver a iniciar sesión</b>.",
+        icon: "success",
+        confirmButtonColor: "#198754",
+      });
+    } catch (error) {
+      console.error("Error sincronizando permisos:", error);
+      Swal.fire({
+        title: "Error",
+        text: error.message || "No se pudieron sincronizar los permisos.",
+        icon: "error",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
   const columnasEmpleados = [
     { accessorKey: "nombreCompleto", header: "Nombre Completo" },
     {
@@ -256,10 +288,21 @@ const PanelAdmin = () => {
                         >
                           Sucursales
                         </button>
+                        <button
+                          variant="tertiary"
+                          className="btn-contorno m-1"
+                          onClick={sincronizarPermisos}
+                          disabled={sincronizando}
+                          title="Reparte el permiso de administrador en los tokens. Usalo después de crear un admin desde la Consola de Firebase."
+                        >
+                          {sincronizando ? "Sincronizando..." : "Sincronizar permisos"}
+                        </button>
                       </div>
                     </div>
 
-                    <div className="d-flex justify-content-end">
+                    <div className="d-flex justify-content-end align-items-center gap-2">
+                      {/*TODO: ELIMINAR PRUEBAS CUANDO SE IMPLEMENTE. RECORDAR ELIMINARLO DE TODOS LADOS*/}
+                      <InsertarRegistros />
                       <button
                         variant="primary"
                         className="btn-contorno m-2"

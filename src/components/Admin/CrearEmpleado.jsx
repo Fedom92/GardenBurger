@@ -184,9 +184,11 @@ const CrearEmpleado = (props) => {
               <div className="row">
                 <div className="col-md-6 mb-2">
                   <label className="form-label">Rol*</label>
+                  {/* Sin opción Admin: los administradores se dan de alta a mano desde la
+                      Consola de Firebase. La Cloud Function además rechaza ese rol, porque
+                      reponer un <option> con las devtools es trivial. */}
                   <select className="form-control" multiple={false} style={{ height: "48px" }} required {...register("rol")}>
                     <option value="">Selecciona un rol ....</option>
-                    <option value={process.env.REACT_APP_admin}>Admin</option>
                     <option value={process.env.REACT_APP_encargado}>Encargado</option>
                     <option value={process.env.REACT_APP_cajero}>Cajero</option>
                     <option value={process.env.REACT_APP_cocina}>Cocina</option>

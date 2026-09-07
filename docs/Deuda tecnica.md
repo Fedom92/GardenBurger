@@ -40,11 +40,23 @@ Corre antes y fuera del `writeBatch` del pedido. Si el commit falla, ese número
 quemado y la numeración salta. Cerrarlo exige mover el contador a la misma transacción que el
 pedido.
 
-### `asistencias` sin reglas propias
+### `asistencias` sin reglas propias — **ya no está bloqueado por costo**
 
 Cae bajo el wildcard `match /{coleccion}/{documento}` de `sucursales`, así que **cualquier staff
-autenticado puede leer y escribir los sueldos**. Decisión explícita para no pagar el `get()` de
-una regla por rol. Ver [[Asistencias y liquidacion#Seguridad]].
+autenticado puede leer y escribir los sueldos**.
+
+Se dejó así porque cerrarlo por rol costaba un `get()` facturado por request. **Ese argumento
+desapareció**: con [[Decisiones tecnicas#Ser admin es un custom claim, no una lectura|custom claims]]
+una regla por rol no cuesta nada.
+
+Lo que falta para cerrarlo:
+
+1. Un claim `encargado`, igual que el de admin: agregar `ENCARGADO_ROL` a `functions/.env` y que
+   `sincronizarClaims` lo reparta.
+2. **Excluir `asistencias` del wildcard**, como ya se hace con `pedidos` — las reglas se combinan
+   con OR, así que agregar una regla más específica no restringe nada.
+3. La regla: lectura para admin y encargado, escritura para el encargado de esa sucursal.
+
 
 ### Una solicitud web trabada
 

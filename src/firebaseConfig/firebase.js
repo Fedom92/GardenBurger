@@ -79,13 +79,22 @@ const sucursalRequerida = () => {
   return sucursalStaff;
 };
 
+// Refs a una sucursal EXPLÍCITA. Las usan el admin —que no tiene sucursal
+// propia y elige sobre cuál operar— y, por debajo, las versiones de abajo.
+export const colDeSucursal = (sucursal, nombre, ...segs) => collection(db, "sucursales", sucursal, nombre, ...segs);
+export const docDeSucursal = (sucursal, nombre, ...segs) => doc(db, "sucursales", sucursal, nombre, ...segs);
+
 // Refs a subcolecciones de la sucursal del usuario logueado:
 // colSucursal("pedidos") → sucursales/{sucursalStaff}/pedidos
-export const colSucursal = (nombre, ...segs) => collection(db, "sucursales", sucursalRequerida(), nombre, ...segs);
-export const docSucursal = (nombre, ...segs) => doc(db, "sucursales", sucursalRequerida(), nombre, ...segs);
+export const colSucursal = (nombre, ...segs) => colDeSucursal(sucursalRequerida(), nombre, ...segs);
+export const docSucursal = (nombre, ...segs) => docDeSucursal(sucursalRequerida(), nombre, ...segs);
 
-export const getNextSequence = async (coleccion) => {
-  const counterRef = docSucursal("contadores", coleccion);
+// `sucursal` es un override opcional: sin él usa la del usuario logueado, que es
+// lo que hace la Caja. Lo pasa solo el admin, que opera sobre una sucursal ajena.
+export const getNextSequence = async (coleccion, sucursal) => {
+  const counterRef = sucursal
+    ? docDeSucursal(sucursal, "contadores", coleccion)
+    : docSucursal("contadores", coleccion);
 
   return await runTransaction(db, async (transaction) => {
     const counterDoc = await transaction.get(counterRef);

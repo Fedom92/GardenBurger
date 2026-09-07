@@ -115,5 +115,11 @@ Admin SDK), que valida contra `ADMIN_ROL` que quien llama sea admin.
 - `AuthContext` desloguea a quien tenga `activo: false`, como respaldo mientras siga vigente un
   token ya emitido.
 
-> [!note] El código de `functions/` no está versionado
-> Ver [[Decisiones tecnicas#Nada de configuración de infraestructura en el repo]].
+El rol **admin no se puede asignar desde la app**: no figura en el select de alta, `PanelAdmin`
+tampoco lo ofrece al editar, y `crearUsuario` lo rechaza server-side. Los administradores se dan de
+alta a mano desde la Consola de Firebase y después hay que repartirles el claim con
+"Sincronizar permisos". Ver [[Decisiones tecnicas#Ser admin es un custom claim, no una lectura]].
+
+> [!note] El código de `functions/` sí está versionado
+> Vive en `functions/src/index.ts`. Su `.env` no, porque tiene `ADMIN_ROL`. Ver
+> [[Decisiones tecnicas#La configuración de Firebase se versiona]].

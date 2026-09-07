@@ -23,6 +23,10 @@ export const publicarMenu = async () => {
     };
 
     const blob = new Blob([JSON.stringify(menu)], { type: "application/json" });
+    // 60 segundos de caché: durante ese minuto el navegador ni pregunta, así que un
+    // precio recién publicado no se ve hasta que expire (o con Ctrl+F5, que saltea
+    // la caché). No es un problema en operación —el menú se publica horas antes de
+    // que lo mire un cliente— y a cambio son cero requests durante ese minuto.
     await uploadBytes(ref(storage, MENU_PATH), blob, {
         contentType: "application/json",
         cacheControl: "public, max-age=60",

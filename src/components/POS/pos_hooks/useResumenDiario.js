@@ -1,5 +1,5 @@
 import { increment } from "firebase/firestore";
-import { docSucursal } from "../../../firebaseConfig/firebase";
+import { docSucursal, docDeSucursal } from "../../../firebaseConfig/firebase";
 import { getFechaComercial } from "../../../Utils/fechaComercial";
 import { CATEGORIAS_COMBOS, ENVIOS_LOCALES } from "../../../Utils/Constantes";
 
@@ -14,9 +14,14 @@ const contarCombos = (carrito = []) =>
         return total + (Number(item.cantidad) || 1);
     }, 0);
 
-export const getResumenOperation = ({ metodoPago, total, montoEfectivo, montoMPConRecargo, envio, carrito, descontar = false }) => {
+// `sucursal` es un override opcional: sin él usa la del usuario logueado, que es
+// lo que hacen Caja, BuscarPedido y PendientesMP. Lo pasa solo el admin, que
+// opera sobre una sucursal ajena.
+export const getResumenOperation = ({ metodoPago, total, montoEfectivo, montoMPConRecargo, envio, carrito, descontar = false, sucursal }) => {
     const hoy = getFechaComercial();
-    const resumenRef = docSucursal("resumenDiario", hoy);
+    const resumenRef = sucursal
+        ? docDeSucursal(sucursal, "resumenDiario", hoy)
+        : docSucursal("resumenDiario", hoy);
     const signo = descontar ? -1 : 1;
 
     const montoEfectivoFinal = metodoPago === "EFECTIVO" ? total

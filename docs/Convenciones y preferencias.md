@@ -18,8 +18,8 @@ Fede (`Fedom92`) es el único desarrollador. Preferencias que ya dejó claras m�
 > 3. **Código explícito** por sobre abstracciones. Rutas de Firestore literales (`data.rol`),
 >    no capas que las oculten.
 > 4. **Las verificaciones las hace él.** No correr builds salvo que lo pida.
-> 5. **Nada de infraestructura en el repo.** Ver
->    [[Decisiones tecnicas#Nada de configuración de infraestructura en el repo]].
+> 5. **La config de Firebase sí se versiona**, los secretos no. Ver
+>    [[Decisiones tecnicas#La configuración de Firebase se versiona]].
 > 6. Preguntar antes de suponer una regla de negocio.
 
 Cuando hay que elegir entre dos soluciones equivalentes: **la que consuma menos lecturas y sea

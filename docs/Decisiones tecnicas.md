@@ -68,15 +68,49 @@ desde localhost hace falta el debug token. Se imprime en consola en **cada** `in
 mientras el modo debug esté activo (verificado en el SDK instalado) — que aparezca no significa
 que se esté regenerando. Guardado en `REACT_APP_appCheckDebug` deja de cambiar.
 
-## Nada de configuración de infraestructura en el repo
+## La configuración de Firebase se versiona
 
-**Qué**: no hay `firebase.json`, `.firebaserc`, `storage.rules`, `firestore.rules` ni `functions/`
-versionados.
+**Qué**: `firebase.json`, `.firebaserc`, `firestore.rules`, `storage.rules` y `functions/src` están
+en el repo. Las reglas se despliegan con `firebase deploy`, no se pegan a mano.
 
-**Por qué**: decisión explícita del dueño. Las reglas se pegan a mano en la Consola.
+**Antes era al revés**, y con motivo: mientras las reglas se escribían a mano en la Consola, tener
+un archivo en el repo solo agregaba una copia que se desincronizaba. Cambió cuando aparecieron dos
+problemas concretos:
 
-**Consecuencia**: [[Reglas de seguridad]] documenta la **intención**, no necesariamente lo
-desplegado. Al diagnosticar un permission-denied, pedir las reglas reales antes de suponer.
+- `Esquema_firestore.md` documentaba la *intención*, no lo desplegado, y ya había divergido.
+- El código TypeScript de las Cloud Functions vivía **solo en un disco**. Sin respaldo ni historial.
+
+**Consecuencia**: lo del repo es lo que se despliega. Si alguien ajusta una regla en la Consola, el
+próximo deploy se la lleva puesta — comparar antes de desplegar.
+
+**Lo que sigue afuera**: el `.env` de la raíz y `functions/.env` (tiene `ADMIN_ROL`), y los
+**índices**, que no se declaran en `firebase.json` a propósito para que ningún deploy pueda
+borrarlos. Ver [[Reglas de seguridad]].
+
+## Ser admin es un custom claim, no una lectura
+
+**Qué**: la regla es `request.auth.token.admin == true`. El claim lo reparte la Cloud Function
+`sincronizarClaims`.
+
+**Por qué**: `esAdmin()` era un `get()` a `usuarios` **facturado en cada evaluación**, y además
+obligaba a escribir el valor crudo del rol dentro de la regla. Con el claim desaparecen las dos
+cosas: no se lee nada y no hay ningún valor de rol en los archivos.
+
+**El efecto secundario es el importante**: una regla por rol pasó a costar cero. `asistencias` está
+abierta a cualquier staff únicamente porque cerrarla costaba un `get()` — ese argumento ya no
+existe. Ver [[Deuda tecnica#`asistencias` sin reglas propias — **ya no está bloqueado por costo**|Deuda tecnica]].
+
+**Los admins se crean solo desde la Consola de Firebase.** La app no ofrece ese rol y
+`crearUsuario` lo rechaza server-side. Después de crear uno hay que entrar al PanelAdmin y tocar
+"Sincronizar permisos", y esa persona tiene que **volver a iniciar sesión**: el claim viaja en el
+token.
+
+> [!important] Por qué las Functions conservan el respaldo contra Firestore
+> Las reglas miran solo el claim, pero las Functions aceptan *claim o rol en Firestore*. No es
+> inconsistencia: es el camino de recuperación. Un admin recién creado en la Consola tiene el rol
+> en `usuarios` pero **todavía no tiene claim**, y sin ese respaldo no podría ni invocar
+> `sincronizarClaims` para otorgárselo. El `||` cortocircuita, así que normalmente no se lee nada.
+
 
 ## `menu.json` depende de tres capas
 

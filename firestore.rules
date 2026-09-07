@@ -1,0 +1,105 @@
+rules_version = '2';
+
+service cloud.firestore {
+
+  match /databases/{database}/documents {
+    // ── Sucursales ─────────────────────────────────────────────────────
+    // Metadata pública: el selector de sucursal de la web la lee sin sesión.
+    // La edición es solo del admin, igual que los demás ABM: desactivar una
+    // sucursal desde la consola del navegador cortaría los pedidos web.
+    match /sucursales/{sucursal} {
+      allow read: if true;
+      allow write: if esAdmin();
+
+      // Pedidos: la web pública crea solicitudes validadas y
+      // solo lee pedidos de origen WEB (/ver-pedido)
+      match /pedidos/{pedido} {
+        allow read: if estaAutenticado() || esOrigenWeb();
+        allow create: if estaAutenticado() || esCreacionPublicaValida();
+        allow update: if estaAutenticado();
+        allow delete: if false;
+      }
+
+      // Colecciones operativas (resumenDiario, contadores, asistencias): solo staff.
+      // Excluye pedidos: las reglas se combinan con OR y este wildcard
+      // re-otorgaría el delete bloqueado arriba.
+      //
+      // OJO: `asistencias` cae acá, así que cualquier staff autenticado puede leer
+      // y escribir los sueldos. Se dejó así cuando una regla por rol costaba un
+      // get() facturado; con los custom claims ese costo desapareció, así que
+      // cerrarlo ahora es gratis: hace falta un claim `encargado` y excluir
+      // `asistencias` de este wildcard, igual que se hace con `pedidos`.
+      match /{coleccion}/{documento} {
+        allow read, write: if estaAutenticado() && coleccion != 'pedidos';
+      }
+    }
+
+
+    // Colecciones Públicas
+    match /productos/{producto} {
+      allow read: if true;
+      allow write: if esAdmin();
+    }
+    match /categorias/{categoria} {
+      allow read: if true;
+      allow write: if esAdmin();
+    }
+    match /envios/{envio} {
+      allow read: if true;
+      allow write: if esAdmin();
+    }
+
+    // Otras Colecciones
+    // Empleados. Cualquier staff puede LEER (la Caja necesita nombres, el
+    // encargado la lista de su sucursal), pero escribir es SOLO del admin: un
+    // `write` abierto dejaba que un cajero se pusiera rol admin editando su
+    // propio documento desde la consola del navegador.
+    //
+    // Nadie edita su propio perfil: Mi Perfil es de solo lectura y si un dato
+    // está mal lo corrige el administrador. Lo único que el empleado cambia por
+    // su cuenta es la contraseña, y eso va por Auth, no por Firestore.
+    //
+    // El alta CON acceso la hace la Cloud Function con Admin SDK, que se saltea
+    // las reglas; este write cubre a los empleados sin acceso (repartidores),
+    // que los escribe el cliente desde PanelAdmin.
+    match /usuarios/{usuario} {
+      allow read: if estaAutenticado();
+      allow write: if esAdmin();
+    }
+    match /clientes/{cliente} {
+      allow read, write: if estaAutenticado();
+    }
+
+
+    // Funciones Aux
+    function esCreacionPublicaValida() {
+      let data = request.resource.data;
+      return data.origen == "WEB"
+        && data.estado == "PENDIENTE"
+        && data.keys().hasAll(["cliente", "carrito", "total", "estado", "origen", "clienteTimestamp"])
+        && !data.keys().hasAny(["cajeroID", "cocineroID", "deliveryID"])
+        && data.carrito is list
+        && data.carrito.size() > 0
+        && data.carrito.size() <= 50
+        && data.total is number
+        && data.total > 0
+        && data.total <= 1000000;
+    }
+
+    function esOrigenWeb() {
+      return resource.data.origen == "WEB";
+    }
+
+    function estaAutenticado() {
+      return request.auth != null;
+    }
+
+    // Ser admin va en un custom claim del token, no en un get() a Firestore:
+    // evaluar la regla no cuesta ninguna lectura. Lo reparte la Cloud Function
+    // sincronizarClaims, que se corre tras crear un admin desde la Consola.
+    // Ojo: el claim viaja en el token, así que toma efecto al re-loguearse.
+    function esAdmin() {
+      return estaAutenticado() && request.auth.token.admin == true;
+    }
+  }
+}
