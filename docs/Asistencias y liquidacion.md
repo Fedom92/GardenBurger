@@ -87,7 +87,7 @@ compuesto. Incluye a los `sinAcceso` (los repartidores trabajan y cobran) y al p
 
 `asistencias` **no tiene reglas propias**: cae bajo el wildcard de subcolecciones de `sucursales`,
 así que cualquier staff autenticado puede leer y escribir los sueldos. Es una decisión explícita
-para no pagar el `get()` que costaría una regla por rol. Ver [[Deuda tecnica#`asistencias` sin reglas propias — **ya no está bloqueado por costo**|Deuda tecnica]].
+para no pagar el `get()` que costaría una regla por rol. Ver [[Deuda tecnica#`asistencias` abierta en reglas, cerrada solo por front|Deuda tecnica]].
 
 Para cerrarlo algún día hay que **excluir `asistencias` del wildcard**, como ya se hizo con
 `pedidos`: las reglas se combinan con OR, así que agregar una regla más específica no restringe nada.

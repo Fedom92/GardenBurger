@@ -2,13 +2,25 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    // menu.json: lo lee la web publica sin sesion, y es lo unico que se puede
+    // escribir en esta carpeta. Lo genera el boton "Publicar Menu" de Productos.
     match /publico/{archivo} {
       allow read: if true;
-      allow write: if request.auth != null && archivo == "menu.json";
+      allow write: if esAdmin() && archivo == "menu.json";
     }
 
+    // Imagenes de producto y demas. La LECTURA queda en autenticado a proposito:
+    // las imagenes se sirven por URL con token de descarga, que saltea las reglas,
+    // asi que el menu publico las muestra igual sin sesion.
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if esAdmin();
+    }
+
+    // Mismo criterio que firestore.rules: ser admin va en un custom claim del
+    // token, que reparte la Cloud Function sincronizarClaims. No cuesta lecturas.
+    function esAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
     }
   }
 }

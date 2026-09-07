@@ -70,5 +70,11 @@ nada.
 
 La carpeta `publico/` aloja `menu.json`, que genera el botón "Publicar Menú" de Productos.
 Necesita **lectura pública** para que `/menu` lo consuma sin autenticación y sin lecturas de
-Firestore. La escritura sigue exigiendo sesión. Ver
+Firestore. **La escritura es solo del admin**, con el mismo claim que Firestore.
+
+> [!note] La lectura del resto del bucket queda en "autenticado", a propósito
+> Las imágenes de producto se sirven por URL con token de descarga, que **saltea las reglas**: por
+> eso el menú público las muestra sin sesión aunque la regla pida autenticación.
+
+Ver
 [[Decisiones tecnicas#`menu.json` depende de tres capas]].

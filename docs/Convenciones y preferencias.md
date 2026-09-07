@@ -115,12 +115,5 @@ parte del build.
 Lo que queda por hacer en el proyecto:
 
 - Panel/Dashboard de estadísticas sobre datos reales (el actual lee TSV del sistema viejo).
-- Terminar y testear el cierre del día.
-- Finalizar el menú público.
-- Sacar `Utils/InsertarRegistros.jsx` y su entrada en `MODULOS_POR_ROL` cuando se implemente.
-- La fila de **"Vuelto"** en el bloque de cobro de Caja: hoy se guarda `pagaCon` pero el vuelto lo
-  calcula el cajero de cabeza. Sale de una resta con datos que ya están en memoria.
-- El selector de horario especial ofrece 20–23, pero el local **abre a las 19**: no se puede
-  pactar un pedido para las 19:xx.
-- Dashboard general cross-sucursal para el super-admin (a futuro).
+- Dashboard cross-sucursal para el super-admin, **solo sobre `resumenDiario`**.
 - Lo que queda abierto en [[Deuda tecnica]].

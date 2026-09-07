@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { serverTimestamp, writeBatch, doc, Timestamp, deleteField, getDoc } from "firebase/firestore";
-import { db, getNextSequence, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
+import { serverTimestamp, runTransaction, doc, Timestamp, deleteField, getDoc } from "firebase/firestore";
+import { db, avanzarContador, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
@@ -117,11 +117,10 @@ const Caja = () => {
         setProcesando(true);
 
         try {
-            const nuevoCodigo = await getNextSequence("pedidos");
-            const batch = writeBatch(db);
-
             const isWebOrder = !!data.id;
             const pedidosRef = colSucursal("pedidos");
+            // FUERA de la transaccion: si el id se generara adentro, cada reintento
+            // crearia un documento distinto.
             const pedidoRef = isWebOrder ? doc(pedidosRef, data.id) : doc(pedidosRef);
 
             let timestampPedido = serverTimestamp();
@@ -133,33 +132,8 @@ const Caja = () => {
                 timestampPedido = Timestamp.fromDate(fecha.toDate());
             }
 
-            batch.set(pedidoRef, {
-                codigo: `${nuevoCodigo}-${userData.iniciales}`,
-                cajeroID: userData.id,
-                cajero: userData.nombreCompleto,
-                cajeroTimestamp: serverTimestamp(),
-                nombre: data.nombre,
-                direccion: data.direccion,
-                entreCalles: data.entreCalles || "",
-                telefono: data.telefono,
-                observaciones: data.observaciones || "",
-                envio: envioSeleccionado,
-                metodoPago: data.metodoPago,
-                pagaCon: Number(data.pagaCon) || 0,
-                montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
-                total: Number(totalFinal),
-                carrito: carrito,
-                estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTEMP : ESTADOS.CONFIRMADO,
-                esHorarioEspecial: !!data.horarioEspecial,
-                sucursal: userData.sucursal,
-                origen: isWebOrder ? "WEB" : "CAJA",
-                timestamp: timestampPedido,
-                // La asignacion ya cumplio su funcion: no queda colgando en el pedido.
-                cajeroRevisaID: deleteField(),
-                cajeroRevisa: deleteField(),
-            }, { merge: true });
-
-            const { ref, stats: resumenData } = getResumenOperation({
+            // Tambien afuera: es pura, solo arma {ref, stats} con los increment().
+            const { ref: resumenRef, stats: resumenData } = getResumenOperation({
                 metodoPago: data.metodoPago,
                 total: totalFinal,
                 montoEfectivo,
@@ -167,9 +141,44 @@ const Caja = () => {
                 envio: envioSeleccionado,
                 carrito,
             });
-            batch.set(ref, resumenData, { merge: true });
 
-            await batch.commit();
+            // Contador, pedido y arqueo en una sola transaccion: o entran los tres o
+            // no entra ninguno. Antes el contador iba aparte y, si el batch fallaba,
+            // el numero quedaba quemado y la numeracion saltaba.
+            //
+            // Mismo costo que antes: 1 lectura (el contador) + 3 escrituras. Y la
+            // unica lectura va primero, que es lo que exige runTransaction.
+            await runTransaction(db, async (transaction) => {
+                const nuevoCodigo = await avanzarContador(transaction, "pedidos");
+
+                transaction.set(pedidoRef, {
+                    codigo: `${nuevoCodigo}-${userData.iniciales}`,
+                    cajeroID: userData.id,
+                    cajero: userData.nombreCompleto,
+                    cajeroTimestamp: serverTimestamp(),
+                    nombre: data.nombre,
+                    direccion: data.direccion,
+                    entreCalles: data.entreCalles || "",
+                    telefono: data.telefono,
+                    observaciones: data.observaciones || "",
+                    envio: envioSeleccionado,
+                    metodoPago: data.metodoPago,
+                    pagaCon: Number(data.pagaCon) || 0,
+                    montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
+                    total: Number(totalFinal),
+                    carrito: carrito,
+                    estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTEMP : ESTADOS.CONFIRMADO,
+                    esHorarioEspecial: !!data.horarioEspecial,
+                    sucursal: userData.sucursal,
+                    origen: isWebOrder ? "WEB" : "CAJA",
+                    timestamp: timestampPedido,
+                    // La asignacion ya cumplio su funcion: no queda colgando en el pedido.
+                    cajeroRevisaID: deleteField(),
+                    cajeroRevisa: deleteField(),
+                }, { merge: true });
+
+                transaction.set(resumenRef, resumenData, { merge: true });
+            });
             guardarClienteSiNoExiste(data);
             await Swal.fire({
                 title: '¡Éxito!',

@@ -89,20 +89,27 @@ export const docDeSucursal = (sucursal, nombre, ...segs) => doc(db, "sucursales"
 export const colSucursal = (nombre, ...segs) => colDeSucursal(sucursalRequerida(), nombre, ...segs);
 export const docSucursal = (nombre, ...segs) => docDeSucursal(sucursalRequerida(), nombre, ...segs);
 
+// Avanza el contador DENTRO de una transacción que abre quien llama, para que el
+// número y el pedido se guarden juntos o no se guarde ninguno. Antes el contador
+// corría en su propia transacción, antes del batch: si el batch fallaba el número
+// ya estaba consumido y la numeración saltaba (42, 43, 45), que en un negocio de
+// efectivo parece un ticket faltante al cuadrar la caja.
+//
 // `sucursal` es un override opcional: sin él usa la del usuario logueado, que es
 // lo que hace la Caja. Lo pasa solo el admin, que opera sobre una sucursal ajena.
-export const getNextSequence = async (coleccion, sucursal) => {
+export const avanzarContador = async (transaction, coleccion, sucursal) => {
   const counterRef = sucursal
     ? docDeSucursal(sucursal, "contadores", coleccion)
     : docSucursal("contadores", coleccion);
 
-  return await runTransaction(db, async (transaction) => {
-    const counterDoc = await transaction.get(counterRef);
+  const counterDoc = await transaction.get(counterRef);
+  const newValue = counterDoc.exists() ? counterDoc.data().value + 1 : 1;
+  transaction.set(counterRef, { value: newValue }, { merge: true });
 
-    const newValue = counterDoc.exists() ? counterDoc.data().value + 1 : 1;
-
-    transaction.set(counterRef, { value: newValue }, { merge: true });
-
-    return newValue;
-  });
+  return newValue;
 };
+
+// Para quien solo necesita el número y no tiene una transacción propia en la que
+// meterlo: la abre él. Hoy lo usa InsertarRegistros.
+export const getNextSequence = (coleccion, sucursal) =>
+  runTransaction(db, (transaction) => avanzarContador(transaction, coleccion, sucursal));

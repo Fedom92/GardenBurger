@@ -34,7 +34,7 @@ deja de costar la jornada completa.
 > [!warning] Lo que NO gana
 > `getDocs` **siempre** consulta al servidor y se factura igual. Para leer de caché hay que pedir
 > `getDocsFromCache()` explícitamente, y hoy nadie lo hace. Por eso `useTraerDatos` sigue siendo el
-> mayor costo recurrente: ver [[Deuda tecnica#Caché del catálogo de Caja — el mayor costo recurrente]].
+> mayor costo recurrente: ver [[Decisiones tecnicas#El catálogo de Caja va por listener|el catálogo por listener]].
 
 **Síntoma esperado, no es un error**: abrir una segunda pestaña imprime un warning de IndexedDB en
 consola. Es el fallback del SDK funcionando.
@@ -98,7 +98,7 @@ cosas: no se lee nada y no hay ningún valor de rol en los archivos.
 
 **El efecto secundario es el importante**: una regla por rol pasó a costar cero. `asistencias` está
 abierta a cualquier staff únicamente porque cerrarla costaba un `get()` — ese argumento ya no
-existe. Ver [[Deuda tecnica#`asistencias` sin reglas propias — **ya no está bloqueado por costo**|Deuda tecnica]].
+existe. Ver [[Deuda tecnica#`asistencias` abierta en reglas, cerrada solo por front|Deuda tecnica]].
 
 **Los admins se crean solo desde la Consola de Firebase.** La app no ofrece ese rol y
 `crearUsuario` lo rechaza server-side. Después de crear uno hay que entrar al PanelAdmin y tocar
@@ -159,6 +159,45 @@ paneles se estiran al contenido y rompen el layout.
 > Al segundo intento fallido, parar de editar a ciegas y poner un `outline` rojo de testigo para
 > ver qué caja se está estirando realmente.
 
+
+## El catálogo de Caja va por listener
+
+**Qué**: `useTraerDatos` escucha productos, categorías y envíos con `onSnapshot`, no con `getDocs`.
+
+**Por qué**: releía las tres colecciones enteras en **cada montaje de Caja** —cada F5 y cada vuelta
+desde otra pantalla— y era el mayor costo recurrente del sistema. Con `persistentLocalCache` el
+`resumeToken` de cada listener queda en IndexedDB, así que al re-montar el servidor manda **solo
+los cambios**. De regalo el catálogo queda en vivo: un precio que cambia el admin llega a la Caja
+abierta sin recargar.
+
+**Lo que se descartó:**
+
+| Alternativa | Por qué no |
+|---|---|
+| Caché propia con marca de jornada en `localStorage` | Código propio —marca, botón "Actualizar catálogo" y camino de respaldo— y un precio cambiado a mitad de turno no llegaba hasta refrescar a mano |
+| Provider por encima de las rutas | Evita la relectura al navegar, pero el F5 sigue costando todo |
+| Reusar `menu.json` | Cero lecturas, pero el JSON solo se actualiza al "Publicar Menú": riesgo real de **cobrar un precio viejo** |
+
+> [!note] La incertidumbre honesta
+> Cuánto tiempo el servidor honra un resume token es política suya, no algo verificable desde el
+> SDK. Tras una noche cerrado, la primera carga probablemente sea completa igual — que es
+> exactamente el objetivo: una lectura del catálogo por PC por noche en vez de una por montaje.
+
+## Numeración de tickets dentro de la transacción del pedido
+
+**Qué**: `guardarBD` usa `runTransaction` con contador + pedido + arqueo adentro. `avanzarContador`
+participa de esa transacción; `getNextSequence` sigue existiendo para quien no tiene una propia.
+
+**Por qué**: el contador corría en su propia transacción **antes** del `writeBatch`. Si el batch
+fallaba, el número ya estaba consumido y la numeración saltaba (42, 43, 45), que en un negocio de
+efectivo parece un ticket faltante al cuadrar la caja.
+
+**No cuesta nada**: antes era 1 lectura del contador + 3 escrituras; ahora también.
+
+> [!caution] Dos cosas que rompen sutilmente si se tocan
+> El `doc(pedidosRef)` se genera **fuera** del callback: adentro, cada reintento de la transacción
+> crearía un id distinto. Y todas las lecturas van antes que cualquier escritura, que es lo que
+> exige `runTransaction` — se cumple solo porque la única lectura es el contador.
 
 ## Todos los empleados viven en `usuarios`
 

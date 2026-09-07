@@ -16,17 +16,6 @@ por una decisión, no por olvido.
 
 ## Abierto por decisión
 
-### Caché del catálogo de Caja — el mayor costo recurrente
-
-`useTraerDatos` relee productos + categorías + envíos **en cada montaje de Caja**. Volver a
-`persistentLocalCache` (ver [[Decisiones tecnicas#Persistencia en IndexedDB, modo una sola pestaña]])
-**no lo resuelve**: `getDocs` siempre va al servidor.
-
-Camino acordado si se retoma: `getDocsFromCache()` con una marca de jornada en `localStorage`
-—para saber si el catálogo se trajo completo esta noche— más un botón "Actualizar catálogo" para
-el cambio de precio a mitad de turno. Resultado esperado: **1 lectura del catálogo por PC por
-noche** en vez de una por montaje.
-
 ### Concurrencia entre dos cajeros sobre el arqueo
 
 `useAccionUnica` cubre el doble click de **una** persona. Dos cajeros distintos descontando el
@@ -34,40 +23,18 @@ mismo pedido con ~200 ms de diferencia siguen pudiendo duplicar el movimiento, p
 `increment()` no es idempotente. Cerrarlo exige transacciones, y eso se descartó a propósito:
 [[Decisiones tecnicas#Sin runTransaction para el arqueo]].
 
-### `getNextSequence` fuera del batch
-
-Corre antes y fuera del `writeBatch` del pedido. Si el commit falla, ese número de ticket queda
-quemado y la numeración salta. Cerrarlo exige mover el contador a la misma transacción que el
-pedido.
-
-### `asistencias` sin reglas propias — **ya no está bloqueado por costo**
+### `asistencias` abierta en reglas, cerrada solo por front
 
 Cae bajo el wildcard `match /{coleccion}/{documento}` de `sucursales`, así que **cualquier staff
-autenticado puede leer y escribir los sueldos**.
+autenticado puede leer y escribir los sueldos** desde la consola del navegador. La barrera real es
+el front: la ruta `/asistencias` solo la ve el encargado y `/liquidacion` solo el admin.
 
-Se dejó así porque cerrarlo por rol costaba un `get()` facturado por request. **Ese argumento
-desapareció**: con [[Decisiones tecnicas#Ser admin es un custom claim, no una lectura|custom claims]]
-una regla por rol no cuesta nada.
+**Es una decisión, no un olvido.** Se evaluó cerrarla con un claim `encargado` —ahora que los
+custom claims hacen gratis una regla por rol— y el dueño la descartó.
 
-Lo que falta para cerrarlo:
-
-1. Un claim `encargado`, igual que el de admin: agregar `ENCARGADO_ROL` a `functions/.env` y que
-   `sincronizarClaims` lo reparta.
-2. **Excluir `asistencias` del wildcard**, como ya se hace con `pedidos` — las reglas se combinan
-   con OR, así que agregar una regla más específica no restringe nada.
-3. La regla: lectura para admin y encargado, escritura para el encargado de esa sucursal.
-
-
-### Una solicitud web trabada
-
-Un cajero que se asigna una solicitud y termina el turno sin volver la deja bloqueada: nadie más
-puede revisarla ni rechazarla. Salida barata si llega a pasar: dejar pasar al rol `encargado` en
-`esDeOtroCajero`.
-
-### `HistorialPedidos` sin `limit`
-
-Un rango de fechas largo lee todos los documentos del período. Es una pantalla de admin y de uso
-esporádico, pero el costo crece con el historial.
+Si algún día se reconsidera: hace falta el claim `encargado` repartido por `sincronizarClaims`, y
+**excluir `asistencias` del wildcard** como se hace con `pedidos` — las reglas se combinan con OR,
+así que agregar una regla más específica no restringe nada.
 
 ## Riesgos latentes (no son bugs hoy)
 

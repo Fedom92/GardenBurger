@@ -22,6 +22,9 @@ tags: [gardenburger, firestore, costos]
   `onSnapshot` persistan su `resumeToken`: al recargar, el servidor manda **solo los cambios** en
   vez de la query entera. **No ayuda a `getDocs`.** Ver
   [[Decisiones tecnicas#Persistencia en IndexedDB, modo una sola pestaña]].
+- Corolario: para algo que se relee seguido, **un listener sale más barato que un `getDocs`**. Es
+  lo que se hizo con el catálogo de Caja:
+  [[Decisiones tecnicas#El catálogo de Caja va por listener]].
 - `deleteField()` dentro de un `batch.set(..., {merge:true})` **no cuesta operación extra**.
 - `increment()` es atómico del lado del servidor, pero **no es idempotente**: si la misma
   operación se dispara dos veces, suma dos veces.
@@ -30,7 +33,7 @@ tags: [gardenburger, firestore, costos]
 
 | Dónde | Qué lee | Cuándo | Volumen | Nota |
 |---|---|---|---|---|
-| `useTraerDatos` | productos (`visible==true`) + categorías + envíos | **cada montaje de Caja** | N+M+Z | 🔴 **el mayor costo recurrente** |
+| `useTraerDatos` | 3 listeners: productos (`visible==true`), categorías y envíos | mientras Caja está abierta | solo los cambios al re-montar | ✅ era el mayor costo recurrente; ahora resume por token y queda en vivo |
 | `Clientes.jsx` | teléfono exacto, prefijo de nombre o sucursal | **por búsqueda**, no al entrar | con tope | ✅ era la colección entera |
 | `AuthContext.fetchUserData` | `usuarios/{uid}` | **1 por login** | 1 | ✅ `login()` y `onAuthStateChanged` comparten la promesa en vuelo |
 | `MiPerfil` | — | — | **0** | ✅ consume `useAuth()` |
@@ -75,7 +78,7 @@ arqueo del día** y no queda rastro:
 
 | Operación | Efecto |
 |---|---|
-| `Caja.guardarBD` | suma efectivo/mp/pedidos/combos |
+| `Caja.guardarBD` | suma efectivo/mp/pedidos/combos. Va en la **misma transacción** que el contador y el pedido |
 | `PendientesMP.rechazarPedido` | resta todo |
 | `BuscarPedido.eliminarPedido` | resta todo |
 | `JefeDeliverys.marcarEstado` (VOLVIO) | suma métricas del repartidor |
