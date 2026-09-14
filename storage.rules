@@ -12,15 +12,29 @@ service firebase.storage {
     // Imagenes de producto y demas. La LECTURA queda en autenticado a proposito:
     // las imagenes se sirven por URL con token de descarga, que saltea las reglas,
     // asi que el menu publico las muestra igual sin sesion.
+    //
+    // La ESCRITURA exige imagen de hasta 5 MB: es el mismo tope que valida el
+    // front en CrearProducto/EditProducto, pero aca no se saltea con las devtools.
+    // Es lo unico que se sube por esta via (productos/...); menu.json entra por la
+    // regla de /publico, que se combina con OR. `delete` va aparte porque en un
+    // borrado request.resource es null y esImagenValida() tiraria.
     match /{allPaths=**} {
       allow read: if request.auth != null;
-      allow write: if esAdmin();
+      allow create, update: if esAdmin() && esImagenValida();
+      allow delete: if esAdmin();
     }
 
     // Mismo criterio que firestore.rules: ser admin va en un custom claim del
     // token, que reparte la Cloud Function sincronizarClaims. No cuesta lecturas.
     function esAdmin() {
       return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // uploadBytes sin contentType en metadata usa el `type` del File (image/png,
+    // image/webp...), asi que los uploads actuales pasan sin tocar el front.
+    function esImagenValida() {
+      return request.resource.size <= 5 * 1024 * 1024
+          && request.resource.contentType.matches('image/.*');
     }
   }
 }

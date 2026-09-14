@@ -248,7 +248,9 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                     <i className="fa-brands fa-whatsapp fs-5 align-middle me-1"></i> Enviar WhatsApp
                                                 </a>
 
-                                                {pedido.estado !== ESTADOS.ELIMINADO ? (
+                                                {/* Un CANCELADO que vino de rechazar un MP ya descontó el arqueo:
+                                                    eliminarlo lo descontaría por segunda vez. */}
+                                                {![ESTADOS.ELIMINADO, ESTADOS.CANCELADO].includes(pedido.estado) ? (
                                                     <button
                                                         className="btn btn-danger btn-sm w-75 fw-bold"
                                                         onClick={() => eliminarPedido(pedido)}
@@ -258,7 +260,10 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                     </button>
                                                 ) : (
                                                     <div className="alert alert-secondary mb-0 p-2 w-75" role="alert">
-                                                        <small className="fw-bold"><i className="fa fa-info-circle me-1"></i> Ya está eliminado</small>
+                                                        <small className="fw-bold">
+                                                            <i className="fa fa-info-circle me-1"></i>
+                                                            Ya está {pedido.estado === ESTADOS.ELIMINADO ? "eliminado" : "cancelado"}
+                                                        </small>
                                                     </div>
                                                 )}
                                             </div>

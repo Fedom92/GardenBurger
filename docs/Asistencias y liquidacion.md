@@ -22,7 +22,7 @@ no es de solo lectura.
 ## Modelo
 
 `sucursales/{id}/asistencias/{DD-MM-YYYY}` — **un documento por jornada**, con los empleados en un
-mapa `registros`. Ver los campos en [[Modelo de datos Firestore#Subcolección asistencias]].
+mapa `registros`. Ver los campos en [[Modelo de datos Firestore#Subcolección `asistencias`]].
 
 Cargar la noche entera es **1 escritura** y leerla **1 lectura**, sin importar cuánta gente haya.
 

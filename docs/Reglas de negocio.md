@@ -92,9 +92,13 @@ Pedidos encargados para más tarde. `Caja` graba **la hora pedida directamente e
 (base `ahoraServidor()`) y marca `esHorarioEspecial: true`. O sea: **en un pedido con horario
 especial, `timestamp` no es cuándo se cargó sino cuándo tiene que estar listo.**
 
-Selector limitado a horas 20–23 y minutos 00/15/30/45 (el selector no se movió cuando la
-apertura pasó de 20 a 19: hoy no se puede pactar un pedido para las 19:xx). El horario especial no permite pedidos
+Selector limitado a horas 20–23 y minutos 00/15/30/45. El horario especial no permite pedidos
 después de las 00.
+
+> [!note] Arranca a las 20 aunque el local abra a las 19, por decisión
+> Nadie encarga para las 19:xx. Se evaluó generar las horas desde `REACT_APP_horaAbre` y el dueño
+> prefirió dejarlo (14-09-2026). Las opciones están hardcodeadas en `Caja.jsx`; si algún día
+> cambia, ese es el lugar.
 
 En `PedidosEspera`:
 - La hora va en **rojo y negrita** cuando `esHorarioEspecial`.
@@ -115,26 +119,79 @@ que se le entrega al cliente y tiene que listar todo, si no los ítems no cierra
 `CANTIDAD_CARNES` mapea categorías a cantidad de medallones para el contador de "Carnes
 Seleccionadas" (los `EXTRA` se cuentan por descripción, ej. "CARNE EXTRA").
 
+**"Cocinados TODOS" es la única forma de marcar cocinado, a propósito.** Cada cocinero ve solo los
+pedidos que él mandó a cocina (`where cocineroID`), y en la práctica salen juntos. Se evaluó un
+botón por tarjeta y el dueño lo descartó (14-09-2026).
+
 ## Numeración de tickets
 
 `codigo = "{secuencial}-{iniciales del cajero}"`. El secuencial sale de
-`getNextSequence("pedidos")`, que usa `runTransaction` sobre
 `sucursales/{id}/contadores/pedidos`. **La numeración es por sucursal.**
 
-> [!caution] El número se puede quemar
-> `getNextSequence` corre **antes** y **fuera** del `writeBatch`. Si el commit falla, el número
-> ya se consumió y la numeración salta. Cerrarlo exige meter el contador en la misma
-> transacción que el pedido.
+Hay dos formas de pedirlo, y la diferencia importa:
+
+- **`avanzarContador(transaction, coleccion, sucursal)`** — avanza el contador **dentro de una
+  transacción que abre quien llama**. Es lo que hace `Caja.guardarBD`: el número, el pedido y el
+  arqueo van juntos o no va ninguno, así que **un commit fallido ya no quema el número**.
+- **`getNextSequence(coleccion, sucursal)`** — abre su propia transacción, para quien solo necesita
+  el número y no tiene una propia. Hoy lo usa únicamente `InsertarRegistros`.
+
+El parámetro `sucursal` es un override opcional: sin él usa la del usuario logueado, que es lo que
+hace la Caja. Lo pasa solo el admin, que opera sobre una sucursal ajena.
 
 ## Clientes
 
-Alta automática al cobrar en Caja: `guardarClienteSiNoExiste` busca por teléfono y, si no
-existe, lo crea. **No actualiza** la dirección de un cliente ya existente que se mudó.
+**La ficha se actualiza en cada cobro.** `registrarCliente` (en `useCliente`) busca por teléfono:
+si no existe lo crea; si existe, **pisa nombre, dirección y entre calles** con lo que el cajero
+acaba de cargar — la última dirección usada es la más probable como actual (decisión del
+14-09-2026; antes solo se creaba y un cliente que se mudó quedaba con la dirección vieja).
+
+En la misma escritura van los campos CRM: `ultimoPedido` (fecha del cobro, no la del pedido: un
+horario especial tiene fecha futura), `cantidadPedidos` (contador; los clientes anteriores a
+sep-2026 arrancan en 1 con su próximo pedido) y `creado` (solo al crear). Costo: 1 lectura + 1
+escritura por pedido.
 
 La pantalla `/clientes` **no lista nada al entrar**: es un buscador. Un término de solo dígitos se
 busca como teléfono exacto; cualquier otra cosa, como prefijo de nombre —y ahí Firestore compara
 byte a byte, o sea que **distingue mayúsculas y acentos**: hay que escribirlo como se cargó—. La
 sucursal sola lista esa sucursal. Todo con tope.
+
+## Reglas que solo vivían en el código
+
+Salieron de la [[Auditoria 2026-09|auditoría de septiembre 2026]]. Ninguna es un bug: son
+decisiones que estaban implementadas y sin escribir, y sorprenden a quien lee el código de corrido.
+
+1. **Un extra de hamburguesa solo se agrega inmediatamente después de una hamburguesa**
+   (`useCarrito.js:38`). Si el cajero mete una bebida en el medio, el extra se rechaza.
+2. **El carrito solo acumula cantidad sobre el último ítem** (`useCarrito.js:60`). El mismo producto
+   con algo en el medio abre un renglón nuevo — es el mismo motivo por el que el rediseño de Caja
+   descartó el control `− +` por línea.
+3. **El teléfono se valida por longitud, no por contenido** (`validarPedido.js:5`): pide 10
+   caracteres, sin verificar que sean dígitos.
+4. **El vuelto se exige pero no se muestra.** En efectivo se pide `pagaCon >= total` para poder
+   calcularlo, y después la pantalla no lo informa.
+5. **Un pedido `ELIMINADO` o `CANCELADO` sigue apareciendo en los buscadores**, a propósito: el
+   cajero tiene que poder auditarlo.
+
+## Validación del pedido web: forma, no contenido
+
+`esCreacionPublicaValida()` en `firestore.rules` valida la **forma** del documento —origen, estado,
+campos obligatorios, ausencia de IDs de staff, carrito de 1 a 50 ítems, total entre 0 y 1.000.000—
+pero **no** valida el contenido: ni que los precios coincidan con el catálogo, ni que `total` sea la
+suma del carrito, ni la forma de cada ítem.
+
+Está bien que sea así —validar precios en las reglas exigiría un `get()` facturado por ítem—. **El
+precio definitivo lo pone la Caja al Revisar**: `useRevisarSolicitud` reemplaza el precio de cada
+ítem por el del catálogo en vivo (`productos`, ya en memoria), en silencio. El cliente pudo haber
+visto otro en un `menu.json` viejo; el total que vale es el del ticket. Un producto que ya no está
+en el catálogo (`visible: false`) conserva el precio del cliente.
+
+## Pago dividido: la validación corre dos veces
+
+`errorPagoDividido(montoEfectivo, totalBase)` exige `0 < montoEfectivo < totalBase`. Corre al
+confirmar el modal **y otra vez en `validarPedido` al guardar**, porque el cajero puede seguir
+editando el carrito después de fijar el efectivo: si el total baja de ese monto, el recargo sale
+negativo y el pedido se guardaría subcobrado con el arqueo corrido.
 
 ## Horas trabajadas y sueldos
 

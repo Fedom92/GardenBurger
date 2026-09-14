@@ -1,7 +1,7 @@
 ---
 tags: [moc, gardenburger]
 aliases: [GardenBurger MOC, Indice GardenBurger]
-actualizado: 2026-09-07
+actualizado: 2026-09-09
 ---
 
 # GardenBurger — Mapa del proyecto
@@ -29,11 +29,13 @@ Según qué vengas a hacer, con esto alcanza:
 |---|---|
 | Entender el negocio | [[Reglas de negocio]] → [[Flujo del pedido]] |
 | Tocar la Caja o Cocina | [[Flujo del pedido]] + [[Reglas de negocio]] + [[Mapa de operaciones Firestore]] |
+| Cambiar el `estado` de un pedido | [[Modelo de estados]] ← transiciones, quién las dispara, qué le hace al arqueo |
 | Agregar o cambiar una pantalla | [[Arquitectura y rutas]] + [[Mapa de archivos]] + [[Convenciones y preferencias]] |
-| Tocar datos o reglas | [[Modelo de datos Firestore]] |
+| Tocar datos o reglas | [[Modelo de datos Firestore]] + [[Reglas de seguridad]] |
 | Sueldos y horas | [[Asistencias y liquidacion]] |
 | Entender por qué algo está "raro" | [[Decisiones tecnicas]] ← **leer antes de "arreglar" nada** |
 | Saber qué falta | [[Deuda tecnica]] |
+| Ver el diagnóstico completo | [[Auditoria 2026-09]] ← foto al 09-09-2026, con evidencia |
 
 ## Las cinco cosas que hay que saber sí o sí
 
@@ -59,13 +61,15 @@ Según qué vengas a hacer, con esto alcanza:
 - **React Hook Form** en Caja y CrearSolicitud
 - **Moment.js** (+ moment-timezone) — formato `DD/MM/YYYY`
 - **@tanstack/react-table** debajo de `TablaGenerica`
-- **Recharts** en Estadísticas · **html2pdf.js** para exportar el menú
+- **Recharts** en Estadísticas · **html2pdf.js** para exportar el menú (se carga al tocar el botón)
 
 ## Todas las notas
 
 - [[Arquitectura y rutas]] — rutas, guards, roles, providers, multi-sucursal
 - [[Modelo de datos Firestore]] — colecciones, campos reales, reglas de seguridad
-- [[Flujo del pedido]] — estados, quién escribe qué en cada paso
+- [[Reglas de seguridad]] — el porqué de `firestore.rules` y `storage.rules`
+- [[Flujo del pedido]] — el recorrido feliz: quién escribe qué en cada paso
+- [[Modelo de estados]] — el pipeline como máquina de estados, y las transiciones que no deberían existir
 - [[Reglas de negocio]] — jornada, combos, métodos de pago, horario especial
 - [[Asistencias y liquidacion]] — horas trabajadas y sueldos
 - [[Mapa de operaciones Firestore]] — cada lectura y escritura, con su costo
@@ -73,3 +77,4 @@ Según qué vengas a hacer, con esto alcanza:
 - [[Decisiones tecnicas]] — el porqué de lo que parece raro
 - [[Deuda tecnica]] — lo que queda abierto, y por qué decisión
 - [[Convenciones y preferencias]] — cómo escribir código en este repo
+- [[Auditoria 2026-09]] — auditoría integral de septiembre 2026 (foto, no documento vivo)

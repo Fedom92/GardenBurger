@@ -4,9 +4,14 @@ tags: [gardenburger, workflow]
 
 # Flujo del pedido
 
-← [[GardenBurger]] · relacionado: [[Modelo de datos Firestore]], [[Reglas de negocio]]
+← [[GardenBurger]] · relacionado: [[Modelo de estados]], [[Modelo de datos Firestore]], [[Reglas de negocio]]
 
 Los valores están en `ESTADOS` de `src/Utils/Constantes.jsx`. **Nunca hardcodear los strings.**
+
+> [!tip] Esta nota cuenta el recorrido feliz
+> Para las transiciones **que el sistema permite y no debería** —un `CANCELADO` que se elimina y
+> descuenta dos veces, un `ELIMINADO` que vuelve a cocina— y el efecto de cada paso sobre el arqueo,
+> la nota es [[Modelo de estados]].
 
 ## Pipeline
 
@@ -40,8 +45,16 @@ Caja.guardarBD ──→  CONFIRMADO          (efectivo)
 ```
 
 Fuera del flujo feliz: **`CANCELADO`** (rechazo de solicitud web o de transferencia MP) y
-**`ELIMINADO`** (el cajero borra el ticket desde `BuscarPedido`). Los dos **descuentan del
-arqueo** con `getResumenOperation({ descontar: true })`.
+**`ELIMINADO`** (el cajero borra el ticket desde `BuscarPedido`).
+
+El descuento del arqueo con `getResumenOperation({ descontar: true })` **no es automático por el
+estado, depende de si el pedido llegó a cobrarse**:
+
+- Rechazar una **solicitud web** (`PENDIENTE` → `CANCELADO`) no toca el arqueo: nunca sumó.
+- Rechazar una **transferencia MP** (`PENDIENTEMP` → `CANCELADO`) **sí descuenta**: el pedido ya
+  sumó al guardarse en Caja.
+- Eliminar un ticket descuenta **solo si tiene `cajeroID`** — `BuscarPedido.jsx:86` lo verifica, así
+  que una solicitud web que nadie cobró no descuenta nada al borrarse.
 
 > [!important] El ruteo de cocina define todo lo que sigue
 > `PedidosCocinando` decide entre `ATP` y `DELIVERY` mirando `pedido.envio.zona_envio` contra
@@ -118,7 +131,22 @@ ticket. Por eso:
 - Al guardar, `guardarBD` borra `cajeroRevisa*` con `deleteField()` dentro del mismo
   `batch.set(..., {merge:true})` — sin costo extra de operación.
 
-> [!caution] Caso abierto
+> [!important] La atomicidad la garantizan las reglas, no el front
+> `esDeOtroCajero()` se evalúa contra el **snapshot local**, así que dos cajeros cuyos listeners
+> todavía no recibieron la asignación del otro pasan los dos el chequeo. Hasta el 14-09-2026 los
+> dos escribían y los dos quedaban con el pedido cargado: dos tickets y el arqueo sumando dos veces.
+>
+> Hoy la regla `asignacionValida()` rechaza la segunda escritura del lado del servidor —sin
+> lecturas, sin transacción— y `useRevisarSolicitud` avisa "Otro cajero ya tomó esta solicitud".
+> Ver [[Reglas de seguridad#`update`: valida la asignación, no el estado]].
+>
+> **Al Revisar, los precios del carrito se reemplazan por los del catálogo en vivo** (`productos`
+> que la Caja ya tiene en memoria), en silencio. El precio que trae la solicitud lo puso el
+> navegador del cliente desde un `menu.json` que puede estar viejo o editado.
+
+> [!caution] Caso abierto: la solicitud trabada
 > Un cajero que se asigna una solicitud y no vuelve (terminó el turno) la deja trabada: nadie
-> más puede revisarla ni rechazarla. Salida barata si llega a pasar: dejar pasar al rol
-> `encargado` en `esDeOtroCajero`.
+> más puede revisarla ni rechazarla. **El encargado no la destraba, por decisión** (14-09-2026).
+> Lo va a poder hacer el admin desde `HistorialPedidos`, todavía sin desarrollar — ver
+> [[Deuda tecnica#Funcionalidad pendiente]]. Ojo al implementarlo: la regla `asignacionValida()`
+> hoy rechaza que alguien que no es el dueño borre `cajeroRevisaID`; necesita `|| esAdmin()`.

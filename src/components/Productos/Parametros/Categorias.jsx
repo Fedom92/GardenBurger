@@ -1,42 +1,20 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState } from "react";
 import { Modal } from "react-bootstrap";
-import { addDoc, collection, doc, setDoc, deleteDoc, query, orderBy, getDocs } from "firebase/firestore";
+import { addDoc, collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase.js";
 import { useForm } from "react-hook-form";
 
-const Categorias = ({ show, onHide }) => {
+// Las categorias vienen de Productos, que ya las leyo: este modal no hace ninguna
+// lectura propia (antes releia la coleccion entera al montar). Editar aca actualiza
+// el estado del padre, asi que los <option> de Crear/Editar producto se enteran al
+// instante. onCambio avisa que el menu publico quedo desactualizado.
+const Categorias = ({ show, onHide, categorias, setCategorias, onCambio }) => {
   const { register, handleSubmit, setValue, reset } = useForm();
 
   const [idAEditar, setIdAEditar] = useState(null);
-  const [categorias, setCategorias] = useState([]);
   const [error, setError] = useState("");
 
   const categoriasCollection = collection(db, "categorias");
-  const categoriasCollectionOrdenados =useRef(query(categoriasCollection, orderBy("nroOrden", "asc")));
-
-  const getCategorias = useCallback((snapshot) => {
-    const categoriasArray = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    setCategorias(categoriasArray);
-  }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const categoriasSnapshot = await getDocs(categoriasCollectionOrdenados.current);
-        await getCategorias(categoriasSnapshot);
-
-      } catch (error) {
-        console.error('Error fetching data Categoría:', error);
-      }
-    };
-
-    fetchData();
-
-  }, [getCategorias]);
 
   const categoriaExiste = (nombre) => {
     return categorias.some(
@@ -61,6 +39,7 @@ const Categorias = ({ show, onHide }) => {
       setError("");
       reset();
       setCategorias([...categorias, { id: newId, ...newState }]);
+      onCambio?.();
 
     } catch (error) {
       console.error("Error al agregar la Categoría: ", error);
@@ -91,6 +70,7 @@ const Categorias = ({ show, onHide }) => {
       setIdAEditar(null);
       reset();
       setError("");
+      onCambio?.();
     });
   };
 
@@ -99,6 +79,7 @@ const Categorias = ({ show, onHide }) => {
     const newStates = categorias.filter((item) => item.id !== id);
     setCategorias(newStates);
     setError("");
+    onCambio?.();
   };
 
   return (

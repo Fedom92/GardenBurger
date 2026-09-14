@@ -8,18 +8,25 @@ import { Card } from "./Card.jsx"
 import logo from '../../img/logo_negro3.png';
 import logoMobile from '../../img/logo_negro.webp';
 import './menu.css';
-import html2pdf from 'html2pdf.js';
 
 
 const Menu = () => {
-  const exportarPDF = () => {
-    const elemento = document.getElementById('menu');
-    html2pdf().from(elemento).set({
-      margin: 10,
-      filename: 'menu_garden_burger.pdf',
-      html2canvas: { scale: 2 },
-      jsPDF: { orientation: 'portrait' }
-    }).save();
+  // html2pdf (y jspdf debajo) solo sirven para este botón y arrastran un advisory
+  // crítico: se cargan recién al tocarlo, no con la página pública.
+  const exportarPDF = async () => {
+    try {
+      const { default: html2pdf } = await import('html2pdf.js');
+      const elemento = document.getElementById('menu');
+      await html2pdf().from(elemento).set({
+        margin: 10,
+        filename: 'menu_garden_burger.pdf',
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait' }
+      }).save();
+    } catch (error) {
+      console.error("Error exportando el menú a PDF:", error);
+      alert("No se pudo generar el PDF. Revisá la conexión e intentá de nuevo.");
+    }
   };
 
   const [categorias, setCategorias] = useState([]);

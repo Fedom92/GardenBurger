@@ -1,24 +1,18 @@
 import React from "react";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
+import { errorPagoDividido } from "../pos_hooks/validarPedido";
 
 const PagoDividido = ({ isOpen, onClose, onCancelar, montoEfectivo, setMontoEfectivo, totalBase }) => {
 
+    // Misma validacion que corre validarPedido al guardar: aca se avisa temprano,
+    // alla se garantiza aunque el carrito haya cambiado despues.
     const handleConfirmar = () => {
-        if (montoEfectivo <= 0) {
+        const error = errorPagoDividido(montoEfectivo, totalBase);
+        if (error) {
             Swal.fire({
                 title: 'Advertencia',
-                text: 'El monto en efectivo debe ser mayor a 0',
-                icon: 'warning',
-                confirmButtonColor: '#ffc107',
-            });
-            return;
-        }
-
-        if (montoEfectivo >= totalBase) {
-            Swal.fire({
-                title: 'Advertencia',
-                text: 'El monto en efectivo no puede ser mayor o igual al total base',
+                text: error,
                 icon: 'warning',
                 confirmButtonColor: '#ffc107',
             });

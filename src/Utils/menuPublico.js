@@ -35,6 +35,16 @@ export const publicarMenu = async () => {
     return menu;
 };
 
+// Bandera "hay cambios sin publicar". Vive en localStorage: la prende Productos
+// con cualquier edición del catálogo y se apaga al publicar. Es por navegador, a
+// propósito: no vale una lectura de Firestore para saberlo desde otra PC, y
+// publicar dos veces no rompe nada. Los try/catch son por el modo privado, donde
+// localStorage puede tirar.
+const CLAVE_PENDIENTE = "menuSinPublicar";
+export const marcarMenuPendiente = () => { try { localStorage.setItem(CLAVE_PENDIENTE, "1"); } catch { /* sin storage */ } };
+export const limpiarMenuPendiente = () => { try { localStorage.removeItem(CLAVE_PENDIENTE); } catch { /* sin storage */ } };
+export const hayMenuPendiente = () => { try { return localStorage.getItem(CLAVE_PENDIENTE) === "1"; } catch { return false; } };
+
 // Cachea la promesa para que productos y categorías compartan una sola descarga
 let menuPromise = null;
 

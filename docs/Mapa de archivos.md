@@ -12,7 +12,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 
 | Archivo | Qué hace |
 |---|---|
-| `App.js` | Tabla de rutas. Públicas afuera de `AuthContext`, staff adentro. Ver [[Arquitectura y rutas]] |
+| `App.js` | Tabla de rutas. Públicas afuera de `AuthContext`, staff adentro. Pantallas por `React.lazy`; `Login` eager. Ver [[Arquitectura y rutas]] y [[Decisiones tecnicas#Code splitting por ruta]] |
 | `index.js` | Entry point. `root.render(<App/>)` + `moment.tz.setDefault()`. **Ya no monta providers** |
 | `firebaseConfig/firebase.js` | Init de Firebase, App Check, `db`/`auth`/`storage`, `colSucursal`/`docSucursal`, `setSucursalStaff`, `getNextSequence` |
 
@@ -38,7 +38,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 |---|---|
 | `Constantes.jsx` | `ESTADOS`, `ENVIOS_LOCALES`, `CATEGORIAS_COMBOS`, `CATEGORIAS_HAMBURGUESA`, `CANTIDAD_CARNES`, `FLUJO_PUB_ESTADOS`, `TIEMPO_MIN_PEDIDOESP`, `getCurrentStepIndex()` y **`ROLES`** (nombre + ruta inicial + `llevaMoto` de cada rol, en un solo objeto) |
 | `fechaComercial.js` | Jornada comercial y hora del servidor. Ver [[Reglas de negocio#Jornada comercial]] |
-| `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`) y `fetchMenuPublico()` (lo consume, con promesa cacheada) |
+| `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`), `fetchMenuPublico()` (lo consume, con promesa cacheada) y la bandera `menuSinPublicar` en localStorage (`marcar`/`limpiar`/`hayMenuPendiente`) |
 | `sucursales.js` | `fetchSucursales()` — lista ordenada de la colección global |
 | `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table`: búsqueda, filtros por columna, orden y paginación. Exporta `quitarAcentos` |
 | `formato.js` | `fmtPesos` y `fmtPesosRedondeado`. **Único lugar** donde se formatean montos |
@@ -53,7 +53,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `Caja.css` | Estilos del rediseno, scopeados bajo `#caja`. Tokens, layout y componentes propios (`.pos-*`). Solo lo importa Caja.jsx |
 | `pos_hooks/useTraerDatos.js` | Trae productos + categorías + envíos al montar. 🔴 El mayor costo del sistema |
 | `pos_hooks/useCarrito.js` | Carrito de la Caja y `getResumen` (subtotal, recargo, total, split MP/efectivo) |
-| `pos_hooks/useCliente.js` | Busca cliente por teléfono y lo da de alta si no existe |
+| `pos_hooks/useCliente.js` | `registrarCliente`: busca por teléfono y crea o actualiza la ficha en cada cobro, con `ultimoPedido` / `cantidadPedidos` / `creado` |
 | `pos_hooks/usePendientes.js` | Dos listeners `limit(1)`: prenden los botones F1 y F2 |
 | `pos_hooks/useHorarioEspecial.js` | Estado del selector de hora especial |
 | `pos_hooks/useRevisarSolicitud.js` | Toma una solicitud web y llena el formulario. Exporta `liberarSolicitud` |

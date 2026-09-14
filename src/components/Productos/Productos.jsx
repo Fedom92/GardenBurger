@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { collection, updateDoc, deleteDoc, doc, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CrearProducto from "./CrearProducto";
@@ -8,7 +8,7 @@ import "../../style/Main.css"
 import Swal from "sweetalert2";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import { useAuth } from "../../context/AuthContext";
-import { publicarMenu } from "../../Utils/menuPublico";
+import { publicarMenu, marcarMenuPendiente, limpiarMenuPendiente, hayMenuPendiente } from "../../Utils/menuPublico";
 
 const Productos = () => {
   const { userData } = useAuth();
@@ -17,11 +17,17 @@ const Productos = () => {
   const [modalShowProducto, setModalShowProducto] = useState(false);
   const [modalShowEditProducto, setModalShowEditProducto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState([]);
-  const [categoriasOptions, setCategoriasOptions] = useState([]);
+  // Las categorias crudas viven aca y el modal Categorias las recibe por props:
+  // antes el modal las releia entero al montar (dos lecturas de la coleccion por
+  // visita) y los <option> de Crear/Editar quedaban viejos hasta recargar.
+  const [categorias, setCategorias] = useState([]);
   const [modalShowCategorias, setModalShowCategorias] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [mostrarAjustes, setMostrarAjustes] = useState(false);
   const [publicando, setPublicando] = useState(false);
+  // "Hay cambios sin publicar": la bandera persiste en localStorage, asi que
+  // sobrevive a salir de la pantalla. Ver marcarPendiente.
+  const [menuPendiente, setMenuPendiente] = useState(hayMenuPendiente);
 
   const productosCollection = useRef(query(collection(db, "productos"), orderBy("descripcion", "desc")));
   const categoriasCollection = useRef(query(collection(db, "categorias"), orderBy("nroOrden", "asc")));
@@ -37,16 +43,21 @@ const Productos = () => {
   }, []);
 
   const getCategorias = useCallback((snapshot) => {
-    const categoriasArray = snapshot.docs.map((doc) => ({
+    setCategorias(snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    }));
+    })));
+  }, []);
 
-    const opciones = categoriasArray.map((categoria) => (
-      <option key={categoria.id} value={categoria.nombre}>{categoria.nombre}</option>
-    ));
+  const categoriasOptions = useMemo(() => categorias.map((categoria) => (
+    <option key={categoria.id} value={categoria.nombre}>{categoria.nombre}</option>
+  )), [categorias]);
 
-    setCategoriasOptions(opciones);
+  // Cualquier edicion del catalogo —producto o categoria— deja el menu publico
+  // desactualizado hasta que se vuelva a publicar. El boton parpadea mientras tanto.
+  const marcarPendiente = useCallback(() => {
+    marcarMenuPendiente();
+    setMenuPendiente(true);
   }, []);
 
 
@@ -84,6 +95,7 @@ const Productos = () => {
       a.descripcion.localeCompare(b.descripcion)
     );
     setProductos(nuevosProductos);
+    marcarPendiente();
   };
 
   const editarProducto = (nuevoProductoActualizado) => {
@@ -93,6 +105,7 @@ const Productos = () => {
       a.descripcion.localeCompare(b.descripcion)
     );
     setProductos(productosActualizados);
+    marcarPendiente();
   };
 
 
@@ -134,6 +147,7 @@ const Productos = () => {
         producto.id === id ? { ...producto, visible: nuevoEstado } : producto
       )
     );
+    marcarPendiente();
   };
 
   const confirmeDelete = async (id) => {
@@ -154,6 +168,7 @@ const Productos = () => {
     try {
       await deleteDoc(doc(db, "productos", id));
       setProductos((prevProductos) => prevProductos.filter((producto) => producto.id !== id));
+      marcarPendiente();
       Swal.fire({
         title: '¡Borrado!',
         text: 'Producto eliminado.',
@@ -175,6 +190,8 @@ const Productos = () => {
     setPublicando(true);
     try {
       await publicarMenu();
+      limpiarMenuPendiente();
+      setMenuPendiente(false);
       Swal.fire({
         title: '¡Éxito!',
         text: 'Menú publicado. Los clientes ya ven la última versión.',
@@ -300,10 +317,12 @@ const Productos = () => {
 
                     <button
                       variant="secondary"
-                      className="btn-contorno m-1"
+                      className={`btn-contorno m-1 ${menuPendiente ? "parpadeo" : ""}`}
                       onClick={handlePublicarMenu}
                       disabled={publicando}
-                      title="Genera el menú que ven los clientes en la web"
+                      title={menuPendiente
+                        ? "Hay cambios sin publicar: los clientes todavía ven el menú anterior"
+                        : "Genera el menú que ven los clientes en la web"}
                     >
                       {publicando ? "Publicando..." : "Publicar Menú"}
                     </button>
@@ -353,6 +372,9 @@ const Productos = () => {
       {mostrarAjustes && (<Categorias
         show={modalShowCategorias}
         onHide={() => setModalShowCategorias(false)}
+        categorias={categorias}
+        setCategorias={setCategorias}
+        onCambio={marcarPendiente}
       />)}
     </>
   );

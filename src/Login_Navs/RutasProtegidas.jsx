@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { sincronizarHoraServidor } from "../Utils/fechaComercial";
@@ -8,13 +8,23 @@ import Navigation from "./Navigation";
 // una tabla de rutas y nada más. Todos usan useAuth(), así que sólo funcionan
 // dentro de <AuthContextProvider> — o sea, bajo la rama de staff.
 
+// Fallback de Suspense mientras baja el chunk de una pantalla. Es el mismo
+// .loader de Main.css que usan las pantallas; el CSS llega con Login y
+// Navigation, que siguen en el chunk principal.
+export const Cargando = () => (
+    <div className="text-center py-5"><span className="loader"></span></div>
+);
+
+// La frontera de Suspense va ADENTRO, alrededor de los children: así la barra de
+// navegación queda en pantalla mientras baja el chunk de la página, en vez de
+// parpadear a un loader entero. Los guards de abajo quedan dentro de la frontera.
 export const RequireAuth = ({ children }) => {
     const { userData } = useAuth();
     const location = useLocation();
     return userData ? (
         <>
             <Navigation />
-            {children}
+            <Suspense fallback={<Cargando />}>{children}</Suspense>
         </>
     ) : (
         <Navigate to="/" state={{ from: location }} replace />

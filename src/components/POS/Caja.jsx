@@ -89,10 +89,10 @@ const Caja = () => {
 
     const { productos, categorias, envios, isLoading } = useTraerDatos();
     const { tieneSolicitudesPendientes, tienePendientesMP } = usePendientes();
-    const { guardarClienteSiNoExiste } = useCliente();
+    const { registrarCliente } = useCliente();
     const { carrito, setCarrito, handleAgregarAlCarrito, handleEliminarDelCarrito, resetCarrito, getResumen } = useCarrito({ envioSeleccionado, metodoPago, montoEfectivo, recargo });
     const { showHorarioEspecial, toggleHorarioEspecial, handleHoraEspecialChange, handleMinutosEspecialChange, resetHorario } = useHorarioEspecial({ setValue });
-    const { handleRevisarSolicitud } = useRevisarSolicitud({ setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios });
+    const { handleRevisarSolicitud } = useRevisarSolicitud({ setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios, productos });
     const layout = useTicketLayout();
 
     const { totalBase, total: totalFinal, montoMPConRecargo } = getResumen;
@@ -113,7 +113,7 @@ const Caja = () => {
         [productos, search, categoriaSeleccionada]);
 
     const guardarBD = async (data) => {
-        if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal })) return;
+        if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo })) return;
         setProcesando(true);
 
         try {
@@ -179,7 +179,7 @@ const Caja = () => {
 
                 transaction.set(resumenRef, resumenData, { merge: true });
             });
-            guardarClienteSiNoExiste(data);
+            registrarCliente(data);
             await Swal.fire({
                 title: '¡Éxito!',
                 text: 'Pedido agregado!.',

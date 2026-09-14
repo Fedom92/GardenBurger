@@ -145,7 +145,7 @@ No reemplazar por `getDocs` + incremento manual.
 
 Los repartidores se unificaron en `usuarios` con `rol` de delivery y `sinAcceso: true`. Ya no se
 lee ni se escribe. **Su campo de nombre pasó a ser `nombreCompleto`**, no `nombre`:
-[[Decisiones tecnicas#Todos los empleados viven en usuarios]].
+[[Decisiones tecnicas#Todos los empleados viven en `usuarios`]].
 
 ## Subcolección `asistencias`
 
@@ -222,17 +222,25 @@ que tienen acceso; id automático para los que no.
 
 ## `clientes` (global)
 
-Se comparten entre sucursales. Alta automática al cobrar en Caja (`useCliente`) o a mano.
+Se comparten entre sucursales. La Caja **actualiza la ficha en cada cobro**
+(`useCliente.registrarCliente`): crea si el teléfono no existe, y si existe pisa nombre, dirección
+y entre calles con lo recién cargado. También se puede crear a mano desde `/clientes`.
 
 ```js
 { nombre, telefono, direccion, entreCalles,
-  sucursal: "davinci"   // "" si lo creó un admin sin sucursal
+  sucursal: "davinci",       // la del primer pedido; "" si lo creó un admin sin sucursal
+  creado: Timestamp,         // primer pedido (solo los creados desde sep-2026)
+  ultimoPedido: Timestamp,   // serverTimestamp() del último cobro
+  cantidadPedidos: 12,       // increment(1) por cobro; los clientes viejos arrancan en 1
 }
 ```
 
-> [!danger] Colección de crecimiento indefinido
-> Se crea un doc por cada teléfono nuevo. `Clientes.jsx` la lee **entera** sin límite. Ver
-> [[Deuda tecnica]].
+Los tres campos de abajo son para CRM y los llena solo la Caja. Un cliente anterior a sep-2026 no
+los tiene hasta su próximo pedido.
+
+> [!note] Colección de crecimiento indefinido, pero ya no se lee entera
+> Se crea un doc por cada teléfono nuevo. `Clientes.jsx` es un **buscador con tope** desde sep-2026:
+> no lee nada al entrar. Ver [[Reglas de negocio#Clientes]].
 
 ## `envios` (global)
 
@@ -274,4 +282,4 @@ entre 1 y 50 ítems y `total` entre 0 y 1.000.000.
 
 **Storage**: `publico/menu.json` con lectura pública y escritura autenticada limitada a ese
 archivo. El resto del bucket, solo autenticado. Además el bucket tiene **CORS** configurado por
-`gsutil`, que es una capa aparte de las reglas — ver [[Decisiones tecnicas#menu.json depende de tres capas]].
+`gsutil`, que es una capa aparte de las reglas — ver [[Decisiones tecnicas#`menu.json` depende de tres capas]].

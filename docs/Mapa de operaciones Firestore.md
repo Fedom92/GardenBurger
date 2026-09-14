@@ -37,7 +37,7 @@ tags: [gardenburger, firestore, costos]
 | `Clientes.jsx` | teléfono exacto, prefijo de nombre o sucursal | **por búsqueda**, no al entrar | con tope | ✅ era la colección entera |
 | `AuthContext.fetchUserData` | `usuarios/{uid}` | **1 por login** | 1 | ✅ `login()` y `onAuthStateChanged` comparten la promesa en vuelo |
 | `MiPerfil` | — | — | **0** | ✅ consume `useAuth()` |
-| `useCliente.buscarClientePorTelefono` | `clientes` con `where telefono` + `limit(1)` | por pedido guardado | 1 | necesaria: evita duplicar el cliente |
+| `useCliente.registrarCliente` | `clientes` con `where telefono` + `limit(1)`, y después **1 escritura siempre** (crea o actualiza la ficha + campos CRM) | por pedido guardado | 1 read + 1 write | antes la escritura era solo para clientes nuevos |
 | `usePendientes` | 2 listeners con `limit(1)` | permanentes en Caja | 1 c/u | ✅ correcta y barata |
 | `PendientesSolicitudes` | listener de `estado==PENDIENTE` | mientras el modal está abierto | pendientes | se solapa con `usePendientes`, pero son queries distintas |
 | `PendientesMP` | listener de `estado==PENDIENTEMP` | ídem | pendientes | ídem |
@@ -46,7 +46,8 @@ tags: [gardenburger, firestore, costos]
 | `PedidosEspera` / `PedidosCocinando` / `ATP` / `JefeDeliverys` | listeners por `estado` | mientras la pantalla está abierta | los del estado | ✅ real-time justificado |
 | `JefeDeliverys` | repartidores activos de la sucursal, desde `usuarios` | al montar | pocos | ✅ one-time |
 | `HistorialPedidos` | pedidos por rango de fechas, **sin filtro de estado** | por búsqueda | según rango | ⚠ sin `limit`: un rango largo lee miles |
-| `Productos` / `PanelAdmin` / `Categorias` / `Envios` | su colección entera | al montar | acotado | pantallas de admin, poco frecuentes |
+| `Productos` / `PanelAdmin` / `Envios` | su colección entera | al montar | acotado | pantallas de admin, poco frecuentes |
+| `Parametros/Categorias` (modal) | — | — | **0** | ✅ recibe las categorías de `Productos` por props; antes releía la colección al montar |
 | `sucursales.js` | `sucursales` | selector público y de admin | pocas | ✅ |
 | `PaginaDetalle` | 1 pedido | por visita pública | 1 | ✅ |
 | `Asistencias` | el doc de la jornada | al entrar | **1** | ✅ el mapa `registros` trae a todos |
@@ -80,7 +81,7 @@ arqueo del día** y no queda rastro:
 |---|---|
 | `Caja.guardarBD` | suma efectivo/mp/pedidos/combos. Va en la **misma transacción** que el contador y el pedido |
 | `PendientesMP.rechazarPedido` | resta todo |
-| `BuscarPedido.eliminarPedido` | resta todo |
+| `BuscarPedido.eliminarPedido` | resta todo, **solo si el pedido tiene `cajeroID`** (`BuscarPedido.jsx:86`) |
 | `JefeDeliverys.marcarEstado` (VOLVIO) | suma métricas del repartidor |
 | `getResumenOperation({descontar:true})` | el helper que invierte los signos |
 
@@ -94,3 +95,16 @@ entera, con todos los empleados, es **una sola escritura**, porque van en un map
 
 Las cuatro operaciones tienen guard (`useAccionUnica`). Lo que queda abierto es la carrera
 entre **dos cajeros distintos**: [[Deuda tecnica#Concurrencia entre dos cajeros sobre el arqueo]].
+
+> [!success] Tres caminos que corrompían el arqueo, cerrados el 14-09-2026
+> La [[Auditoria 2026-09|auditoría de septiembre]] encontró que la carrera entre cajeros no era el
+> único agujero. Los tres, y cómo se cerró cada uno:
+>
+> - **Eliminar un pedido `CANCELADO`** que ya descontó al rechazarse por MP → `BuscarPedido` ya no
+>   ofrece Eliminar en `CANCELADO`.
+> - **Editar el carrito después de fijar el pago dividido** → `errorPagoDividido()` corre también
+>   en `validarPedido`, al guardar.
+> - **Dos cajeros tomando la misma solicitud web** → la regla `asignacionValida()` rechaza la
+>   segunda toma, sin lecturas.
+>
+> Ninguno necesitó una operación nueva. Ver [[Auditoria 2026-09#9. Integridad del dinero]].

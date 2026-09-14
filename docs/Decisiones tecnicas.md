@@ -50,6 +50,86 @@ el provider en una página pública inicializaba estado de sesión que no corres
 **Consecuencia**: `useAuth()` **solo funciona bajo la rama de staff**. Un componente público que
 lo llame revienta.
 
+## Code splitting por ruta
+
+**Qué**: en `App.js` las 15 pantallas van por `React.lazy(() => import(...))`. Solo `Login` queda
+importado de forma estática.
+
+**Por qué**: el bundle único pesaba **3,2 MB**. Un cliente que abría `/menu` en el celular
+descargaba Caja, Cocina, Delivery, PanelAdmin y Estadísticas con Recharts, sin sesión y sin usarlas
+nunca. CRA hace el split solo con `import()`: no hace falta configurar nada.
+
+**Las dos fronteras de `Suspense`, y por qué son dos:**
+
+- Una alrededor de `<Routes>`, para las públicas y el Login.
+- Otra **dentro de `RequireAuth`**, alrededor de `{children}`. `RequireAuth` renderiza
+  `<Navigation />` y después la página: con la frontera ahí, la barra queda en pantalla mientras
+  baja el chunk, en vez de parpadear a un loader entero. Los guards `RequireAdmin` /
+  `RequireSucursal` / `RequireRole` caen dentro sin tocarlos.
+
+El fallback es `Cargando` (en `RutasProtegidas.jsx`), con el mismo `.loader` de `Main.css` que
+usan las pantallas. El CSS llega con `Login` y `Navigation`, que siguen en el chunk principal.
+
+> [!note] `PaginaDetalle` es export nombrado
+> `lazy()` necesita un default, así que se envuelve:
+> `import('./…/PaginaDetalle.jsx').then(m => ({ default: m.PaginaDetalle }))`. Si se agrega otra
+> pantalla con export nombrado, mismo truco.
+
+**Consecuencia**: la primera visita a cada pantalla muestra el loader un instante mientras baja su
+chunk; las siguientes no (queda cacheado). `Login` sigue eager a propósito: es la landing del staff
+y no tiene sentido diferirla.
+
+## `moment-timezone` con la tabla de zonas recortada
+
+**Qué**: `index.js` importa `moment-timezone/builds/moment-timezone-with-data-10-year-range` en
+vez de `moment-timezone` a secas.
+
+**Por qué se queda `moment-timezone`**: `moment.tz.setDefault('America/Argentina/Buenos_Aires')`
+hace que **todos** los `moment()` de la app —los que formatean horas en las tarjetas y los que
+calculan la jornada en `fechaComercial.js`— usen hora argentina aunque la PC tenga otra zona
+configurada. Es complementario a `ahoraServidor()`: ese corrige el **reloj** (desfase de
+minutos), `setDefault` corrige la **zona** (una PC en UTC mostraría las 23:00 como 02:00 y mandaría
+el pedido a otra jornada). No está discontinuado: lo usa implícitamente cada `moment()`.
+
+**Por qué el build recortado**: la entrada por defecto trae la tabla de reglas horarias de todas
+las zonas del mundo desde 1800 — **703 KB, el 38 % de `main`**. El build de 10 años trae solo los
+últimos y próximos 5 años (44 KB). Argentina está fija en `-03` desde 2009, así que los dos dan la
+misma hora para cualquier fecha, incluidas las Estadísticas históricas (verificado con 2010, 2019
+y hoy). En ese build Buenos Aires es un alias de São Paulo porque comparten reglas en el rango; a
+moment le da igual.
+
+**Consecuencia**: si algún día Argentina vuelve a cambiar el horario, alcanza con actualizar el
+paquete: el build de 10 años se regenera con cada versión.
+
+## El aviso de menú sin publicar es una bandera en `localStorage`
+
+**Qué**: en Productos, el botón "Publicar Menú" **parpadea** mientras haya cambios en el catálogo
+que la web pública todavía no ve. La bandera (`menuSinPublicar`) vive en `localStorage`: la
+prenden `agregarProducto`, `editarProducto`, `actualizarVisibilidad`, `confirmeDelete` y los tres
+handlers del modal `Categorias` (vía `onCambio`); la apaga `handlePublicarMenu` en el camino feliz.
+Helpers en `menuPublico.js`.
+
+**Por qué así y no de otra forma**:
+
+- **No un campo en `productos`** (`publicadoEl`, `modificadoEl`…): el dueño no quiere campos
+  nuevos en la colección, y cada escritura de producto tendría que tocarlo.
+- **No comparar el catálogo en memoria contra `menu.json`**: es exacto y funciona desde cualquier
+  PC, pero se descartó por complejidad — hay que canonizar y ordenar dos estructuras para que la
+  comparación no dé falsos positivos.
+- Una bandera es una línea por punto de edición y cero lecturas.
+
+**Consecuencia, aceptada**: es por navegador. Si se edita en una PC y se publica desde otra, la
+primera sigue parpadeando hasta que publique desde ahí. Inofensivo: publicar dos veces no rompe
+nada.
+
+## `html2pdf` se carga al tocar "Exportar a PDF"
+
+**Qué**: `Menu.jsx` hace `await import('html2pdf.js')` dentro de `exportarPDF`, no arriba.
+
+**Por qué**: `html2pdf` arrastra `jspdf` con un advisory crítico y pesa varios cientos de KB, y
+solo sirve para ese botón. Con el import dinámico queda en su propio chunk y el menú público no lo
+descarga hasta que alguien exporta. Se mantiene la dependencia porque la exportación **se usa**.
+
 ## App Check está "Aplicada"
 
 **Qué**: reCAPTCHA Enterprise, enforcement activo para Cloud Firestore y Authentication.
@@ -137,6 +217,17 @@ el mismo pedido. Riesgo aceptado y documentado. La protección elegida es `useAc
 cubre el doble click de **una** persona pero no la carrera entre dos.
 
 `getNextSequence` sí usa transacción, y esa no se toca.
+
+> [!note] `guardarBD` sí quedó en transacción, y eso no cambia lo de arriba
+> Desde sep-2026 el guardado de Caja corre dentro de `runTransaction` para meter el contador
+> adentro (ver más abajo). La transacción hace **atómico** el conjunto contador + pedido + arqueo,
+> pero no vuelve **idempotente** al `increment()`: si la misma suma se dispara dos veces desde dos
+> lugares distintos, se aplica dos veces igual. Los otros tres movimientos del arqueo —rechazo de
+> MP, eliminación de ticket y cierre de delivery— siguen siendo `writeBatch`.
+>
+> La forma barata de cerrar la familia entera es marcar en el pedido que su arqueo ya fue aplicado
+> o revertido, y condicionar cada operación a esa marca. Ver
+> [[Auditoria 2026-09#9. Integridad del dinero]].
 
 ## Una solicitud web, un solo cajero
 

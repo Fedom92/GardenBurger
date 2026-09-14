@@ -11,12 +11,17 @@ service cloud.firestore {
       allow read: if true;
       allow write: if esAdmin();
 
-      // Pedidos: la web pública crea solicitudes validadas y
-      // solo lee pedidos de origen WEB (/ver-pedido)
+      // Pedidos: la web pública crea solicitudes validadas y lee UN pedido por id
+      // (/ver-pedido). `get` y `list` van separados a propósito: `read` cubría los
+      // dos, y como esOrigenWeb() se evalúa documento por documento, una query
+      // where("origen","==","WEB") la satisfacía y devolvía sin sesión nombre,
+      // teléfono y dirección de toda la clientela web. PaginaDetalle usa getDoc,
+      // así que el público nunca necesitó `list`.
       match /pedidos/{pedido} {
-        allow read: if estaAutenticado() || esOrigenWeb();
+        allow get: if estaAutenticado() || esOrigenWeb();
+        allow list: if estaAutenticado();
         allow create: if estaAutenticado() || esCreacionPublicaValida();
-        allow update: if estaAutenticado();
+        allow update: if estaAutenticado() && asignacionValida();
         allow delete: if false;
       }
 
@@ -88,6 +93,21 @@ service cloud.firestore {
 
     function esOrigenWeb() {
       return resource.data.origen == "WEB";
+    }
+
+    // Una solicitud web tiene un solo dueño. `cajeroRevisaID` solo se puede
+    // escribir si estaba libre o ya era de quien escribe (retomar, liberar,
+    // guardar). Compara resource (lo que hay) con request.resource (lo que se
+    // quiere escribir): no cuesta lecturas.
+    //
+    // Cierra la carrera entre dos cajeros cuyos listeners todavía no recibieron
+    // la asignación del otro: el front chequeaba contra el snapshot local y los
+    // dos pasaban, los dos cargaban el pedido y el arqueo lo sumaba dos veces.
+    // Toda escritura que no toque el campo pasa igual (despues == antes).
+    function asignacionValida() {
+      let antes = resource.data.get('cajeroRevisaID', null);
+      let despues = request.resource.data.get('cajeroRevisaID', null);
+      return despues == antes || antes == null || antes == request.auth.uid;
     }
 
     function estaAutenticado() {

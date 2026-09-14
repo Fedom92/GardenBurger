@@ -5,6 +5,7 @@ import { fetchSucursales } from "../../Utils/sucursales";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
+import moment from "moment";
 import CrearCliente from "./CrearCliente";
 import EditCliente from "./EditCliente";
 
@@ -162,6 +163,21 @@ const Clientes = () => {
             accessorKey: "sucursal",
             header: "Sucursal",
             cell: ({ getValue }) => sucursales.find((s) => s.id === getValue())?.nombre || getValue() || "—",
+        },
+        // Los llena la Caja en cada cobro (useCliente.registrarCliente). Los clientes
+        // anteriores a sep-2026 no los tienen hasta su proximo pedido.
+        {
+            accessorKey: "cantidadPedidos",
+            header: "Pedidos",
+            cell: ({ getValue }) => getValue() ?? "—",
+        },
+        {
+            accessorKey: "ultimoPedido",
+            header: "Último pedido",
+            cell: ({ getValue }) => {
+                const ts = getValue();
+                return ts?.toDate ? moment(ts.toDate()).format("DD/MM/YY") : "—";
+            },
         },
         {
             id: "acciones",

@@ -24,13 +24,15 @@ export const liberarSolicitud = async (solicitudId, cajeroID) => {
     });
 };
 
-const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios }) => {
+const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios, productos }) => {
     const { userData } = useAuth();
 
     const handleRevisarSolicitud = useCallback(async (solicitud) => {
         try {
             // Queda asignada a este cajero: es lo unico que ven las otras cajas para
-            // saber que ya la esta cargando alguien.
+            // saber que ya la esta cargando alguien. La regla asignacionValida() de
+            // firestore.rules rechaza la escritura si otro cajero se la asigno antes
+            // de que este listener se enterara: es lo que cierra la carrera.
             await updateDoc(docSucursal("pedidos", solicitud.id), {
                 cajeroRevisaID: userData.id,
                 cajeroRevisa: userData.nombreCompleto,
@@ -69,19 +71,35 @@ const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
                 }
             }
 
-            // Agregar productos al carrito
+            // Agregar productos al carrito. El precio que viaja en la solicitud lo
+            // puso el navegador del cliente desde un menu.json que puede estar
+            // desactualizado (o editado): manda el catalogo en vivo, que la Caja ya
+            // tiene en memoria. Cada variante y cada extra es un documento propio de
+            // productos, asi que el match por id cubre todo el carrito. Si el producto
+            // ya no esta (visible: false), se mantiene el precio del cliente.
             if (solicitud.carrito?.length > 0) {
-                setCarrito(solicitud.carrito.map(producto => ({
-                    ...producto,
-                    cantidad: producto.cantidad || 1,
-                    subtotal: (producto.cantidad || 1) * producto.precio
-                })));
+                setCarrito(solicitud.carrito.map(producto => {
+                    const cantidad = producto.cantidad || 1;
+                    const precio = productos.find(p => p.id === producto.id)?.precio ?? producto.precio;
+                    return { ...producto, cantidad, precio, subtotal: cantidad * precio };
+                }));
             }
 
             // Cerrar el modal. Solo se llega aca si la asignacion se grabo bien.
             setShowPendientesSolicitudes(false);
 
         } catch (error) {
+            // Las reglas rechazan la asignacion si otro cajero la tomo primero. El
+            // listener del modal actualiza el badge solo; aca alcanza con decirlo.
+            if (error.code === "permission-denied") {
+                Swal.fire({
+                    title: 'Solicitud tomada',
+                    text: 'Otro cajero ya tomó esta solicitud',
+                    icon: 'info',
+                    confirmButtonColor: '#0d6efd',
+                });
+                return;
+            }
             console.error('Error cargando datos de solicitud:', error);
             Swal.fire({
                 title: 'Error',
@@ -90,7 +108,7 @@ const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
                 confirmButtonColor: '#dc3545',
             });
         }
-    }, [setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios, userData]);
+    }, [setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios, productos, userData]);
 
     return { handleRevisarSolicitud };
 };

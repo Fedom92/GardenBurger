@@ -41,6 +41,11 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                 ...doc.data(),
             }));
         setPedidosEspera(pedidosEsperaArray);
+        // La seleccion se poda contra lo que sigue en espera: si el cajero elimino un
+        // pedido que el cocinero tenia tildado, el listener lo saca de la lista pero
+        // el id quedaba en la seleccion y el batch lo mandaba a COCINA igual, con el
+        // arqueo ya descontado.
+        setSelectedPedidos(prev => prev.filter(id => pedidosEsperaArray.some(p => p.id === id)));
         setIsLoading(false);
     }, []);
 

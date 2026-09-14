@@ -92,7 +92,10 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
 
             pedidosCocinando.forEach(pedido => {
                 const pedidoRef = docSucursal("pedidos", pedido.id);
-                const nuevoEstado = (pedido.envio?.zona_envio === ENVIOS_LOCALES[0] || pedido.envio?.zona_envio === ENVIOS_LOCALES[1])
+                // Es la decision mas consecuente del pipeline: mostrador o reparto.
+                // Va por includes() como el resto del proyecto, no por indices fijos:
+                // una tercera zona local rompia el ruteo en silencio.
+                const nuevoEstado = ENVIOS_LOCALES.includes(pedido.envio?.zona_envio)
                     ? ESTADOS.ATP
                     : ESTADOS.DELIVERY;
                 batch.update(pedidoRef, { estado: nuevoEstado, cocinaFinTimestamp: serverTimestamp() });
