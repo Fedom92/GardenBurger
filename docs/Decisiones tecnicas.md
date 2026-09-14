@@ -33,8 +33,9 @@ deja de costar la jornada completa.
 
 > [!warning] Lo que NO gana
 > `getDocs` **siempre** consulta al servidor y se factura igual. Para leer de caché hay que pedir
-> `getDocsFromCache()` explícitamente, y hoy nadie lo hace. Por eso `useTraerDatos` sigue siendo el
-> mayor costo recurrente: ver [[Decisiones tecnicas#El catálogo de Caja va por listener|el catálogo por listener]].
+> `getDocsFromCache()` explícitamente, y hoy nadie lo hace. Por eso el catálogo de Caja, que era el
+> mayor costo recurrente mientras iba por `getDocs`, pasó a listener:
+> [[Decisiones tecnicas#El catálogo de Caja va por listener|el catálogo por listener]].
 
 **Síntoma esperado, no es un error**: abrir una segunda pestaña imprime un warning de IndexedDB en
 consola. Es el fallback del SDK funcionando.
@@ -176,9 +177,10 @@ borrarlos. Ver [[Reglas de seguridad]].
 obligaba a escribir el valor crudo del rol dentro de la regla. Con el claim desaparecen las dos
 cosas: no se lee nada y no hay ningún valor de rol en los archivos.
 
-**El efecto secundario es el importante**: una regla por rol pasó a costar cero. `asistencias` está
-abierta a cualquier staff únicamente porque cerrarla costaba un `get()` — ese argumento ya no
-existe. Ver [[Deuda tecnica#`asistencias` abierta en reglas, cerrada solo por front|Deuda tecnica]].
+**El efecto secundario es el importante**: una regla por rol pasó a costar cero. `asistencias`
+quedó abierta a cualquier staff cuando cerrarla costaba un `get()`; con los claims ese argumento
+desapareció, se volvió a evaluar y **el dueño decidió dejarla como está**. Ver
+[[Deuda tecnica#`asistencias` abierta en reglas, cerrada solo por front|Deuda tecnica]].
 
 **Los admins se crean solo desde la Consola de Firebase.** La app no ofrece ese rol y
 `crearUsuario` lo rechaza server-side. Después de crear uno hay que entrar al PanelAdmin y tocar
@@ -225,15 +227,19 @@ cubre el doble click de **una** persona pero no la carrera entre dos.
 > lugares distintos, se aplica dos veces igual. Los otros tres movimientos del arqueo —rechazo de
 > MP, eliminación de ticket y cierre de delivery— siguen siendo `writeBatch`.
 >
-> La forma barata de cerrar la familia entera es marcar en el pedido que su arqueo ya fue aplicado
-> o revertido, y condicionar cada operación a esa marca. Ver
-> [[Auditoria 2026-09#9. Integridad del dinero]].
+> Se evaluó una marca `arqueoAplicado` en el pedido para hacer idempotentes los caminos que
+> revierten, y **se descartó** (14-09-2026): los tres agujeros concretos se cerraron cada uno por su
+> lado. Ver [[Auditoria 2026-09#9. Integridad del dinero]] y [[Deuda tecnica]].
 
 ## Una solicitud web, un solo cajero
 
 Ver [[Flujo del pedido#Asignación de solicitudes web — un solo dueño]]. Se descartaron el
 timeout de 5 minutos, `runTransaction` y los campos extra por over-engineering. La solución
 final no agrega **ninguna** lectura ni escritura.
+
+La atomicidad la garantiza la regla `asignacionValida()` desde el 14-09-2026, no el front: el
+chequeo del modal contra el snapshot local tenía una ventana de carrera. Ver
+[[Reglas de seguridad#`update`: valida la asignación, no el estado]].
 
 ## `BuscarPedido` absorbió a `EliminarTickets`
 

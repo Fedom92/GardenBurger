@@ -66,7 +66,8 @@ lista. Verificado sobre los 42 puntos de acceso.
   categorías comparten una sola descarga. Hay fallback a Firestore si el JSON no está.
 - **`usePendientes` con `limit(1)`** — solo necesita saber *si hay* pendientes para prender el
   botón, no traerlos. Los trae el modal cuando se abre.
-- **`writeBatch` en Caja** — pedido y resumen viajan juntos: atómico y una sola ida al servidor.
+- **`runTransaction` en Caja** — contador, pedido y resumen viajan juntos: atómico, y el número de
+  ticket no se quema si el guardado falla. Los otros movimientos del arqueo van en `writeBatch`.
 - **`liberarSolicitud`** — el `getDoc` previo es deliberado: sin él, un cajero le pisaría la
   asignación a otro.
 - **Refs de queries en `useRef`** — evitan recrear la referencia en cada render y que el

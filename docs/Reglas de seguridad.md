@@ -4,7 +4,7 @@ tags: [gardenburger, firestore, seguridad]
 
 # Reglas de seguridad
 
-← [[GardenBurger]] · resumen y contexto en [[Modelo de datos Firestore#Reglas de seguridad]]
+← [[GardenBurger]] · tabla resumen de quién puede qué en [[Modelo de datos Firestore#Reglas de seguridad]]
 
 > [!important] El texto vive en el repo, no acá
 > Las reglas son **`firestore.rules`** y **`storage.rules`** en la raíz, declaradas en
@@ -16,9 +16,12 @@ tags: [gardenburger, firestore, seguridad]
 ## Desplegar
 
 ```bash
-npx firebase deploy --only firestore:rules
+npx firebase deploy --only firestore:rules,storage   # las dos juntas
+npx firebase deploy --only firestore:rules            # o una sola
 npx firebase deploy --only storage
 ```
+
+El deploy compila las reglas antes de subirlas: un error de sintaxis corta ahí y no toca nada.
 
 > [!warning] Los índices NO se manejan desde el repo
 > `firebase.json` **no declara** la clave `indexes`, a propósito: así ningún deploy puede tocarlos
@@ -67,7 +70,8 @@ cortocircuita, las condiciones baratas van primero.
 
 **Hoy no queda ninguno.** `esAdmin()` era un `get()` a `usuarios`; ahora es
 `request.auth.token.admin == true`, que sale del token y es gratis. Eso significa que **cerrar
-`asistencias` por rol ya no tiene costo**, que era la única razón por la que estaba abierta.
+`asistencias` por rol ya no tiene costo** — se volvió a evaluar con ese dato y el dueño decidió
+dejarla abierta igual. Ver [[Deuda tecnica#`asistencias` abierta en reglas, cerrada solo por front|Deuda tecnica]].
 
 ### Ser admin va en el token
 

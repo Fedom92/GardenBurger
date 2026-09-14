@@ -138,8 +138,11 @@ Un doc por [[Reglas de negocio#Jornada comercial|jornada comercial]]. Todo se ac
 { value: 42 }
 ```
 
-Lo maneja `getNextSequence(coleccion)` con `runTransaction`. **La numeración es por sucursal.**
-No reemplazar por `getDocs` + incremento manual.
+Lo avanza `avanzarContador(transaction, coleccion)` **dentro de la transacción del pedido** en
+`Caja.guardarBD`, para que un guardado fallido no queme el número. `getNextSequence(coleccion)`
+abre su propia transacción para quien no tiene una (hoy solo `InsertarRegistros`). **La numeración
+es por sucursal.** No reemplazar por `getDocs` + incremento manual. Ver
+[[Decisiones tecnicas#Numeración de tickets dentro de la transacción del pedido]].
 
 ## ~~`sucursales/{id}/deliverys`~~ — EN DESUSO
 
@@ -257,29 +260,24 @@ desglose de efectivo. Ver [[Reglas de negocio#Envíos locales vs delivery]].
 
 ## Reglas de seguridad
 
-Están **pegadas a mano en la Consola**, no versionadas como archivo. El texto completo, listo para copiar, está en
-[[Reglas de seguridad]]. Resumen:
+Viven en **`firestore.rules`** y **`storage.rules`** en la raíz del repo, versionadas y desplegadas
+con `firebase deploy`. El porqué de cada una está en [[Reglas de seguridad]]. Resumen de quién
+puede qué, al 14-09-2026:
 
-- `sucursales/{s}` — lectura pública (el selector de sucursal la necesita), escritura autenticada.
-- `sucursales/{s}/pedidos/{p}` — lectura si está autenticado **o** si `origen == "WEB"`
-  (para `/ver-pedido`). Creación autenticada **o** `esCreacionPublicaValida()`. Update solo
-  autenticado. **Delete: nunca** — por eso "eliminar" es un cambio de estado a `ELIMINADO`.
-- `sucursales/{s}/{coleccion}/{doc}` con `coleccion != 'pedidos'` — solo staff. La exclusión
-  es necesaria porque las reglas se combinan con OR y el wildcard reotorgaría el delete.
-- `productos`, `categorias`, `envios` — lectura pública, escritura autenticada.
-- `usuarios` — **lectura** para todo staff (la Caja necesita nombres), **escritura solo del admin**:
-  con `write` abierto un cajero podía ponerse rol admin editando su propio documento desde la
-  consola del navegador.
-- `clientes` — todo autenticado.
+| Colección | Lectura | Escritura |
+|---|---|---|
+| `sucursales/{s}` | pública (el selector web la necesita) | admin |
+| `sucursales/{s}/pedidos/{p}` | `get` público solo si `origen == "WEB"`; `list` solo staff | crear: staff o `esCreacionPublicaValida()`; update: staff **y** `asignacionValida()`; **delete: nunca** — por eso "eliminar" es cambiar el estado a `ELIMINADO` |
+| `sucursales/{s}/{otra}/{doc}` (`resumenDiario`, `contadores`, `asistencias`) | staff | staff — el wildcard excluye `pedidos` porque las reglas se combinan con OR |
+| `productos`, `categorias`, `envios` | pública | admin |
+| `usuarios` | staff (la Caja necesita nombres) | admin — con `write` abierto un cajero se ascendía editando su propio doc |
+| `clientes` | staff | staff |
 
-`esCreacionPublicaValida()` exige `origen == "WEB"`, `estado == "PENDIENTE"`, las claves
-obligatorias presentes, ninguna clave de staff (`cajeroID`/`cocineroID`/`deliveryID`), carrito
-entre 1 y 50 ítems y `total` entre 0 y 1.000.000.
+**Storage**: `publico/menu.json` lectura pública, escritura solo admin y solo ese archivo. El
+resto del bucket: lectura staff, escritura admin **y solo imágenes de hasta 5 MB**. Además el
+bucket tiene **CORS** configurado por `gsutil`, que es una capa aparte de las reglas — ver
+[[Decisiones tecnicas#`menu.json` depende de tres capas]].
 
-> [!warning] Falta el `exists()` de sucursal
-> La regla no verifica que la sucursal de la URL exista. `/crear-solicitud/inventada` crea una
-> subcolección huérfana bajo un doc que no existe. Ver [[Deuda tecnica]].
-
-**Storage**: `publico/menu.json` con lectura pública y escritura autenticada limitada a ese
-archivo. El resto del bucket, solo autenticado. Además el bucket tiene **CORS** configurado por
-`gsutil`, que es una capa aparte de las reglas — ver [[Decisiones tecnicas#`menu.json` depende de tres capas]].
+La sucursal de la URL pública **no se valida en las reglas** sino en el front: `Crearsolicitud`
+lee el doc de `sucursales` antes de crear (1 lectura) y rechaza si no existe. Ver
+[[Mapa de operaciones Firestore]].

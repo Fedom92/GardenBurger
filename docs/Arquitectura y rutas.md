@@ -25,6 +25,12 @@ rutas del staff. Las páginas públicas no montan nada de sesión. Ver
 `sincronizarHoraServidor()`: así los visitantes públicos no gastan invocaciones de la Cloud
 Function.
 
+**Cada pantalla es un chunk aparte** (`React.lazy` en `App.js`; solo `Login` va en el bundle
+principal). Hay dos fronteras de `Suspense`: una alrededor de `<Routes>` y otra dentro de
+`RequireAuth`, para que el sidebar no parpadee mientras baja el chunk. Una pantalla nueva se
+agrega con `lazy(() => import(...))`, no con `import` estático. Ver
+[[Decisiones tecnicas#Code splitting por ruta]].
+
 ## Rutas reales
 
 | Ruta | Componente | Guard |
@@ -50,7 +56,8 @@ Function.
 ## Guards (`src/Login_Navs/RutasProtegidas.jsx`)
 
 - **`RequireAuth`** — sin `userData` redirige a `/` guardando `location.state.from`. Además
-  renderiza el `<Navigation/>`, o sea que el sidebar sale de acá.
+  renderiza el `<Navigation/>` y envuelve la página en `<Suspense>`, o sea que el sidebar y el
+  loader de carga de chunk salen de acá.
 - **`RequireSucursal`** — las pantallas operativas leen `sucursales/{id}/...`; sin sucursal
   asignada las queries tiran error. Muestra un cartel en vez de crashear. Con `permitirAdmin`
   deja pasar al admin sin sucursal (para pantallas con selector propio).
@@ -74,7 +81,7 @@ la barrera real son los guards.
 | Rol | Módulos del sidebar | Aterriza en |
 |---|---|---|
 | admin | productos, historial, estadisticas, liquidacion, clientes, configuracion | `/productos` |
-| encargado | caja, cocina, atp, deliverys, asistencias, historial, pruebas | `/pedidos-caja` |
+| encargado | caja, cocina, atp, deliverys, asistencias, historial | `/pedidos-caja` |
 | cajero | caja, historial | `/pedidos-caja` |
 | cocina | cocina | `/gestion-cocina` |
 | delivery | deliverys | `/jefe-deliverys` |

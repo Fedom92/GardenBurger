@@ -10,17 +10,24 @@ tags: [gardenburger, convenciones]
 
 Fede (`Fedom92`) es el único desarrollador. Preferencias que ya dejó claras más de una vez:
 
-> [!important] Reglas duras
+> [!important] Preferencias firmes — no reglas cerradas
+> En sus palabras: *"no existen reglas que no se negocian; si hay mejores alternativas, propuestas
+> o mejoras, son siempre bienvenidas"*. Lo que sigue es cómo decide **hoy**, y cada punto salió de
+> un problema real. Una propuesta distinta se escucha si trae el motivo y el costo en lecturas.
+>
 > 1. **Nada de over-engineering.** Se rechazaron explícitamente: timeouts de 5 minutos,
 >    `runTransaction` donde no era imprescindible, wrappers con singleton global, constantes
->    intermedias tipo `PASO_EQUIVALENTE` y campos extra "por las dudas".
+>    intermedias tipo `PASO_EQUIVALENTE`, campos extra "por las dudas", una marca `arqueoAplicado`
+>    en el pedido y comparar el catálogo contra `menu.json` para detectar cambios (prefirió una
+>    bandera).
 > 2. **Minimizar lecturas y escrituras de Firebase** es un requisito de primer orden.
 > 3. **Código explícito** por sobre abstracciones. Rutas de Firestore literales (`data.rol`),
 >    no capas que las oculten.
 > 4. **Las verificaciones las hace él.** No correr builds salvo que lo pida.
 > 5. **La config de Firebase sí se versiona**, los secretos no. Ver
 >    [[Decisiones tecnicas#La configuración de Firebase se versiona]].
-> 6. Preguntar antes de suponer una regla de negocio.
+> 6. Preguntar antes de suponer una regla de negocio — y cuando una decisión es de negocio, es
+>    suya: se documenta con el motivo, no se "arregla".
 
 Cuando hay que elegir entre dos soluciones equivalentes: **la que consuma menos lecturas y sea
 más simple.**
@@ -45,6 +52,13 @@ más simple.**
   `ESTADOS` de `Constantes.jsx`.
 - Al crear un componente que use `pedidos`/`resumenDiario`/`asistencias`/`contadores`: helpers
   `colSucursal`/`docSucursal` (staff) o path explícito con la sucursal de la URL (público).
+- **Una pantalla nueva va por `React.lazy`** en `App.js`, no con `import` estático: cada pantalla
+  es su propio chunk. Ver [[Decisiones tecnicas#Code splitting por ruta]].
+- **Todo camino que edite el catálogo** (productos o categorías) llama a `marcarPendiente()` en
+  `Productos.jsx`, para que "Publicar Menú" parpadee. Si se agrega un ABM nuevo que toque
+  `productos`, va con la bandera.
+- Al escribir una regla con `allow read`, preguntarse si hace falta `list` o alcanza con `get`.
+  Ver [[Reglas de seguridad#`read` es `get` **y** `list`]].
 
 ## Acciones que escriben plata
 
@@ -102,13 +116,15 @@ Todas con prefijo `REACT_APP_`. **Nunca hardcodear sus valores.**
 ## Comandos
 
 ```bash
-npm start                      # dev en localhost:3000
-npm run build                  # build de producción (corre el lint de CRA)
-CI=true npx react-scripts test # tests una sola vez, sin watch
+npm start                                          # dev en localhost:3000
+npm run build                                      # build de producción, sin source maps (corre el lint de CRA)
+npx firebase deploy --only firestore:rules,storage # reglas
 ```
 
 No hay `.eslintrc`: la config `react-app` está dentro de `package.json` y el lint corre como
-parte del build.
+parte del build — un `import` después de un `const` (`import/first`) lo rompe. No hay tests
+automatizados por decisión: [[Deuda tecnica#Sin tests]]. Los source maps van apagados
+(`GENERATE_SOURCEMAP=false`) a propósito: en producción expondrían el código fuente en las devtools.
 
 ## Pendientes del proyecto
 

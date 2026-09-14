@@ -93,6 +93,9 @@ se hizo sobre CRA (14-09-2026) sin necesitar la migración.
 
 - **Dashboard de estadísticas con datos reales**, en vez de los TSV exportados a mano.
 - **Dashboard cross-sucursal** — solo del resumen diario.
+- **Mostrar el vuelto en la Caja.** Se exige `pagaCon >= total` pero nunca se muestra la resta; el
+  cajero la hace de cabeza. Sale de datos que ya están en memoria, sin lecturas. Quedó propuesto
+  en el rediseño de la Caja y sin decidir: [[Decisiones tecnicas#Pendiente]].
 - **Liberar solicitudes trabadas desde `HistorialPedidos` (solo admin).** Una solicitud web
   asignada a un cajero que terminó el turno queda sin dueño activo y nadie puede tomarla. Decidido
   el 14-09-2026: lo destraba el admin, no el encargado. Para implementarlo, dos cosas que no son

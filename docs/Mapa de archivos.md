@@ -14,7 +14,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 |---|---|
 | `App.js` | Tabla de rutas. Públicas afuera de `AuthContext`, staff adentro. Pantallas por `React.lazy`; `Login` eager. Ver [[Arquitectura y rutas]] y [[Decisiones tecnicas#Code splitting por ruta]] |
 | `index.js` | Entry point. `root.render(<App/>)` + `moment.tz.setDefault()`. **Ya no monta providers** |
-| `firebaseConfig/firebase.js` | Init de Firebase, App Check, `db`/`auth`/`storage`, `colSucursal`/`docSucursal`, `setSucursalStaff`, `getNextSequence` |
+| `firebaseConfig/firebase.js` | Init de Firebase, App Check, `persistentLocalCache` single-tab, `db`/`auth`/`storage`. Refs por sucursal: `colSucursal`/`docSucursal` (la del staff) y `colDeSucursal`/`docDeSucursal` (explícita, para el admin). `avanzarContador` (dentro de una transacción ajena) y `getNextSequence` (con la propia) |
 
 ## Contextos
 
@@ -30,7 +30,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `Login.jsx` | Pantalla de login + modal de reseteo de clave |
 | `Navigation.jsx` | Sidebar. `MODULOS_POR_ROL` decide qué ve cada rol |
 | `Nav.jsx` | Ítem individual del sidebar |
-| `RutasProtegidas.jsx` | `RequireAuth`, `RequireSucursal`, `RequireAdmin`, `LayoutStaff` |
+| `RutasProtegidas.jsx` | `RequireAuth` (renderiza el sidebar y la frontera de `Suspense`), `RequireSucursal`, `RequireAdmin`, `RequireRole`, `LayoutStaff`, `Cargando` (fallback del lazy) |
 
 ## `Utils/`
 
@@ -43,7 +43,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table`: búsqueda, filtros por columna, orden y paginación. Exporta `quitarAcentos` |
 | `formato.js` | `fmtPesos` y `fmtPesosRedondeado`. **Único lugar** donde se formatean montos |
 | `useAccionUnica.js` | Guard contra doble ejecución de todo lo que escribe plata. Ver [[Convenciones y preferencias#Acciones que escriben plata]] |
-| `InsertarRegistros.jsx` | 🧪 **herramienta de dev**: botón que inserta 3 pedidos de Caja + 3 solicitudes WEB de prueba. Suma al arqueo igual que el flujo real. Marca todo con `esPrueba: true`. No montar en producción |
+| `InsertarRegistros.jsx` | 🧪 **herramienta de pruebas**: botón que inserta 3 pedidos de Caja + 3 solicitudes WEB en la sucursal que se elija. Suma al arqueo igual que el flujo real. Marca todo con `esPrueba: true`. Está montado en `PanelAdmin` (solo admin) con un `TODO` para sacarlo cuando ya no haga falta |
 
 ## `components/POS/` — la Caja
 
@@ -51,16 +51,16 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 |---|---|
 | `Caja.jsx` | Pantalla principal del POS, redisenada con el artboard 2a de Claude Design. Topbar oscura con F1-F4, panel de productos con fotos, ticket movible y redimensionable. Atajos **F1**-**F4**, **/** y **Esc** |
 | `Caja.css` | Estilos del rediseno, scopeados bajo `#caja`. Tokens, layout y componentes propios (`.pos-*`). Solo lo importa Caja.jsx |
-| `pos_hooks/useTraerDatos.js` | Trae productos + categorías + envíos al montar. 🔴 El mayor costo del sistema |
+| `pos_hooks/useTraerDatos.js` | Tres `onSnapshot` (productos visibles, categorías, envíos). Con `persistentLocalCache` resumen por token: al re-montar solo bajan los cambios. Era el mayor costo del sistema cuando iba por `getDocs` |
 | `pos_hooks/useCarrito.js` | Carrito de la Caja y `getResumen` (subtotal, recargo, total, split MP/efectivo) |
 | `pos_hooks/useCliente.js` | `registrarCliente`: busca por teléfono y crea o actualiza la ficha en cada cobro, con `ultimoPedido` / `cantidadPedidos` / `creado` |
 | `pos_hooks/usePendientes.js` | Dos listeners `limit(1)`: prenden los botones F1 y F2 |
 | `pos_hooks/useHorarioEspecial.js` | Estado del selector de hora especial |
-| `pos_hooks/useRevisarSolicitud.js` | Toma una solicitud web y llena el formulario. Exporta `liberarSolicitud` |
+| `pos_hooks/useRevisarSolicitud.js` | Toma una solicitud web (la regla `asignacionValida()` rechaza si otro la tomó antes), llena el formulario y **re-precifica el carrito contra el catálogo en memoria**. Exporta `liberarSolicitud` |
 | `pos_hooks/useTicketLayout.js` | Lado y ancho del ticket: arrastre de la manija para cambiarlo de lado y divisor redimensionable |
 | `pos_hooks/useResumenDiario.js` | `getResumenOperation()` — arma ref + `increment()` del arqueo. Incluye `contarCombos` |
-| `pos_hooks/validarPedido.js` | Validaciones previas al guardado, con Swal |
-| `pos_modales/BuscarPedido.jsx` | **F3** — busca en la jornada por teléfono/código/dirección y permite **eliminar** el ticket |
+| `pos_hooks/validarPedido.js` | Validaciones previas al guardado, con Swal. Exporta `errorPagoDividido`, que también usa el modal `PagoDividido` |
+| `pos_modales/BuscarPedido.jsx` | **F3** — busca en la jornada por teléfono/código/dirección y permite **eliminar** el ticket (no en `ELIMINADO` ni `CANCELADO`) |
 | `pos_modales/ResumenDiario.jsx` | **F4** — muestra el arqueo del día (presentacional, los datos los trae Caja) |
 | `pos_modales/PagoDividido.jsx` | Reparto efectivo / MP |
 | `pos_modales/Alertas/PendientesSolicitudes.jsx` | **F1** — solicitudes web pendientes, con el modelo de asignación |
@@ -105,10 +105,10 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `ATP/ATP.jsx` | Estado `ATP` — entrega en mostrador |
 | `Pedidos/HistorialPedidos.jsx` | Pedidos por rango de fechas, **sin filtro de estado**: también audita cancelados y eliminados. El admin elige sucursal |
 | `Pedidos/AuditoriaPedido.jsx` | Traza completa de un pedido, agrupada por etapa |
-| `Productos/Productos.jsx` | ABM de productos + botón **"Publicar Menú"** |
-| `Productos/Parametros/Categorias.jsx` | ABM de categorías |
+| `Productos/Productos.jsx` | ABM de productos + botón **"Publicar Menú"**, que parpadea mientras haya cambios sin publicar (bandera en localStorage) |
+| `Productos/Parametros/Categorias.jsx` | ABM de categorías. Recibe la lista de `Productos` por props: no lee nada por su cuenta |
 | `Clientes/Clientes.jsx` (+ Crear/Edit) | **Buscador**, no listado: no lee nada al entrar. Teléfono exacto, prefijo de nombre o sucursal, siempre con tope |
-| `Admin/PanelAdmin.jsx` | Gestión de **todos los empleados**, repartidores incluidos: rol, sucursal, DNI, domicilio, valor hora, moto. Alta y baja ramificadas por `sinAcceso`. Usa `TablaGenerica` con las filas enriquecidas (`rolNombre`, `sucursalNombre`) para que los filtros muestren nombres y no el valor crudo del rol |
+| `Admin/PanelAdmin.jsx` | Gestión de **todos los empleados**, repartidores incluidos: rol, sucursal, DNI, domicilio, valor hora, moto. Alta y baja ramificadas por `sinAcceso`. Botón **"Sincronizar permisos"** (reparte el claim de admin). Usa `TablaGenerica` con las filas enriquecidas (`rolNombre`, `sucursalNombre`) para que los filtros muestren nombres y no el valor crudo del rol |
 | `Admin/CrearEmpleado.jsx` / `EditClave.jsx` / `MiPerfil.jsx` | Alta de empleados (con o sin acceso), cambio de clave, perfil propio |
 | `Admin/Parametros/Sucursales.jsx` / `Envios.jsx` | ABM de sucursales y zonas de envío |
 | `Asistencias/Asistencias.jsx` | Pantalla del encargado: solo la jornada actual. Ver [[Asistencias y liquidacion]] |

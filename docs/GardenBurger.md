@@ -1,7 +1,7 @@
 ---
 tags: [moc, gardenburger]
 aliases: [GardenBurger MOC, Indice GardenBurger]
-actualizado: 2026-09-09
+actualizado: 2026-09-14
 ---
 
 # GardenBurger — Mapa del proyecto
@@ -46,7 +46,8 @@ Según qué vengas a hacer, con esto alcanza:
    proyecto vive con un límite ajustado. Antes de agregar una consulta, preguntarse si el dato ya
    está en memoria.
 3. **`increment()` no es idempotente.** Todo lo que mueve el arqueo va con guard
-   (`useAccionUnica`) y dentro de un `writeBatch` junto al pedido.
+   (`useAccionUnica`) y en la misma escritura atómica que el pedido (`runTransaction` en Caja,
+   `writeBatch` en el resto). Ver [[Modelo de estados]] para saber qué transición toca el arqueo.
 4. **El sistema es multi-sucursal**: las colecciones operativas son subcolecciones de
    `sucursales/{id}/…`, y el scope lo dan `colSucursal`/`docSucursal` (staff) o la URL (público).
 5. **Varios cajeros trabajan en paralelo** sobre la misma sucursal. De ahí el modelo de asignación
