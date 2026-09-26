@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { query, where, onSnapshot, updateDoc, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
-import { db, colSucursal, docSucursal } from "../../../../firebaseConfig/firebase";
+import { query, where, onSnapshot, updateDoc, orderBy, serverTimestamp } from "firebase/firestore";
+import { colSucursal, docSucursal } from "../../../../firebaseConfig/firebase";
 import { useAuth } from "../../../../context/AuthContext";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from "moment";
-import { ESTADOS } from "../../../../Utils/Constantes";
-import { getResumenOperation } from "../../pos_hooks/useResumenDiario";
+import { ESTADOS, METODOS_PAGO } from "../../../../Utils/Constantes";
+import { invalidarFotoDePedido } from "../../pos_hooks/useResumenDiario";
 import { useAccionUnica } from "../../../../Utils/useAccionUnica";
 import { fmtPesos } from "../../../../Utils/formato";
 
@@ -89,32 +89,21 @@ const PendientesMP = ({ isOpen, onClose }) => {
             if (!result.isConfirmed) return;
 
             // El listener pudo haberlo sacado de la lista mientras el Swal estaba
-            // abierto: sin esto, getResumenOperation descuenta con datos undefined.
+            // abierto: si ya no esta, otro lo resolvio y no hay nada que rechazar.
             const pedido = pedidosPendientes.find(p => p.id === pedidoId);
             if (!pedido) return;
 
-            const pedidoRef = docSucursal("pedidos", pedidoId);
-            const updateData = {
+            await updateDoc(docSucursal("pedidos", pedidoId), {
                 estado: ESTADOS.CANCELADO,
                 cajeroCancelaMPID: userData.id,
                 cajeroCancelaMP: userData.nombreCompleto,
                 cajeroCancelaMPTimestamp: serverTimestamp(),
-            };
-
-            const { ref: resumenRef, stats } = getResumenOperation({
-                metodoPago: pedido.metodoPago,
-                total: pedido.total,
-                montoEfectivo: pedido.montoEfectivo,
-                envio: pedido.envio,
-                carrito: pedido.carrito,
-                descontar: true,
-                timestampPedido: pedido.timestamp,
             });
 
-            const batch = writeBatch(db);
-            batch.update(pedidoRef, updateData);
-            batch.set(resumenRef, stats, { merge: true });
-            await batch.commit();
+            // CANCELADO ya lo saca del arqueo, que se calcula desde los pedidos. Esto
+            // solo hace falta si el pedido es de una jornada cerrada, que no es el
+            // caso: al cierre no queda ningun PENDIENTEMP sin resolver.
+            await invalidarFotoDePedido(pedido);
         } catch (error) {
             console.error('Error rechazando el pedido:', error);
             Swal.fire({
@@ -187,7 +176,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                                 <p className="mb-1">
                                                     <strong>Método:</strong> {pedido.metodoPago}
                                                 </p>
-                                                {pedido.metodoPago === "%" && (
+                                                {pedido.metodoPago === METODOS_PAGO.DIVIDIDO.key && (
                                                     <p className="mb-1">
                                                         <strong>Monto Efectivo:</strong> {fmtPesos(pedido.montoEfectivo)}
                                                     </p>

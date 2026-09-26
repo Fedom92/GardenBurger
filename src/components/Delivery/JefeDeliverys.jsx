@@ -1,16 +1,20 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { collection, updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, getDoc, increment, writeBatch } from "firebase/firestore";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { collection, updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { db, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
-import { getFechaComercial } from "../../Utils/fechaComercial";
+import { traerPedidosDeJornada, liquidarDeliverys, repartirPago, invalidarFotoDePedido, FIJO_DELIVERY } from "../POS/pos_hooks/useResumenDiario";
+import { getFechaComercial, esHoraDeArqueo } from "../../Utils/fechaComercial";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
 import ModalPedidoDelivery from "./delivery_modales/ModalPedidoDelivery";
 import ModalMetricasDelivery from "./delivery_modales/ModalMetricasDelivery";
 import Swal from "sweetalert2";
 import moment from "moment";
-import { ESTADOS, SUBESTADOS_MOTODELIVERY } from "../../Utils/Constantes";
+import { ESTADOS, SUBESTADOS_MOTODELIVERY, METODOS_PAGO, etiquetaPago } from "../../Utils/Constantes";
 import { useAuth } from "../../context/AuthContext";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
+import { useHoraDeArqueo } from "../../Utils/useHoraDeArqueo";
+import { fmtPesos } from "../../Utils/formato";
+import { avisarSinConexion } from "../../Utils/avisos";
 
 const JefeDeliverys = () => {
     const { userData } = useAuth();
@@ -18,12 +22,16 @@ const JefeDeliverys = () => {
     const [deliverys, setDeliverys] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showMetricas, setShowMetricas] = useState(false);
-    const [metricasData, setMetricasData] = useState(null);
-    const [loadingMetricas, setLoadingMetricas] = useState(false);
+    const [liquidacion, setLiquidacion] = useState(null);
+    const [jornadaMetricas, setJornadaMetricas] = useState("");
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
-    // Finalizar una entrega incrementa las métricas del repartidor: dos clicks
-    // suman dos veces. Asignar y marcar estado comparten el guard.
+    // Asignar y marcar estado comparten el guard: son la misma fila y dos clicks
+    // rapidos dejarian el pedido a medio camino entre dos estados.
     const { procesando, ejecutar } = useAccionUnica();
+    // La liquidacion va aparte: es una lectura, no tiene por que bloquear la gestion.
+    const { procesando: cargandoLiquidacion, ejecutar: ejecutarLiquidacion } = useAccionUnica();
+    // Solo para el disabled del boton; handleVerMetricas vuelve a preguntar la hora.
+    const horaDeArqueo = useHoraDeArqueo();
 
     const pedidosCollection = useRef(query(
         colSucursal("pedidos"),
@@ -56,6 +64,7 @@ const JefeDeliverys = () => {
             setIsLoading(false);
         }, (error) => {
             console.error('Error listener deliverys:', error);
+            avisarSinConexion("los pedidos de delivery");
             setIsLoading(false);
         });
 
@@ -92,9 +101,14 @@ const JefeDeliverys = () => {
         }
     });
 
-    // pagoMonto viene del modal cuando el repartidor vuelve
-    const marcarEstado = (pedidoId, nuevoEstado, pagoMonto = "") => ejecutar(async () => {
+    // `pagaronCon` viene del modal cuando el repartidor vuelve: con cuánto pagó al
+    // final el cliente. Hace par con `pagaCon`, que es lo que dijo que iba a pagar
+    // cuando pidió.
+    const marcarEstado = (pedidoId, nuevoEstado, pagaronCon = "") => ejecutar(async () => {
         try {
+            // Hace falta el pedido y no solo su id: el listener no filtra por jornada,
+            // asi que aca puede aparecer un delivery que quedo abierto de anoche y su
+            // arqueo es el de ESA jornada. Si ya no esta en la lista, otro lo cerro.
             const pedido = pedidos.find(p => p.id === pedidoId);
             if (!pedido) return;
 
@@ -109,33 +123,24 @@ const JefeDeliverys = () => {
             } else if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
                 updates.estado = ESTADOS.FINAL;
                 updates.deliveryFinTimestamp = serverTimestamp();
-                const monto = Number(pagoMonto);
+                // El fijo de esta noche queda en el pedido: si mañana cambia la
+                // constante, la liquidación de hoy sigue diciendo lo que se pagó.
+                updates.fijoDelivery = FIJO_DELIVERY;
+                const monto = Number(pagaronCon);
                 if (!isNaN(monto) && monto > 0) {
-                    updates.pagoRepartidorCon = monto;
+                    updates.pagaronCon = monto;
                 }
 
-                // El pedido y las métricas del repartidor van juntos: antes eran dos
-                // escrituras sueltas y la segunda tenía su propio catch que solo
-                // logueaba, así que un corte de red dejaba el pedido finalizado y la
-                // métrica perdida sin aviso. `set` con merge además crea el documento
-                // del resumen si todavía no existe, cosa que `updateDoc` no hace.
-                const batch = writeBatch(db);
-                batch.update(pedidoDoc, updates);
+                // Una sola escritura: el pedido. Las metricas del repartidor se
+                // calculan desde los pedidos de la jornada (ver useResumenDiario), asi
+                // que no hay contador que mantener en paralelo ni riesgo de que el
+                // pedido quede finalizado y la metrica perdida.
+                await updateDoc(pedidoDoc, updates);
 
-                if (pedido.deliveryID) {
-                    batch.set(docSucursal("resumenDiario", getFechaComercial()), {
-                        deliverys: {
-                            [pedido.deliveryID]: {
-                                nombre: pedido.deliveryAsignado || "",
-                                cantidadPedidos: increment(1),
-                                totalMonto: increment(pedido.total || 0),
-                                totalCobrado: increment(monto > 0 ? monto : 0),
-                            }
-                        }
-                    }, { merge: true });
-                }
-
-                await batch.commit();
+                // Cerrar la entrega cambia las metricas de ese repartidor. Si el pedido
+                // es de una jornada ya cerrada -un delivery de anoche que se rinde hoy-,
+                // su foto quedo vieja y hay que borrarla.
+                await invalidarFotoDePedido(pedido);
 
                 Swal.fire('¡Éxito!', 'Pedido entregado y finalizado.', 'success');
             }
@@ -148,23 +153,36 @@ const JefeDeliverys = () => {
         }
     });
 
-    const handleVerMetricas = async () => {
-        setLoadingMetricas(true);
+    // La liquidacion se mira al cierre, igual que el arqueo de la Caja: cuesta un
+    // barrido de la jornada (~60-100 lecturas) y a las 21 todavia no significa nada.
+    // Se lee de los pedidos y no de la foto: el detalle necesita las direcciones, y
+    // la jornada en curso no tiene foto de todos modos.
+    const handleVerMetricas = () => ejecutarLiquidacion(async () => {
+        // El boton se deshabilita fuera de hora, pero la verdad se relee aca.
+        if (!esHoraDeArqueo()) return;
+        const jornada = getFechaComercial();
         try {
-            const hoy = getFechaComercial();
-            const snap = await getDoc(docSucursal("resumenDiario", hoy));
-            setMetricasData(snap.exists() ? (snap.data().deliverys || {}) : {});
-        } catch (e) {
-            console.error('Error cargando métricas:', e);
-            setMetricasData({});
-        } finally {
-            setLoadingMetricas(false);
+            const pedidosJornada = await traerPedidosDeJornada(jornada);
+            setLiquidacion(liquidarDeliverys(pedidosJornada));
+            setJornadaMetricas(jornada);
             setShowMetricas(true);
+        } catch (error) {
+            console.error('Error cargando la liquidacion de deliverys:', error);
+            Swal.fire('Error', 'No se pudo cargar la liquidación. Revisá la conexión e intentá de nuevo.', 'error');
         }
-    };
+    });
+
+    // La tabla muestra lo que el repartidor tiene que COBRAR, no el total del
+    // pedido: en MP no cobra nada y en el pago dividido solo la parte en efectivo.
+    // `pagoLegible` es para la columna y el filtro, que si no mostrarian "%".
+    const filas = useMemo(() => pedidos.map(p => ({
+        ...p,
+        pagoLegible: etiquetaPago(p.metodoPago),
+        aCobrar: repartirPago(p).efectivo,
+    })), [pedidos]);
 
     const columnasPedidos = [
-        { columnasBasicas: ["codigo", "nombre", "total"] },
+        { columnasBasicas: ["codigo", "nombre"] },
         {
             accessorKey: "timestamp",
             header: "Hora",
@@ -177,10 +195,26 @@ const JefeDeliverys = () => {
         {
             accessorKey: "envio.costo_envio",
             header: "$ Envío",
+            cell: ({ getValue }) => fmtPesos(getValue()),
         },
         {
-            accessorKey: "metodoPago",
+            accessorKey: "pagoLegible",
             header: "Pago",
+        },
+        {
+            accessorKey: "aCobrar",
+            header: "A cobrar",
+            cell: ({ row }) => row.original.metodoPago === METODOS_PAGO.MP.key
+                ? <span className="text-muted fst-italic">No se cobra</span>
+                : <strong>{fmtPesos(row.original.aCobrar)}</strong>,
+        },
+        {
+            // En MP no se muestra. En el dividido es la parte en efectivo.
+            accessorKey: "pagaCon",
+            header: "Paga con",
+            cell: ({ row }) => row.original.metodoPago !== METODOS_PAGO.MP.key && row.original.pagaCon > 0
+                ? fmtPesos(row.original.pagaCon)
+                : <span className="text-muted">—</span>,
         },
         {
             accessorKey: "deliveryAsignado",
@@ -220,25 +254,27 @@ const JefeDeliverys = () => {
                                         style={{ maxHeight: "40px", marginLeft: "10px" }}
                                     >
                                         <h1>Delivery</h1>
+                                        {/* Pasada la medianoche, igual que el F4 de la Caja: cuesta
+                                            leer los pedidos de la jornada. */}
                                         <button
-                                        variant="primary"
                                             className="btn-contorno m-1"
                                             onClick={handleVerMetricas}
-                                            disabled={loadingMetricas}
+                                            disabled={!horaDeArqueo || cargandoLiquidacion}
+                                            title={horaDeArqueo ? "Liquidación de la jornada" : "La liquidación se habilita a las 00:00"}
                                         >
-                                            {loadingMetricas ? "Cargando..." : "Ver métricas"}
+                                            {cargandoLiquidacion ? "Cargando..." : "Liquidación"}
                                         </button>
                                     </div>
 
                                 </div>
 
                                 <TablaGenerica
-                                    data={pedidos}
+                                    data={filas}
                                     columnas={columnasPedidos}
                                     sortBy="codigo"
                                     ordenDescendente={false}
                                     camposBusqueda={["codigo", "direccion", "nombre"]}
-                                    camposFiltros={["deliveryAsignado", "metodoPago"]}
+                                    camposFiltros={["deliveryAsignado", "pagoLegible"]}
                                     rowClassName={(row) =>
                                         row.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA ? 'bg-warning' : ''
                                     }
@@ -264,7 +300,9 @@ const JefeDeliverys = () => {
             <ModalMetricasDelivery
                 isOpen={showMetricas}
                 onClose={() => setShowMetricas(false)}
-                metricasData={metricasData}
+                liquidacion={liquidacion}
+                jornada={jornadaMetricas}
+                sinCerrar={pedidos.length}
             />
         </>
     );

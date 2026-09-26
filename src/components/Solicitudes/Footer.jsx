@@ -1,6 +1,11 @@
 import React from "react";
+import { textoHorarioWeb } from "../../Utils/fechaComercial";
 
-const Footer = () => {
+// El pie de la web pública. Muestra la dirección y el teléfono de la sucursal
+// cuando la página sabe cuál es (`sucursal`: de menu.json o del pedido). En el
+// selector y en la pantalla de cerrado todavía no hay sucursal elegida. El horario
+// sale de HORARIO, el mismo que decide si la web abre.
+const Footer = ({ sucursal = null }) => {
     return (
         <footer className="m-auto bg-dark text-white py-4 position-relative z-3 w-100">
             <div className="container m-auto p-2">
@@ -8,19 +13,21 @@ const Footer = () => {
                     {/* Columna 1 - Información del local */}
                     <div className="col-12 col-md-4 mb-4 mb-md-0 text-center text-md-start">
                         <h5 className="mb-3">GARDEN BURGER</h5>
-                        <p className="small text-white-50">
-                            <span>📍</span>
-                            Leonardo Da Vinci 425<br />
-                            Gregorio de Laferrere, La Matanza<br />
-                            Buenos Aires
-                        </p>
-                        <p className="small text-white-50">
-                            <span className="me-2">📞</span>
-                            {process.env.REACT_APP_celular || "11-1234-5678"}
-                        </p>
+                        {sucursal?.direccion && (
+                            <p className="small text-white-50">
+                                <span className="me-2">📍</span>
+                                {sucursal.direccion}
+                            </p>
+                        )}
+                        {sucursal?.telefono && (
+                            <p className="small text-white-50">
+                                <span className="me-2">📞</span>
+                                {sucursal.telefono}
+                            </p>
+                        )}
                         <p className="small text-white-50 mb-0">
                             <span className="me-2">🕒</span>
-                            Horario: 19:00 a 00:00 hrs
+                            Pedidos {textoHorarioWeb()}
                         </p>
                     </div>
 

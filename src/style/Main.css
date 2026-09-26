@@ -53,8 +53,16 @@ h3 {
   font-weight: 600;
 }
 
-.btn-contorno:hover {
+.btn-contorno:hover:not(:disabled) {
   background-color: var(--color-secundario);
+}
+
+/* Deshabilitado tiene que verse deshabilitado. Sin esto el boton conservaba la
+   mano y el cambio de color al pasar el mouse: el navegador ignoraba el click,
+   pero parecia que se podia apretar. Mismo tratamiento que .pos-fkey de la Caja. */
+.btn-contorno:disabled {
+  opacity: .45;
+  cursor: default;
 }
 
 /*<!------------Inicia estilos tablas---------------->*/

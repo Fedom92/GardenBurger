@@ -1,11 +1,20 @@
 import React, { useState } from "react";
 import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { SUBESTADOS_MOTODELIVERY } from "../../../Utils/Constantes";
+import { SUBESTADOS_MOTODELIVERY, METODOS_PAGO, etiquetaPago } from "../../../Utils/Constantes";
+import { repartirPago } from "../../POS/pos_hooks/useResumenDiario";
 import { fmtPesos } from "../../../Utils/formato";
 
+// Lo que ve el jefe es lo que el repartidor tiene que COBRAR en la puerta, no el
+// total del pedido:
+// - EFECTIVO: el total, con lo que el cliente dijo que paga y el vuelto a llevar.
+// - Pago dividido: solo la parte en efectivo, que es también su pagaCon. El resto
+//   ya entró por MP.
+// - MP: nada. No se muestran ni el total ni pagaCon: no hay plata que manejar.
 const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDelivery, onMarcarEstado, procesando = false }) => {
-    const [pagoRepartidorInput, setPagoRepartidorInput] = useState(pedido?.pagoRepartidorCon || "");
+    // Se carga a mano y sin precargar: con pagaCon ya escrito, confirmar sin mirar
+    // es un error humano que no se ve. Por ahora el monto es libre.
+    const [pagaronConInput, setPagaronConInput] = useState(pedido?.pagaronCon || "");
 
     if (!pedido) return null;
 
@@ -13,8 +22,26 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
     const estadoDelivery = p.estadoDelivery || "";
     const salio = estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA;
     const tieneAsignado = Boolean(p.deliveryAsignado);
-    // Los repartidores salen de `usuarios`, donde el campo es `nombreCompleto`.
-    const selectedDeliveryId = deliverys.find(d => d.nombreCompleto === p.deliveryAsignado)?.id || "";
+    // El selector va por `deliveryID`, que es lo que guarda el pedido. Por nombre,
+    // corregir el nombre de un repartidor dejaba sus pedidos como "Sin asignar".
+
+    const esMP = p.metodoPago === METODOS_PAGO.MP.key;
+    const esDividido = p.metodoPago === METODOS_PAGO.DIVIDIDO.key;
+    const aCobrar = repartirPago(p).efectivo;
+    const pagaCon = Number(p.pagaCon) || 0;
+    // El cambio que el repartidor tiene que llevar encima. En el pago dividido
+    // pagaCon es justo la parte en efectivo, así que no hay vuelto.
+    const vuelto = pagaCon > aCobrar ? pagaCon - aCobrar : 0;
+
+    const confirmarEntrega = () => {
+        // Tiene que estar cargado —si no, la entrega se cerraba sin registrar con
+        // cuánto pagó el cliente—, pero el monto no se compara con nada.
+        if (!esMP && (!pagaronConInput || isNaN(Number(pagaronConInput)))) {
+            toast.error("Ingresá con cuánto pagó el cliente antes de confirmar.");
+            return;
+        }
+        onMarcarEstado(p.id, SUBESTADOS_MOTODELIVERY.FIN, esMP ? "" : pagaronConInput);
+    };
 
     const waClienteHref = p.telefono
         ? `https://api.whatsapp.com/send?phone=549${p.telefono}&text=${encodeURIComponent(`Tu pedido está en camino! 🛵`)}`
@@ -56,12 +83,36 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                                 <span className="text-warning fw-semibold">{p.observaciones}</span>
                             </p>
                         )}
-                    </div>
-                    <div className="col-md-6">
-                        <p className="mb-1"><strong>Total:</strong> {fmtPesos(p.total)}</p>
-                        <p className="mb-1"><strong>Método de pago:</strong> {p.metodoPago}</p>
                         <p className="mb-1"><strong>Zona:</strong> {p.envio?.zona_envio}</p>
                         <p className="mb-1"><strong>Costo envío:</strong> {fmtPesos(p.envio?.costo_envio)}</p>
+                    </div>
+
+                    {/* Cobro: lo único que le importa al repartidor en la puerta */}
+                    <div className="col-md-6">
+                        <p className="mb-1">
+                            <strong>Método de pago:</strong> {etiquetaPago(p.metodoPago)}
+                        </p>
+                        {esMP ? (
+                            <div className="border rounded p-2">
+                                <i className="fa-solid fa-circle-check me-1"></i>
+                                Pagado por Mercado Pago. <strong>No se cobra nada.</strong>
+                            </div>
+                        ) : (
+                            <div className="border border-dark rounded p-2">
+                                <div className="fs-5">
+                                    Cobrar en efectivo: <strong>{fmtPesos(aCobrar)}</strong>
+                                </div>
+                                {esDividido && (
+                                    <small className="d-block">Pago dividido: solo la parte en efectivo.</small>
+                                )}
+                                {pagaCon > 0 && (
+                                    <div className="mt-1">
+                                        Paga con: <strong>{fmtPesos(pagaCon)}</strong>
+                                        {vuelto > 0 && <> · Vuelto a llevar: <strong>{fmtPesos(vuelto)}</strong></>}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -75,7 +126,7 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                         </div>
                         <select
                             className="form-select"
-                            value={selectedDeliveryId}
+                            value={p.deliveryID || ""}
                             onChange={(e) => onAsignarDelivery(p.id, e.target.value)}
                             disabled={procesando}
                         >
@@ -86,19 +137,20 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                         </select>
                     </div>
 
-                    {/* "Pagó con $": solo cuando salió, para EFECTIVO o pago dividido */}
-                    {salio && (p.metodoPago === "EFECTIVO" || p.metodoPago === "%") && (
+                    {/* Al volver el repartidor: con cuánto pagó al final el cliente */}
+                    {salio && !esMP && (
                         <div className="col-md-6 mb-2">
-                            <label className="form-label fw-semibold">Pagó con $</label>
+                            <label className="form-label fw-semibold">Pagaron con $</label>
                             <input
                                 type="number"
                                 className="form-control"
-                                placeholder="Monto recibido por el repartidor"
-                                value={pagoRepartidorInput}
-                                onChange={(e) => setPagoRepartidorInput(e.target.value)}
+                                placeholder="Con cuánto pagó el cliente"
+                                min={0}
+                                value={pagaronConInput}
+                                onChange={(e) => setPagaronConInput(e.target.value)}
                             />
-                            {p.metodoPago === "%" && (
-                                <small className="text-muted">Solo la parte en efectivo del pago dividido.</small>
+                            {esDividido && (
+                                <small className="text-muted">Solo la parte en efectivo: {fmtPesos(aCobrar)}.</small>
                             )}
                         </div>
                     )}
@@ -118,16 +170,7 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                 {salio && (
                     <button
                         className="btn btn-success"
-                        onClick={() => {
-                            // El campo se muestra para EFECTIVO y para el pago dividido,
-                            // así que el monto se exige en los dos: si no, un pago
-                            // dividido se cerraba sin registrar cuánto trajo el repartidor.
-                            if ((p.metodoPago === "EFECTIVO" || p.metodoPago === "%") && !pagoRepartidorInput) {
-                                toast.error("Ingresá el monto que pagó el cliente antes de confirmar.");
-                                return;
-                            }
-                            onMarcarEstado(p.id, SUBESTADOS_MOTODELIVERY.FIN, pagoRepartidorInput);
-                        }}
+                        onClick={confirmarEntrega}
                         disabled={procesando}
                     >
                         <i className="fa-solid fa-check"></i> Confirmar Entrega

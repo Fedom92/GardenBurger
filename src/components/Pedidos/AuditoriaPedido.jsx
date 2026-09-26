@@ -2,6 +2,7 @@ import React from "react";
 import { Modal } from "react-bootstrap";
 import moment from "moment";
 import { fmtPesos } from "../../Utils/formato";
+import { METODOS_PAGO } from "../../Utils/Constantes";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -74,7 +75,7 @@ const Grupo = ({ label, children }) => (
 const AuditoriaPedido = ({ pedido: p, isOpen, onClose }) => {
     if (!p) return null;
 
-    const tieneMP = p.metodoPago === "MP" || p.metodoPago === "%";
+    const tieneMP = p.metodoPago === METODOS_PAGO.MP.key || p.metodoPago === METODOS_PAGO.DIVIDIDO.key;
     const tieneCocinaFin = !!p.cocinaFinTimestamp;
     const tieneCancelaciones = !!(p.cajeroCancelaSolID || p.cajeroCancelaMPID || p.cajeroEliminaID);
     const iconoCreacion = p.origen === "WEB" ? "🌐" : "🖥️";
@@ -252,7 +253,7 @@ const AuditoriaPedido = ({ pedido: p, isOpen, onClose }) => {
                             titulo="Entrega a domicilio"
                             campos={[
                                 { label: "Fecha/hora",   valor: fmt(p.deliveryFinTimestamp) },
-                                { label: "Cliente pagó", valor: p.pagoRepartidorCon ? fmtPesos(p.pagoRepartidorCon) : null },
+                                { label: "Pagaron con",  valor: p.pagaronCon ? fmtPesos(p.pagaronCon) : null },
                             ]}
                         />
                     </Grupo>

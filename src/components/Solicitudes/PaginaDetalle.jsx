@@ -14,6 +14,7 @@ export const PaginaDetalle = () => {
   const { sucursal, id } = useParams(); // Sucursal e ID del pedido en la URL
   const [pedido, setPedido] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [aviso, setAviso] = useState("");
 
   useEffect(() => {
     const fetchPedido = async () => {
@@ -28,6 +29,11 @@ export const PaginaDetalle = () => {
         }
       } catch (error) {
         console.error("Error obteniendo el pedido:", error);
+        // Las reglas niegan el link vencido y el que no existe con el mismo
+        // permission-denied: el cartel tiene que servir para los dos.
+        setAviso(error.code === "permission-denied"
+          ? "Este pedido ya no está disponible. Si tenés dudas, escribinos por WhatsApp."
+          : "No pudimos cargar tu pedido. Probá recargar la página.");
       } finally {
         setLoading(false);
       }
@@ -37,8 +43,9 @@ export const PaginaDetalle = () => {
   }, [id, sucursal]);
 
   const enviarMensajeWSP = (() => {
-    if (pedido?.mensajeWsp) {
-      window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${pedido.mensajeWsp}`, "_blank");
+    // El teléfono de la sucursal quedó guardado en la solicitud al crearla.
+    if (pedido?.mensajeWsp && pedido?.telefonoSucursal) {
+      window.open(`https://api.whatsapp.com/send?phone=549${pedido.telefonoSucursal}&text=${pedido.mensajeWsp}`, "_blank");
     }
   })
 
@@ -152,20 +159,24 @@ export const PaginaDetalle = () => {
               </Link>
             </div>
 
-            {/* Botón flotante WhatsApp */}
-            <button
-              type="button"
-              className="fab-whatsapp"
-              onClick={enviarMensajeWSP}
-            >
-              <img src={whatsapp} alt="WhatsApp" />
-            </button>
+            {/* Botón flotante WhatsApp: solo si la sucursal tenía teléfono al crear el pedido */}
+            {pedido.telefonoSucursal && (
+              <button
+                type="button"
+                className="fab-whatsapp"
+                onClick={enviarMensajeWSP}
+              >
+                <img src={whatsapp} alt="WhatsApp" />
+              </button>
+            )}
           </>
         ) : (
-          <h1 className='text-center m-4'>No se ha encontrado registros!</h1>
+          aviso
+            ? <h4 className='text-center m-4'>{aviso}</h4>
+            : <h1 className='text-center m-4'>No se ha encontrado registros!</h1>
         )}
       </div>
-      <Footer />
+      <Footer sucursal={pedido?.telefonoSucursal ? { telefono: pedido.telefonoSucursal } : null} />
     </div>
   )
 }

@@ -7,12 +7,10 @@ import Categorias from "./Parametros/Categorias";
 import "../../style/Main.css"
 import Swal from "sweetalert2";
 import TablaGenerica from "../../Utils/TablaGenerica";
-import { useAuth } from "../../context/AuthContext";
 import { publicarMenu, marcarMenuPendiente, limpiarMenuPendiente, hayMenuPendiente } from "../../Utils/menuPublico";
+import { avisarErrorDeCarga } from "../../Utils/avisos";
 
 const Productos = () => {
-  const { userData } = useAuth();
-  const [rol, setRol] = useState("");
   const [productos, setProductos] = useState([]);
   const [modalShowProducto, setModalShowProducto] = useState(false);
   const [modalShowEditProducto, setModalShowEditProducto] = useState(false);
@@ -23,7 +21,6 @@ const Productos = () => {
   const [categorias, setCategorias] = useState([]);
   const [modalShowCategorias, setModalShowCategorias] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [mostrarAjustes, setMostrarAjustes] = useState(false);
   const [publicando, setPublicando] = useState(false);
   // "Hay cambios sin publicar": la bandera persiste en localStorage, asi que
   // sobrevive a salir de la pantalla. Ver marcarPendiente.
@@ -72,6 +69,7 @@ const Productos = () => {
 
       } catch (error) {
         console.error('Error fetching data Productos:', error);
+        avisarErrorDeCarga("los productos");
       } finally {
         // Antes esto vivía dentro de getProductos, o sea solo en el camino feliz:
         // si Firestore fallaba, el loader giraba para siempre sin explicación.
@@ -83,9 +81,6 @@ const Productos = () => {
 
   }, [getProductos, getCategorias]);
 
-  useEffect(() => {
-    setRol(userData?.rol || "");
-  }, [userData]);
 
 
   //Agrega y Edita en vista Local
@@ -109,13 +104,6 @@ const Productos = () => {
   };
 
 
-  function funcMostrarAjustes() {
-    if (mostrarAjustes) {
-      setMostrarAjustes(false);
-    } else {
-      setMostrarAjustes(true);
-    }
-  }
 
   const toggleVisibilidad = (id, visible) => {
     Swal.fire({
@@ -306,18 +294,6 @@ const Productos = () => {
                   <div
                     className="d-flex justify-content-start align-items-center">
                     <h1>Productos</h1>
-                    {rol === process.env.REACT_APP_admin ? (
-                      <button
-                        className="btn mx-2 btn-sm"
-                        style={{ borderRadius: "5px" }}
-                        onClick={() => {
-                          funcMostrarAjustes(true);
-                        }}
-                      >
-                        <i className="fa-solid fa-gear"></i>
-                      </button>
-                    ) : null}
-
                     <button
                       variant="primary"
                       className="btn-contorno m-1"
@@ -338,17 +314,12 @@ const Productos = () => {
                       {publicando ? "Publicando..." : "Publicar Menú"}
                     </button>
 
-                    {mostrarAjustes && (
-                      <div>
-                        <button
-                          variant="tertiary"
-                          className="btn-contorno m-1"
-                          onClick={() => setModalShowCategorias(true)}
-                        >
-                          Categorias
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      className="btn-contorno m-1"
+                      onClick={() => setModalShowCategorias(true)}
+                    >
+                      Categorías
+                    </button>
                   </div>
                 </div>
 
@@ -380,13 +351,13 @@ const Productos = () => {
         show={modalShowEditProducto}
         onHide={() => setModalShowEditProducto(false)}
       />)}
-      {mostrarAjustes && (<Categorias
+      <Categorias
         show={modalShowCategorias}
         onHide={() => setModalShowCategorias(false)}
         categorias={categorias}
         setCategorias={setCategorias}
         onCambio={marcarPendiente}
-      />)}
+      />
     </>
   );
 }

@@ -9,6 +9,7 @@ import { ahoraServidor } from "../../Utils/fechaComercial";
 import { getItemsCocina } from "./cocina_hooks/useItemsCocina";
 import ModalHorariosEspeciales from "./ModalHorariosEspeciales";
 import moment from "moment";
+import { avisarSinConexion } from "../../Utils/avisos";
 
 const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     const { userData } = useAuth();
@@ -29,6 +30,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
 
     const manejarError = useCallback((error) => {
         console.error('Error en listener de Pedidos Espera:', error);
+        avisarSinConexion("los pedidos en espera");
         setPedidosEspera([]);
         actualizarContador(0);
         setIsLoading(false);

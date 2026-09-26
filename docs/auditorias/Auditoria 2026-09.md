@@ -303,6 +303,13 @@ el catálogo que ya tiene en memoria — que es exactamente lo que propone el ar
 
 ## 9. Integridad del dinero
 
+> [!success] 26-09-2026: el `increment()` del arqueo ya no existe
+> Esta sección diagnosticó bien la causa raíz. Se resolvió eliminándola: `resumenDiario` pasó de
+> contador a foto de un cálculo sobre los pedidos de la jornada. Las tres grietas que quedaban
+> —doble descuento, doble suma por toma simultánea, carrera entre dos cajeros— dependían de que
+> sumar dos veces sumara dos veces. Ver
+> [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]].
+
 Es el área con más hallazgos, y no es casualidad: `resumenDiario` se mueve con `increment()`, que
 **no es idempotente**. Cualquier camino que ejecute dos veces la misma suma o resta deja el arqueo
 mal, en silencio y sin rastro.

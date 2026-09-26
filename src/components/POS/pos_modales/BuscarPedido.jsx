@@ -1,12 +1,12 @@
 import React, { useState, useRef } from "react";
-import { query, getDocs, where, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
-import { db, colSucursal, docSucursal } from "../../../firebaseConfig/firebase";
+import { query, getDocs, where, orderBy, serverTimestamp, updateDoc } from "firebase/firestore";
+import { colSucursal, docSucursal } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
 import { useAuth } from "../../../context/AuthContext";
-import { ESTADOS, ENVIOS_LOCALES } from "../../../Utils/Constantes";
-import { getResumenOperation } from "../pos_hooks/useResumenDiario";
+import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO } from "../../../Utils/Constantes";
+import { invalidarFotoDePedido } from "../pos_hooks/useResumenDiario";
 import { quitarAcentos } from "../../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../../Utils/fechaComercial";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
@@ -119,33 +119,19 @@ const BuscarPedido = ({ isOpen, onClose }) => {
             });
 
             if (result.isConfirmed) {
-                const pedidoRef = docSucursal("pedidos", pedido.id);
-                const updateData = {
+                await updateDoc(docSucursal("pedidos", pedido.id), {
                     estado: ESTADOS.ELIMINADO,
                     cajeroEliminaID: userData.id,
                     cajeroElimina: userData.nombreCompleto,
                     cajeroEliminaTimestamp: serverTimestamp(),
-                };
+                });
 
-                if (pedido.cajeroID) {
-                    const { ref: resumenRef, stats } = getResumenOperation({
-                        metodoPago: pedido.metodoPago,
-                        total: pedido.total,
-                        montoEfectivo: pedido.montoEfectivo,
-                        envio: pedido.envio,
-                        carrito: pedido.carrito,
-                        descontar: true,
-                        timestampPedido: pedido.timestamp,
-                    });
-                    const batch = writeBatch(db);
-                    batch.update(pedidoRef, updateData);
-                    batch.set(resumenRef, stats, { merge: true });
-                    await batch.commit();
-                } else {
-                    const batch = writeBatch(db);
-                    batch.update(pedidoRef, updateData);
-                    await batch.commit();
-                }
+                // El arqueo se calcula desde los pedidos, asi que cambiar el estado ya
+                // lo corrige: no hay contador que descontar. Lo unico que puede quedar
+                // viejo es la foto de una jornada cerrada, y hoy no hay ninguna: F3
+                // esta acotado a la jornada en curso. Va igual para que el componente
+                // de eliminacion por fecha, pendiente, no tenga que acordarse.
+                await invalidarFotoDePedido(pedido);
 
                 // Actualizar el pedido local, y también la jornada cacheada: si no,
                 // la siguiente búsqueda dentro del mismo modal lo mostraría otra
@@ -273,7 +259,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                             <p className="mb-2">
                                                 <strong>Método de pago:</strong> {pedido.metodoPago}
                                             </p>
-                                            {pedido.metodoPago === "%" && (
+                                            {pedido.metodoPago === METODOS_PAGO.DIVIDIDO.key && (
                                                 <p className="mb-2">
                                                     <strong>Monto Efectivo:</strong> {fmtPesos(pedido.montoEfectivo)}
                                                 </p>
@@ -303,8 +289,8 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                     <i className="fa-brands fa-whatsapp fs-5 align-middle me-1"></i> Enviar WhatsApp
                                                 </a>
 
-                                                {/* Un CANCELADO que vino de rechazar un MP ya descontó el arqueo:
-                                                    eliminarlo lo descontaría por segunda vez. */}
+                                                {/* CANCELADO y ELIMINADO ya estan fuera del arqueo:
+                                                    volver a eliminarlos no cambia nada y confunde. */}
                                                 {[ESTADOS.ELIMINADO, ESTADOS.CANCELADO].includes(pedido.estado) ? (
                                                     <div className="alert alert-secondary mb-0 p-2 w-75" role="alert">
                                                         <small className="fw-bold">

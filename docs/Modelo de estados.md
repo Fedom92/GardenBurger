@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, workflow]
 aliases: [Estados, Transiciones, Maquina de estados]
-actualizado: 2026-09-14
+actualizado: 2026-09-26
 ---
 
 # Modelo de estados del pedido
@@ -41,7 +41,7 @@ Los dos últimos son terminales **en la intención**, no en el código: nada imp
 
 ## Transiciones válidas
 
-| Desde | Hacia | Quién la dispara | Dónde | Efecto en `resumenDiario` |
+| Desde | Hacia | Quién la dispara | Dónde | Efecto en el arqueo |
 |---|---|---|---|---|
 | — | `PENDIENTE` | Cliente web | `Crearsolicitud` | — |
 | — | `CONFIRMADO` | Cajero (efectivo) | `Caja.guardarBD` | **Suma** |
@@ -49,28 +49,32 @@ Los dos últimos son terminales **en la intención**, no en el código: nada imp
 | `PENDIENTE` | `CONFIRMADO` / `PENDIENTEMP` | Cajero, al Revisar y Guardar | `useRevisarSolicitud` → `Caja.guardarBD` | **Suma** |
 | `PENDIENTE` | `CANCELADO` | Cajero, al Rechazar | `PendientesSolicitudes` | — (nunca sumó) |
 | `PENDIENTEMP` | `CONFIRMADO` | Cajero, al cotejar MP | `PendientesMP.aprobarPedido` | — (ya sumó al guardar) |
-| `PENDIENTEMP` | `CANCELADO` | Cajero, al rechazar MP | `PendientesMP.rechazarPedido` | **Descuenta** |
+| `PENDIENTEMP` | `CANCELADO` | Cajero, al rechazar MP | `PendientesMP.rechazarPedido` | **Sale** del cálculo |
 | `CONFIRMADO` | `COCINA` | Cocina, "Empezar a Cocinar" | `PedidosEspera.cocinar` | — |
 | `COCINA` | `ATP` | Cocina, "Cocinados TODOS", zona ∈ `ENVIOS_LOCALES` | `PedidosCocinando` | — |
 | `COCINA` | `DELIVERY` | Cocina, "Cocinados TODOS", resto de zonas | `PedidosCocinando` | — |
 | `ATP` | `ENTREGADO` | ATP, al entregar en mostrador | `ATP.jsx` | — |
 | `DELIVERY` | `ENTREGADO` | Jefe de deliverys, al registrar el regreso | `JefeDeliverys` | Métricas en `deliverys` |
-| *(casi cualquiera)* | `ELIMINADO` | Cajero, desde F3 | `BuscarPedido` | **Descuenta**, solo si el pedido tiene `cajeroID` |
+| *(casi cualquiera)* | `ELIMINADO` | **Encargado**, desde F3 | `BuscarPedido` | **Sale** del cálculo |
 
-**El arqueo se mueve en cuatro lugares**, y solo cuatro: guardar en Caja (suma), rechazar MP
-(descuenta), eliminar un ticket (descuenta) y cerrar un delivery (métricas). Todos pasan por
-`getResumenOperation()`.
+**Ninguna transición escribe el arqueo.** Desde el 26-09-2026 el arqueo se calcula desde los
+pedidos de la jornada: la columna de arriba dice si el pedido **entra** al cálculo, no qué se
+suma o se resta. Ver [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]].
 
-> [!important] El descuento va a la jornada DEL PEDIDO
-> Los dos caminos que revierten pasan el `timestamp` del pedido a `getResumenOperation`, que
-> deriva la jornada de ahí con `getFechaComercialDe()`. Antes usaba siempre la jornada actual:
-> eliminar hoy un pedido de ayer habría descontado del día equivocado.
+> [!important] Qué pedido entra al arqueo
+> Dos condiciones, las dos en `entraAlArqueo()`:
+>
+> 1. **Tiene `cajeroID`** — lo cobró un cajero. Una solicitud web que nadie atendió nunca movió
+>    plata, así que no aparece pase lo que pase con su estado.
+> 2. **No está en `CANCELADO` ni en `ELIMINADO`** — las dos formas de anular.
+>
+> De ahí que rechazar una solicitud web no cambie nada (nunca entró) y que los únicos `CANCELADO`
+> que mueven el número sean los que vienen de `PENDIENTEMP`: esos sí pasaron por la Caja.
 
-> [!note] El descuento depende de si el pedido llegó a cobrarse, no del estado
-> `BuscarPedido.jsx:86` condiciona el descuento a `if (pedido.cajeroID)`, así que borrar una
-> solicitud web que nadie cobró no toca el arqueo. Rechazar una solicitud web tampoco: nunca sumó.
-> Los únicos `CANCELADO` que descuentan son los que vienen de `PENDIENTEMP`, porque esos ya pasaron
-> por la Caja.
+> [!important] Cada pedido cuenta en SU jornada
+> El cálculo lee los pedidos por rango de `timestamp`, así que un pedido pertenece a la jornada en
+> que se cobró y no a la de hoy: eliminar hoy un pedido de ayer corrige el arqueo de ayer. Si esa
+> jornada ya tenía foto, `invalidarFotoDePedido(pedido)` la borra para que se reconstruya.
 
 > [!important] El ruteo de cocina define todo lo que sigue
 > `PedidosCocinando` decide entre `ATP` y `DELIVERY` mirando `pedido.envio.zona_envio` contra
@@ -85,18 +89,20 @@ Ninguna capa valida el estado de origen. Las dos que rompían el arqueo se cerra
 
 | Desde | Hacia | Cómo se llega | Qué rompe | Estado |
 |---|---|---|---|---|
-| `CANCELADO` | `ELIMINADO` | F3 ofrecía Eliminar para todo lo que no fuera `ELIMINADO` | Descontaba el arqueo por segunda vez | ✅ `BuscarPedido` ya no ofrece Eliminar en `CANCELADO` |
-| `ELIMINADO` | `COCINA` | Cocina lo tenía seleccionado cuando el cajero lo eliminó | Se cocinaba con el arqueo ya descontado | ✅ `PedidosEspera` poda la selección en cada snapshot |
-| `ENTREGADO` | `ELIMINADO` | F3 | Descuenta un pedido ya cobrado y entregado | ✅ **Correcto por diseño** (14-09-2026): es la anulación de una venta y tiene que descontar |
+| `CANCELADO` | `ELIMINADO` | F3 ofrecía Eliminar para todo lo que no fuera `ELIMINADO` | Descontaba el arqueo por segunda vez | ✅ `BuscarPedido` ya no ofrece Eliminar en `CANCELADO`, y desde el 26-09 el doble descuento es imposible |
+| `ELIMINADO` | `COCINA` | Cocina lo tenía seleccionado cuando el cajero lo eliminó | Se cocinaba un pedido ya fuera del arqueo | ✅ `PedidosEspera` poda la selección en cada snapshot |
+| `ENTREGADO` | `ELIMINADO` | F3 | Saca del arqueo un pedido ya cobrado y entregado | ✅ **Correcto por diseño** (14-09-2026): es la anulación de una venta y tiene que salir |
 | Cualquiera | Cualquiera | Dos pantallas abiertas escribiendo a destiempo | Último en escribir gana, sin aviso | Abierto |
 
 Los dos cierres son de **front**: la consola del navegador todavía puede hacer esas escrituras. Se
 aceptó así porque el riesgo real era operativo (un cajero y un cocinero apurados), no malicioso.
 Cerrarlo por reglas exigiría validar `estado` de origen en cada `update`.
 
-> [!note] El arqueo sigue sin saber si ya fue aplicado
-> Se evaluó una marca `arqueoAplicado` en el pedido y se descartó por simplicidad. Si aparece un
-> camino nuevo que revierta dos veces, sigue siendo la opción.
+> [!success] Ya no hace falta saber si el arqueo "fue aplicado"
+> Se había evaluado una marca `arqueoAplicado` en el pedido, para que un camino que revirtiera dos
+> veces no descontara dos veces, y se descartó por simplicidad (14-09-2026). Con el arqueo
+> calculado la pregunta desapareció: el estado del pedido **es** la respuesta, y recalcular mil
+> veces da el mismo número.
 
 ## Campos que acompañan cada transición
 
@@ -110,7 +116,7 @@ cocinero* / cocinaFinTimestamp     ← quién cocinó y cuándo terminó
 atp*                               ← quién entregó en mostrador
 delivery* / gestorDelivery*        ← repartidor asignado y quién lo asignó
 estadoDelivery                     ← SALIO → VOLVIO, dentro del estado DELIVERY
-pagoRepartidorCon                  ← con qué se le pagó al repartidor
+pagaronCon                         ← con cuánto pagó al final el cliente
 cajeroElimina*                     ← quién borró el ticket
 ```
 

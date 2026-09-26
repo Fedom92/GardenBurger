@@ -1,7 +1,7 @@
 ---
 tags: [moc, gardenburger]
 aliases: [GardenBurger MOC, Indice GardenBurger, Inicio]
-actualizado: 2026-09-23
+actualizado: 2026-09-26
 ---
 
 # GardenBurger — Mapa del proyecto
@@ -42,7 +42,7 @@ Según qué vengas a hacer, con esto alcanza:
 | Sueldos y horas | [[Asistencias y liquidacion]] |
 | Entender por qué algo está "raro" | [[Decisiones tecnicas]] ← **leer antes de "arreglar" nada** |
 | Saber qué falta | [[Deuda tecnica]] |
-| Ver el diagnóstico completo | [[Auditoria 2026-09-15]] ← la última, con la evidencia |
+| Ver el diagnóstico completo | [[Auditoria 2026-09-26]] ← la última, con la evidencia y las preguntas abiertas |
 
 ## Las cinco cosas que hay que saber sí o sí
 
@@ -52,9 +52,10 @@ Según qué vengas a hacer, con esto alcanza:
 2. **Minimizar lecturas de Firestore es un requisito de primer orden**, no una optimización. El
    proyecto vive con un límite ajustado. Antes de agregar una consulta, preguntarse si el dato ya
    está en memoria.
-3. **`increment()` no es idempotente.** Todo lo que mueve el arqueo va con guard
-   (`useAccionUnica`) y en la misma escritura atómica que el pedido (`runTransaction` en Caja,
-   `writeBatch` en el resto). Ver [[Modelo de estados]] para saber qué transición toca el arqueo.
+3. **El arqueo se calcula desde los pedidos**, no se acumula con `increment()`. Ningún camino
+   escribe `resumenDiario`: se escribe el pedido y el número sale de ahí. Ver
+   [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]] para el porqué y el costo, y
+   [[Modelo de estados]] para saber qué pedido entra al cálculo.
 4. **El sistema es multi-sucursal**: las colecciones operativas son subcolecciones de
    `sucursales/{id}/…`, y el scope lo dan `colSucursal`/`docSucursal` (staff) o la URL (público).
 5. **Varios cajeros trabajan en paralelo** sobre la misma sucursal. De ahí el modelo de asignación
@@ -102,4 +103,4 @@ Según qué vengas a hacer, con esto alcanza:
 
 - [[Deuda tecnica]] — lo que queda abierto, y por qué decisión ← **el documento vivo**
 - `auditorias/` — fotos fechadas, no se actualizan:
-  [[Auditoria 2026-09-15]] (la última) · [[Auditoria 2026-09]] (la primera)
+  [[Auditoria 2026-09-26]] (la última) · [[Auditoria 2026-09-15]] · [[Auditoria 2026-09]] (la primera)

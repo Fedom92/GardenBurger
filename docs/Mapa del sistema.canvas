@@ -28,7 +28,7 @@
       "width": 380,
       "height": 200,
       "color": "4",
-      "text": "## Caja — el cobro\n**`guardarBD`**\n\nUna sola transacción: contador + pedido + arqueo. O entran los tres, o no entra ninguno.\n\n💰 **Suma al arqueo**"
+      "text": "## Caja — el cobro\n**`guardarBD`**\n\nUna sola transaccion: contador + pedido. O entran los dos, o no entra ninguno.\n\nEl arqueo no se escribe aca: se calcula desde los pedidos cuando alguien lo mira.\n\n💰 **Entra al arqueo** (tiene `cajeroID`)"
     },
     {
       "id": "d4c6f0a38b2e5917",
@@ -88,7 +88,7 @@
       "width": 380,
       "height": 200,
       "color": "4",
-      "text": "## ENTREGADO\nCerrado. `ESTADOS.FINAL`\n\nAl cerrar un delivery se escriben además las **métricas del repartidor** en el arqueo."
+      "text": "## ENTREGADO\nCerrado. `ESTADOS.FINAL`\n\nAl cerrar un delivery, ese pedido pasa a contar en las **metricas del repartidor**, que se calculan igual que el arqueo."
     },
     {
       "id": "3a4cf6192082b573",
@@ -98,7 +98,7 @@
       "width": 380,
       "height": 200,
       "color": "1",
-      "text": "## CANCELADO\nRechazo de solicitud web (**F1**) o de transferencia MP (**F2**).\n\n💸 **Descuenta del arqueo solo si venía de PENDIENTEMP** — una solicitud web nunca sumó."
+      "text": "## CANCELADO\nRechazo de solicitud web (**F1**) o de transferencia MP (**F2**).\n\n💸 **Sale del arqueo solo si venia de PENDIENTEMP** — una solicitud web nunca entro: no tiene `cajeroID`."
     },
     {
       "id": "4b5d072a3193c684",
@@ -117,7 +117,7 @@
       "y": 900,
       "width": 500,
       "height": 260,
-      "text": "## Cómo leer este mapa\n\n🟠 Espera una **acción humana**\n🟢 **Mueve plata** hacia el arqueo\n🔵 Producción y entrega — no toca plata\n🔴 **Revierte** plata\n\nLas flechas dicen **quién dispara** cada paso.\n\n`F1`–`F4` son los atajos de la Caja."
+      "text": "## Como leer este mapa\n\n🟠 Espera una **accion humana**\n🟢 **Mueve plata** hacia el arqueo\n🔵 Produccion y entrega — no toca plata\n🔴 **Anula** una venta: sale del arqueo\n\nLas flechas dicen **quien dispara** cada paso.\n\n`F1`–`F4` son los atajos de la Caja.\n\nEl arqueo no es un contador: se **calcula** sumando los pedidos de la jornada."
     },
     {
       "id": "6d7f294c53b5e8a6",

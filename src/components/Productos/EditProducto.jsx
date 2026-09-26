@@ -4,6 +4,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
 
 const EditProducto = (props) => {
   const { editar_producto, categorias_options, producto, ...propsModal } = props;
@@ -67,6 +68,8 @@ const EditProducto = (props) => {
       clearForm();
     } catch (err) {
       console.error("Error al editar producto: ", err);
+      // Sin esto el modal quedaba abierto sin decir nada, y el precio viejo seguía.
+      Swal.fire({ title: 'Error', text: 'No se pudo guardar el producto. Revisá la conexión e intentá de nuevo.', icon: 'error', confirmButtonColor: '#dc3545' });
     } finally {
       setSubiendoImagen(false);
     }

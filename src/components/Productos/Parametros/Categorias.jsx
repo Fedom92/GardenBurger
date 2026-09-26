@@ -4,6 +4,7 @@ import { addDoc, collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase.js";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
+import { useAccionUnica } from "../../../Utils/useAccionUnica";
 
 // Las categorias vienen de Productos, que ya las leyo: este modal no hace ninguna
 // lectura propia (antes releia la coleccion entera al montar). Editar aca actualiza
@@ -23,7 +24,11 @@ const Categorias = ({ show, onHide, categorias, setCategorias, onCambio }) => {
     );
   };
 
-  const handleCreate = async (data) => {
+  // addDoc genera un id por llamada: un doble click daba dos categorías, porque
+  // el chequeo de repetida mira un estado que todavía no se actualizó.
+  const { ejecutar } = useAccionUnica();
+
+  const handleCreate = (data) => ejecutar(async () => {
     if (categoriaExiste(data.nombre)) {
       setError("La Categoría ya existe");
       return;
@@ -44,8 +49,9 @@ const Categorias = ({ show, onHide, categorias, setCategorias, onCambio }) => {
 
     } catch (error) {
       console.error("Error al agregar la Categoría: ", error);
+      setError("No se pudo agregar la categoría. Revisá la conexión e intentá de nuevo.");
     }
-  };
+  });
 
   const handleEdit = (item) => {
     setIdAEditar(item.id);

@@ -7,35 +7,45 @@ import { ROLES } from "../../Utils/Constantes";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { useForm } from "react-hook-form";
+import { useAccionUnica } from "../../Utils/useAccionUnica";
+import { avisarErrorDeCarga } from "../../Utils/avisos";
 
-// Alta de empleados. Dos variantes en el mismo formulario:
+// Alta de empleados. Dos variantes en el mismo formulario, y las decide el ROL
+// (`ROLES[rol].sinAcceso`), no un check: antes había uno, y solo servía para los
+// repartidores.
 //
 // - CON acceso: la Cloud Function crea la cuenta de Auth y escribe el perfil,
 //   las dos cosas server-side. El perfil viaja en `datos` como objeto genérico,
 //   así que agregar un campo acá no obliga a redeployar la Function.
-// - SIN acceso (repartidores): no se toca Auth. Es un documento y nada más.
+// - SIN acceso (repartidores): no se toca Auth. Es un documento y nada más. En
+//   lugar del correo y la contraseña, el formulario pide los datos de la moto.
 const CrearEmpleado = (props) => {
   const { register, handleSubmit, reset, watch } = useForm({
-    defaultValues: { sinAcceso: false, valorHora: 0 }
+    defaultValues: { valorHora: 0 }
   });
   const { agregarempleado, ...propsModal } = props;
   const [error, setError] = useState('');
-  const [procesando, setProcesando] = useState(false);
+  // Un useState no alcanza: entre dos clicks rápidos el botón sigue habilitado y
+  // un repartidor (addDoc, id por llamada) quedaba dado de alta dos veces.
+  const { procesando, ejecutar } = useAccionUnica();
   const [sucursales, setSucursales] = useState([]);
 
-  const sinAcceso = watch("sinAcceso");
   const rol = watch("rol");
+  const sinAcceso = !!ROLES[rol]?.sinAcceso;
   const llevaMoto = !!ROLES[rol]?.llevaMoto;
 
   const userCollection = collection(db, "usuarios");
 
   useEffect(() => {
-    fetchSucursales().then(setSucursales).catch(console.error);
+    fetchSucursales().then(setSucursales).catch((error) => {
+      console.error(error);
+      avisarErrorDeCarga("las sucursales");
+    });
   }, []);
 
   const validarInputs = async (data) => {
     // Un empleado sin acceso no tiene correo ni contraseña que validar.
-    if (data.sinAcceso) return null;
+    if (ROLES[data.rol]?.sinAcceso) return null;
 
     if (!data.correo || !/@[^.]+\.com(\.\w+)?$/.test(data.correo)) {
       return "Correo electrónico inválido";
@@ -69,8 +79,8 @@ const CrearEmpleado = (props) => {
     sucursal: data.sucursal,
     valorHora: Number(data.valorHora) || 0,
     activo: true,
-    sinAcceso: !!data.sinAcceso,
-    ...(data.sinAcceso ? {} : { correo: data.correo }),
+    sinAcceso: !!ROLES[data.rol]?.sinAcceso,
+    ...(ROLES[data.rol]?.sinAcceso ? {} : { correo: data.correo }),
     ...(ROLES[data.rol]?.llevaMoto ? {
       marcaMoto: data.marcaMoto || "",
       modeloMoto: data.modeloMoto || "",
@@ -79,19 +89,18 @@ const CrearEmpleado = (props) => {
     } : {}),
   });
 
-  const validarFields = async (data) => {
+  const validarFields = (data) => ejecutar(async () => {
     const errorMsg = await validarInputs(data);
     if (errorMsg) {
       setError(errorMsg);
       return;
     }
 
-    setProcesando(true);
     setError("");
     const empleado = armarEmpleado(data);
 
     try {
-      if (data.sinAcceso) {
+      if (ROLES[data.rol]?.sinAcceso) {
         // Sin cuenta de Auth: es un documento y nada más, no hay Function.
         const docRef = await addDoc(userCollection, { ...empleado, timestamp: serverTimestamp() });
         agregarempleado({ id: docRef.id, ...empleado });
@@ -117,10 +126,8 @@ const CrearEmpleado = (props) => {
         icon: 'error',
         confirmButtonColor: '#d33',
       });
-    } finally {
-      setProcesando(false);
     }
-  };
+  });
 
   const clearForm = () => {
     reset();
@@ -144,13 +151,6 @@ const CrearEmpleado = (props) => {
         <div className="container">
           <div className="col">
             <form name="crearEmpleado" onSubmit={handleSubmit(validarFields)}>
-
-              <div className="form-check mb-3">
-                <input className="form-check-input" type="checkbox" id="sinAcceso" {...register("sinAcceso")} />
-                <label className="form-check-label" htmlFor="sinAcceso">
-                  Sin acceso al sistema <span className="text-body-secondary">(no se le crea usuario ni contraseña)</span>
-                </label>
-              </div>
 
               <div className="row">
                 <div className="col-md-6 mb-2">
@@ -192,6 +192,7 @@ const CrearEmpleado = (props) => {
                     <option value={process.env.REACT_APP_encargado}>Encargado</option>
                     <option value={process.env.REACT_APP_cajero}>Cajero</option>
                     <option value={process.env.REACT_APP_cocina}>Cocina</option>
+                    <option value={process.env.REACT_APP_jefeDeliverys}>Jefe de Deliverys</option>
                     <option value={process.env.REACT_APP_delivery}>Delivery</option>
                     <option value={process.env.REACT_APP_atp}>ATP</option>
                   </select>

@@ -14,10 +14,11 @@ export const NavigationContext = createContext();
 // guards de App.js. Un rol que no figure acá ve únicamente Mi Perfil y Salir.
 const MODULOS_POR_ROL = {
     [process.env.REACT_APP_admin]: ["productos", "historial", "estadisticas", "liquidacion", "clientes", "configuracion"],
-    [process.env.REACT_APP_encargado]: ["caja", "cocina", "atp", "deliverys", "asistencias", "historial"],
-    [process.env.REACT_APP_cajero]: ["caja", "historial"],
+    [process.env.REACT_APP_encargado]: ["caja", "cocina", "atp", "deliverys", "asistencias"],
+    [process.env.REACT_APP_cajero]: ["caja"],
     [process.env.REACT_APP_cocina]: ["cocina"],
-    [process.env.REACT_APP_delivery]: ["deliverys"],
+    // Los repartidores no tienen modulo: existen para la asistencia y para asignarles pedidos.
+    [process.env.REACT_APP_jefeDeliverys]: ["deliverys"],
     [process.env.REACT_APP_atp]: ["atp"],
 };
 

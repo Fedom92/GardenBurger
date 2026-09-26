@@ -32,9 +32,10 @@ ves una alternativa mejor, proponela. El detalle y el porqué están en el vault
 2. **Minimizar lecturas de Firestore es un requisito de primer orden**, no una optimización. Antes
    de agregar una consulta, preguntarse si el dato ya está en memoria. `getDocs` **siempre** va al
    servidor y se factura, aunque haya caché.
-3. **`increment()` no es idempotente.** Todo lo que mueve `resumenDiario` va con guard
-   (`Utils/useAccionUnica.js`) y dentro del mismo `writeBatch` que el pedido. Nunca `updateDoc`
-   sobre `resumenDiario`: falla si el documento de la jornada no existe todavía.
+3. **El arqueo se calcula desde los pedidos**, no se acumula: `resumenDiario` guarda el resultado
+   como foto de una jornada cerrada. Nadie lo escribe al cobrar ni al anular — se escribe el pedido
+   y el número sale de ahí (`pos_hooks/useResumenDiario.js`). `increment()` sigue sin ser
+   idempotente, así que lo que quede usándolo va con guard (`Utils/useAccionUnica.js`).
 4. **Multi-sucursal**: las colecciones operativas son subcolecciones de `sucursales/{id}/…`. El
    scope lo dan `colSucursal`/`docSucursal` (staff) o la sucursal de la URL (público).
 5. **Nunca hardcodear** roles ni estados: van por `process.env.REACT_APP_*`, `ROLES` y `ESTADOS`

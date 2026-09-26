@@ -65,9 +65,12 @@ const MiPerfil = () => {
               <div className="card mb-4">
                 <div className="card-header d-flex justify-content-between align-items-center">
                   <span>Detalles de la Cuenta</span>
-                  <small className="text-body-secondary">
-                    Para modificar algún dato, avisale al administrador
-                  </small>
+                  {/* El admin se corrige a sí mismo desde el PanelAdmin: la leyenda es para el resto. */}
+                  {userData?.rol !== process.env.REACT_APP_admin && (
+                    <small className="text-body-secondary">
+                      Para modificar algún dato, avisale al administrador
+                    </small>
+                  )}
                 </div>
                 <div className="card-body">
                   <div className="row gx-3">

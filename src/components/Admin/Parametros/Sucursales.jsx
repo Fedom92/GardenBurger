@@ -23,7 +23,7 @@ const slugify = (texto = "") =>
     .replace(/^-|-$/g, "");
 
 const Sucursales = ({ show, onHide }) => {
-  const { register, handleSubmit, setValue, reset, watch } = useForm();
+  const { register, handleSubmit, setValue, reset } = useForm();
 
   const [idAEditar, setIdAEditar] = useState(null);
   const [sucursales, setSucursales] = useState([]);
@@ -41,6 +41,7 @@ const Sucursales = ({ show, onHide }) => {
       setSucursales(sucursalesArray);
     } catch (error) {
       console.error("Error fetching data Sucursales:", error);
+      setError("No se pudieron cargar las sucursales. Revisá la conexión.");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -63,9 +64,20 @@ const Sucursales = ({ show, onHide }) => {
       return;
     }
 
+    // WhatsApp necesita el número sin 0 ni 15: característica más número, 10
+    // dígitos. La web le antepone el 549.
+    const telefono = String(data.telefono || "").replace(/\D/g, "");
+    if (telefono.length !== 10) {
+      setError("El teléfono tiene que tener 10 dígitos, sin 0 ni 15. Ej: 1134567890");
+      return;
+    }
+
+    // setDoc sin merge reemplaza el documento entero: todo campo de la sucursal
+    // tiene que viajar acá, o editarla lo borra.
     const newState = {
       nombre: data.nombre,
       direccion: data.direccion || "",
+      telefono,
       activa: idAEditar !== null
         ? sucursales.find((s) => s.id === id)?.activa ?? true
         : true,
@@ -85,6 +97,7 @@ const Sucursales = ({ show, onHide }) => {
       setError("");
     } catch (error) {
       console.error("Error al guardar la Sucursal: ", error);
+      setError("No se pudo guardar la sucursal. Revisá la conexión e intentá de nuevo.");
     }
   };
 
@@ -92,6 +105,7 @@ const Sucursales = ({ show, onHide }) => {
     setIdAEditar(item.id);
     setValue("nombre", item.nombre);
     setValue("direccion", item.direccion || "");
+    setValue("telefono", item.telefono || "");
     setError("");
   };
 
@@ -104,6 +118,7 @@ const Sucursales = ({ show, onHide }) => {
       );
     } catch (error) {
       console.error("Error al actualizar la Sucursal: ", error);
+      setError("No se pudo actualizar la sucursal. Revisá la conexión e intentá de nuevo.");
     }
   };
 
@@ -125,18 +140,16 @@ const Sucursales = ({ show, onHide }) => {
         <form name="sucursales" onSubmit={handleSubmit(guardar)}>
           <div className="mb-3">
             <label className="form-label">Nombre*</label>
-            <input type="text" className="form-control" required placeholder="ej: Luro" {...register("nombre")} />
+            <input type="text" className="form-control" required placeholder="..." {...register("nombre")} />
 
-            <label className="form-label">Identificador (automático, para link)</label>
-            <input
-              type="text"
-              className="form-control"
-              disabled
-              value={idAEditar !== null ? idAEditar : slugify(watch("nombre") || "")}
-            />
+            {/* El identificador del link se genera solo desde el nombre: al admin no le
+                sirve verlo. */}
+            <label className="form-label">Dirección*</label>
+            <input type="text" className="form-control" required placeholder="..." {...register("direccion")} />
 
-            <label className="form-label">Dirección</label>
-            <input type="text" className="form-control" {...register("direccion")} />
+            {/* El de atención al público: la web manda ahí el WhatsApp de cada pedido. */}
+            <label className="form-label">Teléfono de atención*</label>
+            <input type="tel" className="form-control" required placeholder="10 dígitos, sin 0 ni 15. Ej: 1134567890" {...register("telefono")} />
             {error && <small className="text-danger">{error}</small>}
           </div>
 
@@ -160,8 +173,7 @@ const Sucursales = ({ show, onHide }) => {
               key={sucursal.id}
               className="d-flex align-items-center justify-content-between border p-2"
             >
-              <div className="col-3">{sucursal.id}</div>
-              <div className="col-5">{sucursal.nombre}</div>
+              <div className="col-6 text-center fw-bold">{sucursal.nombre}</div>
               <div className="col-4 text-end">
                 <button
                   type="button"

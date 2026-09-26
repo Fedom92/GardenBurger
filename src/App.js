@@ -64,9 +64,9 @@ function App() {
                 <Route path="/liquidacion" element={<RequireAuth><RequireAdmin><LiquidacionAsistencias /></RequireAdmin></RequireAuth>} />
   
                 <Route path="/pedidos-caja" element={<RequireAuth><RequireSucursal><Caja /></RequireSucursal></RequireAuth>} />
-                <Route path="/jefe-deliverys" element={<RequireAuth><RequireSucursal><JefeDeliverys /></RequireSucursal></RequireAuth>} />
+                <Route path="/jefe-deliverys" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_jefeDeliverys, process.env.REACT_APP_encargado]}><RequireSucursal><JefeDeliverys /></RequireSucursal></RequireRole></RequireAuth>} />
                 <Route path="/gestion-cocina" element={<RequireAuth><RequireSucursal><Cocina /></RequireSucursal></RequireAuth>} />
-                <Route path="/historial-pedidos" element={<RequireAuth><RequireSucursal permitirAdmin><HistorialPedidos /></RequireSucursal></RequireAuth>} />
+                <Route path="/historial-pedidos" element={<RequireAuth><RequireAdmin><HistorialPedidos /></RequireAdmin></RequireAuth>} />
                 <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />
                 <Route path="/gestion-atp" element={<RequireAuth><RequireSucursal><ATP /></RequireSucursal></RequireAuth>} />
                 {/* Solo el encargado carga asistencias; el admin las ve y corrige desde /liquidacion */}

@@ -3,6 +3,7 @@ import './TicketImpresion.css';
 import icono from "../../img/logo_blanco_corto.webp";
 import moment from "moment";
 import { fmtPesos } from '../../Utils/formato';
+import { etiquetaPago } from "../../Utils/Constantes";
 
 const TicketImpresion = ({ pedido, pedidos, onClose }) => {
     const isMultiple = Array.isArray(pedidos);
@@ -10,18 +11,6 @@ const TicketImpresion = ({ pedido, pedidos, onClose }) => {
 
     if (list.length === 0) return null;
 
-    const formatMetodoPago = (metodo) => {
-        switch (metodo) {
-            case 'EFECTIVO':
-                return 'Efectivo';
-            case 'MP':
-                return 'Mercado Pago';
-            case '%':
-                return 'Dividido';
-            default:
-                return metodo;
-        }
-    };
 
     const handleImprimir = () => {
         // Crear una nueva ventana para imprimir solo el ticket
@@ -138,7 +127,7 @@ const TicketImpresion = ({ pedido, pedidos, onClose }) => {
                                     Total: {fmtPesos(p.total)}
                                 </div>
                                 <div className="payment-method">
-                                    Metodo Pago: {formatMetodoPago(p.metodoPago)}
+                                    Metodo Pago: {etiquetaPago(p.metodoPago)}
                                 </div>
                             </div>
 

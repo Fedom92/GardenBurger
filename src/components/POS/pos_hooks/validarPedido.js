@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+import { METODOS_PAGO } from "../../../Utils/Constantes";
 
 // Devuelve el mensaje de error o null. Lo usa el modal PagoDividido al confirmar
 // y validarPedido al guardar: el cajero puede seguir editando el carrito despues
@@ -51,7 +52,7 @@ const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal, totalBase
         return false;
     }
 
-    if (data.metodoPago === "EFECTIVO" && (!data.pagaCon || data.pagaCon < totalFinal)) {
+    if (data.metodoPago === METODOS_PAGO.EFECTIVO.key && (!data.pagaCon || data.pagaCon < totalFinal)) {
         Swal.fire({
             title: 'Advertencia',
             text: `El monto "Paga Con" debe ser igual o mayor al total ($${totalFinal})`,
@@ -61,7 +62,7 @@ const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal, totalBase
         return false;
     }
 
-    const errorDividido = data.metodoPago === "%" ? errorPagoDividido(montoEfectivo, totalBase) : null;
+    const errorDividido = data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? errorPagoDividido(montoEfectivo, totalBase) : null;
     if (errorDividido) {
         Swal.fire({
             title: 'Advertencia',

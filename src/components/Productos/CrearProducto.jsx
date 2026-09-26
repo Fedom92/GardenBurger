@@ -4,6 +4,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
+import { useAccionUnica } from "../../Utils/useAccionUnica";
 
 const CrearProducto = (props) => {
   const { register, handleSubmit, reset, watch } = useForm();
@@ -24,7 +25,10 @@ const CrearProducto = (props) => {
     return await getDownloadURL(storageRef);
   };
 
-  const guardarBD = async (data) => {
+  // addDoc genera un id por llamada: un doble click daba dos productos.
+  const { ejecutar } = useAccionUnica();
+
+  const guardarBD = (data) => ejecutar(async () => {
     try {
       setSubiendoImagen(true);
       let urlImagen = data.imagen;
@@ -64,7 +68,7 @@ const CrearProducto = (props) => {
     } finally {
       setSubiendoImagen(false);
     }
-  };
+  });
 
   const clearForm = () => {
     reset();

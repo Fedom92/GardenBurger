@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { collection, orderBy, query, getDocs, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { db, app } from "../../firebaseConfig/firebase";
-import { ROLES } from "../../Utils/Constantes";
+import { db, app, auth } from "../../firebaseConfig/firebase";
+import { ROLES, EMAIL_SUPERADMIN } from "../../Utils/Constantes";
 import { fmtPesos } from "../../Utils/formato";
 import CrearEmpleado from "./CrearEmpleado";
 import Envios from "./Parametros/Envios";
@@ -12,11 +12,31 @@ import TablaGenerica from "../../Utils/TablaGenerica";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
+import { avisarErrorDeCarga } from "../../Utils/avisos";
 
 const EDICION_VACIA = {
   rol: "", sucursal: "", dni: "", domicilio: "", telefono: "", valorHora: 0,
   marcaMoto: "", modeloMoto: "", colorMoto: "", patente: "",
 };
+
+// Los roles que se pueden asignar al editar un empleado, en el orden del selector.
+// Sin admin: los administradores se dan de alta a mano desde la Consola.
+const ROLES_EDITABLES = [
+  process.env.REACT_APP_encargado,
+  process.env.REACT_APP_cajero,
+  process.env.REACT_APP_cocina,
+  process.env.REACT_APP_jefeDeliverys,
+  process.env.REACT_APP_delivery,
+  process.env.REACT_APP_atp,
+];
+
+// El cambio de rol no cruza la frontera del acceso, y esa frontera la marca el
+// `sinAcceso` GUARDADO en el empleado —si tiene o no cuenta de Auth—, no el rol
+// elegido. Un repartidor pasado a cajero no podría loguearse; un cajero pasado a
+// repartidor conservaría usuario y clave sin ver ningún módulo. El rol actual
+// entra siempre, para que un dato viejo que no encaje no se cambie en silencio.
+const rolesPermitidos = (empleado) =>
+  ROLES_EDITABLES.filter((r) => r === empleado.rol || !!ROLES[r]?.sinAcceso === !!empleado.sinAcceso);
 
 const PanelAdmin = () => {
   const [empleados, setEmpleados] = useState([]);
@@ -30,6 +50,8 @@ const PanelAdmin = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
+  // Solo visual: la Cloud Function exige ser admin igual.
+  const esSuperAdmin = (auth.currentUser?.email || "").toLowerCase() === EMAIL_SUPERADMIN;
 
   const empleadosCollection = useRef(query(collection(db, "usuarios"), orderBy("rol")));
 
@@ -55,6 +77,7 @@ const PanelAdmin = () => {
 
       } catch (error) {
         console.error('Error fetching data Panel Admin:', error);
+        avisarErrorDeCarga("los empleados");
       }
     };
 
@@ -63,7 +86,10 @@ const PanelAdmin = () => {
   }, [getEmpleados]);
 
   useEffect(() => {
-    fetchSucursales().then(setSucursales).catch(console.error);
+    fetchSucursales().then(setSucursales).catch((error) => {
+      console.error(error);
+      avisarErrorDeCarga("las sucursales");
+    });
   }, []);
 
   // El rol y la sucursal se guardan como valores crudos —el del .env y el slug—
@@ -82,8 +108,21 @@ const PanelAdmin = () => {
       return;
     }
 
-    // Los datos de la moto solo se guardan si el rol los usa: si alguien deja de
-    // ser repartidor, no tiene sentido que arrastre la patente.
+    // El selector ya no ofrece cruzar la frontera del acceso, pero esta es la
+    // función que escribe: se valida igual.
+    const empleado = empleados.find((e) => e.id === id);
+    if (empleado && !rolesPermitidos(empleado).includes(edicion.rol)) {
+      Swal.fire({
+        title: "Cambio de rol no permitido",
+        text: "Un repartidor no tiene usuario para entrar al sistema, y un empleado con acceso no puede pasar a repartidor. Si hace falta, dalo de baja y crealo de nuevo.",
+        icon: "warning",
+        confirmButtonColor: "#198754",
+      });
+      return;
+    }
+
+    // Los datos de la moto solo se guardan si el rol los usa (hoy, solo el
+    // repartidor).
     const cambios = {
       rol: edicion.rol,
       sucursal: edicion.sucursal,
@@ -297,6 +336,7 @@ const PanelAdmin = () => {
                         >
                           Sucursales
                         </button>
+                        {esSuperAdmin && (
                         <button
                           variant="tertiary"
                           className="btn-contorno m-1"
@@ -306,6 +346,7 @@ const PanelAdmin = () => {
                         >
                           {sincronizando ? "Sincronizando..." : "Sincronizar permisos"}
                         </button>
+                        )}
                       </div>
                     </div>
 
@@ -350,7 +391,10 @@ const PanelAdmin = () => {
         show={modalShowSucursales}
         onHide={() => {
           setModalShowSucursales(false);
-          fetchSucursales().then(setSucursales).catch(console.error);
+          fetchSucursales().then(setSucursales).catch((error) => {
+            console.error(error);
+            avisarErrorDeCarga("las sucursales");
+          });
         }} />
       {
         modalShowEditRol[0] && (
@@ -374,12 +418,15 @@ const PanelAdmin = () => {
                       className="form-control"
                       multiple={false}
                     >
-                      <option value={process.env.REACT_APP_encargado}>Encargado</option>
-                      <option value={process.env.REACT_APP_cajero}>Cajero</option>
-                      <option value={process.env.REACT_APP_cocina}>Cocina</option>
-                      <option value={process.env.REACT_APP_delivery}>Delivery</option>
-                      <option value={process.env.REACT_APP_atp}>ATP</option>
+                      {rolesPermitidos(modalShowEditRol[1]).map((r) => (
+                        <option key={r} value={r}>{ROLES[r]?.nombre || r}</option>
+                      ))}
                     </select>
+                    {modalShowEditRol[1].sinAcceso && (
+                      <small className="text-body-secondary">
+                        Un repartidor no cambia de rol: no tiene usuario para entrar al sistema.
+                      </small>
+                    )}
                   </div>
                   <div className="col-md-6 mb-2">
                     <label className="form-label">Sucursal*</label>

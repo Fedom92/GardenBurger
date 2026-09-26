@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import Swal from "sweetalert2";
-import { CATEGORIAS_HAMBURGUESA } from "../../../Utils/Constantes";
+import { CATEGORIAS_HAMBURGUESA, METODOS_PAGO } from "../../../Utils/Constantes";
 
 const useCarrito = ({ envioSeleccionado, metodoPago, montoEfectivo, recargo }) => {
     const [carrito, setCarrito] = useState([]);
@@ -10,10 +10,11 @@ const useCarrito = ({ envioSeleccionado, metodoPago, montoEfectivo, recargo }) =
         const costoEnvio = envioSeleccionado?.costo_envio || 0;
         const base = subtotal + costoEnvio;
 
-        // Recargo segun metodo de pago
+        // Recargo segun metodo de pago. Redondeado: los pesos no van partidos, y la
+        // web calcula el mismo recargo con Math.round.
         const recargoCalculado = (() => {
-            if (metodoPago === "MP") return base * (recargo / 100);
-            if (metodoPago === "%") return (base - montoEfectivo) * (recargo / 100);
+            if (metodoPago === METODOS_PAGO.MP.key) return Math.round(base * (recargo / 100));
+            if (metodoPago === METODOS_PAGO.DIVIDIDO.key) return Math.round((base - montoEfectivo) * (recargo / 100));
             return 0;
         })();
 

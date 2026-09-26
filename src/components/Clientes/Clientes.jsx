@@ -8,6 +8,7 @@ import "../../style/Main.css";
 import moment from "moment";
 import CrearCliente from "./CrearCliente";
 import EditCliente from "./EditCliente";
+import { avisarErrorDeCarga } from "../../Utils/avisos";
 
 // Antes esta pantalla hacía un getDocs de TODA la colección en cada apertura: una
 // lectura facturada por cliente, y creciendo para siempre. Ahora no lee nada hasta
@@ -33,7 +34,10 @@ const Clientes = () => {
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
 
     useEffect(() => {
-        fetchSucursales().then(setSucursales).catch(console.error);
+        fetchSucursales().then(setSucursales).catch((error) => {
+            console.error(error);
+            avisarErrorDeCarga("las sucursales");
+        });
     }, []);
 
     // Arma la consulta real contra Firestore. La sucursal se aplica del lado del

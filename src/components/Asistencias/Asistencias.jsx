@@ -16,6 +16,7 @@ const Asistencias = () => {
     const [jornada] = useState(getFechaComercial);
     const [registros, setRegistros] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [errorCarga, setErrorCarga] = useState(false);
     const [modalCompleto, setModalCompleto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
 
@@ -28,7 +29,13 @@ const Asistencias = () => {
             })
             .catch((e) => {
                 console.error("Error cargando la jornada:", e);
-                if (vigente) setRegistros({});
+                // null y no {}: con {} el modal cree que ya tiene la jornada, arma
+                // las filas vacías, y al guardar pisa la asistencia real de todos.
+                // Con null el modal la relee por su cuenta.
+                if (vigente) {
+                    setRegistros(null);
+                    setErrorCarga(true);
+                }
             })
             .finally(() => { if (vigente) setIsLoading(false); });
 
@@ -121,7 +128,11 @@ const Asistencias = () => {
                                     </button>
                                 </div>
 
-                                {filas.length === 0 ? (
+                                {errorCarga ? (
+                                    <div className="alert alert-danger" role="alert">
+                                        No se pudo cargar la jornada. Revisá la conexión y recargá la página.
+                                    </div>
+                                ) : filas.length === 0 ? (
                                     <div className="alert alert-secondary" role="alert">
                                         Todavía no se cargaron los horarios de esta jornada.
                                     </div>

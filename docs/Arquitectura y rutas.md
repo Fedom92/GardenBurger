@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, arquitectura]
 aliases: [Rutas, Guards, Multi-sucursal]
-actualizado: 2026-09-14
+actualizado: 2026-09-26
 ---
 
 # Arquitectura y rutas
@@ -37,10 +37,10 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 
 | Ruta | Componente | Guard |
 |---|---|---|
-| `/crear-solicitud` | `SeleccionSucursal` | **pública** |
-| `/crear-solicitud/:sucursal` | `CrearSolicitud` | **pública** |
-| `/menu` | `Menu` | **pública** |
-| `/ver-pedido/:sucursal/:id` | `PaginaDetalle` | **pública** |
+| `/crear-solicitud` | `SeleccionSucursal` | **pública**, cerrada fuera de horario ([[Reglas de negocio#La web pública solo toma pedidos en horario]]) |
+| `/crear-solicitud/:sucursal` | `CrearSolicitud` | **pública**, cerrada fuera de horario |
+| `/menu` | `Menu` | **pública**, pero sin links: todavía no está terminado |
+| `/ver-pedido/:sucursal/:id` | `PaginaDetalle` | **pública**; el link vence a las 48 h |
 | `/` | `Login` | staff (sin guard) |
 | `/admin` | `PanelAdmin` | `RequireAuth` + `RequireAdmin` |
 | `/productos` | `Productos` | `RequireAuth` + `RequireAdmin` |
@@ -49,10 +49,10 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 | `/pedidos-caja` | `Caja` | `RequireAuth` + `RequireSucursal` |
 | `/gestion-cocina` | `Cocina` | `RequireAuth` + `RequireSucursal` |
 | `/gestion-atp` | `ATP` | `RequireAuth` + `RequireSucursal` |
-| `/jefe-deliverys` | `JefeDeliverys` | `RequireAuth` + `RequireSucursal` |
+| `/jefe-deliverys` | `JefeDeliverys` | `RequireAuth` + `RequireRole` (jefe de deliverys, encargado) + `RequireSucursal` |
 | `/asistencias` | `Asistencias` | `RequireAuth` + `RequireRole` (encargado) + `RequireSucursal` |
 | `/liquidacion` | `LiquidacionAsistencias` | `RequireAuth` + `RequireAdmin` |
-| `/historial-pedidos` | `HistorialPedidos` | `RequireAuth` + `RequireSucursal permitirAdmin` |
+| `/historial-pedidos` | `HistorialPedidos` | `RequireAuth` + `RequireAdmin`: solo el admin, por eso sin tope de días |
 | `/miPerfil` | `MiPerfil` | `RequireAuth` |
 
 ## Guards (`src/Login_Navs/RutasProtegidas.jsx`)
@@ -70,11 +70,11 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 ## Roles
 
 Los valores de rol viven en `.env` (`REACT_APP_admin`, `_encargado`, `_cajero`, `_cocina`,
-`_delivery`, `_atp`, `_contador`). **Nunca hardcodear el string del rol.**
+`_jefeDeliverys`, `_delivery`, `_atp`). **Nunca hardcodear el string del rol.**
 
 `ROLES` en `Constantes.jsx` reúne **todo lo que se sabe de cada rol** en un solo objeto: la clave
 es el valor crudo (el del `.env`, ilegible) y el valor trae `nombre` —cómo se muestra—,
-`rutaInicial` —dónde aterriza al loguearse— y `llevaMoto`. Un rol que no figure cae en `/miPerfil`
+`rutaInicial` —dónde aterriza al loguearse—, `llevaMoto` y `sinAcceso`. Un rol que no figure cae en `/miPerfil`
 y se muestra como `—`.
 
 `MODULOS_POR_ROL` en `Navigation.jsx` decide qué ve cada rol en el sidebar. Es **cosmético**:
@@ -83,10 +83,11 @@ la barrera real son los guards.
 | Rol | Módulos del sidebar | Aterriza en |
 |---|---|---|
 | admin | productos, historial, estadisticas, liquidacion, clientes, configuracion | `/productos` |
-| encargado | caja, cocina, atp, deliverys, asistencias, historial | `/pedidos-caja` |
-| cajero | caja, historial | `/pedidos-caja` |
+| encargado | caja, cocina, atp, deliverys, asistencias | `/pedidos-caja` |
+| cajero | caja | `/pedidos-caja` |
 | cocina | cocina | `/gestion-cocina` |
-| delivery | deliverys | `/jefe-deliverys` |
+| jefe de deliverys | deliverys | `/jefe-deliverys` |
+| delivery | ninguno: el repartidor no entra al sistema | — |
 | atp | atp | `/gestion-atp` |
 
 
@@ -116,7 +117,7 @@ Admin SDK), que valida contra `ADMIN_ROL` que quien llama sea admin.
 - **Alta con acceso**: callable `crearUsuario` → cuenta de Auth + doc `usuarios/{uid}` con
   `activo: true`. Si el `set` de Firestore falla, **borra la cuenta de Auth recién creada**:
   [[Decisiones tecnicas#El alta de empleados compensa en vez de transaccionar]].
-- **Alta sin acceso** (`sinAcceso: true`, los repartidores): no se les crea cuenta de Auth. El
+- **Alta sin acceso** (`sinAcceso: true`, los repartidores): no se les crea cuenta de Auth. Lo decide el rol (`ROLES[rol].sinAcceso`), no un check: en su lugar el formulario pide la moto. El
   front hace un `addDoc` directo desde `CrearEmpleado.jsx`.
 - **Baja**: callable `darDeBajaUsuario` → **borra la cuenta de Auth** y deja el doc con
   `activo: false` + `bajaTimestamp` como registro histórico. No se reactiva: si la persona
@@ -128,6 +129,8 @@ El rol **admin no se puede asignar desde la app**: no figura en el select de alt
 tampoco lo ofrece al editar, y `crearUsuario` lo rechaza server-side. Los administradores se dan de
 alta a mano desde la Consola de Firebase y después hay que repartirles el claim con
 "Sincronizar permisos". Ver [[Decisiones tecnicas#Ser admin es un custom claim, no una lectura]].
+Ese botón solo lo ve `EMAIL_SUPERADMIN` (`Constantes.jsx`): es visual, la Cloud Function exige
+ser admin igual.
 
 > [!note] El código de `functions/` sí está versionado
 > Vive en `functions/src/index.ts`. Su `.env` no, porque tiene `ADMIN_ROL`. Ver

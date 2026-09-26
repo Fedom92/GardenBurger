@@ -18,7 +18,7 @@ service cloud.firestore {
       // teléfono y dirección de toda la clientela web. PaginaDetalle usa getDoc,
       // así que el público nunca necesitó `list`.
       match /pedidos/{pedido} {
-        allow get: if estaAutenticado() || esOrigenWeb();
+        allow get: if estaAutenticado() || (esOrigenWeb() && sigueVisibleParaElPublico());
         allow list: if estaAutenticado();
         allow create: if estaAutenticado() || esCreacionPublicaValida();
         allow update: if estaAutenticado() && asignacionValida();
@@ -93,6 +93,13 @@ service cloud.firestore {
 
     function esOrigenWeb() {
       return resource.data.origen == "WEB";
+    }
+
+    // El link público de un pedido vence a las 48 horas. El registro no se toca:
+    // el staff lo sigue viendo y el cliente ya no. No cuesta lecturas: compara la
+    // hora del pedido con la de la consulta.
+    function sigueVisibleParaElPublico() {
+      return request.time < resource.data.clienteTimestamp + duration.value(48, 'h');
     }
 
     // Una solicitud web tiene un solo dueño. `cajeroRevisaID` solo se puede

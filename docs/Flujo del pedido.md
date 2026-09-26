@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, workflow]
 aliases: [Pipeline, Recorrido del pedido]
-actualizado: 2026-09-14
+actualizado: 2026-09-26
 ---
 
 # Flujo del pedido
@@ -11,9 +11,9 @@ actualizado: 2026-09-14
 Los valores están en `ESTADOS` de `src/Utils/Constantes.jsx`. **Nunca hardcodear los strings.**
 
 > [!tip] Esta nota cuenta el recorrido feliz
-> Para las transiciones **que el sistema permite y no debería** —un `CANCELADO` que se elimina y
-> descuenta dos veces, un `ELIMINADO` que vuelve a cocina— y el efecto de cada paso sobre el arqueo,
-> la nota es [[Modelo de estados]].
+> Para las transiciones **que el sistema permite y no debería** —un `ELIMINADO` que vuelve a
+> cocina, dos pantallas pisándose el estado— y para saber qué pedido entra al arqueo, la nota es
+> [[Modelo de estados]].
 
 ## Pipeline
 
@@ -49,14 +49,15 @@ Caja.guardarBD ──→  CONFIRMADO          (efectivo)
 Fuera del flujo feliz: **`CANCELADO`** (rechazo de solicitud web o de transferencia MP) y
 **`ELIMINADO`** (el cajero borra el ticket desde `BuscarPedido`).
 
-El descuento del arqueo con `getResumenOperation({ descontar: true })` **no es automático por el
-estado, depende de si el pedido llegó a cobrarse**:
+Ninguno de los dos escribe el arqueo: lo **saca del cálculo**, porque el arqueo se calcula desde
+los pedidos de la jornada. Que un pedido cuente o no depende de si llegó a cobrarse, no de su
+estado:
 
-- Rechazar una **solicitud web** (`PENDIENTE` → `CANCELADO`) no toca el arqueo: nunca sumó.
-- Rechazar una **transferencia MP** (`PENDIENTEMP` → `CANCELADO`) **sí descuenta**: el pedido ya
-  sumó al guardarse en Caja.
-- Eliminar un ticket descuenta **solo si tiene `cajeroID`** — `BuscarPedido.jsx:86` lo verifica, así
-  que una solicitud web que nadie cobró no descuenta nada al borrarse.
+- Rechazar una **solicitud web** (`PENDIENTE` → `CANCELADO`) no cambia el arqueo: sin `cajeroID`,
+  nunca contó.
+- Rechazar una **transferencia MP** (`PENDIENTEMP` → `CANCELADO`) **sí lo baja**: ese pedido sí
+  pasó por la Caja.
+- Eliminar un ticket lo saca, y lo hace **solo el encargado**, al fiscalizar el cierre.
 
 > [!important] El ruteo de cocina define todo lo que sigue
 > `PedidosCocinando` decide entre `ATP` y `DELIVERY` mirando `pedido.envio.zona_envio` contra
@@ -69,15 +70,15 @@ estado, depende de si el pedido llegó a cobrarse**:
 | Cliente arma pedido web | `Crearsolicitud` | doc nuevo `PENDIENTE`, `clienteTimestamp`, `mensajeWsp`, `cliente{}` |
 | Cajero toma la solicitud | `useRevisarSolicitud` | `cajeroRevisaID`, `cajeroRevisa` |
 | Cajero cancela el ticket | `Caja.cancelarTicket` | borra `cajeroRevisa*` (solo si es suyo) |
-| Cajero guarda | `Caja.guardarBD` | todo el pedido + `codigo` + estado; **borra** `cajeroRevisa*`; incrementa `resumenDiario` |
+| Cajero guarda | `Caja.guardarBD` | todo el pedido + `codigo` + estado; **borra** `cajeroRevisa*`. El arqueo no se escribe: se calcula |
 | Confirma MP | `PendientesMP.aprobarPedido` | `estado: CONFIRMADO` + `cajeroApruebaMP*` |
-| Rechaza MP | `PendientesMP.rechazarPedido` | `estado: CANCELADO` + **descuenta** el arqueo |
+| Rechaza MP | `PendientesMP.rechazarPedido` | `estado: CANCELADO` — con eso sale del arqueo |
 | Manda a cocinar | `PedidosEspera.cocinar` | `estado: COCINA` + `cocinero*` |
 | Marca cocinado | `PedidosCocinando` | `estado: ATP\|DELIVERY` + `cocinaFinTimestamp` |
 | Entrega en mostrador | `ATP` | `estado: FINAL` + `atp*` |
 | Asigna repartidor | `JefeDeliverys` | `delivery*`, `gestorDelivery*` |
-| Salida / regreso | `JefeDeliverys` | `estadoDelivery`, timestamps, `pagoRepartidorCon`, `estado: FINAL`, métricas en `resumenDiario.deliverys` |
-| Elimina el ticket | `BuscarPedido` | `estado: ELIMINADO` + `cajeroElimina*` + **descuenta** el arqueo |
+| Salida / regreso | `JefeDeliverys` | `estadoDelivery`, timestamps, `pagaronCon`, `estado: FINAL`. Las métricas del repartidor se calculan desde acá |
+| Elimina el ticket | `BuscarPedido` (**solo el encargado**) | `estado: ELIMINADO` + `cajeroElimina*` — con eso sale del arqueo |
 
 ## Cómo el cliente arma el carrito (menú público)
 
@@ -118,9 +119,9 @@ pedido (no existe `envio` todavía), cae a `pedido.cliente.opcion`.
 
 ## Asignación de solicitudes web — un solo dueño
 
-Si dos cajeros cargaran la misma solicitud, los dos podrían guardarla y el arqueo sumaría el
-pedido **dos veces** (`getResumenOperation` usa `increment()`), además de quemar dos números de
-ticket. Por eso:
+Si dos cajeros cargaran la misma solicitud, los dos podrían guardarla: **dos pedidos distintos**
+para el mismo cliente, dos números de ticket quemados y el arqueo contando las dos ventas. Por
+eso:
 
 - Tomar una solicitud escribe `cajeroRevisaID` + `cajeroRevisa`.
 - `esDeOtroCajero()` deshabilita **Revisar y Rechazar** en las demás cajas. El badge dice de
@@ -128,15 +129,16 @@ ticket. Por eso:
 - El mismo cajero **sí** puede retomarla: si se le reinicia la PC, vuelve a entrar, ve
   "Asignada a vos" y Revisar le recarga el ticket.
 - El botón "Limpiar" de Caja pasa a decir **"Cancelar"** cuando el ticket vino de una solicitud,
-  y libera la asignación. `liberarSolicitud` relee el doc y **solo libera si sigue siendo suya**,
-  para no pisarle la asignación a otro.
+  y libera la asignación. `liberarSolicitud` **no relee el doc**: intenta el `updateDoc` y trata
+  `permission-denied` como "ya es de otro cajero", porque eso lo garantiza `asignacionValida()`
+  en las reglas. Antes era una lectura facturada por cada Cancelar.
 - Al guardar, `guardarBD` borra `cajeroRevisa*` con `deleteField()` dentro del mismo
   `batch.set(..., {merge:true})` — sin costo extra de operación.
 
 > [!important] La atomicidad la garantizan las reglas, no el front
 > `esDeOtroCajero()` se evalúa contra el **snapshot local**, así que dos cajeros cuyos listeners
 > todavía no recibieron la asignación del otro pasan los dos el chequeo. Hasta el 14-09-2026 los
-> dos escribían y los dos quedaban con el pedido cargado: dos tickets y el arqueo sumando dos veces.
+> dos escribían y los dos quedaban con el pedido cargado: dos tickets y dos ventas en el arqueo.
 >
 > Hoy la regla `asignacionValida()` rechaza la segunda escritura del lado del servidor —sin
 > lecturas, sin transacción— y `useRevisarSolicitud` avisa "Otro cajero ya tomó esta solicitud".

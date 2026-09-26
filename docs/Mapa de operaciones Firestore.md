@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, costos]
 aliases: [Costos, Lecturas y escrituras]
-actualizado: 2026-09-23
+actualizado: 2026-09-26
 ---
 
 # Mapa de operaciones Firestore
@@ -29,7 +29,9 @@ actualizado: 2026-09-23
   [[Decisiones tecnicas#El catálogo de Caja va por listener]].
 - `deleteField()` dentro de un `batch.set(..., {merge:true})` **no cuesta operación extra**.
 - `increment()` es atómico del lado del servidor, pero **no es idempotente**: si la misma
-  operación se dispara dos veces, suma dos veces.
+  operación se dispara dos veces, suma dos veces. Por eso el arqueo dejó de usarlo — un `set()` de
+  un valor calculado da lo mismo corra una vez o tres. Sigue en uso donde un conteo aproximado
+  alcanza: `clientes.cantidadPedidos`.
 
 ## Inventario de lecturas
 
@@ -44,18 +46,19 @@ actualizado: 2026-09-23
 | `PendientesSolicitudes` | listener de `estado==PENDIENTE` | mientras el modal está abierto | pendientes | se solapa con `usePendientes`, pero son queries distintas |
 | `PendientesMP` | listener de `estado==PENDIENTEMP` | ídem | pendientes | ídem |
 | `BuscarPedido` | por **código**: consulta directa. Por teléfono o dirección: la jornada, **una vez por apertura del modal** | al abrir F3, no en cada búsqueda | 1 doc, o la jornada | ✅ era el mayor costo recurrente: releía la jornada entera en cada búsqueda |
-| `Caja.verResumen` (F4) | `resumenDiario/{jornada}` | al abrir el modal | 1 | ✅ con guard: mantener F4 no repite la lectura |
+| `Caja.verResumen` (F4) | los **pedidos** de la jornada, y los suma | al abrir el modal, y solo el encargado entre las 00 y `horaCierre` | la jornada (~60-100) | el arqueo se calcula, no se lee de un contador. Jornada cerrada: **1 lectura** de la foto. La ventana horaria está para no pagar el barrido por curiosidad: [[Reglas de negocio#Quién mira el arqueo, y cuándo]] |
 | `PedidosEspera` / `PedidosCocinando` / `ATP` / `JefeDeliverys` | listeners por `estado` | mientras la pantalla está abierta | los del estado | ✅ real-time justificado |
 | `JefeDeliverys` | repartidores activos de la sucursal, desde `usuarios` | al montar | pocos | ✅ one-time |
-| `HistorialPedidos` | pedidos por rango de fechas, **sin filtro de estado** | por búsqueda | según rango | ⚠ sin `limit`: un rango largo lee miles |
+| `JefeDeliverys.handleVerMetricas` | los pedidos de la jornada, para `liquidarDeliverys()` | al abrir la liquidación, de 00:00 a `horaCierre` | la jornada (~60-100) | misma ventana que F4. Lee pedidos y no la foto: el detalle necesita las direcciones |
+| `HistorialPedidos` | pedidos por rango de fechas, **sin filtro de estado** | por búsqueda | según rango | **solo el admin**: sin `limit` a propósito, sabe lo que pide |
 | `Productos` / `PanelAdmin` / `Envios` | su colección entera | al montar | acotado | pantallas de admin, poco frecuentes |
 | `Parametros/Categorias` (modal) | — | — | **0** | ✅ recibe las categorías de `Productos` por props; antes releía la colección al montar |
-| `sucursales.js` | `sucursales` | selector público y de admin | pocas | ✅ promesa cacheada: 1 vez por sesión |
-| `PaginaDetalle` | 1 pedido | por visita pública | 1 | ✅ |
+| `sucursales.js` | `sucursales` | selector público (solo en horario) y de admin | pocas | ✅ promesa cacheada: 1 vez por sesión |
+| `PaginaDetalle` | 1 pedido | por visita pública, durante 48 h | 1 | ✅ pasado el plazo la regla lo niega |
 | `Asistencias` | el doc de la jornada | al entrar | **1** | ✅ el mapa `registros` trae a todos |
 | `ModalCargarJornada` | empleados de la sucursal | **solo al abrir el formulario** | N | ✅ editar un renglón cuesta 0 |
 | `LiquidacionAsistencias` | rango de jornadas | por búsqueda | D días | ✅ un mes ≈ 30, y **no lee `usuarios`** |
-| `Crearsolicitud` | 1 sucursal, para validarla | al confirmar el pedido | 1 | ✅ evita subcolecciones huérfanas |
+| `Crearsolicitud` | 1 sucursal, para validarla | al confirmar el pedido | 1 | ✅ evita subcolecciones huérfanas, y de ahí sale el teléfono para el WhatsApp. Fuera de horario la web no lee **nada** |
 | `Estadisticas` | — | — | **0** | ✅ lee dos TSV de Storage (`getBytes`), no Firestore. 10,5 MB la primera vez; después el navegador revalida con `If-None-Match` y Storage responde **304 con cuerpo vacío** |
 
 **No hay ningún patrón N+1.** No existe ningún bucle que haga `getDoc` por cada ítem de una
@@ -69,8 +72,8 @@ lista. Verificado sobre los 42 puntos de acceso.
   categorías comparten una sola descarga. Hay fallback a Firestore si el JSON no está.
 - **`usePendientes` con `limit(1)`** — solo necesita saber *si hay* pendientes para prender el
   botón, no traerlos. Los trae el modal cuando se abre.
-- **`runTransaction` en Caja** — contador, pedido y resumen viajan juntos: atómico, y el número de
-  ticket no se quema si el guardado falla. Los otros movimientos del arqueo van en `writeBatch`.
+- **`runTransaction` en Caja** — contador y pedido viajan juntos: atómico, y el número de
+  ticket no se quema si el guardado falla. El arqueo ya no entra: se calcula después.
 - **Refs de queries en `useRef`** — evitan recrear la referencia en cada render y que el
   `useEffect` se redispare.
 
@@ -84,27 +87,44 @@ lista. Verificado sobre los 42 puntos de acceso.
 
 ## Escrituras que mueven plata
 
-Cinco puntos tocan `resumenDiario`. Como usan `increment()`, **cada ejecución de más corrompe el
-arqueo del día** y no queda rastro:
+**Ningún punto escribe el arqueo.** Desde el 26-09-2026 los cinco caminos que lo movían escriben
+solo el pedido, y el arqueo se calcula desde ahí cuando alguien lo mira. Ver
+[[Decisiones tecnicas#El arqueo se calcula desde los pedidos]].
 
-| Operación | Efecto |
-|---|---|
-| `Caja.guardarBD` | suma efectivo/mp/pedidos/combos. Va en la **misma transacción** que el contador y el pedido |
-| `PendientesMP.rechazarPedido` | resta todo |
-| `BuscarPedido.eliminarPedido` | resta todo, **solo si el pedido tiene `cajeroID`** (`BuscarPedido.jsx:86`) |
-| `JefeDeliverys.marcarEstado` (VOLVIO) | suma métricas del repartidor |
-| `getResumenOperation({descontar:true})` | el helper que invierte los signos |
+| Operación | Qué escribe | Qué pasa con el arqueo |
+|---|---|---|
+| `Caja.guardarBD` | contador + pedido, en una `runTransaction` | el pedido entra al cálculo porque tiene `cajeroID` |
+| `PendientesMP.rechazarPedido` | `updateDoc` → `CANCELADO` | el cálculo lo saltea |
+| `BuscarPedido.eliminarPedido` | `updateDoc` → `ELIMINADO` (**solo el encargado**) | ídem |
+| `JefeDeliverys.marcarEstado` (VOLVIO) | `updateDoc` → `estadoDelivery: FIN` | habilita las métricas de ese repartidor |
 
-**Regla**: nunca `updateDoc` sobre `resumenDiario` — falla con `not-found` si el documento de la
-jornada todavía no existe. Siempre `set(ref, stats, {merge:true})` dentro del mismo `writeBatch`
-que el pedido, para que los dos se muevan juntos o no se muevan.
+Los **tres que corrigen un pedido ya existente** —rechazar MP, eliminar el ticket y cerrar el
+delivery— llaman además a `invalidarFotoDePedido(pedido)`: si ese pedido es de una jornada ya
+cerrada, borra su foto para que el próximo que la mire la reconstruya con los hechos nuevos. Con la
+jornada en curso no hace nada, que es el caso normal. `guardarBD` no lo necesita: un pedido nuevo
+nace siempre en la jornada en curso.
+
+> [!note] Hoy ninguna invalidación hace nada, porque no hay fotos
+> La foto se escribe solo cuando alguien mira una jornada **cerrada**, y el único que llama a
+> `obtenerArqueo` es el F4, siempre con la jornada en curso. Hasta que exista el dashboard (o la
+> pantalla de gestión por fecha), `setDoc` nunca corre y las tres invalidaciones no tienen nada
+> que borrar. Ver [[Auditoria 2026-09-26#A · P2 · La foto promete una historia exacta, pero hoy nadie la saca|Auditoría 2026-09-26]].
+>
+> Cuando haya fotos, el primer caso que va a importar es el del delivery: el listener de
+> `JefeDeliverys` **no filtra por jornada**, así que un delivery que quedó sin rendir pasa a la
+> noche siguiente y se cierra ahí, con su jornada ya cerrada. Por eso `marcarEstado` necesita el
+> `pedido` entero y no solo su id.
+
+**Regla que sigue en pie**: nunca `updateDoc` sobre `resumenDiario` — falla con `not-found` si el
+documento de la jornada todavía no existe. La foto se escribe con `setDoc`.
 
 Fuera del arqueo, la escritura más eficiente del sistema es la de **asistencias**: una jornada
 entera, con todos los empleados, es **una sola escritura**, porque van en un mapa dentro de un
 único documento.
 
-Las cuatro operaciones tienen guard (`useAccionUnica`). Lo que queda abierto es la carrera
-entre **dos cajeros distintos**: [[Deuda tecnica#Concurrencia entre dos cajeros sobre el arqueo]].
+Las cuatro siguen con guard (`useAccionUnica`), ahora para no duplicar **el pedido** o dejarlo a
+medio camino entre dos estados. La carrera entre dos cajeros sobre el arqueo ya no existe: no hay
+contador que duplicar.
 
 > [!success] Tres caminos que corrompían el arqueo, cerrados el 14-09-2026
 > La [[Auditoria 2026-09|auditoría de septiembre]] encontró que la carrera entre cajeros no era el

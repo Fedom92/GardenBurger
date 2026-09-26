@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, datos]
 aliases: [Colecciones, Esquema Firestore, Campos]
-actualizado: 2026-09-14
+actualizado: 2026-09-26
 ---
 
 # Modelo de datos Firestore
@@ -24,13 +24,17 @@ con `colSucursal`/`docSucursal`. Las globales van directo con `collection(db, ..
 
 ## `sucursales/{slug}`
 
-Doc ID = slug usado en las URLs públicas. ABM en PanelAdmin → ⚙ → Sucursales.
+Doc ID = slug usado en las URLs públicas, generado solo desde el nombre (el ABM no lo muestra). ABM en PanelAdmin → Sucursales.
 
 ```js
-{ nombre: "Luro", direccion: "Av. Luro 3300", activa: true }
+{ nombre: "Luro", direccion: "Av. Luro 3300", activa: true,
+  telefono: "1134567890" }   // de atención: 10 dígitos, sin 0 ni 15. La web le antepone el 549
 ```
 
 Se desactiva en vez de borrarse, para conservar las subcolecciones.
+
+El ABM guarda con `setDoc` **sin merge**, así que reemplaza el documento entero: todo campo nuevo
+de la sucursal tiene que viajar en el objeto que arma `guardar`, o editarla lo borra.
 
 ## `sucursales/{id}/pedidos`
 
@@ -48,11 +52,13 @@ origen: "WEB" | "CAJA"
 ### Dinero
 ```js
 total: 1850
-metodoPago: "EFECTIVO" | "MP" | "%"     // "%" = pago dividido
+metodoPago: "EFECTIVO" | "MP" | "%"     // las `key` de METODOS_PAGO; "%" = pago dividido
 montoEfectivo: 0                         // solo si metodoPago === "%"
-pagaCon: 2000                            // para calcular el vuelto
+pagaCon: 2000                            // lo que el cliente DIJO que paga. En "%" = montoEfectivo; en MP, 0
 envio: { zona_envio: "0-1", costo_envio: 500 }   // copia de un doc de `envios`
 carrito: [...]                           // ver más abajo
+combos: 3                                // CONGELADO al cobrar: contarCombos(carrito) de ese día
+esLocal: false                           // CONGELADO al cobrar: si la zona cobra en mostrador
 ```
 
 ### Estado y tiempos
@@ -81,12 +87,14 @@ Cada paso deja `<actor>ID`, `<actor>` (nombre) y `<actor>Timestamp`:
 | `delivery*` (`ID`, `Asignado`) | `JefeDeliverys` | al asignar repartidor |
 | `estadoDelivery` | `JefeDeliverys` | `"SALIO"` / `"VOLVIO"` |
 | `deliverySalidaTimestamp`, `deliveryFinTimestamp` | `JefeDeliverys` | salida y regreso |
-| `pagoRepartidorCon` | `JefeDeliverys` | monto que entregó el cliente |
+| `pagaronCon` | `JefeDeliverys` | con cuánto pagó **al final** el cliente (hasta sep-2026, `pagoRepartidorCon`). Hace par con `pagaCon` |
+| `fijoDelivery` | `JefeDeliverys` | el fijo del repartidor, **congelado** al cerrar la entrega |
 
 ### Solo si `origen === "WEB"`
 ```js
 clienteTimestamp: Timestamp   // ⚠ NO es `timestamp`
 mensajeWsp: "..."             // mensaje ya encodeURIComponent
+telefonoSucursal: "1134567890" // el de la sucursal al crear la solicitud: /ver-pedido arma su WhatsApp sin leer la sucursal
 cliente: {
   nombre, telefono, direccion, entreCalles,
   metodoPago: "EFECTIVO" | "MP",
@@ -115,12 +123,11 @@ cliente: {
 
 ## `sucursales/{id}/resumenDiario/{DD-MM-YYYY}`
 
-Un doc por [[Reglas de negocio#Jornada comercial|jornada comercial]]. Todo se acumula con
-`increment()` desde `getResumenOperation`, y se resta con el mismo helper pasando
-`descontar: true`.
-
-**A qué jornada va**: quien revierte pasa además el `timestamp` del pedido, y el helper deriva la
-jornada de ahí. Así el descuento cae en el día en que ese pedido sumó, y no en el de hoy.
+Un doc por [[Reglas de negocio#Jornada comercial|jornada comercial]]. **No es un contador: es una
+foto.** El arqueo se calcula desde los pedidos de la jornada (`calcularArqueo`), y el documento
+guarda ese resultado para no tener que releerlos. Desde el 26-09-2026: antes se acumulaba con
+`increment()` y cada camino que tocaba un pedido tenía que acordarse de moverlo. Ver
+[[Decisiones tecnicas#El arqueo se calcula desde los pedidos]].
 
 ```js
 {
@@ -130,12 +137,34 @@ jornada de ahí. Así el descuento cae en el día en que ese pedido sumó, y no 
   mp: 10000,
   totalPedidos: 12,
   totalCombos: 9,         // unidades, no renglones del carrito
-  deliverys: {            // lo escribe JefeDeliverys, no getResumenOperation
-    "<deliveryID>": { nombre, cantidadPedidos, totalMonto, totalCobrado }
-  }
+  deliverys: {            // liquidarDeliverys(): entregas cerradas (estadoDelivery == FIN)
+    "<deliveryID>": {
+      nombre, cantidadPedidos,
+      totalEnvios,          // suma de envio.costo_envio, MP incluido
+      efectivoCobrado,      // lo que tiene que rendir: total, montoEfectivo o 0 según el método
+      fijo,                 // el fijoDelivery congelado en las entregas de esa noche
+      aPagar,               // fijo + totalEnvios
+    }
+  },
+  generadoEl: Timestamp,  // serverTimestamp() del cálculo. Sin este campo no es una foto
 }
 // invariante: efectivoLocal + efectivoEnvio === totalEfectivo
 ```
+
+**Cuándo existe el documento.** Solo para jornadas **cerradas**, y solo desde que alguien miró su
+arqueo por primera vez. La jornada en curso no tiene foto: se calcula cada vez, porque congelarla
+daría un número que enseguida es falso. Por eso una jornada sin actividad nunca genera documento.
+
+**Cuándo se regenera.** Nunca sola. La borra `invalidarFotoDePedido(pedido)` cuando alguien cancela
+un pedido, elimina un ticket o cierra un delivery **de una jornada ya cerrada** —cambiaron los
+hechos— y el siguiente que la mire la reconstruye. Cambiar código no regenera nada: si mañana se
+agrega una categoría a `CATEGORIAS_COMBOS`, agosto sigue diciendo lo que era cierto en agosto.
+
+> [!note] El detalle de cada entrega no está en la foto
+> La liquidación del Jefe de Deliverys muestra cada entrega con su dirección, pero la foto guarda
+> solo el resumen por repartidor: el detalle ya está en los pedidos. Hasta sep-2026 este bloque
+> tenía `totalMonto` y `totalCobrado`, que sumaban el total aunque fuera MP. Ver
+> [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].
 
 ## `sucursales/{id}/contadores/{nombre}`
 
@@ -272,7 +301,7 @@ puede qué, al 14-09-2026:
 | Colección | Lectura | Escritura |
 |---|---|---|
 | `sucursales/{s}` | pública (el selector web la necesita) | admin |
-| `sucursales/{s}/pedidos/{p}` | `get` público solo si `origen == "WEB"`; `list` solo staff | crear: staff o `esCreacionPublicaValida()`; update: staff **y** `asignacionValida()`; **delete: nunca** — por eso "eliminar" es cambiar el estado a `ELIMINADO` |
+| `sucursales/{s}/pedidos/{p}` | `get` público solo si `origen == "WEB"`, y por 48 h; `list` solo staff | crear: staff o `esCreacionPublicaValida()`; update: staff **y** `asignacionValida()`; **delete: nunca** — por eso "eliminar" es cambiar el estado a `ELIMINADO` |
 | `sucursales/{s}/{otra}/{doc}` (`resumenDiario`, `contadores`, `asistencias`) | staff | staff — el wildcard excluye `pedidos` porque las reglas se combinan con OR |
 | `productos`, `categorias`, `envios` | pública | admin |
 | `usuarios` | staff (la Caja necesita nombres) | admin — con `write` abierto un cajero se ascendía editando su propio doc |

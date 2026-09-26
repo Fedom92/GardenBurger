@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, onSnapshot, where } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
+import { avisarSinConexion } from "../../../Utils/avisos";
 
 // Catalogo de la Caja por listener, no por getDocs.
 //
@@ -37,6 +38,7 @@ const useTraerDatos = () => {
 
         const alFallar = (clave) => (error) => {
             console.error(`Error escuchando ${clave} en Caja:`, error);
+            avisarSinConexion(`el catálogo (${clave})`);
             marcarListo(clave);
         };
 

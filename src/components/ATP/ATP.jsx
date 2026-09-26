@@ -7,6 +7,7 @@ import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
 import moment from "moment";
 import "../../style/Main.css";
+import { avisarSinConexion } from "../../Utils/avisos";
 
 const ATP = () => {
     const { userData } = useAuth();
@@ -31,6 +32,7 @@ const ATP = () => {
             handleSnapshot,
             (err) => {
                 console.error("Error en listener ATP:", err);
+                avisarSinConexion("los pedidos de ATP");
                 setIsLoading(false);
             }
         );

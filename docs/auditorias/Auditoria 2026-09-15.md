@@ -6,7 +6,7 @@ fecha: 2026-09-15
 
 # Auditoría integral — 15 de septiembre 2026
 
-← [[GardenBurger]] · anterior: [[Auditoria 2026-09]]
+← [[GardenBurger]] · anterior: [[Auditoria 2026-09]] · siguiente: [[Auditoria 2026-09-26]]
 
 > [!success] Procesada el 24-09-2026
 > De los 22 hallazgos, **20 se corrigieron con código** y 2 quedaron sin cambios por decisión: el
@@ -134,10 +134,20 @@ molesta todos los días.
 
 ## 3. Dinero y arqueo
 
+> [!success] La causa estructural de esta sección se eliminó el 26-09-2026
+> Todo lo que sigue razona sobre un `resumenDiario` mantenido con `increment()`. Ese contador ya no
+> existe: el arqueo se **calcula** desde los pedidos de la jornada y `resumenDiario` guarda el
+> resultado como foto. Los hallazgos quedan como registro de lo que se encontró; el mecanismo que
+> los hacía posibles no está más. Ver
+> [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]].
+
 ### 3 · P2 · Las métricas de delivery mienten para MP y pago dividido
 
-> [!abstract] Sin cambios
-> **Postergado por decisión**: el componente se rehace de cero. No se toca nada suyo, ni siquiera `fmtPesos`.
+> [!success] Cerrado el 26-09-2026, con el componente rehecho
+> Las métricas pasaron a ser una **liquidación**: por repartidor, lo que rinde en efectivo
+> (`repartirPago(p).efectivo`: total, `montoEfectivo` o 0 según el método) y lo que se le paga
+> (fijo por noche + envíos). `totalMonto` y la columna "Diferencia" ya no existen. Ver
+> [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].
 
 
 **Dónde:** `JefeDeliverys.jsx:131` — `totalMonto: increment(pedido.total || 0)`;
@@ -166,7 +176,8 @@ la pena migrarlos, alcanza con que la nota lo diga.
 ### 4 · P2 · `Caja.guardarBD` es el único movimiento de arqueo sin `useAccionUnica`
 
 > [!success] Corregido el 24-09-2026
-> `guardarBD` va con `useAccionUnica`.
+> `guardarBD` va con `useAccionUnica`. El guard sigue puesto y sigue haciendo falta, pero desde el
+> 26-09 protege de **dos pedidos**, no de un arqueo sumado dos veces.
 
 
 **Dónde:** `Caja.jsx:72` — `const [procesando, setProcesando] = useState(false)`; `Caja.jsx:115`.
@@ -180,7 +191,7 @@ plata mueve, no.
 **Impacto:** un doble click que entre antes del re-render dispara **dos transacciones**: dos
 tickets consecutivos idénticos y el arqueo sumado dos veces. Improbable, pero es exactamente el
 caso para el que existe el hook, y contradice la convención escrita en
-[[Convenciones y preferencias#Acciones que escriben plata]].
+[[Convenciones y preferencias#Acciones que no se pueden repetir]].
 
 **Arreglo:** `const { procesando, ejecutar } = useAccionUnica();` y
 `const guardarBD = (data) => ejecutar(async () => { … })`. Se van el `useState` y los dos
@@ -228,8 +239,12 @@ entrada == salida → error. Cuatro líneas. **Complejidad:** trivial.
 
 ### 7 · P3 · Descontar del arqueo usa la jornada actual, no la del pedido
 
-> [!success] Corregido el 24-09-2026
-> `getResumenOperation` acepta el `timestamp` del pedido y deriva la jornada con `getFechaComercialDe()`.
+> [!success] Corregido el 24-09-2026, y resuelto de raíz el 26-09
+> Primero `getResumenOperation` pasó a derivar la jornada del `timestamp` del pedido. Después el
+> contador desapareció: ahora el arqueo de una jornada se calcula leyendo **sus** pedidos, así que
+> cada pedido cuenta en su jornada por construcción y no porque alguien se acuerde de pasar el
+> `timestamp`. Lo único que hace falta recordar es invalidar la foto de una jornada cerrada, y de
+> eso se encarga `invalidarFotoDePedido()`.
 
 
 **Dónde:** `useResumenDiario.js:21` — `const hoy = getFechaComercial()`.

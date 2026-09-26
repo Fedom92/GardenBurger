@@ -3,9 +3,9 @@ import { Modal } from "react-bootstrap";
 
 import { fmtPesos } from "../../../Utils/formato";
 
-// Muestra el documento resumenDiario de la jornada en curso. Los datos los trae la Caja
-// con un getDoc al abrir: es una sola lectura y no hace falta que se actualice solo,
-// porque el arqueo se mira al cierre.
+// Muestra el arqueo de la jornada en curso. Los datos los trae la Caja al abrir, con
+// obtenerArqueo(): los calcula desde los pedidos, no los lee de un contador. No hace
+// falta que se actualice solo, porque el arqueo se mira al cierre.
 const ResumenDiario = ({ isOpen, onClose, resumen, fecha, isLoading }) => {
     const totalEfectivo = resumen?.totalEfectivo || 0;
     const efectivoLocal = resumen?.efectivoLocal || 0;
@@ -29,12 +29,7 @@ const ResumenDiario = ({ isOpen, onClose, resumen, fecha, isLoading }) => {
                         <span className="loader"></span>
                         <p className="mt-3">Cargando resumen...</p>
                     </div>
-                ) : !resumen ? (
-                    <div className="text-center text-body-secondary py-5">
-                        <i className="fa fa-chart-simple fa-4x mb-3 opacity-25"></i>
-                        <h5 className="fw-semibold text-secondary">Todavía no hay movimientos</h5>
-                    </div>
-                ) : (
+                ) : !resumen ? null : (
                     <>
                         <div className="row g-3">
                             <div className="col-md-6">
@@ -97,16 +92,20 @@ const ResumenDiario = ({ isOpen, onClose, resumen, fecha, isLoading }) => {
                                     <thead>
                                         <tr>
                                             <th>Repartidor</th>
-                                            <th className="text-center">Pedidos</th>
-                                            <th className="text-end">Total</th>
+                                            <th className="text-center">Entregas</th>
+                                            <th className="text-end">Envíos</th>
+                                            <th className="text-end">A pagar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        {/* Fijo por noche + envíos: la misma cuenta que ve el Jefe de
+                                            Deliverys en su liquidación. */}
                                         {deliverys.map((d, idx) => (
                                             <tr key={idx}>
                                                 <td>{d.nombre}</td>
                                                 <td className="text-center">{d.cantidadPedidos || 0}</td>
-                                                <td className="text-end">{fmtPesos(d.totalMonto)}</td>
+                                                <td className="text-end">{fmtPesos(d.totalEnvios)}</td>
+                                                <td className="text-end fw-bold">{fmtPesos(d.aPagar)}</td>
                                             </tr>
                                         ))}
                                     </tbody>

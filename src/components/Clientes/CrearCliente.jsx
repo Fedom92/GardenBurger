@@ -4,6 +4,8 @@ import { db } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
+import { useAccionUnica } from "../../Utils/useAccionUnica";
 
 const CrearCliente = (props) => {
     const { onCreated, ...propsModal } = props;
@@ -12,7 +14,10 @@ const CrearCliente = (props) => {
 
     const clientesCollection = collection(db, "clientes");
 
-    const guardarBD = async (data) => {
+    // addDoc genera un id por llamada: un doble click daba dos clientes.
+    const { ejecutar } = useAccionUnica();
+
+    const guardarBD = (data) => ejecutar(async () => {
         const nuevoCliente = {
             nombre: data.nombre,
             direccion: data.direccion,
@@ -22,10 +27,16 @@ const CrearCliente = (props) => {
             sucursal: userData?.sucursal || "",
         };
 
-        const docRef = await addDoc(clientesCollection, nuevoCliente);
-        onCreated && onCreated({ id: docRef.id, ...nuevoCliente });
-        clearForm();
-    };
+        try {
+            const docRef = await addDoc(clientesCollection, nuevoCliente);
+            onCreated && onCreated({ id: docRef.id, ...nuevoCliente });
+            clearForm();
+        } catch (error) {
+            // No tenía catch: el error ni siquiera quedaba en la consola ordenado.
+            console.error("Error al crear el cliente:", error);
+            Swal.fire({ title: 'Error', text: 'No se pudo crear el cliente. Revisá la conexión e intentá de nuevo.', icon: 'error', confirmButtonColor: '#dc3545' });
+        }
+    });
 
     const clearForm = () => {
         reset();

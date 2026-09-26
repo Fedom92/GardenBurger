@@ -11,9 +11,13 @@ import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
-import { CATEGORIAS_HAMBURGUESA, ENVIOS_LOCALES, ESTADOS } from "../../Utils/Constantes";
+import { CATEGORIAS_HAMBURGUESA, ENVIOS_LOCALES, ESTADOS, METODOS_PAGO } from "../../Utils/Constantes";
 import Footer from "./Footer";
 import { fmtPesos } from "../../Utils/formato";
+import { useAccionUnica } from "../../Utils/useAccionUnica";
+import { webRecibePedidos, textoHorarioWeb } from "../../Utils/fechaComercial";
+import WebCerrada from "./WebCerrada";
+import { fetchMenuPublico } from "../../Utils/menuPublico";
 
 
 const CrearSolicitud = () => {
@@ -21,8 +25,17 @@ const CrearSolicitud = () => {
   const { sucursal } = useParams();
 
   const [loading, setLoading] = useState(true);
-  const [procesando, setProcesando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
+  const [errorCarga, setErrorCarga] = useState(false);
+  // Dirección y teléfono de la sucursal, para el pie.
+  const [sucursalInfo, setSucursalInfo] = useState(null);
+  // Se decide al entrar, y se vuelve a mirar al comprar: la página pudo quedar
+  // abierta mientras pasaba la hora de cierre.
+  const [abierta] = useState(webRecibePedidos);
+  // Un useState no alcanza: entre dos toques rapidos el boton todavia figura
+  // habilitado y salian DOS solicitudes con ids distintos, que el cajero ve
+  // duplicadas en F1. useAccionUnica corta en el mismo tick.
+  const { procesando, ejecutar } = useAccionUnica();
 
   const {
     carrito,
@@ -51,9 +64,12 @@ const CrearSolicitud = () => {
 
   const navigate = useNavigate();
 
-  const comprar = async (data) => {
-    setProcesando(true);
+  const comprar = (data) => ejecutar(async () => {
     setErrorEnvio("");
+    if (!webRecibePedidos()) {
+      setErrorEnvio(`Ya no estamos tomando pedidos. Tomamos pedidos ${textoHorarioWeb()}.`);
+      return;
+    }
 
     const solicitudesRef = collection(db, "sucursales", sucursal, "pedidos");
     const newDocRef = doc(solicitudesRef);
@@ -79,7 +95,7 @@ const CrearSolicitud = () => {
     const solicitud = {
       cliente: data,
       carrito: carrito,
-      total: pagoSeleccionado === "MP" ? totalConRecargo : total,
+      total: pagoSeleccionado === METODOS_PAGO.MP.key ? totalConRecargo : total,
       estado: ESTADOS.WEB_PENDIENTE,
       origen: "WEB",
       clienteTimestamp: serverTimestamp(),
@@ -96,24 +112,32 @@ const CrearSolicitud = () => {
         return;
       }
 
-      await setDoc(newDocRef, solicitud);
+      // El teléfono de ESTA sucursal sale del documento que se acaba de leer, sin
+      // lecturas extra. Queda en la solicitud para que /ver-pedido arme su botón de
+      // WhatsApp sin leer la sucursal.
+      const telefonoSucursal = sucursalDoc.data().telefono || "";
+      await setDoc(newDocRef, { ...solicitud, telefonoSucursal });
 
       vaciarCarrito();
       // Si el bloqueador de pop-ups lo corta, el pedido igual quedó guardado y la
       // pantalla de detalle tiene su propio botón de WhatsApp como respaldo.
-      window.open(`https://api.whatsapp.com/send?phone=549${process.env.REACT_APP_celular}&text=${mensajeCodificado}`, "_blank");
+      // Sin teléfono cargado en la sucursal no hay a dónde mandarlo: el pedido quedó
+      // registrado igual y el cajero lo ve en F1.
+      if (telefonoSucursal) {
+        window.open(`https://api.whatsapp.com/send?phone=549${telefonoSucursal}&text=${mensajeCodificado}`, "_blank");
+      }
       navigate(`/ver-pedido/${sucursal}/${newDocRef.id}`);
     } catch (error) {
       // Antes acá solo había un console.error: el cliente se quedaba mirando el
       // formulario creyendo que había comprado, y el pedido no existía.
       console.error("Error al crear solicitud:", error);
       setErrorEnvio("No pudimos registrar tu pedido. Revisá tu conexión e intentá de nuevo.");
-    } finally {
-      setProcesando(false);
     }
-  }
+  });
 
   useEffect(() => {
+    // Cerrada no carga el menú: fuera de horario la visita no cuesta nada.
+    if (!abierta) return;
     const fetchData = async () => {
       try {
         // Obtener categorías
@@ -125,18 +149,31 @@ const CrearSolicitud = () => {
         setCategorias(categoriasDataOrdenada);
         setProductos(productosData);
 
+        // Los datos de la sucursal para el pie salen de menu.json, que ya se
+        // descargó para el menú: no cuesta lecturas. Si falla, el pie va sin ellos.
+        fetchMenuPublico()
+          .then((menu) => setSucursalInfo(menu?.sucursales?.find((s) => s.id === sucursal) || null))
+          .catch(() => {});
+
       } catch (error) {
         console.error("Error fetching data:", error);
+        setErrorCarga(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [abierta, sucursal]);
+
+  if (!abierta) return <WebCerrada />;
 
   if (loading) {
     return <p>Cargando...</p>;
+  }
+
+  if (errorCarga) {
+    return <p className="text-center fw-bold py-5">No pudimos cargar el menú. Probá recargar la página.</p>;
   }
 
   const hamburguesas = obtenerHamburguesasConVariantes(productos);
@@ -320,7 +357,7 @@ const CrearSolicitud = () => {
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
                 <button type="button" className="btn btn-danger" onClick={() => vaciarCarrito()}>Vaciar carrito</button>
-                <div className="m-2 fw-bold">Total: {fmtPesos(pagoSeleccionado === "MP" ? totalConRecargo : total)}</div>
+                <div className="m-2 fw-bold">Total: {fmtPesos(pagoSeleccionado === METODOS_PAGO.MP.key ? totalConRecargo : total)}</div>
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
@@ -381,7 +418,7 @@ const CrearSolicitud = () => {
                         <input
                           style={{ margin: "0px" }}
                           type="radio"
-                          value="EFECTIVO"
+                          value={METODOS_PAGO.EFECTIVO.key}
                           {...register("metodoPago", { required: "Debes seleccionar una opción" })}
                         />
                         Efectivo
@@ -392,7 +429,7 @@ const CrearSolicitud = () => {
                         <input
                           style={{ margin: "0px" }}
                           type="radio"
-                          value="MP"
+                          value={METODOS_PAGO.MP.key}
                           {...register("metodoPago", { required: "Debes seleccionar una opción" })}
                         />
                         MercadoPago
@@ -400,7 +437,7 @@ const CrearSolicitud = () => {
                     </div>
                   </div>
                   {errors.metodoPago && <p className="text-danger">{errors.metodoPago.message}</p>}
-                  {pagoSeleccionado === "MP" && (
+                  {pagoSeleccionado === METODOS_PAGO.MP.key && (
                     <>
                       <p className="text-danger">{'La transferencia tiene un recargo de '}{process.env.REACT_APP_recargoMP}%</p>
                       <p className="text-danger fw-bold">{'Advertencia: HASTA QUE NO INGRESE LA TRANSFERENCIA NO SE TOMARÁ SU PEDIDO'}</p>
@@ -424,7 +461,7 @@ const CrearSolicitud = () => {
       <ModalExtras />
       <ModalExtrasGenericos />
 
-      <Footer />
+      <Footer sucursal={sucursalInfo} />
     </div>
   );
 };

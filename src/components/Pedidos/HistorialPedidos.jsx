@@ -9,12 +9,13 @@ import { getRangoJornada } from "../../Utils/fechaComercial";
 import AuditoriaPedido from "./AuditoriaPedido";
 import moment from "moment";
 import { fmtPesos } from "../../Utils/formato";
+import { avisarErrorDeCarga } from "../../Utils/avisos";
+import { HORARIO } from "../../Utils/Constantes";
 
 const toInputDate = (d) => moment(d).format("YYYY-MM-DD");
 
 const computeRango = (startStr, endStr) => {
-  const horaAbre = Number(process.env.REACT_APP_horaAbre);
-  const horaCierre = Number(process.env.REACT_APP_horaCierre);
+  const { horaAbre, horaCierre } = HORARIO;
   const inicio = moment(startStr).set({ hour: horaAbre, minute: 0, second: 0, millisecond: 0 }).toDate();
   const fin = moment(endStr).add(1, "day").set({ hour: horaCierre, minute: 0, second: 0, millisecond: 0 }).toDate();
   return { inicio, fin };
@@ -29,7 +30,8 @@ const HistorialPedidos = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [auditoriaPedido, setAuditoriaPedido] = useState(null);
 
-  // El admin puede consultar cualquier sucursal; el staff solo la propia
+  // Solo el admin entra (RequireAdmin en App.js): por eso el rango no tiene tope
+  // de días. Elige la sucursal.
   const [sucursales, setSucursales] = useState([]);
   const [sucursalSel, setSucursalSel] = useState("");
   const sucursalActiva = esAdmin ? sucursalSel : userData?.sucursal;
@@ -47,7 +49,10 @@ const HistorialPedidos = () => {
         setSucursales(lista);
         setSucursalSel((prev) => prev || lista[0]?.id || "");
       })
-      .catch(console.error);
+      .catch((error) => {
+        console.error(error);
+        avisarErrorDeCarga("las sucursales");
+      });
   }, [esAdmin]);
 
   useEffect(() => {
@@ -67,7 +72,10 @@ const HistorialPedidos = () => {
     );
     getDocs(q)
       .then(snap => setPedidos(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
-      .catch(err => console.error("Error HistorialPedidos:", err))
+      .catch(err => {
+        console.error("Error HistorialPedidos:", err);
+        avisarErrorDeCarga("los pedidos");
+      })
       .finally(() => setIsLoading(false));
   }, [queryRange, sucursalActiva]);
 

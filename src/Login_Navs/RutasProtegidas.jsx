@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { sincronizarHoraServidor } from "../Utils/fechaComercial";
 import Navigation from "./Navigation";
+import { toast } from "react-toastify";
 
 // Guards de permisos y layout del staff. Viven acá para que App.js quede como
 // una tabla de rutas y nada más. Todos usan useAuth(), así que sólo funcionan
@@ -74,7 +75,11 @@ export const LayoutStaff = () => {
 
     useEffect(() => {
         if (userData) {
-            sincronizarHoraServidor();
+            // Sin la hora del servidor esta PC usa su propio reloj, y los pedidos
+            // se graban con esa hora: en el local hay PCs con el reloj corrido.
+            sincronizarHoraServidor().then((ok) => {
+                if (!ok) toast.warn("No se pudo sincronizar la hora con el servidor: se usa la hora de esta PC.", { toastId: "hora-servidor" });
+            });
         }
     }, [userData]);
 

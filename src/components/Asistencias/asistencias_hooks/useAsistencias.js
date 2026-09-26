@@ -6,7 +6,7 @@ import moment from "moment";
 // las horas y la del bruto viven en un solo lugar.
 
 // Un turno arranca de noche y termina de madrugada: la jornada comercial va de
-// REACT_APP_horaAbre (19) a REACT_APP_horaCierre (2). Restar de frente 02:00 -
+// HORARIO.horaAbre (19) a HORARIO.horaCierre (2). Restar de frente 02:00 -
 // 19:00 da -17, así que cuando la salida no es posterior a la entrada se entiende
 // que cruzó la medianoche y se le suma un día.
 export const calcularHoras = (entrada, salida) => {

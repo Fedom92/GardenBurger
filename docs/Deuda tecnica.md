@@ -1,14 +1,14 @@
 ---
 tags: [gardenburger, deuda, auditoria]
 aliases: [Pendientes, Que falta]
-actualizado: 2026-09-23
+actualizado: 2026-09-26
 ---
 
 # Deuda técnica
 
 ← [[GardenBurger]]
 
-Estado al **24-09-2026**. Las dos auditorías integrales están procesadas: la
+Estado al **26-09-2026**. Las dos auditorías integrales están procesadas: la
 [[Auditoria 2026-09|del 09-09]] (11 hallazgos) y la [[Auditoria 2026-09-15|del 15-09]] (23). Lo que
 sigue es lo que queda abierto **por decisión**, con el motivo, para que nadie lo "arregle" sin
 saberlo.
@@ -16,14 +16,6 @@ saberlo.
 > [!info] Cómo leer esta nota
 > Si un hallazgo no figura acá, está corregido. El detalle de cada uno —evidencia, impacto, cómo se
 > cerró— está en la auditoría que lo encontró.
-
-## Postergado: dos componentes que se rehacen
-
-- **Métricas de delivery** (`ModalMetricasDelivery.jsx`). Hoy `totalMonto` acumula el total del
-  pedido sin mirar el método de pago, así que un delivery cobrado por MP aparece como un faltante
-  en rojo: el repartidor nunca tuvo que traer esa plata. **El componente se rehará de cero**, así
-  que no se parchea —ni siquiera con `fmtPesos`—. Ver
-  [[Auditoria 2026-09-15#3 · P2 · Las métricas de delivery mienten para MP y pago dividido]].
 
 ## Cerrado por decisión, no por código
 
@@ -40,14 +32,25 @@ Cosas que las auditorías marcaron y el dueño decidió dejar como están. **No 
   (`where cocineroID`), así que "todos" nunca pisa el trabajo de otro.
 - **El horario especial ofrece 20–23**, aunque el local abre a las 19. Nadie encarga para las
   19:xx. Las opciones están hardcodeadas en `Caja.jsx`; si algún día cambia, generarlas desde
-  `REACT_APP_horaAbre`.
-- **Sin marca `arqueoAplicado` en el pedido.** Se evaluó un booleano que hiciera idempotentes los
-  caminos que revierten el arqueo. Se descartó por simplicidad: el caso real (eliminar un
-  `CANCELADO`) se cerró ocultando el botón, y los otros dos hallazgos de dinero tenían causas
-  distintas — uno era validación, el otro se cerró por regla. Si aparece un camino nuevo que
-  revierta dos veces, la marca sigue siendo la opción.
+  `HORARIO.horaAbre`.
 - **Re-precificar en silencio** al Revisar una solicitud web, sin avisar al cajero. El cliente ve
   el total definitivo en `/ver-pedido` y en el ticket.
+- **El fijo de los repartidores y el recargo de MP son constantes del `.env`**
+  (`REACT_APP_fijoDeliverys`, `REACT_APP_recargoMP`). Cambiarlos es un build y un deploy, y el dueño
+  lo prefiere así antes que editarlos desde el admin (26-09-2026).
+- **`usuarios` es legible por todo el staff**, con `valorHora` y DNI incluidos. Los usuarios
+  internos no son la preocupación, y el externo no puede leerla (la regla exige sesión). Separar
+  esos campos costaría lecturas extra al cargar asistencias (26-09-2026).
+- **Un repartidor que cobra fijo más envíos va con `valorHora` en 0.** La carga de asistencias lo
+  incluye igual —sirve para registrar quién vino—, y con valor hora 0 la liquidación de asistencias
+  no le paga horas encima. Es configuración del alta, no código (26-09-2026).
+- **La creación pública de solicitudes usa lista negra, no blanca.** Una lista blanca (`hasOnly`)
+  obliga a tocar la regla cada vez que la web agrega un campo, y el dueño no quiere mantenerla.
+  Queda el riesgo de que alguien arme a mano una solicitud con `cajeroRevisaID` y nazca trabada:
+  se rechaza desde F1 (26-09-2026).
+- **El horario de la web se controla solo en el front.** Cerrarlo en las reglas obligaría a
+  repetir días y horas en `firestore.rules`, en UTC. Una solicitud armada a mano fuera de horario
+  aparece pendiente la noche siguiente y se rechaza (26-09-2026).
 
 ## Abierto por decisión
 
@@ -73,14 +76,18 @@ sigue: un pedido `ENTREGADO` se puede eliminar y dos pantallas pueden pisarse. C
 es gratis en lecturas pero toca todas las escrituras del pedido. Ver
 [[Modelo de estados#Transiciones que el sistema permite y no debería]].
 
-**Eliminar un `ENTREGADO` sí descuenta, y es correcto**: es la anulación de una venta. Desde el
-24-09-2026 el descuento además va a la jornada del pedido y no a la de hoy.
+**Eliminar un `ENTREGADO` sale del arqueo, y es correcto**: es la anulación de una venta. El
+pedido queda en `ELIMINADO` y `calcularArqueo` lo saltea, en su jornada y no en la de hoy.
 
-### Concurrencia entre dos cajeros sobre el arqueo
-
-`useAccionUnica` cubre el doble click de **una** persona. Dos cajeros distintos descontando el
-mismo pedido con ~200 ms de diferencia siguen pudiendo duplicar el movimiento.
-Ver [[Decisiones tecnicas#Sin `runTransaction` para el arqueo]].
+> [!success] La carrera entre dos cajeros sobre el arqueo dejó de existir (26-09-2026)
+> Era el riesgo más citado de esta nota: dos cajeros descontando el mismo pedido con ~200 ms de
+> diferencia duplicaban el movimiento, porque `increment()` no es idempotente. Ya no hay
+> contador que duplicar —el arqueo se calcula desde los pedidos— así que la carrera se cerró por
+> construcción, no por un guard. Ver
+> [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]].
+>
+> Queda en pie lo estructural de arriba: dos pantallas todavía pueden pisarse el `estado` de un
+> pedido. Lo que cambió es que eso ya no descuadra la plata, solo el estado.
 
 ### Sobre CRA
 
@@ -103,10 +110,10 @@ se hizo sobre CRA (14-09-2026) sin necesitar la migración.
 
 ## Deuda de mantenibilidad (sin urgencia)
 
-- **`Caja.jsx` (752 líneas)** — ya extrajo nueve hooks, que era lo importante. Lo que queda por
+- **`Caja.jsx` (779 líneas)** — ya extrajo nueve hooks, que era lo importante. Lo que queda por
   separar es el **render**: el panel de productos y el ticket son dos componentes conviviendo en un
   archivo.
-- **`CartContext.jsx` (608 líneas)** — 20 `useState`, once de los cuales son en realidad una máquina
+- **`CartContext.jsx` (582 líneas)** — 20 `useState`, once de los cuales son en realidad una máquina
   de estados de modales. Caso de manual para un `useReducer`: hoy no se puede razonar sobre qué
   combinaciones de esos once estados son válidas.
 
@@ -119,13 +126,20 @@ se hizo sobre CRA (14-09-2026) sin necesitar la migración.
   > Esa pantalla es el **histórico del sistema anterior** y se queda como está, permanentemente:
   > lee los TSV exportados a mano de `privado/estadisticas` en Storage. Son dos cosas separadas y
   > ninguna sustituye a la otra.
+- **Por confirmar: ¿se paga el envío de una entrega anulada?** Son dos casos y hoy se comportan
+  distinto: si se anula **después** de que el repartidor volvió, se paga (la liquidación cuenta
+  toda entrega cerrada); si se anula **mientras está en la calle**, no se paga (el pedido sale del
+  listener del jefe y nunca llega a `VOLVIO`). En los dos el viaje se hizo. El dueño va a
+  averiguar qué corresponde; si cambia, es una línea en `liquidarDeliverys()`.
 - **Mostrar el vuelto en la Caja.** Se exige `pagaCon >= total` pero nunca se muestra la resta; el
   cajero la hace de cabeza. Sale de datos que ya están en memoria, sin lecturas. Quedó propuesto
   en el rediseño de la Caja y sin decidir: [[Decisiones tecnicas#Pendiente]].
-- **Gestionar pedidos de otras jornadas (encargado y admin).** F3 es la herramienta del cajero y se
-  queda acotada a la jornada en curso, a propósito. Eliminar o corregir un pedido de otra fecha va
-  en una pantalla propia, todavía sin desarrollar. La mitad del trabajo ya está hecha: el arqueo
-  descuenta de la jornada del pedido, así que esa pantalla no tiene que acordarse de nada.
+- **Gestionar pedidos y arqueos de otras jornadas (encargado y admin).** F3 es la herramienta del
+  cajero y se queda acotada a la jornada en curso, a propósito; F4 además solo se habilita entre
+  las 00:00 y `horaCierre`. Eliminar o corregir un pedido de otra fecha —y **mirar el arqueo de una
+  noche que no se cerró a tiempo**— va en una pantalla propia, todavía sin desarrollar. Casi todo
+  el trabajo ya está hecho: `obtenerArqueo(jornada, sucursal)` acepta cualquier jornada y cualquier
+  sucursal, y una jornada cerrada con foto cuesta **1 lectura**.
 - **Liberar solicitudes trabadas desde `HistorialPedidos` (solo admin).** Una solicitud web
   asignada a un cajero que terminó el turno queda sin dueño activo y nadie puede tomarla. Decidido
   el 14-09-2026: lo destraba el admin, no el encargado. Para implementarlo, dos cosas que no son
@@ -142,8 +156,11 @@ dueño. La lógica pura se verifica a mano con casos cada vez que se toca:
 
 - `calcularHoras` — el cruce de medianoche (19:00 → 02:00 = 7 h, no −17).
 - `agregarLiquidacion` — el bruto acumulado día por día, no `horasTotales × unValorHora`.
-- `contarCombos`, `getResumenOperation`, `getCurrentStepIndex`, `getItemsCocina`,
-  `getJornadaDeFecha` / `getRangoJornada` / `getFechaComercial`, `validarPedido`.
+- **`calcularArqueo`** — es la función más cara de equivocar del sistema. Al reemplazar el contador
+  (26-09-2026) se comparó contra una simulación de la secuencia de `increment()` vieja en 8 casos:
+  los 6 campos coinciden en los 8. Si se le agrega un campo, se repite el ejercicio.
+- `contarCombos`, `getCurrentStepIndex`, `getItemsCocina`, `getJornadaDeFecha` /
+  `getRangoDeJornada` / `getFechaComercial`, `validarPedido`.
 
 Vale una anotación de la auditoría: los hallazgos 3, 4 y 5 son de la clase que **un test detecta y
 una prueba manual no**, porque dependen de secuencias improbables o de dos usuarios simultáneos. Si

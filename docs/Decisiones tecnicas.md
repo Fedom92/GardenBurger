@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, decisiones, adr]
 aliases: [ADR, Por que esta asi]
-actualizado: 2026-09-14
+actualizado: 2026-09-26
 ---
 
 # Decisiones técnicas
@@ -219,7 +219,9 @@ desapareció, se volvió a evaluar y **el dueño decidió dejarla como está**. 
 **Los admins se crean solo desde la Consola de Firebase.** La app no ofrece ese rol y
 `crearUsuario` lo rechaza server-side. Después de crear uno hay que entrar al PanelAdmin y tocar
 "Sincronizar permisos", y esa persona tiene que **volver a iniciar sesión**: el claim viaja en el
-token.
+token. Desde el 26-09-2026 ese botón **solo lo ve el dueño** (`EMAIL_SUPERADMIN` en
+`Constantes.jsx`). Es visual: la Cloud Function exige ser admin igual, y el dueño decidió que no
+importa que su correo quede en el JavaScript público del sitio.
 
 > [!important] Por qué las Functions conservan el respaldo contra Firestore
 > Las reglas miran solo el claim, pero las Functions aceptan *claim o rol en Firestore*. No es
@@ -241,29 +243,95 @@ Para que el menú público funcione tienen que estar bien **las tres**:
 > sigue andando**: la falla solo se ve como un warning en consola, mientras se pagan lecturas
 > que se suponía ahorradas.
 
-## Sin `runTransaction` para el arqueo
+## El arqueo se calcula desde los pedidos
 
-**Qué**: `getResumenOperation` usa `increment()` dentro de un `writeBatch`, no transacciones.
+**Qué**: `resumenDiario` dejó de ser un contador mantenido con `increment()` y pasó a ser el
+resultado de `calcularArqueo(pedidos)`, una función pura sobre los pedidos de la jornada. El
+documento sigue existiendo, pero como **foto** de ese cálculo. 26-09-2026.
 
-**Por qué**: decisión explícita — se prefiere evitar la complejidad de las transacciones. Dos
-clicks simultáneos sobre el mismo pedido se consideran suficientemente raros.
+**Por qué**: `increment()` es atómico pero **no idempotente**, y eso obligaba a que los cinco
+caminos que tocaban un pedido —guardar, rechazar MP, eliminar ticket, cerrar delivery— se acordaran
+de mover el arqueo, con el signo correcto y exactamente una vez. Cada camino nuevo era una
+oportunidad de olvidarlo, y si el número se desincronizaba no había forma de detectarlo ni de
+arreglarlo: era un acumulado, no la verdad. Un `set()` de un valor **calculado** es idempotente por
+construcción: correrlo dos veces da lo mismo.
 
-**Consecuencia**: queda una ventana de ~200 ms en la que dos cajeros pueden descontar dos veces
-el mismo pedido. Riesgo aceptado y documentado. La protección elegida es `useAccionUnica`, que
-cubre el doble click de **una** persona pero no la carrera entre dos.
+Con esto, eliminar un pedido volvió a ser cambiar un campo. La carrera entre dos cajeros
+descontando el mismo pedido **desapareció** en vez de quedar documentada como riesgo aceptado.
 
-`getNextSequence` sí usa transacción, y esa no se toca.
+**Las cuatro reglas de la foto** (están también en la cabecera de `useResumenDiario.js`):
 
-> [!note] `guardarBD` sí quedó en transacción, y eso no cambia lo de arriba
-> Desde sep-2026 el guardado de Caja corre dentro de `runTransaction` para meter el contador
-> adentro (ver más abajo). La transacción hace **atómico** el conjunto contador + pedido + arqueo,
-> pero no vuelve **idempotente** al `increment()`: si la misma suma se dispara dos veces desde dos
-> lugares distintos, se aplica dos veces igual. Los otros tres movimientos del arqueo —rechazo de
-> MP, eliminación de ticket y cierre de delivery— siguen siendo `writeBatch`.
->
-> Se evaluó una marca `arqueoAplicado` en el pedido para hacer idempotentes los caminos que
-> revierten, y **se descartó** (14-09-2026): los tres agujeros concretos se cerraron cada uno por su
-> lado. Ver [[Auditoria 2026-09#9. Integridad del dinero]] y [[Deuda tecnica]].
+| Situación | Qué hace `obtenerArqueo()` |
+|---|---|
+| Jornada **abierta** | calcula siempre, no guarda nada — todavía se está moviendo |
+| Jornada **cerrada** sin foto | calcula una vez y la guarda. Queda definitiva |
+| Jornada **cerrada** con foto | usa la foto. **Nunca** recalcula sola |
+| Alguien corrige **los hechos** | `invalidarFotoDePedido(pedido)` la borra; el siguiente que la mire la reconstruye |
+
+**Cambiar código no regenera nada.** Si se agrega una categoría a `CATEGORIAS_COMBOS`, las fotos
+viejas se quedan como están: agosto tiene que seguir diciendo lo que era cierto en agosto, o los
+meses dejan de ser comparables. Regla del dueño, y es la correcta: *"modificar registros históricos
+NO"*.
+
+**Y para que valga sin importar cuándo se saca la foto**, lo que depende de reglas que cambian se
+**congela en el pedido** al escribirlo: `combos` y `esLocal` al cobrar, `fijoDelivery` al cerrar
+la entrega. Es el mismo criterio que el `valorHora` en asistencias. Sin eso, la foto de una noche
+vieja se calculaba con el menú y el fijo del día en que alguien la abría por primera vez (26-09-2026,
+ver [[Auditoria 2026-09-26#A · P2 · La foto promete una historia exacta, pero hoy nadie la saca]]).
+
+**El costo**, con los volúmenes reales (davinci ~60 pedidos/noche, pico de 101; 2 arqueos por
+noche y ~5 vistas de dashboard por día):
+
+| Modalidad | Lecturas/día | Escrituras/día | 90 días de histórico |
+|---|---|---|---|
+| Contador con `increment()` | ~314 | ~125 extra | 1 lectura por día-sucursal |
+| Calcular siempre, sin foto | ~12.560 (25% de la cuota) | 0 | ~36.560 (73%) — **descartada** |
+| **Foto (elegida)** | ~940 (1,9%) | 2 | 1 lectura por día-sucursal |
+
+La cuota gratuita de Firestore son **50.000 lecturas por día** y aplica también en Blaze, así que
+el costo no fue el criterio: las tres entraban. Lo que decidió fue que "calcular siempre" hacía
+inviable el dashboard cross-sucursal sobre histórico, y la foto lo deja igual de barato que el
+contador sin heredar su fragilidad.
+
+Esas ~2 vistas por noche no son un supuesto optimista: **F4 se restringió** para que sea así. Solo
+lo ve el encargado y solo entre las 00:00 y `horaCierre`, que es cuando el arqueo significa algo.
+Ver [[Reglas de negocio#Quién mira el arqueo, y cuándo]].
+
+**Verificado antes de reemplazar**: se comparó `calcularArqueo` contra una simulación de la
+secuencia de `increment()` del contador viejo en 8 casos —mostrador en efectivo, delivery en
+efectivo, MP puro, pago dividido, MP rechazado, eliminado desde F3, solicitud web nunca cobrada y
+solicitud web rechazada sin `cajeroID`—. **Los 6 campos coinciden en los 8 casos.**
+
+`getNextSequence` sí usa transacción, y esa no se toca. `Caja.guardarBD` sigue en
+`runTransaction`, ahora con solo dos cosas adentro: el contador y el pedido.
+
+> [!note] Momento ideal, y por qué no hubo migración
+> Se hizo cuando el sistema nuevo **todavía no estaba productivo**: `resumenDiario` tenía 0
+> documentos reales (lo único en producción es el sistema viejo de App Script + Google Sheets). No
+> hubo nada que migrar ni nada que romper.
+
+## El teléfono de la sucursal viaja en la solicitud web
+
+**Qué**: cada sucursal tiene su teléfono de atención (`sucursales/{id}.telefono`), y la solicitud
+web lo copia al crearse (`telefonoSucursal`). Reemplaza a `REACT_APP_celular`, que era uno solo
+para todas las sucursales.
+
+**Por qué así**: al confirmar, la web **ya lee** el documento de la sucursal para validarla, así
+que el teléfono sale sin lecturas extra. Copiarlo en la solicitud hace que `/ver-pedido` arme su
+botón de WhatsApp sin leer la sucursal: 0 lecturas por visita. Si la sucursal cambia de teléfono,
+los pedidos viejos conservan el de entonces, que es irrelevante: el link vence a las 48 h.
+
+## El horario vive en código, no en el `.env`
+
+**Qué**: los días de apertura y las horas de apertura y cierre están en `HORARIO`, en
+`Utils/Constantes.jsx`. Hasta el 26-09-2026 las horas eran `REACT_APP_horaAbre` y
+`REACT_APP_horaCierre`.
+
+**Por qué**: no son secretos, y las variables `REACT_APP_` se meten en el bundle al hacer el
+build, así que el `.env` no daba ninguna flexibilidad: cambiar cualquiera de las dos cosas es un
+build y un deploy. En código quedan versionadas, juntas y en un solo lugar. El `.env`, que git
+ignora, queda para la configuración de Firebase y para lo que el dueño decidió dejar ahí: el fijo
+de los repartidores y el recargo de MP.
 
 ## Una solicitud web, un solo cajero
 
@@ -343,8 +411,14 @@ referencia vieja quedó colgada en `JefeDeliverys` y reventaba la pantalla enter
 repartidores, porque `a.nombre.localeCompare(...)` sobre `undefined` tira. Con uno solo no se
 notaba: el comparador de `sort` nunca se llama.
 
-`sinAcceso: true` significa **sin cuenta de Auth**: no se loguean, así que su alta no pasa por la
+Lo decide el rol: `ROLES` del delivery trae `sinAcceso: true` (hasta el 26-09-2026 era un check en el alta, que solo servía para ellos). `sinAcceso: true` significa **sin cuenta de Auth**: no se loguean, así que su alta no pasa por la
 Cloud Function sino por un `addDoc` directo desde PanelAdmin.
+
+**Al editar, el rol no cruza esa frontera.** El selector de PanelAdmin solo ofrece roles de la
+misma clase que el empleado —con o sin cuenta de Auth, según su `sinAcceso` guardado—, y
+`handleEditEmpleado` lo vuelve a validar. Un repartidor pasado a cajero no podría loguearse, y un
+cajero pasado a repartidor conservaría usuario y clave sin ver ningún módulo. Si de verdad cambia
+de puesto, se lo da de baja y se lo crea de nuevo (26-09-2026).
 
 ## El alta de empleados compensa en vez de transaccionar
 
@@ -363,7 +437,8 @@ se le suba el sueldo a alguien.
 ## `MiPerfil` es de solo lectura
 
 **Qué**: el empleado no edita sus propios datos. Lo único que cambia por su cuenta es la
-contraseña, y eso va por Auth, no por Firestore.
+contraseña, y eso va por Auth, no por Firestore. La leyenda "avisale al administrador" no se le
+muestra al admin, que se corrige a sí mismo desde el PanelAdmin.
 
 **Por qué**: con `write` abierto sobre `usuarios/{uid}` propio, un cajero podía ponerse rol admin
 editando su documento desde la consola del navegador. La regla quedó `read` para todo staff y

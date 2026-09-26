@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import { ENVIOS_LOCALES } from "../../../Utils/Constantes";
 import { fmtPesos } from "../../../Utils/formato";
+import { useAccionUnica } from "../../../Utils/useAccionUnica";
 
 // "Retira" y "Espera Afuera" no son zonas cualquiera: el codigo las compara POR
 // TEXTO contra ENVIOS_LOCALES para decidir el ruteo de cocina (mostrador vs
@@ -32,6 +33,7 @@ const Envios = ({ show, onHide }) => {
         setEnvios(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
         console.error("Error fetching data Envíos:", error);
+        setError("No se pudieron cargar las zonas de envío. Revisá la conexión.");
       }
     };
     fetchData();
@@ -43,7 +45,11 @@ const Envios = ({ show, onHide }) => {
     );
   };
 
-  const handleCreate = async (data) => {
+  // addDoc genera un id por llamada: un doble click daba dos zonas, porque el
+  // chequeo de repetida mira un estado que todavía no se actualizó.
+  const { ejecutar } = useAccionUnica();
+
+  const handleCreate = (data) => ejecutar(async () => {
     if (envioExiste(data.zona_envio)) {
       setError("El envío ya existe");
       return;
@@ -63,8 +69,9 @@ const Envios = ({ show, onHide }) => {
 
     } catch (error) {
       console.error("Error al agregar el Envío: ", error);
+      setError("No se pudo agregar la zona. Revisá la conexión e intentá de nuevo.");
     }
-  };
+  });
 
   const handleEdit = (item) => {
     setIdAEditar(item.id);

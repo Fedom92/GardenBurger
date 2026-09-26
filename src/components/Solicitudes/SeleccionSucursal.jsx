@@ -5,19 +5,31 @@ import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import Footer from "./Footer";
 import '../../style/Main.css';
+import { webRecibePedidos } from "../../Utils/fechaComercial";
+import WebCerrada from "./WebCerrada";
 
 // Pantalla pública: el cliente elige la sucursal antes de armar su pedido.
 // Los links con sucursal precargada (/crear-solicitud/luro) salteán esta pantalla.
 const SeleccionSucursal = () => {
     const [sucursales, setSucursales] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [errorCarga, setErrorCarga] = useState(false);
+    // Se decide al entrar: fuera de horario ni se eligen sucursales.
+    const [abierta] = useState(webRecibePedidos);
 
     useEffect(() => {
+        // Cerrada no lee nada: una visita fuera de horario no cuesta lecturas.
+        if (!abierta) return;
         fetchSucursales()
             .then((lista) => setSucursales(lista.filter((s) => s.activa !== false)))
-            .catch((error) => console.error("Error cargando sucursales:", error))
+            .catch((error) => {
+                console.error("Error cargando sucursales:", error);
+                setErrorCarga(true);
+            })
             .finally(() => setLoading(false));
-    }, []);
+    }, [abierta]);
+
+    if (!abierta) return <WebCerrada />;
 
     if (loading) {
         return <p>Cargando...</p>;
@@ -34,7 +46,9 @@ const SeleccionSucursal = () => {
                     <h2 className="w-75 tituloCategoria">Elegí tu sucursal</h2>
                     {sucursales.length === 0 ? (
                         <div className="text-white fw-bold text-center py-5">
-                            No hay sucursales disponibles por el momento
+                            {errorCarga
+                                ? "No pudimos cargar las sucursales. Probá recargar la página."
+                                : "No hay sucursales disponibles por el momento"}
                         </div>
                     ) : (
                         <div className="d-flex flex-column align-items-center gap-3 py-4 w-100">

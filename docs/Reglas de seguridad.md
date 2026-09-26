@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, seguridad]
 aliases: [firestore.rules, storage.rules, Seguridad]
-actualizado: 2026-09-14
+actualizado: 2026-09-26
 ---
 
 # Reglas de seguridad
@@ -44,7 +44,7 @@ por ese campo, así que **la query está permitida y devuelve todo lo que matche
 > correr `where("origen","==","WEB")` y llevarse nombre, teléfono y dirección de toda la clientela.
 > El slug de la sucursal es público y App Check no protege desde el sitio real.
 >
-> Hoy está separado: `allow get` (público solo para origen WEB) y `allow list: if estaAutenticado()`.
+> Hoy está separado: `allow get` (público solo para origen WEB, y por 48 h desde el pedido) y `allow list: if estaAutenticado()`.
 > No rompió nada porque `PaginaDetalle` lee con `getDoc` por id — la app nunca necesitó `list`
 > público. Ver [[Auditoria 2026-09#1 · P0 · Cualquier visitante puede listar los datos de todos los clientes web]].
 
@@ -112,6 +112,13 @@ escrito exactamente hasta dónde llega.
 - Que el teléfono, el nombre o la dirección sean plausibles.
 - **Cuántas** solicitudes crea un mismo visitante — no hay rate limiting. App Check encarece el
   abuso automatizado, pero no lo impide desde el sitio real.
+- **Qué otros campos trae.** La validación es una **lista negra** (`cajeroID`, `cocineroID`,
+  `deliveryID`), así que pasa cualquier otro. En particular `cajeroRevisaID`: una solicitud que
+  nace con ese campo queda "tomada por otro cajero" y nadie la puede revisar. Y como la Caja
+  guarda con `merge: true`, los campos que no pisa sobreviven en el pedido cobrado. **Se decidió
+  mantener la lista negra** (26-09-2026): una lista blanca con `hasOnly()` obliga a tocar la
+  regla cada vez que la web agrega un campo, y el dueño prefiere no mantenerla. Riesgo aceptado:
+  ver [[Auditoria 2026-09-26#5 · P2 · La creación pública usa una lista negra de campos]].
 
 Está bien que sea una validación de forma: validar precios exigiría un `get()` facturado por ítem.
 El lugar correcto para el contenido es **el cajero al Revisar**, con el catálogo que la Caja ya

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { serverTimestamp, runTransaction, doc, Timestamp, deleteField, getDoc } from "firebase/firestore";
-import { db, avanzarContador, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
+import { serverTimestamp, runTransaction, doc, Timestamp, deleteField } from "firebase/firestore";
+import { db, avanzarContador, colSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
@@ -22,11 +22,12 @@ import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
 import useTicketLayout from './pos_hooks/useTicketLayout';
 import validarPedido from './pos_hooks/validarPedido';
 import useRevisarSolicitud, { liberarSolicitud } from './pos_hooks/useRevisarSolicitud';
-import { getResumenOperation } from './pos_hooks/useResumenDiario';
-import { ESTADOS, ENVIOS_LOCALES } from '../../Utils/Constantes';
-import { ahoraServidor, getFechaComercial } from '../../Utils/fechaComercial';
+import { obtenerArqueo, contarCombos } from './pos_hooks/useResumenDiario';
+import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO } from '../../Utils/Constantes';
+import { ahoraServidor, getFechaComercial, esHoraDeArqueo } from '../../Utils/fechaComercial';
 import { fmtPesos } from '../../Utils/formato';
 import { useAccionUnica } from '../../Utils/useAccionUnica';
+import { useHoraDeArqueo } from '../../Utils/useHoraDeArqueo';
 
 // Los EXTRA son filas hermanas en el carrito, pero el diseño los cuelga de su
 // producto. Se agrupa solo para mostrar: el array que se guarda no cambia.
@@ -85,6 +86,12 @@ const Caja = () => {
     const buscadorRef = useRef(null);
     const resumenEnCurso = useRef(false);
 
+    // El arqueo es del encargado y del cierre: cuesta un barrido de la jornada y a
+    // las 21 no significa nada todavia. Se habilita de 00:00 a horaCierre.
+    const esEncargado = userData?.rol === process.env.REACT_APP_encargado;
+    // Solo para el disabled del boton; verResumen vuelve a preguntar la hora.
+    const horaDeArqueo = useHoraDeArqueo(esEncargado);
+
     const horarioEspecial = watch("horarioEspecial");
     const horaEspecial = horarioEspecial ? horarioEspecial.split(':')[0] : "20";
     const minutosEspecial = horarioEspecial ? horarioEspecial.split(':')[1] : "00";
@@ -116,8 +123,9 @@ const Caja = () => {
 
     // El guard va con useAccionUnica y no con un useState: entre dos clicks
     // rapidos el estado todavia no se aplico y el boton sigue habilitado, asi que
-    // salian dos transacciones —dos tickets y el arqueo sumado dos veces—. Es el
-    // movimiento de plata mas frecuente del sistema.
+    // salian dos transacciones y con ellas DOS pedidos, cada uno con su numero de
+    // ticket. Es la unica escritura del sistema donde repetirla no es inofensiva:
+    // el id del documento se genera por llamada.
     const guardarBD = (data) => ejecutar(async () => {
         if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo })) return;
 
@@ -137,22 +145,22 @@ const Caja = () => {
                 timestampPedido = Timestamp.fromDate(fecha.toDate());
             }
 
-            // Tambien afuera: es pura, solo arma {ref, stats} con los increment().
-            const { ref: resumenRef, stats: resumenData } = getResumenOperation({
-                metodoPago: data.metodoPago,
-                total: totalFinal,
-                montoEfectivo,
-                montoMPConRecargo,
-                envio: envioSeleccionado,
-                carrito,
-            });
+            // Con cuanto paga el cliente. En efectivo lo carga el cajero. En el pago
+            // dividido es la parte en efectivo que ya se fijo en su modal: el cliente
+            // paga justo esa parte, sin otro input. En MP no aplica.
+            const pagaConPedido = data.metodoPago === METODOS_PAGO.EFECTIVO.key ? Number(data.pagaCon) || 0
+                : data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? Number(montoEfectivo) || 0
+                : 0;
 
-            // Contador, pedido y arqueo en una sola transaccion: o entran los tres o
-            // no entra ninguno. Antes el contador iba aparte y, si el batch fallaba,
-            // el numero quedaba quemado y la numeracion saltaba.
+            // Contador y pedido en una sola transaccion: o entran los dos o no entra
+            // ninguno. Antes el contador iba aparte y, si el batch fallaba, el numero
+            // quedaba quemado y la numeracion saltaba.
             //
-            // Mismo costo que antes: 1 lectura (el contador) + 3 escrituras. Y la
-            // unica lectura va primero, que es lo que exige runTransaction.
+            // El arqueo ya no se escribe aca: se calcula desde los pedidos cuando
+            // alguien lo mira. Ver useResumenDiario.
+            //
+            // Cuesta 1 lectura (el contador) + 2 escrituras, y la unica lectura va
+            // primero, que es lo que exige runTransaction.
             await runTransaction(db, async (transaction) => {
                 const nuevoCodigo = await avanzarContador(transaction, "pedidos");
 
@@ -168,11 +176,15 @@ const Caja = () => {
                     observaciones: data.observaciones || "",
                     envio: envioSeleccionado,
                     metodoPago: data.metodoPago,
-                    pagaCon: Number(data.pagaCon) || 0,
-                    montoEfectivo: data.metodoPago === "%" ? Number(montoEfectivo) : 0,
+                    pagaCon: pagaConPedido,
+                    montoEfectivo: data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? Number(montoEfectivo) : 0,
                     total: Number(totalFinal),
                     carrito: carrito,
-                    estado: data.metodoPago === "MP" || data.metodoPago === "%" ? ESTADOS.PENDIENTEMP : ESTADOS.CONFIRMADO,
+                    // Congelados al cobrar: si mañana cambia qué es combo o qué zona
+                    // cobra en mostrador, el arqueo de hoy no cambia. Ver useResumenDiario.
+                    combos: contarCombos(carrito),
+                    esLocal: ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio),
+                    estado: data.metodoPago === METODOS_PAGO.MP.key || data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? ESTADOS.PENDIENTEMP : ESTADOS.CONFIRMADO,
                     esHorarioEspecial: !!data.horarioEspecial,
                     sucursal: userData.sucursal,
                     origen: isWebOrder ? "WEB" : "CAJA",
@@ -181,8 +193,6 @@ const Caja = () => {
                     cajeroRevisaID: deleteField(),
                     cajeroRevisa: deleteField(),
                 }, { merge: true });
-
-                transaction.set(resumenRef, resumenData, { merge: true });
             });
             registrarCliente(data);
             await Swal.fire({
@@ -212,7 +222,7 @@ const Caja = () => {
     const seleccionarMetodoPago = (nuevoMetodo) => {
         limpiarCamposMetodoPago();
         setValue("metodoPago", nuevoMetodo);
-        setShowModalDividido(nuevoMetodo === "%");
+        setShowModalDividido(nuevoMetodo === METODOS_PAGO.DIVIDIDO.key);
     };
 
     const limpiar = useCallback(() => {
@@ -223,25 +233,38 @@ const Caja = () => {
         setModoDelivery(false);
     }, [reset, resetCarrito, resetHorario]);
 
-    // Una sola lectura al abrir, no un listener: el arqueo se mira al cierre del turno
-    // y no necesita ir actualizandose solo mientras el modal esta abierto.
+    // Se calcula desde los pedidos de la jornada, no de un contador acumulado: el
+    // numero que ve el encargado al fiscalizar el cierre es el de los pedidos que
+    // quedaron. Si no cuadra con la caja, falta plata — no puede ser el sistema.
+    //
+    // Cuesta los pedidos de la noche (~60-100 lecturas) en vez de 1, y se abre una
+    // o dos veces por turno. No es un listener a proposito: el arqueo se mira al
+    // cerrar, no necesita ir cambiando solo mientras el modal esta abierto.
     const verResumen = useCallback(async () => {
-        // Sin esto, mantener F4 apretado dispara un getDoc por repetición de tecla.
+        // El boton es solo el pixel: la verdad se relee aca, con el reloj del
+        // servidor ya sincronizado y sin depender de cuando repinto React. El atajo
+        // F4 entra por este camino sin pasar por el boton, y esta es la que lee.
+        if (!esEncargado || !esHoraDeArqueo()) return;
+        // Sin esto, mantener F4 apretado dispara un barrido por repeticion de tecla.
         if (resumenEnCurso.current) return;
         resumenEnCurso.current = true;
         setCargandoResumen(true);
         setShowResumen(true);
         try {
-            const snap = await getDoc(docSucursal("resumenDiario", getFechaComercial()));
-            setResumenDiario(snap.exists() ? snap.data() : null);
+            const { arqueo } = await obtenerArqueo();
+            setResumenDiario(arqueo);
         } catch (error) {
             console.error("Error cargando el resumen del dia:", error);
+            // Nunca un arqueo vacío por un error: "sin movimientos" a las 00:30
+            // se lee como una caja en cero.
             setResumenDiario(null);
+            setShowResumen(false);
+            Swal.fire({ title: 'Error', text: 'No se pudo cargar el arqueo. Revisá la conexión e intentá de nuevo.', icon: 'error', confirmButtonColor: '#dc3545' });
         } finally {
             resumenEnCurso.current = false;
             setCargandoResumen(false);
         }
-    }, []);
+    }, [esEncargado]);
 
     // Cancelar devuelve la solicitud al listado para que otro cajero pueda tomarla.
     // Un ticket comun no tiene nada que liberar y se comporta como el Limpiar de siempre.
@@ -334,7 +357,7 @@ const Caja = () => {
 
     const esAfuera = envioSeleccionado?.zona_envio === ENVIOS_LOCALES[1];
     const esRetira = envioSeleccionado?.zona_envio === ENVIOS_LOCALES[0];
-    const pagaConCorto = metodoPago === "EFECTIVO" && pagaCon > 0 && pagaCon < totalFinal;
+    const pagaConCorto = metodoPago === METODOS_PAGO.EFECTIVO.key && pagaCon > 0 && pagaCon < totalFinal;
 
     return (
         <>
@@ -373,9 +396,18 @@ const Caja = () => {
                         <button className="pos-fkey" onClick={() => setShowBuscarPedido(true)}>
                             <kbd>F3</kbd><span>Buscar Tickets</span>
                         </button>
-                        <button className="pos-fkey" onClick={verResumen}>
-                            <kbd>F4</kbd><span>Estadística</span>
-                        </button>
+                        {/* Solo el encargado, y solo pasada la medianoche: ver el arqueo
+                            cuesta leer los pedidos de la jornada. */}
+                        {esEncargado && (
+                            <button
+                                className="pos-fkey"
+                                onClick={verResumen}
+                                disabled={!horaDeArqueo}
+                                title={horaDeArqueo ? "Estadisticas" : "Se habilita a las 00:00"}
+                            >
+                                <kbd>F4</kbd><span>Estadística</span>
+                            </button>
+                        )}
                     </header>
 
                     <div className={`pos-row ${layout.side === 'left' ? 'is-left' : ''}`} ref={layout.rowRef}>
@@ -574,9 +606,9 @@ const Caja = () => {
 
                             <div className="pos-cobro">
                                 <div className="pos-seg-group">
-                                    <button type="button" className={`pos-seg ${metodoPago === 'EFECTIVO' ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago("EFECTIVO")}>Efectivo</button>
-                                    <button type="button" className={`pos-seg ${metodoPago === 'MP' ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago("MP")}>MP +{recargo}%</button>
-                                    <button type="button" className={`pos-seg ${metodoPago === '%' ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago("%")}>Dividido</button>
+                                    <button type="button" className={`pos-seg ${metodoPago === METODOS_PAGO.EFECTIVO.key ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago(METODOS_PAGO.EFECTIVO.key)}>Efectivo</button>
+                                    <button type="button" className={`pos-seg ${metodoPago === METODOS_PAGO.MP.key ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago(METODOS_PAGO.MP.key)}>MP +{recargo}%</button>
+                                    <button type="button" className={`pos-seg ${metodoPago === METODOS_PAGO.DIVIDIDO.key ? 'is-on' : ''}`} onClick={() => seleccionarMetodoPago(METODOS_PAGO.DIVIDIDO.key)}>Dividido</button>
                                 </div>
 
                                 {mostrarDelivery && (
@@ -602,7 +634,7 @@ const Caja = () => {
 
                                 {/* "Paga con" no estaba en el diseño, pero sin él
                                     validarPedido no deja guardar un pedido en efectivo. */}
-                                {metodoPago === "EFECTIVO" && (
+                                {metodoPago === METODOS_PAGO.EFECTIVO.key && (
                                     <div className="pos-fila">
                                         <span className="pos-desglose flex-fill">Paga con</span>
                                         <input
@@ -616,14 +648,14 @@ const Caja = () => {
                                     </div>
                                 )}
 
-                                {metodoPago === "MP" && (
+                                {metodoPago === METODOS_PAGO.MP.key && (
                                     <div className="pos-desglose">
                                         <span>Recargo MP {recargo}%</span>
                                         <span>{fmtPesos(totalFinal - totalBase)}</span>
                                     </div>
                                 )}
 
-                                {metodoPago === "%" && (<>
+                                {metodoPago === METODOS_PAGO.DIVIDIDO.key && (<>
                                     <div className="pos-desglose">
                                         <span>Efectivo</span>
                                         <span>{fmtPesos(montoEfectivo)}</span>

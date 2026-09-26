@@ -9,6 +9,7 @@ import VerPedidoModal from './VerPedidoModal';
 import moment from "moment";
 import { ENVIOS_LOCALES, ESTADOS } from "../../Utils/Constantes";
 import { getItemsCocina } from "./cocina_hooks/useItemsCocina";
+import { avisarSinConexion } from "../../Utils/avisos";
 
 const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const { userData } = useAuth();
@@ -30,6 +31,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
 
     const manejarError = useCallback((error) => {
         console.error('Error en listener de Pedidos Cocinando:', error);
+        avisarSinConexion("los pedidos en cocina");
         setPedidosCocinando([]);
         actualizarContador(0);
         setIsLoading(false);
