@@ -243,6 +243,12 @@ Para que el menú público funcione tienen que estar bien **las tres**:
 > sigue andando**: la falla solo se ve como un warning en consola, mientras se pagan lecturas
 > que se suponía ahorradas.
 
+> [!tip] Y una copia en memoria, al probar
+> `fetchMenuPublico` guarda la descarga mientras la pestaña esté abierta (y en desarrollo el
+> recargado en caliente la conserva). Si un dato recién publicado no aparece pero los productos sí,
+> el primer paso es **Ctrl+F5**. Desde el 26-09-2026 `publicarMenu` descarta esa copia, así la misma
+> pestaña ve el menú nuevo.
+
 ## El arqueo se calcula desde los pedidos
 
 **Qué**: `resumenDiario` dejó de ser un contador mantenido con `increment()` y pasó a ser el

@@ -5,6 +5,7 @@ import { db, storage } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
+import { soloEnteros } from "../../Utils/formato";
 
 const EditProducto = (props) => {
   const { editar_producto, categorias_options, producto, ...propsModal } = props;
@@ -55,7 +56,7 @@ const EditProducto = (props) => {
 
       const newData = {
         categoria: data.categoria || productoData.categoria,
-        descripcion: data.descripcion || productoData.descripcion,
+        descripcion: (data.descripcion || productoData.descripcion).trim(),
         precio: Number(data.precio) || Number(productoData.precio),
         imagen: urlImagen,
         ingredientes: data.ingredientes || productoData.ingredientes,
@@ -101,7 +102,7 @@ const EditProducto = (props) => {
 
                 <div className="col-3">
                   <label className="form-label">Precio*</label>
-                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} onInput={e => e.target.value = e.target.value.slice(0, 6)} />
+                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} step={1} onKeyDown={soloEnteros} onInput={e => e.target.value = e.target.value.slice(0, 6)} />
                 </div>
               </div>
 

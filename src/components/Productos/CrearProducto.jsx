@@ -5,6 +5,7 @@ import { db, storage } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
+import { soloEnteros } from "../../Utils/formato";
 
 const CrearProducto = (props) => {
   const { register, handleSubmit, reset, watch } = useForm();
@@ -50,7 +51,7 @@ const CrearProducto = (props) => {
 
       const nuevoProducto = {
         categoria: data.categoria,
-        descripcion: data.descripcion,
+        descripcion: data.descripcion.trim(),
         precio: Number(data.precio),
         imagen: urlImagen,
         ingredientes: data.ingredientes,
@@ -97,7 +98,7 @@ const CrearProducto = (props) => {
 
                 <div className="col-3">
                   <label className="form-label">Precio*</label>
-                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} onInput={e => e.target.value = e.target.value.slice(0, 6)} />
+                  <input type="number" className="form-control" autoComplete="off" required {...register("precio")} min={0} step={1} onKeyDown={soloEnteros} onInput={e => e.target.value = e.target.value.slice(0, 6)} />
                 </div>
               </div>
 

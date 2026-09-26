@@ -20,6 +20,17 @@ export const CATEGORIAS_COMBOS = [
   { key: "NUGGETS", label: "Nuggets" }
 ];
 
+// Categorías que se venden SOLO en la Caja —los productos para empleados—: la web
+// pública no las muestra, ni en menu.json ni en sus respaldos contra Firestore.
+// Hardcodeadas por decisión del dueño (26-09-2026). Si algún día son muchas, el
+// camino es una casilla "solo en Caja" en el producto.
+export const CATEGORIAS_SOLO_CAJA = ["COMBO GARDEN", "GARDEN SIN PAPAS"];
+
+// Si una categoría se puede mostrar en la web. Tolera mayúsculas y espacios de
+// más, que aparecen al copiar y pegar nombres.
+export const esCategoriaWeb = (categoria) =>
+  !CATEGORIAS_SOLO_CAJA.includes(String(categoria || "").trim().toUpperCase());
+
 export const CANTIDAD_CARNES = {
   TRIPLE: 3,
   DOBLE: 2,
@@ -67,8 +78,8 @@ export const HORARIO = {
 // mano. El "%" del pago dividido es el que más se presta a errores.
 export const METODOS_PAGO = {
   EFECTIVO: { key: "EFECTIVO", label: "Efectivo" },
-  MP: { key: "MP", label: "Mercado Pago" },
-  DIVIDIDO: { key: "%", label: "Dividido" },
+  MP:       { key: "MP",       label: "Mercado Pago" },
+  DIVIDIDO: { key: "%",        label: "Dividido" },
 };
 
 // La etiqueta de un valor guardado: "%" -> "Dividido". Si el valor no es uno de

@@ -4,6 +4,7 @@
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../firebaseConfig/firebase";
+import { esCategoriaWeb } from "./Constantes";
 
 const MENU_PATH = "publico/menu.json";
 
@@ -22,8 +23,9 @@ export const publicarMenu = async () => {
 
     const menu = {
         generadoEl: Date.now(),
-        productos: productosSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-        categorias: categoriasSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+        // Los productos para empleados se venden solo en la Caja: no se publican.
+        productos: productosSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => esCategoriaWeb(p.categoria)),
+        categorias: categoriasSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => esCategoriaWeb(c.nombre)),
         sucursales: sucursalesSnap.docs
             .map(d => ({ id: d.id, ...d.data() }))
             .filter(s => s.activa !== false)
@@ -40,6 +42,9 @@ export const publicarMenu = async () => {
         cacheControl: "public, max-age=60",
     });
 
+    // La copia en memoria de esta pestaña quedó vieja: sin esto, la web abierta en
+    // el mismo navegador seguía mostrando el menú anterior hasta recargar la página.
+    menuPromise = null;
     return menu;
 };
 

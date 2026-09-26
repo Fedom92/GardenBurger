@@ -145,13 +145,6 @@ const Caja = () => {
                 timestampPedido = Timestamp.fromDate(fecha.toDate());
             }
 
-            // Con cuanto paga el cliente. En efectivo lo carga el cajero. En el pago
-            // dividido es la parte en efectivo que ya se fijo en su modal: el cliente
-            // paga justo esa parte, sin otro input. En MP no aplica.
-            const pagaConPedido = data.metodoPago === METODOS_PAGO.EFECTIVO.key ? Number(data.pagaCon) || 0
-                : data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? Number(montoEfectivo) || 0
-                : 0;
-
             // Contador y pedido en una sola transaccion: o entran los dos o no entra
             // ninguno. Antes el contador iba aparte y, si el batch fallaba, el numero
             // quedaba quemado y la numeracion saltaba.
@@ -176,7 +169,7 @@ const Caja = () => {
                     observaciones: data.observaciones || "",
                     envio: envioSeleccionado,
                     metodoPago: data.metodoPago,
-                    pagaCon: pagaConPedido,
+                    pagaCon: data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? Number(montoEfectivo) : Number(data.pagaCon) || 0,
                     montoEfectivo: data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? Number(montoEfectivo) : 0,
                     total: Number(totalFinal),
                     carrito: carrito,

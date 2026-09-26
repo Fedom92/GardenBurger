@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { fetchMenuPublico } from "../../Utils/menuPublico";
 import { fmtPesos } from "../../Utils/formato";
-import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
+import { CATEGORIAS_HAMBURGUESA, esCategoriaWeb } from "../../Utils/Constantes";
 import 'moment/locale/es';
 import './menu.css';
 
@@ -59,8 +59,9 @@ const Menu = () => {
       } catch (errorMenu) {
         console.warn("menu.json no disponible, fallback a Firestore:", errorMenu);
         try {
-          await getData(productosCollection.current, setProductos);
-          await getData(categoriasCollection.current, setCategorias);
+          // Mismo filtro que al publicar menu.json: lo de empleados no es para la web.
+          await getData(productosCollection.current, (lista) => setProductos(lista.filter((p) => esCategoriaWeb(p.categoria))));
+          await getData(categoriasCollection.current, (lista) => setCategorias(lista.filter((c) => esCategoriaWeb(c.nombre))));
         } catch (error) {
           alert("Error al cargar los datos.");
           console.error("Error fetching data Menu:", error);

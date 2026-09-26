@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebaseConfig/firebase";
 import { fetchMenuPublico } from "../Utils/menuPublico";
-import { CATEGORIAS_HAMBURGUESA } from "../Utils/Constantes";
+import { CATEGORIAS_HAMBURGUESA, esCategoriaWeb } from "../Utils/Constantes";
 
 export const CartContext = createContext();
 
@@ -76,6 +76,7 @@ export const CartProvider = ({ children }) => {
         ...doc.data(),
         id: doc.id
       }))
+      .filter(c => esCategoriaWeb(c.nombre))
       .sort((a, b) => a.nroOrden - b.nroOrden);
     setCategorias(categoriasDataOrdenada);
     return categoriasDataOrdenada;
@@ -96,7 +97,7 @@ export const CartProvider = ({ children }) => {
     const productosData = productosSnapshot.docs.map(doc => ({
       ...doc.data(),
       id: doc.id
-    }));
+    })).filter(p => esCategoriaWeb(p.categoria));
     setProductos(productosData);
     return productosData;
   }, [])

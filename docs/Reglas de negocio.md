@@ -137,8 +137,9 @@ Elegir sucursal y armar el pedido (`/crear-solicitud`) funciona solo **los días
   queda guardado en la solicitud (`telefonoSucursal`) para el botón de `/ver-pedido`. Si la
   sucursal no tiene teléfono cargado, el pedido se registra igual y no se abre WhatsApp.
 - **El pie de la web** muestra la dirección y el teléfono de la sucursal elegida —salen de
-  `menu.json`, sin lecturas— y el horario desde `HORARIO`. En el selector y en la pantalla de
-  cerrado todavía no hay sucursal, así que muestra solo el horario. Los datos nuevos de una
+  `menu.json`, sin lecturas— y el horario desde `HORARIO`. También en la pantalla de cerrado,
+  si el link trae la sucursal (`/crear-solicitud/davinci`): es cuando el cliente más necesita el
+  teléfono. En el selector todavía no hay sucursal elegida, así que muestra solo el horario. Los datos nuevos de una
   sucursal llegan al pie **después de republicar el menú**.
 - **Solo en el front, por decisión.** Alguien que arme el pedido a mano podría crear una
   solicitud fuera de horario: aparecería pendiente la noche siguiente y el cajero la rechaza.
@@ -206,6 +207,22 @@ Caja y por la misma razón: cuesta un barrido de la jornada. Muestra arriba el t
 —entregas, envíos, fijos, total a pagar y efectivo a rendir— y un acordeón con cada repartidor;
 al desplegarlo, el detalle de sus entregas con dirección, zona, envío, método y `pagaronCon`.
 
+## Qué producto se ve dónde
+
+| Producto | Pantalla de Productos (admin) | Caja | Web pública |
+|---|---|---|---|
+| `visible: true` | sí | sí | sí |
+| `visible: false` | sí | **no** | **no** |
+| Categoría de `CATEGORIAS_SOLO_CAJA` (`COMBO GARDEN`, `GARDEN SIN PAPAS`) | sí | sí | **no** |
+
+- **`visible: false` es "pausado"**: no se vende en ningún lado. Sirve para un producto sin stock o
+  de temporada. Los pedidos viejos no cambian: cada uno guarda su copia del producto.
+- **Los productos para empleados** van en las categorías de `CATEGORIAS_SOLO_CAJA`: se cobran en
+  la Caja y la web no los muestra, ni en `menu.json` ni en sus respaldos contra Firestore. Como no
+  son categorías de combo, **no cuentan como combos**. Hardcodeadas por decisión (26-09-2026).
+- **El precio va entero** (`soloEnteros` + `step={1}`) y **la descripción se guarda sin espacios
+  al principio ni al final**: "Hamburguesa " y "Hamburguesa" serían dos productos distintos, y la
+  exclusión de combos (`excludes`) compara el nombre exacto.
 ## Combos
 
 `CATEGORIAS_COMBOS` en `Constantes.jsx`. Cada categoría puede llevar un array **opcional**

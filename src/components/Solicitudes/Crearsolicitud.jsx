@@ -166,7 +166,7 @@ const CrearSolicitud = () => {
     fetchData();
   }, [abierta, sucursal]);
 
-  if (!abierta) return <WebCerrada />;
+  if (!abierta) return <WebCerrada sucursal={sucursal} />;
 
   if (loading) {
     return <p>Cargando...</p>;

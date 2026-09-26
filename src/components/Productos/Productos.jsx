@@ -9,6 +9,7 @@ import Swal from "sweetalert2";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import { publicarMenu, marcarMenuPendiente, limpiarMenuPendiente, hayMenuPendiente } from "../../Utils/menuPublico";
 import { avisarErrorDeCarga } from "../../Utils/avisos";
+import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
 
 const Productos = () => {
   const [productos, setProductos] = useState([]);
@@ -108,7 +109,7 @@ const Productos = () => {
   const toggleVisibilidad = (id, visible) => {
     Swal.fire({
       title: visible ? '¿Quiere desactivar el producto?' : '¿Quiere activar el producto?',
-      text: visible ? '(Esto solo ocultará el producto del menú)' : '(Esto volverá a mostrar el producto en el menú)',
+      text: visible ? '(Esto ocultará el producto)' : '(Esto volverá a mostrar el producto en el menú)',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#198754',
@@ -209,6 +210,15 @@ const Productos = () => {
       setPublicando(false);
     }
   };
+
+  // Para el filtro de la tabla, SIMPLE, DOBLE y TRIPLE son una sola familia. Va en
+  // un campo aparte (`filtro.categoria`) para no pisar la categoría real, que la
+  // columna sigue mostrando y la edición usa. La fila no se guarda en Firestore:
+  // editar arma su propio objeto.
+  const filasProductos = useMemo(() => productos.map((p) => ({
+    ...p,
+    filtro: { categoria: CATEGORIAS_HAMBURGUESA.includes(p.categoria) ? "HAMBURGUESAS" : p.categoria },
+  })), [productos]);
 
   const columnasProductos = [
     { columnasBasicas: ["descripcion", "categoria", "precio"] },
@@ -324,12 +334,14 @@ const Productos = () => {
                 </div>
 
                 <TablaGenerica
-                  data={productos}
+                  data={filasProductos}
                   columnas={columnasProductos}
                   sortBy="descripcion"
                   ordenDescendente={false}
-                  camposBusqueda={["descripcion", "categoria"]}
-                  camposFiltros={["categoria", "tipoExtra", "oferta"]}
+                  camposBusqueda={["descripcion", "categoria", "filtro.categoria"]}
+                  camposFiltros={["filtro.categoria", "tipoExtra", "oferta", "visible"]}
+                  // Rojo claro: pausado (visible false), no se vende ni en la Caja ni en la web.
+                  rowClassName={(p) => (p.visible === false ? "bg-danger-subtle" : "")}
                 />
               </div>
             </div>
