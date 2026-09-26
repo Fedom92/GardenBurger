@@ -46,6 +46,7 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 | `/productos` | `Productos` | `RequireAuth` + `RequireAdmin` |
 | `/clientes` | `Clientes` | `RequireAuth` + `RequireAdmin` |
 | `/estadisticas-viejas` | `Estadisticas` | `RequireAuth` + `RequireAdmin` |
+| `/metricas` | `Metricas` | `RequireAuth` + `RequireAdmin`: el vistazo rápido de todas las sucursales |
 | `/pedidos-caja` | `Caja` | `RequireAuth` + `RequireSucursal` |
 | `/gestion-cocina` | `Cocina` | `RequireAuth` + `RequireSucursal` |
 | `/gestion-atp` | `ATP` | `RequireAuth` + `RequireSucursal` |
@@ -82,7 +83,7 @@ la barrera real son los guards.
 
 | Rol | Módulos del sidebar | Aterriza en |
 |---|---|---|
-| admin | productos, historial, estadisticas, liquidacion, clientes, configuracion | `/productos` |
+| admin | productos, metricas, historial, estadisticas, liquidacion, clientes, configuracion | `/productos` |
 | encargado | caja, cocina, atp, deliverys, asistencias | `/pedidos-caja` |
 | cajero | caja | `/pedidos-caja` |
 | cocina | cocina | `/gestion-cocina` |

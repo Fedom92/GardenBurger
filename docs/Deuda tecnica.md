@@ -52,6 +52,9 @@ Cosas que las auditorías marcaron y el dueño decidió dejar como están. **No 
   repetir días y horas en `firestore.rules`, en UTC. Una solicitud armada a mano fuera de horario
   aparece pendiente la noche siguiente y se rechaza (26-09-2026).
 
+- **Sin vuelto en la Caja.** Los vueltos son cosa del Jefe de Deliverys, que ve "Paga con" y "Vuelto
+  a llevar" en cada pedido (26-09-2026).
+
 ## Abierto por decisión
 
 ### `asistencias` abierta en reglas, cerrada solo por front
@@ -119,35 +122,68 @@ se hizo sobre CRA (14-09-2026) sin necesitar la migración.
 
 ## Funcionalidad pendiente
 
-- **Dashboard cross-sucursal del sistema nuevo**, sobre los datos de Firestore: `resumenDiario` de
-  todas las sucursales, para el admin. Es lo único que falta del lado de estadísticas.
+### Estadísticas Generales (sistema nuevo) — especificada, sin implementar
 
-  > [!important] No reemplaza a `/estadisticas-viejas`
-  > Esa pantalla es el **histórico del sistema anterior** y se queda como está, permanentemente:
-  > lee los TSV exportados a mano de `privado/estadisticas` en Storage. Son dos cosas separadas y
-  > ninguna sustituye a la otra.
-- **Por confirmar: ¿se paga el envío de una entrega anulada?** Son dos casos y hoy se comportan
-  distinto: si se anula **después** de que el repartidor volvió, se paga (la liquidación cuenta
-  toda entrega cerrada); si se anula **mientras está en la calle**, no se paga (el pedido sale del
-  listener del jefe y nunca llega a `VOLVIO`). En los dos el viaje se hizo. El dueño va a
-  averiguar qué corresponde; si cambia, es una línea en `liquidarDeliverys()`.
-- **Mostrar el vuelto en la Caja.** Se exige `pagaCon >= total` pero nunca se muestra la resta; el
-  cajero la hace de cabeza. Sale de datos que ya están en memoria, sin lecturas. Quedó propuesto
-  en el rediseño de la Caja y sin decidir: [[Decisiones tecnicas#Pendiente]].
-- **Gestionar pedidos y arqueos de otras jornadas (encargado y admin).** F3 es la herramienta del
-  cajero y se queda acotada a la jornada en curso, a propósito; F4 además solo se habilita entre
-  las 00:00 y `horaCierre`. Eliminar o corregir un pedido de otra fecha —y **mirar el arqueo de una
-  noche que no se cerró a tiempo**— va en una pantalla propia, todavía sin desarrollar. Casi todo
-  el trabajo ya está hecho: `obtenerArqueo(jornada, sucursal)` acepta cualquier jornada y cualquier
-  sucursal, y una jornada cerrada con foto cuesta **1 lectura**.
-- **Liberar solicitudes trabadas desde `HistorialPedidos` (solo admin).** Una solicitud web
-  asignada a un cajero que terminó el turno queda sin dueño activo y nadie puede tomarla. Decidido
-  el 14-09-2026: lo destraba el admin, no el encargado. Para implementarlo, dos cosas que no son
-  obvias: (1) las `PENDIENTE` **no tienen `timestamp`** hasta que la Caja las guarda, así que no
-  aparecen en la consulta por rango del Historial — hace falta una consulta aparte por
-  `estado == PENDIENTE` filtrando `cajeroRevisaID` en el cliente; (2) la regla
-  `asignacionValida()` rechaza que alguien que no es el dueño borre `cajeroRevisaID`: necesita
-  `|| esAdmin()`.
+Las estadísticas **completas** del sistema nuevo, al estilo de `/estadisticas-viejas` (el Histórico),
+pero leyendo las **fotos** de cada noche en vez de los TSV. Métricas (`/metricas`) es solo el vistazo
+rápido; esto es lo detallado. Se especificó el 26-09-2026 y quedó para la próxima sesión.
+
+- **Ruta** `/estadisticas`, solo admin (`RequireAdmin`), lazy. En el menú, el grupo Estadísticas
+  pasa a tener dos opciones: **Generales** (esta) e **Histórico** (la de los TSV).
+- **Datos:** `obtenerResumenes(desde, hasta, sucursal)` y `sumarResumenes()` de
+  `useResumenDiario.js`, que **ya existen** y están verificados. La foto v1 ya guarda todo lo que
+  hace falta (ver [[Modelo de datos Firestore]]). No hay que agregar campos.
+- **Filtros:** sucursal (Todas o una) y modo **Mes / Año / Rango** de días. Sin filtro de horas
+  (casi no se usa); si algún día hace falta, `porHora` ya tiene las cifras principales por hora.
+  Botón **Ver**: al entrar no se lee nada.
+- **Tarjetas** (las del Histórico): Total tickets (válidos, eliminados, cancelados), Efectivo en
+  caja (mostrador / delivery), MercadoPago (% de pedidos), Total facturado (ticket promedio),
+  Stock vendido (`unidades`, ítems por ticket), Combos, Delivery % (`porCanal`), Con observaciones.
+- **Secciones:** Delivery vs Mostrador · Métodos de pago (`porMetodo`, etiqueta con
+  `METODOS_PAGO[k].label`) · Ventas por categoría (sumar `productos` por `categoria`) · Zonas
+  (`porZona`, % por resto mayor como el Histórico) · Top 10 productos (`productos` sin
+  `BEBIDAS`) · Top 10 clientes (`porCliente`: **solo nombre y pedidos**, nunca el teléfono) · Top 10
+  bebidas · Día de la semana (el día de cada foto × su `totalPedidos`) · Franja horaria
+  (`porHora`, ordenada desde `horaAbre`) · Stock de artículos y de bebidas (lista completa, de a 25).
+- **Evolución histórica anual:** con **botón propio**, para no leer todo cada vez que cambia un
+  filtro. Rango: de `primeraJornadaConPedidos(sucursal)` hasta ayer. Series por año, por mes, con
+  pestañas Combos / Tickets / Monto, igual que el Histórico. Cuesta 1 lectura por noche y sucursal
+  (~520 por año con 2 sucursales).
+- **Reusar lo visual del Histórico:** mover `KpiCard`, `BarChart` y `Section` de
+  `Historico/Estadisticas.jsx` a un `Estadisticas/componentes.jsx` compartido, e importar
+  `Historico/Estadisticas.css`. El Histórico no cambia de comportamiento. Montos con `fmtPesos`
+  (la excepción `fmt$`/`fmtN` sin guarda es solo del Histórico).
+
+### Eliminar pedidos desde el Historial (solo admin)
+
+El admin puede **eliminar** —no editar— cualquier pedido de cualquier fecha desde el Historial. El
+encargado ya lo hace desde F3, pero solo en la jornada. Botón en la columna de acciones, solo si
+el pedido no está `ELIMINADO` ni `CANCELADO`; `Swal` de confirmación; `updateDoc` con
+`docDeSucursal(sucursal, "pedidos", id)` (el admin no tiene sucursal propia) marcando `ELIMINADO` y
+`cajeroElimina*`; después `invalidarFotoDePedido(pedido, sucursal)`, para que Métricas y
+Estadísticas recalculen esa noche. Con `useAccionUnica`. Decidido el 26-09-2026.
+
+### CRM de clientes
+
+El módulo Clientes (ya solo del admin) tendrá su propio CRM. Sin diseñar.
+
+### Solicitudes web trabadas
+
+Pasa cuando un cajero toma una solicitud ("Revisar") y no la termina: se le reinicia la PC, se
+va o cierra el navegador. Las otras cajas la ven "Asignada a …" y no pueden tomarla. **Propuesta**
+(26-09-2026): guardar `cajeroRevisaTimestamp` al tomarla y que la regla `asignacionValida()` deje
+tomarla a cualquiera pasados ~15 minutos. No depende del rol —las reglas no saben quién es el
+encargado— y no cuesta lecturas. Sin implementar.
+
+### Por confirmar: ¿se paga el envío de una entrega anulada?
+
+Dos casos que hoy se comportan distinto: anulada **después** de que el repartidor volvió, se paga;
+anulada **mientras está en la calle**, no se paga (sale del listener del jefe y nunca llega a
+`VOLVIO`). El dueño va a averiguar qué corresponde; si cambia, es una línea en `liquidarDeliverys()`.
+
+### Para el final
+
+El menú público (`/menu`) y el ticket impreso.
 
 ## Sin tests
 

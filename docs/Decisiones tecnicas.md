@@ -310,6 +310,21 @@ solicitud web rechazada sin `cajeroID`—. **Los 6 campos coinciden en los 8 cas
 > documentos reales (lo único en producción es el sistema viejo de App Script + Google Sheets). No
 > hubo nada que migrar ni nada que romper.
 
+## Métricas y Estadísticas leen fotos, no pedidos
+
+**Qué**: las pantallas de varios días leen la foto de cada noche (`obtenerResumenes`), no los
+pedidos. Las noches sin foto se calculan una vez —en tandas de noches seguidas, una consulta por
+tanda— y se guardan, incluidas las que dan cero. La noche en curso no entra en los rangos.
+
+**Por qué**: un mes de 2 sucursales son ~44 lecturas con fotos contra ~2.000-2.400 con pedidos; un
+año, ~520 contra ~25.000 (media cuota diaria). La foto se diseñó desde el inventario del Histórico,
+para servir a las dos pantallas sin agregar campos después.
+
+**Nombres**: **Métricas** (`/metricas`) es el vistazo rápido, pensado para el celular: combos,
+ventas (efectivo/MP), pedidos (eliminados), delivery vs mostrador y top 3 combos. **Estadísticas**
+es lo completo: las Generales (pendientes, ver [[Deuda tecnica#Funcionalidad pendiente]]) y el
+Histórico de los TSV.
+
 ## El teléfono de la sucursal viaja en la solicitud web
 
 **Qué**: cada sucursal tiene su teléfono de atención (`sucursales/{id}.telefono`), y la solicitud

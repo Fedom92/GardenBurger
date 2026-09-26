@@ -108,6 +108,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 |---|---|
 | `ATP/ATP.jsx` | Estado `ATP` — entrega en mostrador |
 | `Pedidos/HistorialPedidos.jsx` | Pedidos por rango de fechas, **sin filtro de estado**: también audita cancelados y eliminados. El admin elige sucursal |
+| `Metricas/Metricas.jsx` | **Métricas**: filtros de sucursal y rango, botón Ver (al entrar no lee nada) y "Esta noche". Lee fotos con `obtenerResumenes` |
 | `Pedidos/AuditoriaPedido.jsx` | Traza completa de un pedido, agrupada por etapa |
 | `Productos/Productos.jsx` | ABM de productos + botón **"Publicar Menú"**, que parpadea mientras haya cambios sin publicar (bandera en localStorage) |
 | `Productos/Parametros/Categorias.jsx` | ABM de categorías. Recibe la lista de `Productos` por props: no lee nada por su cuenta |

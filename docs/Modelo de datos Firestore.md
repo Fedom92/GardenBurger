@@ -123,6 +123,20 @@ cliente: {
 
 ## `sucursales/{id}/resumenDiario/{DD-MM-YYYY}`
 
+> [!important] La foto v1 (26-09-2026): todo lo que usan Métricas y Estadísticas
+> Además de los campos del arqueo de abajo, cada foto guarda: `fecha` (Timestamp, inicio de la
+> noche: permite pedir rangos), `version` (`VERSION_FOTO`), `eliminados`, `cancelados`, `unidades`,
+> `conObservaciones`, `porCanal` (`delivery`/`mostrador`: `{pedidos, monto}`), `porMetodo`
+> (`EFECTIVO`/`MP`/`DIVIDIDO`: `{pedidos, monto}`), `porZona` (`{zona: pedidos}`), `porHora`
+> (`{"20": {pedidos, monto, efectivo, mp, combos, delivery, mostrador}}`), `productos`
+> (`{descripcion: {categoria, unidades}}`) y `porCliente` (`{telefono: {nombre, pedidos}}`; en
+> pantalla solo nombre y pedidos). Unos 5-10 KB por noche.
+>
+> **Es versionable.** Si Estadísticas necesita un campo nuevo, se agrega en `calcularArqueo`, se
+> sube `VERSION_FOTO`, y las fotos viejas se reconstruyen solas la próxima vez que alguien las
+> mira (una lectura por pedido, una vez). Lo que ya existía da igual, porque sale de los hechos
+> congelados en cada pedido. Lo que no se hace es cambiar el significado de un campo existente.
+
 Un doc por [[Reglas de negocio#Jornada comercial|jornada comercial]]. **No es un contador: es una
 foto.** El arqueo se calcula desde los pedidos de la jornada (`calcularArqueo`), y el documento
 guarda ese resultado para no tener que releerlos. Desde el 26-09-2026: antes se acumulaba con

@@ -1,5 +1,5 @@
 import Nav from "./Nav";
-import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaHistory, FaChartBar, FaStore, FaClock, FaMoneyCheckAlt } from 'react-icons/fa';
+import { FaAngleLeft, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaHistory, FaChartBar, FaStore, FaClock, FaMoneyCheckAlt, FaTachometerAlt } from 'react-icons/fa';
 import { useState, useEffect, createContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -13,7 +13,7 @@ export const NavigationContext = createContext();
 // Qué módulos del menú ve cada rol. Es solo cosmético: la barrera real son los
 // guards de App.js. Un rol que no figure acá ve únicamente Mi Perfil y Salir.
 const MODULOS_POR_ROL = {
-    [process.env.REACT_APP_admin]: ["productos", "historial", "estadisticas", "liquidacion", "clientes", "configuracion"],
+    [process.env.REACT_APP_admin]: ["productos", "metricas", "historial", "estadisticas", "liquidacion", "clientes", "configuracion"],
     [process.env.REACT_APP_encargado]: ["caja", "cocina", "atp", "deliverys", "asistencias"],
     [process.env.REACT_APP_cajero]: ["caja"],
     [process.env.REACT_APP_cocina]: ["cocina"],
@@ -158,6 +158,12 @@ const Navigation = () => {
                         {puedeVer("liquidacion") && (
                             <div className="sidebar-title">
                                 <Link to="/liquidacion" className="text-decoration-none link-light"><Nav title="Liquidación" Icon={FaMoneyCheckAlt} /></Link>
+                            </div>
+                        )}
+
+                        {puedeVer("metricas") && (
+                            <div className="sidebar-title">
+                                <Link to="/metricas" className="text-decoration-none link-light"><Nav title="Métricas" Icon={FaTachometerAlt} /></Link>
                             </div>
                         )}
 
