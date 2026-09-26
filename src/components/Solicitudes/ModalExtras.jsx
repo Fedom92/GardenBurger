@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { CartContext } from '../../context/CartContext';
+import { fmtPesos } from "../../Utils/formato";
 
 export const ModalExtras = () => {
   const {
@@ -94,7 +95,7 @@ export const ModalExtras = () => {
                                       )}
                                     </div>
                                     <div className="text-white fw-bold">
-                                      ${extra.precio}
+                                      {fmtPesos(extra.precio)}
                                     </div>
                                   </div>
                                 </label>
@@ -128,7 +129,7 @@ export const ModalExtras = () => {
                     <div className="text-white small">Precio base</div>
                   </div>
                   <div className="text-white fw-bold">
-                    ${varianteElegida.precio}
+                    {fmtPesos(varianteElegida.precio)}
                   </div>
                 </div>
                 
@@ -138,7 +139,7 @@ export const ModalExtras = () => {
                     {extrasSeleccionados.map((extra) => (
                       <div key={extra.id} className="d-flex justify-content-between align-items-center small">
                         <span>+ {extra.descripcion}</span>
-                        <span className="text-white">+${extra.precio}</span>
+                        <span className="text-white">+{fmtPesos(extra.precio)}</span>
                       </div>
                     ))}
                   </>
@@ -148,7 +149,7 @@ export const ModalExtras = () => {
                 <div className="d-flex justify-content-between align-items-center bg-secondary text-dark">
                   <strong>Total:</strong>
                   <strong className="text-dark fs-5">
-                    ${(varianteElegida.precio + extrasSeleccionados.reduce((sum, extra) => sum + extra.precio, 0))}
+                    {fmtPesos(varianteElegida.precio + extrasSeleccionados.reduce((sum, extra) => sum + extra.precio, 0))}
                   </strong>
                 </div>
               </div>

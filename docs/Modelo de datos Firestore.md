@@ -1,10 +1,12 @@
 ---
 tags: [gardenburger, firestore, datos]
+aliases: [Colecciones, Esquema Firestore, Campos]
+actualizado: 2026-09-14
 ---
 
 # Modelo de datos Firestore
 
-← [[GardenBurger]] · relacionado: [[Mapa de operaciones Firestore]], [[Flujo del pedido]]
+← [[GardenBurger]] · relacionado: [[Mapa de operaciones Firestore]], [[Flujo del pedido]] · vocabulario en [[Glosario]]
 
 ## Reparto de colecciones
 
@@ -116,6 +118,9 @@ cliente: {
 Un doc por [[Reglas de negocio#Jornada comercial|jornada comercial]]. Todo se acumula con
 `increment()` desde `getResumenOperation`, y se resta con el mismo helper pasando
 `descontar: true`.
+
+**A qué jornada va**: quien revierte pasa además el `timestamp` del pedido, y el helper deriva la
+jornada de ahí. Así el descuento cae en el día en que ese pedido sumó, y no en el de hoy.
 
 ```js
 {

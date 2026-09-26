@@ -26,6 +26,7 @@ import { getResumenOperation } from './pos_hooks/useResumenDiario';
 import { ESTADOS, ENVIOS_LOCALES } from '../../Utils/Constantes';
 import { ahoraServidor, getFechaComercial } from '../../Utils/fechaComercial';
 import { fmtPesos } from '../../Utils/formato';
+import { useAccionUnica } from '../../Utils/useAccionUnica';
 
 // Los EXTRA son filas hermanas en el carrito, pero el diseño los cuelga de su
 // producto. Se agrupa solo para mostrar: el array que se guarda no cambia.
@@ -69,7 +70,8 @@ const Caja = () => {
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
     const recargo = Number(process.env.REACT_APP_recargoMP) || 0;
-    const [procesando, setProcesando] = useState(false);
+    // Guarda el pedido: suma al arqueo, asi que va con el guard contra doble click.
+    const { procesando, ejecutar } = useAccionUnica();
     const [montoEfectivo, setMontoEfectivo] = useState(0);
 
     const [showPendientesMP, setShowPendientesMP] = useState(false);
@@ -112,9 +114,12 @@ const Caja = () => {
         .filter((p) => categoriaSeleccionada === "" || p.categoria === categoriaSeleccionada),
         [productos, search, categoriaSeleccionada]);
 
-    const guardarBD = async (data) => {
+    // El guard va con useAccionUnica y no con un useState: entre dos clicks
+    // rapidos el estado todavia no se aplico y el boton sigue habilitado, asi que
+    // salian dos transacciones —dos tickets y el arqueo sumado dos veces—. Es el
+    // movimiento de plata mas frecuente del sistema.
+    const guardarBD = (data) => ejecutar(async () => {
         if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo })) return;
-        setProcesando(true);
 
         try {
             const isWebOrder = !!data.id;
@@ -195,10 +200,8 @@ const Caja = () => {
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });
-        } finally {
-            setProcesando(false);
         }
-    };
+    });
 
     const limpiarCamposMetodoPago = useCallback(() => {
         resetField("pagaCon");

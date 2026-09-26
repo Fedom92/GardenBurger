@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Modal } from "react-bootstrap";
 import { collection, doc, setDoc, getDocs } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase.js";
+import { invalidarSucursales } from "../../../Utils/sucursales";
 import { useForm } from "react-hook-form";
 
 // ABM de sucursales (colección global "sucursales"). El id es un slug que forma
@@ -72,6 +73,7 @@ const Sucursales = ({ show, onHide }) => {
 
     try {
       await setDoc(doc(sucursalesCollection, id), newState);
+      invalidarSucursales();
 
       setSucursales((prev) =>
         idAEditar !== null
@@ -96,6 +98,7 @@ const Sucursales = ({ show, onHide }) => {
   const toggleActiva = async (item) => {
     try {
       await setDoc(doc(sucursalesCollection, item.id), { activa: !item.activa }, { merge: true });
+      invalidarSucursales();
       setSucursales((prev) =>
         prev.map((s) => (s.id === item.id ? { ...s, activa: !item.activa } : s))
       );

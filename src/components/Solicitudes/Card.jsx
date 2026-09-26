@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
-import { Link } from 'react-router-dom'
 import { CartContext } from '../../context/CartContext'
 import { CATEGORIAS_HAMBURGUESA } from '../../Utils/Constantes'
+import { fmtPesos } from "../../Utils/formato";
 
 export const Card = ({ producto }) => {
   const { 
@@ -36,16 +36,14 @@ export const Card = ({ producto }) => {
   return (
     <div className='cardCS'>
       <div className="cardColumnCS m-3">
-        <Link to={`/item/${producto.id}`} className='text-decoration-none pe-none'>
-          <p className='titulo'>{nombreMostrar}</p>
-        </Link>
+        <p className='titulo'>{nombreMostrar}</p>
         <p className="ingredientes">{producto.ingredientes}</p>
         <div className="cardRowCS">
           <div className="imagenCS btn">
             <img src={producto.imagen} alt={nombreMostrar} loading="lazy" onClick={handleAgregar}/>
           </div>
           <div className="cardColumnCS m-3">
-            <p className="precio">${(producto.precio)}</p>
+            <p className="precio">{fmtPesos(producto.precio)}</p>
             <button type='button' className='btn btn-success' onClick={handleAgregar}>
               Agregar al pedido
             </button>

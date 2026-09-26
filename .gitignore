@@ -35,3 +35,7 @@ PLAN A FUTURO.md
 InsertarRegistros.jsx
 # Config local de Obsidian (el vault de docs/ sí se versiona, su UI no)
 docs/.obsidian/
+
+# Exports del sistema viejo para Estadisticas. NUNCA en public/: todo lo que va ahi
+# se copia al build y el hosting lo sirve sin sesion (era el P0 del 15-09-2026).
+datos-estadisticas/

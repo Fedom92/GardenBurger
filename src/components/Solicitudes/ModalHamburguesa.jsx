@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { CartContext } from '../../context/CartContext';
+import { fmtPesos } from "../../Utils/formato";
 
 export const ModalHamburguesa = () => {
   const {
@@ -76,7 +77,7 @@ export const ModalHamburguesa = () => {
                     >
                       <div className="d-flex justify-content-between align-items-center w-100">
                         <span className="fw-bold fs-5">{tipo}</span>
-                        <span className="fw-bold fs-5">${variante.precio}</span>
+                        <span className="fw-bold fs-5">{fmtPesos(variante.precio)}</span>
                       </div>
                     </button>
                   );

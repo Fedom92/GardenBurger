@@ -40,24 +40,26 @@ const Cocina = () => {
                             </ul>
                         </div>
 
+                        {/* Las dos solapas quedan MONTADAS y la inactiva se oculta con
+                            CSS. Con el montaje condicional se desmontaba el listener de
+                            la otra: el contador "En Espera (N)" quedaba congelado y el
+                            cocinero no veía entrar pedidos nuevos mientras estaba en
+                            Cocinando. No cuesta lecturas de más — los dos listeners
+                            hacen falta igual para los contadores. */}
                         <div className="tab-content">
-                            {activeTab === 'espera' && (
-                                <div className="tab-pane fade show active" role="tabpanel">
-                                    <PedidosEspera
-                                        onCountChange={setPedidosEsperaCount}
-                                        onMandarACocinar={() => { setActiveTab('cocinando') }}
-                                    />
-                                </div>
-                            )}
+                            <div className={`tab-pane fade show active ${activeTab === 'espera' ? '' : 'd-none'}`} role="tabpanel">
+                                <PedidosEspera
+                                    onCountChange={setPedidosEsperaCount}
+                                    onMandarACocinar={() => { setActiveTab('cocinando') }}
+                                />
+                            </div>
 
-                            {activeTab === 'cocinando' && (
-                                <div className="tab-pane fade show active" role="tabpanel">
-                                    <PedidosCocinando
-                                        onCountChange={setPedidosCocinandoCount}
-                                        onVolverAEspera={() => setActiveTab('espera')}
-                                    />
-                                </div>
-                            )}
+                            <div className={`tab-pane fade show active ${activeTab === 'cocinando' ? '' : 'd-none'}`} role="tabpanel">
+                                <PedidosCocinando
+                                    onCountChange={setPedidosCocinandoCount}
+                                    onVolverAEspera={() => setActiveTab('espera')}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

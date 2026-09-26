@@ -23,7 +23,6 @@ const MODULOS_POR_ROL = {
 
 const Navigation = () => {
     const [isActive, setIsActive] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [openConfig, setOpenConfig] = useState(false);
     const [openEstadisticas, setOpenEstadisticas] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -37,7 +36,6 @@ const Navigation = () => {
     const handleLogout = async () => {
         try {
             await logout();
-            localStorage.setItem("rol", JSON.stringify(null));
             navigate("/");
         } catch (e) {
             console.error("handleLogout Navigation.jsx" + e.message)
@@ -61,8 +59,6 @@ const Navigation = () => {
     };
 
     useEffect(() => {
-        setIsLoading(true);
-
         const rutasQueAbrenSubmenu = ["/miPerfil", "/admin"];
         setOpenConfig(rutasQueAbrenSubmenu.includes(location.pathname));
 
@@ -117,8 +113,7 @@ const Navigation = () => {
                         <img src={logo} alt="profile" className={isActive ? "img-barraNav-inactive d-none d-md-block" : "img-barraNav"} />
                     </div>
                 </header>
-                {isLoading && (
-                    <>
+                <>
                         {puedeVer("productos") && (
                             <div className="sidebar-title">
                                 <Link to="/productos" className="text-decoration-none link-light"><Nav title="Productos" Icon={FaCartPlus} /></Link>
@@ -213,8 +208,7 @@ const Navigation = () => {
                             <Link to="/" className="text-decoration-none link-light" onClick={confirmLogout}><Nav title="Salir" Icon={FaSignOutAlt} /></Link>
                         </div>
 
-                    </>
-                )}
+                </>
             </div>
         </NavigationContext.Provider>
     );

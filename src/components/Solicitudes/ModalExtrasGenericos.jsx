@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { CartContext } from '../../context/CartContext';
+import { fmtPesos } from "../../Utils/formato";
 
 export const ModalExtrasGenericos = () => {
   const {
@@ -51,7 +52,7 @@ export const ModalExtrasGenericos = () => {
                   style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
                 /> */}
                 <h6 className="mt-2">{productoEnProceso.descripcion}</h6>
-                <p className="text-white">${productoEnProceso.precio}</p>
+                <p className="text-white">{fmtPesos(productoEnProceso.precio)}</p>
               </div>
               
               {extrasGenericos.length > 0 ? (
@@ -104,7 +105,7 @@ export const ModalExtrasGenericos = () => {
                                     )}
                                   </div>
                                   <div className="text-white fw-bold">
-                                    ${extra.precio}
+                                    {fmtPesos(extra.precio)}
                                   </div>
                                 </div>
                               </div>
@@ -137,7 +138,7 @@ export const ModalExtrasGenericos = () => {
                     <div className="text-white small">Precio base</div>
                   </div>
                   <div className="text-white fw-bold">
-                    ${productoEnProceso.precio}
+                    {fmtPesos(productoEnProceso.precio)}
                   </div>
                 </div>
                 
@@ -147,7 +148,7 @@ export const ModalExtrasGenericos = () => {
                     {extrasGenericosSeleccionados.map((extra) => (
                       <div key={extra.id} className="d-flex justify-content-between align-items-center small bg-secondary">
                         <span>+ {extra.descripcion}</span>
-                        <span className="text-white">+${extra.precio}</span>
+                        <span className="text-white">+{fmtPesos(extra.precio)}</span>
                       </div>
                     ))}
                   </>
@@ -157,7 +158,7 @@ export const ModalExtrasGenericos = () => {
                 <div className="d-flex justify-content-between align-items-center bg-secondary text-dark">
                   <strong>Total:</strong>
                   <strong className="text-dark fs-5">
-                    ${(productoEnProceso.precio + extrasGenericosSeleccionados.reduce((sum, extra) => sum + extra.precio, 0))}
+                    {fmtPesos(productoEnProceso.precio + extrasGenericosSeleccionados.reduce((sum, extra) => sum + extra.precio, 0))}
                   </strong>
                 </div>
               </div>

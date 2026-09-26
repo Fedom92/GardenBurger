@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { query, getDocs, where, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db, colSucursal, docSucursal } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
@@ -10,8 +10,13 @@ import { getResumenOperation } from "../pos_hooks/useResumenDiario";
 import { quitarAcentos } from "../../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../../Utils/fechaComercial";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
+import { fmtPesos } from "../../../Utils/formato";
 
 const CAMPOS_BUSQUEDA = ["telefono", "codigo", "direccion"];
+
+// Un código de ticket es "42-JD": el secuencial de la sucursal y las iniciales
+// del cajero. El contador nunca se reinicia, así que el código es único.
+const ES_CODIGO = /^\d+-\w+$/;
 
 const BuscarPedido = ({ isOpen, onClose }) => {
     const [pedidos, setPedidos] = useState([]);
@@ -21,31 +26,66 @@ const BuscarPedido = ({ isOpen, onClose }) => {
     // Eliminar descuenta del arqueo; `isLoading` es del buscador y no cubre esto.
     const { procesando: eliminando, ejecutar } = useAccionUnica();
     const { userData } = useAuth();
+    // Eliminar un ticket descuenta del arqueo, y la regla del negocio es que lo
+    // hace UNA sola persona por sucursal: el encargado, al fiscalizar el cierre.
+    // Estaba abierto a cualquier cajero solo porque el modal vive dentro de Caja.
+    const puedeEliminar = userData?.rol === process.env.REACT_APP_encargado;
 
-    // Función para buscar, entre los pedidos de hoy, por teléfono, código o dirección.
-    // No filtra por estado: el cajero tiene que poder ver el ticket en cualquier instancia
-    // —incluso ya eliminado— y eliminarlo desde acá sin volver a buscar en otro modal.
+    // La jornada se trae UNA vez por apertura del modal y las búsquedas siguientes
+    // filtran sobre eso. Antes cada búsqueda releía la jornada entera: con ~130
+    // pedidos por noche y 15-20 búsquedas, era el mayor costo recurrente de la
+    // Caja. Cerrar y reabrir F3 vuelve a traer, así que un pedido recién cobrado
+    // aparece.
+    const jornadaEnMemoria = useRef(null);
+
+    const traerJornada = async () => {
+        if (jornadaEnMemoria.current) return jornadaEnMemoria.current;
+
+        const { inicio, fin } = getRangoJornada();
+        const q = query(
+            colSucursal("pedidos"),
+            where("timestamp", ">=", inicio),
+            where("timestamp", "<=", fin),
+            orderBy("timestamp", "desc")
+        );
+        const snap = await getDocs(q);
+        jornadaEnMemoria.current = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return jornadaEnMemoria.current;
+    };
+
+    // Busca por teléfono, código o dirección dentro de la jornada. No filtra por
+    // estado: el cajero tiene que poder ver el ticket en cualquier instancia
+    // —incluso ya eliminado— y eliminarlo desde acá sin abrir otro modal.
     const buscarPedidos = async () => {
         setIsLoading(true);
         setErrorBusqueda("");
         setPedidos([]);
 
         try {
-            const { inicio, fin } = getRangoJornada();
-            const pedidosCollection = colSucursal("pedidos");
-            const q = query(
-                pedidosCollection,
-                where("timestamp", ">=", inicio),
-                where("timestamp", "<=", fin),
-                orderBy("timestamp", "desc")
+            const termino = busqueda.trim();
+            let candidatos;
+
+            if (ES_CODIGO.test(termino)) {
+                // Consulta directa: 1 lectura en vez del barrido de la jornada.
+                // Como no lleva el filtro de fecha, se acota acá: F3 es la
+                // herramienta del cajero, que trabaja el día. Un ticket de otra
+                // jornada lo gestionan encargado y admin desde su propia pantalla.
+                const snap = await getDocs(query(colSucursal("pedidos"), where("codigo", "==", termino)));
+                const { inicio, fin } = getRangoJornada();
+                candidatos = snap.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(p => {
+                        const t = p.timestamp?.toDate?.();
+                        return t && t >= inicio && t <= fin;
+                    });
+            } else {
+                candidatos = await traerJornada();
+            }
+
+            const normalizado = quitarAcentos(termino);
+            const pedidosEncontrados = candidatos.filter(
+                p => CAMPOS_BUSQUEDA.some(campo => quitarAcentos(String(p[campo] ?? "")).includes(normalizado))
             );
-
-            const querySnapshot = await getDocs(q);
-            const termino = quitarAcentos(busqueda.trim());
-
-            const pedidosEncontrados = querySnapshot.docs
-                .map(doc => ({ id: doc.id, ...doc.data() }))
-                .filter(p => CAMPOS_BUSQUEDA.some(campo => quitarAcentos(String(p[campo] ?? "")).includes(termino)));
 
             if (pedidosEncontrados.length === 0) {
                 setErrorBusqueda("No se encontraron pedidos en la jornada de hoy.");
@@ -62,6 +102,10 @@ const BuscarPedido = ({ isOpen, onClose }) => {
 
     // Función para eliminar pedido (cambiar estado a ELIMINADO)
     const eliminarPedido = (pedido) => ejecutar(async () => {
+        // El botón ya no se muestra a un cajero, pero la función es lo que
+        // realmente escribe: sin esto alcanza con llamarla desde la consola.
+        if (!puedeEliminar) return;
+
         try {
             const result = await Swal.fire({
                 title: '¿Estás seguro?',
@@ -91,6 +135,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                         envio: pedido.envio,
                         carrito: pedido.carrito,
                         descontar: true,
+                        timestampPedido: pedido.timestamp,
                     });
                     const batch = writeBatch(db);
                     batch.update(pedidoRef, updateData);
@@ -102,8 +147,15 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                     await batch.commit();
                 }
 
-                // Actualizar el pedido local
+                // Actualizar el pedido local, y también la jornada cacheada: si no,
+                // la siguiente búsqueda dentro del mismo modal lo mostraría otra
+                // vez con su estado anterior y volvería a ofrecer Eliminar.
                 setPedidos(prev => prev.map(p => p.id === pedido.id ? { ...p, estado: ESTADOS.ELIMINADO } : p));
+                if (jornadaEnMemoria.current) {
+                    jornadaEnMemoria.current = jornadaEnMemoria.current.map(
+                        p => p.id === pedido.id ? { ...p, estado: ESTADOS.ELIMINADO } : p
+                    );
+                }
 
                 Swal.fire({
                     title: '¡Eliminado!',
@@ -128,6 +180,9 @@ const BuscarPedido = ({ isOpen, onClose }) => {
         setPedidos([]);
         setBusqueda("");
         setErrorBusqueda("");
+        // Se suelta la jornada cacheada: la próxima apertura la vuelve a traer y
+        // así aparecen los pedidos cobrados mientras el modal estaba cerrado.
+        jornadaEnMemoria.current = null;
         onClose();
     };
 
@@ -220,7 +275,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                             </p>
                                             {pedido.metodoPago === "%" && (
                                                 <p className="mb-2">
-                                                    <strong>Monto Efectivo:</strong> ${pedido.montoEfectivo || 0}
+                                                    <strong>Monto Efectivo:</strong> {fmtPesos(pedido.montoEfectivo)}
                                                 </p>
                                             )}
                                         </div>
@@ -232,10 +287,10 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                 </span>
                                             </p>
                                             <p className="mb-2">
-                                                <strong>Envío:</strong> {pedido.envio?.zona_envio} - ${pedido.envio?.costo_envio}
+                                                <strong>Envío:</strong> {pedido.envio?.zona_envio} - {fmtPesos(pedido.envio?.costo_envio)}
                                             </p>
                                             <p className="mb-2">
-                                                <strong>Total:</strong> ${pedido.total}
+                                                <strong>Total:</strong> {fmtPesos(pedido.total)}
                                             </p>
 
                                             <div className="mt-3 d-flex flex-column gap-2">
@@ -250,7 +305,14 @@ const BuscarPedido = ({ isOpen, onClose }) => {
 
                                                 {/* Un CANCELADO que vino de rechazar un MP ya descontó el arqueo:
                                                     eliminarlo lo descontaría por segunda vez. */}
-                                                {![ESTADOS.ELIMINADO, ESTADOS.CANCELADO].includes(pedido.estado) ? (
+                                                {[ESTADOS.ELIMINADO, ESTADOS.CANCELADO].includes(pedido.estado) ? (
+                                                    <div className="alert alert-secondary mb-0 p-2 w-75" role="alert">
+                                                        <small className="fw-bold">
+                                                            <i className="fa fa-info-circle me-1"></i>
+                                                            Ya está {pedido.estado === ESTADOS.ELIMINADO ? "eliminado" : "cancelado"}
+                                                        </small>
+                                                    </div>
+                                                ) : puedeEliminar ? (
                                                     <button
                                                         className="btn btn-danger btn-sm w-75 fw-bold"
                                                         onClick={() => eliminarPedido(pedido)}
@@ -259,10 +321,10 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                         <i className="fa fa-trash me-1"></i> Eliminar Pedido
                                                     </button>
                                                 ) : (
-                                                    <div className="alert alert-secondary mb-0 p-2 w-75" role="alert">
-                                                        <small className="fw-bold">
-                                                            <i className="fa fa-info-circle me-1"></i>
-                                                            Ya está {pedido.estado === ESTADOS.ELIMINADO ? "eliminado" : "cancelado"}
+                                                    <div className="alert alert-light border mb-0 p-2 w-75" role="alert">
+                                                        <small className="text-body-secondary">
+                                                            <i className="fa fa-lock me-1"></i>
+                                                            Solo el encargado elimina tickets
                                                         </small>
                                                     </div>
                                                 )}

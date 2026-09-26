@@ -22,8 +22,11 @@ export const calcularHoras = (entrada, salida) => {
     const hasta = aMinutos(salida);
     if (desde === null || hasta === null) return 0;
 
+    // Cruce de medianoche: 02:00 se lee como "26:00", asi 19:00 -> 02:00 son 7 h
+    // y no -17. La comparacion es ESTRICTA: entrada igual a salida son 0 horas,
+    // no 24 — nadie trabaja un dia entero de corrido.
     let minutos = hasta - desde;
-    if (minutos <= 0) minutos += 24 * 60;
+    if (minutos < 0) minutos += 24 * 60;
 
     return Math.round((minutos / 60) * 100) / 100;
 };
@@ -66,9 +69,14 @@ export const agregarLiquidacion = (docsJornada = []) => {
 
     for (const jornada of docsJornada) {
         for (const [empleadoId, registro] of Object.entries(jornada.registros || {})) {
-            if (registro.ausente) continue;
-
             const horas = Number(registro.horas) || 0;
+
+            // Sin horas no se liquida nada, y tampoco cuenta como dia trabajado.
+            // Pasa cuando alguien quedo marcado presente pero nunca se le cargo
+            // la salida: antes sumaba un dia con 0 horas, que inflaba la columna
+            // "Dias" de la liquidacion sin que se notara.
+            if (registro.ausente || horas === 0) continue;
+
             const valorHora = Number(registro.valorHora) || 0;
             const descuento = Number(registro.descuento) || 0;
 

@@ -125,7 +125,10 @@ function Section({ title, children }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Estadisticas() {
-    const { ventas, pagos, loading } = useSheetData();
+    // Los TSV salen de `privado/estadisticas` en Storage, con regla de admin.
+    // Antes se leían de `public/CSV/`, que el hosting servía sin sesión con la
+    // base entera de clientes adentro.
+    const { ventas, pagos, loading, error: errorCarga } = useSheetData();
 
     // ── Filtros ──
     const [sucursal, setSucursal] = useState("TODAS");
@@ -486,6 +489,19 @@ export default function Estadisticas() {
                 <span className="spinner-border text-info" role="status">
                     <span className="visually-hidden">Loading...</span>
                 </span>
+            </div>
+        );
+    }
+
+    // Los exports los sube el admin a mano: si faltan, o si el claim de admin
+    // todavia no esta en su token, el mensaje dice exactamente que hacer.
+    if (errorCarga) {
+        return (
+            <div className="est-wrap container-fluid d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
+                <div className="est-card p-4" style={{ maxWidth: "560px" }}>
+                    <h1 className="est-title fw-bolder mb-3">Estadísticas</h1>
+                    <div className="alert alert-warning mb-0" role="alert">{errorCarga}</div>
+                </div>
             </div>
         );
     }

@@ -8,6 +8,7 @@ import { FaCartPlus } from 'react-icons/fa';
 import { Link } from "react-router-dom";
 import { ESTADOS, ENVIOS_LOCALES, FLUJO_PUB_ESTADOS, getCurrentStepIndex } from '../../Utils/Constantes.jsx';
 import Footer from './Footer';
+import { fmtPesos } from "../../Utils/formato";
 
 export const PaginaDetalle = () => {
   const { sucursal, id } = useParams(); // Sucursal e ID del pedido en la URL
@@ -130,14 +131,14 @@ export const PaginaDetalle = () => {
                     </div>
                     <div className='tituloVP'>{producto.descripcion} x{producto.cantidad}</div>
 
-                    <div className="precioVP">${(producto.precio * producto.cantidad)}</div>
+                    <div className="precioVP">{fmtPesos(producto.precio * producto.cantidad)}</div>
                   </div>
                 )
               }
               )}
 
               <div className='d-flex m-2 gap-2 precioVP'>Total:
-                <div>${pedido.total}</div>
+                <div>{fmtPesos(pedido.total)}</div>
               </div>
             </div>
 

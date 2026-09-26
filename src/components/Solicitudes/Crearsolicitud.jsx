@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import '../../style/Main.css';
 import { CATEGORIAS_HAMBURGUESA, ENVIOS_LOCALES, ESTADOS } from "../../Utils/Constantes";
 import Footer from "./Footer";
+import { fmtPesos } from "../../Utils/formato";
 
 
 const CrearSolicitud = () => {
@@ -68,7 +69,7 @@ const CrearSolicitud = () => {
         : `🏪 Retiro en local`}
 
     🔎 *Ver detalle pedido*
-    https://gardenburger.com.ar/ver-pedido/${sucursal}/${newDocRef.id}
+    ${window.location.origin}/ver-pedido/${sucursal}/${newDocRef.id}
     `;
 
     const mensajeCodificado = encodeURIComponent(mensaje.trim());
@@ -176,7 +177,7 @@ const CrearSolicitud = () => {
               No hay categorías o productos disponibles
             </div>
           ) : (
-            <div className="accordion accordionCS mt-3" id="accordionCategorias" key={`accordion-${carrito.reduce((sum, p) => sum + (p.cantidad || 1), 0)}`}>
+            <div className="accordion accordionCS mt-3" id="accordionCategorias">
 
               {/* OFERTAS */}
               {productosOferta.length > 0 && (
@@ -310,7 +311,7 @@ const CrearSolicitud = () => {
                       </>
                     )}
                   </div>
-                  <div className="precioVP">${(producto.precio * producto.cantidad)}</div>
+                  <div className="precioVP">{fmtPesos(producto.precio * producto.cantidad)}</div>
                   <button type="button" className="btn btn-danger" onClick={() => eliminar(producto)}>❌</button>
                 </div>
               )
@@ -319,11 +320,11 @@ const CrearSolicitud = () => {
             {carrito.length > 0 ?
               <div className="d-flex flex-column align-items-center">
                 <button type="button" className="btn btn-danger" onClick={() => vaciarCarrito()}>Vaciar carrito</button>
-                <div className="m-2 fw-bold">Total: ${pagoSeleccionado === "MP" ? totalConRecargo : total}</div>
+                <div className="m-2 fw-bold">Total: {fmtPesos(pagoSeleccionado === "MP" ? totalConRecargo : total)}</div>
 
                 <form className='formulario w-75' onSubmit={handleSubmit(comprar)}>
                   <input type="text" placeholder='Ingrese su nombre' {...register("nombre", { required: true })} required />
-                  <input type="text" id="telefono" placeholder='Teléfono (sin 0 y sin 15)...' {...register("telefono")} required
+                  <input type="text" id="telefono" maxLength={10} placeholder='Teléfono (sin 0 y sin 15)...' {...register("telefono", { minLength: 10 })} required
                     onInput={(e) => {
                       e.target.value = e.target.value.replace(/\D/g, '');
                     }}

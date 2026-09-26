@@ -193,7 +193,6 @@ const CrearEmpleado = (props) => {
                     <option value={process.env.REACT_APP_cajero}>Cajero</option>
                     <option value={process.env.REACT_APP_cocina}>Cocina</option>
                     <option value={process.env.REACT_APP_delivery}>Delivery</option>
-                    <option value={process.env.REACT_APP_contador}>Contador</option>
                     <option value={process.env.REACT_APP_atp}>ATP</option>
                   </select>
                 </div>

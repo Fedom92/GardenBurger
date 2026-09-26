@@ -1,10 +1,12 @@
 ---
 tags: [gardenburger, negocio, modulo]
+aliases: [Sueldos, Horas trabajadas, Liquidacion]
+actualizado: 2026-09-14
 ---
 
 # Asistencias y liquidación
 
-← [[GardenBurger]] · relacionado: [[Modelo de datos Firestore]], [[Reglas de negocio#Jornada comercial]]
+← [[GardenBurger]] · relacionado: [[Modelo de datos Firestore]], [[Reglas de negocio#Jornada comercial]] · vocabulario en [[Glosario]]
 
 Registro de horas trabajadas y liquidación de sueldos. Implementado en **sep-2026**.
 

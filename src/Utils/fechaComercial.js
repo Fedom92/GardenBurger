@@ -27,22 +27,29 @@ export const ahoraServidor = () => moment(Date.now() + offsetMs);
 
 export const HORA_CIERRE = Number(process.env.REACT_APP_horaCierre);
 
-// Jornada comercial a la que pertenece una fecha cualquiera: un pedido de las 00:30
-// es de la noche anterior. Version pura de getFechaComercial() para datos historicos,
-// donde la hora ya viene en el registro y no hace falta consultar al servidor.
-export const getJornadaDeFecha = (date) => {
-    const j = new Date(date);
-    if (j.getHours() < HORA_CIERRE) j.setDate(j.getDate() - 1);
-    j.setHours(0, 0, 0, 0);
-    return j;
+// Jornada comercial a la que pertenece una fecha cualquiera, en DD-MM-YYYY: el
+// mismo formato que usa el id de los documentos de resumenDiario y asistencias.
+// Un pedido de las 00:30 es de la noche anterior.
+//
+// Existe aparte de getFechaComercial() porque el arqueo de un pedido tiene que
+// ir a la jornada DEL PEDIDO y no a la de ahora: eliminar hoy un pedido de ayer
+// descontaba del dia equivocado.
+export const getFechaComercialDe = (fecha) => {
+    const m = moment(fecha);
+    if (m.hour() < HORA_CIERRE) m.subtract(1, 'day');
+    return m.format("DD-MM-YYYY");
 };
 
-export const getFechaComercial = () => {
-    const ahora = ahoraServidor();
-    if (ahora.hour() < Number(process.env.REACT_APP_horaCierre)) {
-        return ahora.subtract(1, 'day').format("DD-MM-YYYY");
-    }
-    return ahora.format("DD-MM-YYYY");
+export const getFechaComercial = () => getFechaComercialDe(ahoraServidor());
+
+// Lo mismo pero devolviendo un Date al inicio de la jornada, para agrupar datos
+// historicos (Estadisticas). Va por moment y no por Date nativo: Date lee la
+// zona horaria de la PC, y todo el resto del modulo trabaja en hora argentina
+// porque index.js hace moment.tz.setDefault().
+export const getJornadaDeFecha = (date) => {
+    const m = moment(date);
+    if (m.hour() < HORA_CIERRE) m.subtract(1, 'day');
+    return m.startOf('day').toDate();
 };
 
 export const getRangoJornada = () => {

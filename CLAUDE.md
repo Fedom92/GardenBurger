@@ -8,7 +8,11 @@ SPA en React 18 (CRA) + Firebase 9.23.0 modular.
 
 **`docs/` es la única fuente de documentación del proyecto**, y también es un vault de Obsidian.
 Antes de recorrer `src/`, abrir **`docs/GardenBurger.md`**: tiene una tabla "vengo a… → leer esto"
-que dice qué nota leer según la tarea. Leer *una* nota, no las doce.
+que dice qué nota leer según la tarea. Leer *una* nota, no las catorce.
+
+Si el término no se entiende —"arqueo", "solicitud", "jornada comercial", "ATP"—, está en
+**`docs/Glosario.md`**: una línea por término y el enlace a la nota que lo desarrolla. Las
+auditorías viven aparte, en `docs/auditorias/`: son fotos fechadas, no contexto vivo.
 
 No hay documentación en ningún otro lado. Si algo falta, la nota correspondiente va actualizada —
 no se crea un `.md` suelto.
@@ -48,6 +52,9 @@ ves una alternativa mejor, proponela. El detalle y el porqué están en el vault
   Firebase, y ser admin se resuelve con un custom claim en el token, no con una lectura.
 - Tablas con `TablaGenerica`, montos con `fmtPesos`, confirmaciones destructivas con `Swal.fire`.
   Un `console.error` sin aviso visible al usuario cuenta como bug.
-- Los archivos son **CRLF**: cualquier patrón multilínea necesita `\r?\n`.
+- **Los finales de línea están mezclados** en el working tree, y da igual: `core.autocrlf=true`
+  normaliza todo a LF al commitear, así que el diff sale limpio igual. Pero un patrón multilínea
+  tiene que tolerar los dos (`\r?\n`) o detectar el del archivo antes de reemplazar: asumir CRLF
+  hace que el reemplazo falle en silencio.
 - Las sugerencias, alternativas y mejoras son siempre bienvenidas. Solo se pide traer el motivo y
   el costo en lecturas de Firestore junto con la propuesta.

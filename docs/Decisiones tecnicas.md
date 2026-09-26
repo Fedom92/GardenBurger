@@ -1,5 +1,7 @@
 ---
 tags: [gardenburger, decisiones, adr]
+aliases: [ADR, Por que esta asi]
+actualizado: 2026-09-14
 ---
 
 # Decisiones técnicas
@@ -79,6 +81,38 @@ usan las pantallas. El CSS llega con `Login` y `Navigation`, que siguen en el ch
 **Consecuencia**: la primera visita a cada pantalla muestra el loader un instante mientras baja su
 chunk; las siguientes no (queda cacheado). `Login` sigue eager a propósito: es la landing del staff
 y no tiene sentido diferirla.
+
+## Los TSV de Estadísticas viven en una carpeta privada de Storage
+
+**Qué**: `ventas.tsv` y `pagos.tsv` están en `privado/estadisticas/` de Storage, con
+`allow read, write: if esAdmin()`. Los sube el admin a mano desde la Consola de Firebase, y
+`Estadisticas` los baja al montar. Antes vivían en `public/CSV/` y se leían con `fetch`.
+
+**Por qué**: todo lo que está en `public/` **se copia al build y el hosting lo sirve sin sesión**.
+`pagos.tsv` tiene 43.039 filas con nombre, dirección, entre calles y teléfono de cada pedido, y
+respondía 200 a cualquiera que supiera la URL. No era una regla mal escrita: era un link.
+
+**Por qué no un selector de archivos**: se probó con un `<input type="file">` —cero
+infraestructura, los archivos nunca salían de la PC— y se descartó porque obligaba al admin a
+elegir los dos archivos cada vez que abría la pantalla.
+
+**Y los 10,5 MB no se pagan en cada apertura**: Storage manda un ETag, así que el navegador
+revalida con `If-None-Match` y recibe un **304 sin cuerpo** (verificado el 26-09-2026). Se
+descartaron el gzip y un `Cache-Control` propio por eso: no hacían falta. Cuando se re-exportan los
+TSV el ETag cambia y el navegador baja los nuevos solo, sin riesgo de datos viejos.
+
+> [!important] `getBytes()`, nunca la URL de descarga
+> Las URL con token de descarga que devuelve `getDownloadURL()` **saltean las reglas**: es lo que
+> hace que las fotos de producto se vean en el menú público sin sesión. Para un archivo privado eso
+> sería el mismo agujero de antes con otra forma. `getBytes()` va por el SDK con el token del
+> usuario y sí pasa por `allow read: if esAdmin()`.
+
+> [!danger] La regla general, que vale para cualquier archivo
+> **`public/` es público.** No hay reglas ahí, no hay sesión, no hay App Check: es un servidor de
+> archivos. Nada con datos de nadie va en esa carpeta.
+
+**Consecuencia**: si los archivos no están en Storage, o si el admin tiene el rol pero todavía no
+el claim en su token, la pantalla dice exactamente eso y qué hacer.
 
 ## `moment-timezone` con la tabla de zonas recortada
 

@@ -1,7 +1,7 @@
 ---
 tags: [moc, gardenburger]
-aliases: [GardenBurger MOC, Indice GardenBurger]
-actualizado: 2026-09-14
+aliases: [GardenBurger MOC, Indice GardenBurger, Inicio]
+actualizado: 2026-09-23
 ---
 
 # GardenBurger — Mapa del proyecto
@@ -23,10 +23,17 @@ Delivery, asistencias y sueldos, menú online público y panel de administració
 
 ## Por dónde empezar
 
+> [!tip] Si es tu primera vez acá
+> Leé **[[Glosario]]** y mirá **[[Mapa del sistema.canvas|el mapa del sistema]]**. Diez minutos, y
+> el resto de las notas se entiende de corrido. El vault usa "arqueo", "solicitud" y "jornada
+> comercial" como si fueran obvios, y no lo son.
+
 Según qué vengas a hacer, con esto alcanza:
 
 | Vengo a… | Leer |
 |---|---|
+| Entender las palabras que usa todo el mundo | [[Glosario]] |
+| Ver el sistema de un vistazo | [[Mapa del sistema.canvas\|Mapa del sistema]] ← canvas: el pipeline y qué pantalla toca cada estado |
 | Entender el negocio | [[Reglas de negocio]] → [[Flujo del pedido]] |
 | Tocar la Caja o Cocina | [[Flujo del pedido]] + [[Reglas de negocio]] + [[Mapa de operaciones Firestore]] |
 | Cambiar el `estado` de un pedido | [[Modelo de estados]] ← transiciones, quién las dispara, qué le hace al arqueo |
@@ -35,7 +42,7 @@ Según qué vengas a hacer, con esto alcanza:
 | Sueldos y horas | [[Asistencias y liquidacion]] |
 | Entender por qué algo está "raro" | [[Decisiones tecnicas]] ← **leer antes de "arreglar" nada** |
 | Saber qué falta | [[Deuda tecnica]] |
-| Ver el diagnóstico completo | [[Auditoria 2026-09]] ← foto al 09-09-2026, con evidencia |
+| Ver el diagnóstico completo | [[Auditoria 2026-09-15]] ← la última, con la evidencia |
 
 ## Las cinco cosas que hay que saber sí o sí
 
@@ -66,16 +73,33 @@ Según qué vengas a hacer, con esto alcanza:
 
 ## Todas las notas
 
-- [[Arquitectura y rutas]] — rutas, guards, roles, providers, multi-sucursal
-- [[Modelo de datos Firestore]] — colecciones, campos reales, reglas de seguridad
-- [[Reglas de seguridad]] — el porqué de `firestore.rules` y `storage.rules`
+**Entrada**
+
+- [[Glosario]] — las palabras del negocio, con el enlace a la nota que desarrolla cada una
+- [[Mapa del sistema.canvas|Mapa del sistema]] — el pipeline en un canvas, con los nodos enlazados
+
+**El negocio y el pedido**
+
+- [[Reglas de negocio]] — jornada, combos, métodos de pago, horario especial
 - [[Flujo del pedido]] — el recorrido feliz: quién escribe qué en cada paso
 - [[Modelo de estados]] — el pipeline como máquina de estados, y las transiciones que no deberían existir
-- [[Reglas de negocio]] — jornada, combos, métodos de pago, horario especial
 - [[Asistencias y liquidacion]] — horas trabajadas y sueldos
+
+**Los datos**
+
+- [[Modelo de datos Firestore]] — colecciones y campos reales
+- [[Reglas de seguridad]] — el porqué de `firestore.rules` y `storage.rules`
 - [[Mapa de operaciones Firestore]] — cada lectura y escritura, con su costo
+
+**El código**
+
+- [[Arquitectura y rutas]] — rutas, guards, roles, providers, multi-sucursal
 - [[Mapa de archivos]] — qué hace cada archivo, sin abrirlo
-- [[Decisiones tecnicas]] — el porqué de lo que parece raro
-- [[Deuda tecnica]] — lo que queda abierto, y por qué decisión
 - [[Convenciones y preferencias]] — cómo escribir código en este repo
-- [[Auditoria 2026-09]] — auditoría integral de septiembre 2026 (foto, no documento vivo)
+- [[Decisiones tecnicas]] — el porqué de lo que parece raro
+
+**Estado del proyecto**
+
+- [[Deuda tecnica]] — lo que queda abierto, y por qué decisión ← **el documento vivo**
+- `auditorias/` — fotos fechadas, no se actualizan:
+  [[Auditoria 2026-09-15]] (la última) · [[Auditoria 2026-09]] (la primera)

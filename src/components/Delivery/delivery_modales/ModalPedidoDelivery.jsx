@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { SUBESTADOS_MOTODELIVERY } from "../../../Utils/Constantes";
+import { fmtPesos } from "../../../Utils/formato";
 
 const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDelivery, onMarcarEstado, procesando = false }) => {
     const [pagoRepartidorInput, setPagoRepartidorInput] = useState(pedido?.pagoRepartidorCon || "");
@@ -57,10 +58,10 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                         )}
                     </div>
                     <div className="col-md-6">
-                        <p className="mb-1"><strong>Total:</strong> ${p.total}</p>
+                        <p className="mb-1"><strong>Total:</strong> {fmtPesos(p.total)}</p>
                         <p className="mb-1"><strong>Método de pago:</strong> {p.metodoPago}</p>
                         <p className="mb-1"><strong>Zona:</strong> {p.envio?.zona_envio}</p>
-                        <p className="mb-1"><strong>Costo envío:</strong> ${p.envio?.costo_envio}</p>
+                        <p className="mb-1"><strong>Costo envío:</strong> {fmtPesos(p.envio?.costo_envio)}</p>
                     </div>
                 </div>
 

@@ -1,5 +1,7 @@
 ---
 tags: [gardenburger, convenciones]
+aliases: [Convenciones, Estilo de codigo]
+actualizado: 2026-09-14
 ---
 
 # Convenciones y preferencias
@@ -47,7 +49,10 @@ más simple.**
 - Tablas con **`TablaGenerica`**, sin excepción: ya resuelve búsqueda sin acentos, filtros,
   orden y paginación. Si una columna necesita mostrar un valor crudo (rol, slug de sucursal),
   **enriquecer la fila** con un campo legible en vez de escribir una tabla a mano.
-- Montos con **`fmtPesos`** de `Utils/formato.js`. Nunca `toLocaleString` suelto.
+- Montos con **`fmtPesos`** de `Utils/formato.js`, **sin excepciones en pantalla**. Las dos
+  únicas son deliberadas y están documentadas: `Estadisticas.jsx` (su `fmtN` no lleva guarda
+  `|| 0`, para que un dato faltante del TSV se vea como `NaN`) y `ModalMetricasDelivery.jsx`
+  (componente a rehacer).
 - **Nunca hardcodear** los valores de rol ni los estados: van por `process.env.REACT_APP_*` y por
   `ESTADOS` de `Constantes.jsx`.
 - Al crear un componente que use `pedidos`/`resumenDiario`/`asistencias`/`contadores`: helpers
@@ -107,7 +112,7 @@ Todas con prefijo `REACT_APP_`. **Nunca hardcodear sus valores.**
 | `REACT_APP_apiKey` … `appId` | config de Firebase |
 | `REACT_APP_gardenAppCheck` | site key de reCAPTCHA Enterprise |
 | `REACT_APP_appCheckDebug` | debug token para localhost |
-| `REACT_APP_admin`, `_encargado`, `_cajero`, `_cocina`, `_delivery`, `_atp`, `_contador` | valores de rol |
+| `REACT_APP_admin`, `_encargado`, `_cajero`, `_cocina`, `_delivery`, `_atp` | valores de rol |
 | `REACT_APP_recargoMP` | % de recargo de Mercado Pago |
 | `REACT_APP_horaAbre` / `_horaCierre` | jornada comercial (**19** / 2). El cierre a las 2 es margen: no se trabaja pasada la 1 |
 | `REACT_APP_celular` | teléfono del local para los links de WhatsApp |
@@ -130,6 +135,7 @@ automatizados por decisión: [[Deuda tecnica#Sin tests]]. Los source maps van ap
 
 Lo que queda por hacer en el proyecto:
 
-- Panel/Dashboard de estadísticas sobre datos reales (el actual lee TSV del sistema viejo).
-- Dashboard cross-sucursal para el super-admin, **solo sobre `resumenDiario`**.
+- Dashboard cross-sucursal para el admin, sobre `resumenDiario` de todas las sucursales — datos
+  del sistema nuevo, desde Firestore. **No reemplaza a `/estadisticas-viejas`**, que es el
+  histórico del sistema anterior y se queda.
 - Lo que queda abierto en [[Deuda tecnica]].

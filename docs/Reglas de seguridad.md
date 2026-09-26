@@ -1,5 +1,7 @@
 ---
 tags: [gardenburger, firestore, seguridad]
+aliases: [firestore.rules, storage.rules, Seguridad]
+actualizado: 2026-09-14
 ---
 
 # Reglas de seguridad
@@ -146,6 +148,17 @@ tomó esta solicitud"; el listener del modal actualiza el badge solo.
 **Lo que sigue sin validarse es el `estado`**: cualquier staff puede llevar un pedido de cualquier
 estado a cualquier otro. Ver [[Modelo de estados#Transiciones que el sistema permite y no debería]].
 
+## `public/` del repo no tiene nada que ver con las reglas
+
+La carpeta `public/` de Create React App **se copia tal cual al build**, y el hosting la sirve
+como archivos estáticos: sin sesión, sin reglas, sin App Check. No es Firebase.
+
+Ahí vivían los TSV de Estadísticas, con la base entera de clientes: era el P0 de la auditoría del
+15-09. Hoy están en `privado/estadisticas/` de Storage, con regla de admin. Ver
+[[Decisiones tecnicas#Los TSV de Estadísticas viven en una carpeta privada de Storage]].
+
+**Regla general: nada con datos de nadie va en `public/`.**
+
 ## Storage: `publico/`
 
 La carpeta `publico/` aloja `menu.json`, que genera el botón "Publicar Menú" de Productos.
@@ -155,6 +168,26 @@ Firestore. **La escritura es solo del admin**, con el mismo claim que Firestore.
 > [!note] La lectura del resto del bucket queda en "autenticado", a propósito
 > Las imágenes de producto se sirven por URL con token de descarga, que **saltea las reglas**: por
 > eso el menú público las muestra sin sesión aunque la regla pida autenticación.
+
+## Storage: `privado/`
+
+```
+match /privado/{ruta=**} {
+  allow read, write: if esAdmin();
+}
+```
+
+Ahí van los exports que consume Estadísticas. La app los lee con **`getBytes()` del SDK**, que pasa
+por esta regla; una URL de descarga la saltearía.
+
+Dos detalles que rompen si se tocan:
+
+- **`{ruta=**}` y no `{archivo}`**: la ruta real tiene dos segmentos
+  (`privado/estadisticas/pagos.tsv`) y un comodín de un solo segmento no la alcanza.
+- **El wildcard de abajo excluye `privado`**, porque las reglas se combinan con OR y su `read` para
+  cualquier staff le ganaría a este, que es solo admin. La exclusión usa un comodín de **un**
+  segmento (`{carpeta}`) para que sea un string comparable: con `{todo=**}` es un Path, y
+  `.matches()` sobre un Path es un error de tipo que hace **denegar** la regla en silencio.
 
 ## Storage: el resto del bucket solo acepta imágenes de hasta 5 MB
 

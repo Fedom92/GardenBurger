@@ -9,6 +9,23 @@ service firebase.storage {
       allow write: if esAdmin() && archivo == "menu.json";
     }
 
+    // Exports del sistema viejo que consume Estadisticas (ventas.tsv, pagos.tsv).
+    // Los sube el admin a mano desde la Consola de Firebase.
+    //
+    // Tienen nombre, direccion y telefono de 43.000 pedidos, asi que la lectura es
+    // SOLO del admin. Antes vivian en `public/CSV/` del repo: eso los copiaba al
+    // build y el hosting los servia sin sesion — cualquiera con el link se bajaba
+    // la base entera de clientes.
+    //
+    // La app los lee con getBytes() del SDK, que pasa por estas reglas. Una URL
+    // con token de descarga NO serviria: esas saltean las reglas.
+    //
+    // `{ruta=**}` y no `{archivo}`: la ruta real tiene dos segmentos
+    // (privado/estadisticas/pagos.tsv) y un solo comodin no la alcanzaria.
+    match /privado/{ruta=**} {
+      allow read, write: if esAdmin();
+    }
+
     // Imagenes de producto y demas. La LECTURA queda en autenticado a proposito:
     // las imagenes se sirven por URL con token de descarga, que saltea las reglas,
     // asi que el menu publico las muestra igual sin sesion.
@@ -18,8 +35,16 @@ service firebase.storage {
     // Es lo unico que se sube por esta via (productos/...); menu.json entra por la
     // regla de /publico, que se combina con OR. `delete` va aparte porque en un
     // borrado request.resource es null y esImagenValida() tiraria.
-    match /{allPaths=**} {
-      allow read: if request.auth != null;
+    // Excluye `privado/`: las reglas se combinan con OR, asi que sin esa
+    // exclusion este `read` mas laxo —cualquier staff autenticado— le ganaria al
+    // de arriba, que es solo admin. Mismo criterio que `pedidos` en
+    // firestore.rules.
+    //
+    // La carpeta va como comodin de UN segmento y no como `{todo=**}`: asi
+    // `carpeta` es un string y se puede comparar. Con `=**` es un Path, y
+    // `.matches()` sobre un Path es un error de tipo que hace denegar la regla.
+    match /{carpeta}/{ruta=**} {
+      allow read: if request.auth != null && carpeta != 'privado';
       allow create, update: if esAdmin() && esImagenValida();
       allow delete: if esAdmin();
     }

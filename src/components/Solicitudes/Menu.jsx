@@ -3,10 +3,8 @@ import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { fetchMenuPublico } from "../../Utils/menuPublico";
 import { fmtPesos } from "../../Utils/formato";
+import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
 import 'moment/locale/es';
-import { Card } from "./Card.jsx"
-import logo from '../../img/logo_negro3.png';
-import logoMobile from '../../img/logo_negro.webp';
 import './menu.css';
 
 
@@ -31,6 +29,9 @@ const Menu = () => {
 
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
+  // Vienen dentro de menu.json, así que el pie muestra las direcciones sin pagar
+  // una lectura de Firestore por visita.
+  const [sucursales, setSucursales] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const productosCollection = useRef(query(collection(db, "productos"), where("visible", "==", true)));
@@ -52,6 +53,9 @@ const Menu = () => {
         const menu = await fetchMenuPublico();
         setProductos(menu.productos);
         setCategorias(menu.categorias);
+        // `sucursales` recién se agregó al JSON: un menu.json publicado antes no
+        // la trae, y el pie simplemente no las muestra hasta que se republique.
+        setSucursales(menu.sucursales || []);
       } catch (errorMenu) {
         console.warn("menu.json no disponible, fallback a Firestore:", errorMenu);
         try {
@@ -73,12 +77,15 @@ const Menu = () => {
     return <p>Cargando...</p>;
   }
 
-  const categoriasEspeciales = ["SIMPLE", "DOBLE", "TRIPLE"];
+  // Las variantes salen de la constante compartida: acá estaban duplicadas y una
+  // categoría nueva habría que agregarla en dos lugares.
+  const categoriasEspeciales = CATEGORIAS_HAMBURGUESA;
+  const regexVariante = new RegExp(` (${CATEGORIAS_HAMBURGUESA.join("|")})$`);
 
   const hamburguesasObj = productos
     .filter(p => categoriasEspeciales.includes(p.categoria))
     .reduce((acum, product) => {
-      const descripcionSimple = product.descripcion.replace(/ (SIMPLE|DOBLE|TRIPLE)$/, "").trim();
+      const descripcionSimple = product.descripcion.replace(regexVariante, "").trim();
       if (!acum[descripcionSimple]) {
         acum[descripcionSimple] = { descripcion: descripcionSimple, ingredientes: product.ingredientes, carnes_precios: {} };
       }
@@ -149,8 +156,12 @@ const Menu = () => {
       </div>
 
       <div className="footer">
-        TODOS LOS COMBOS INCLUYEN PAPAS<br />
-        📍 Leonardo Da Vinci 4225
+        TODOS LOS COMBOS INCLUYEN PAPAS
+        {sucursales.map(s => (
+          <span key={s.id}>
+            <br />📍 {s.nombre}{s.direccion ? ` — ${s.direccion}` : ""}
+          </span>
+        ))}
       </div>
 
       <button className="pdf-button" onClick={exportarPDF}>Exportar a PDF</button>

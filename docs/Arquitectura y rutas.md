@@ -1,5 +1,7 @@
 ---
 tags: [gardenburger, arquitectura]
+aliases: [Rutas, Guards, Multi-sucursal]
+actualizado: 2026-09-14
 ---
 
 # Arquitectura y rutas

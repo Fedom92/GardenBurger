@@ -3,6 +3,7 @@ import { Modal } from "react-bootstrap";
 import { addDoc, collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase.js";
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
 
 // Las categorias vienen de Productos, que ya las leyo: este modal no hace ninguna
 // lectura propia (antes releia la coleccion entera al montar). Editar aca actualiza
@@ -53,33 +54,58 @@ const Categorias = ({ show, onHide, categorias, setCategorias, onCambio }) => {
     setError("");
   };
 
-  const handleUpdate = (data) => {
-    const categoriaToUpdate = categorias.filter((item) => item.id === idAEditar);
+  // El estado local se toca DESPUES de que la escritura salio bien: antes se
+  // actualizaba primero y sin catch, asi que un fallo dejaba la pantalla
+  // mostrando un dato que Firestore nunca guardo.
+  const handleUpdate = async (data) => {
+    const categoriaToUpdate = categorias.find((item) => item.id === idAEditar);
+    if (!categoriaToUpdate) return;
 
     const newState = {
       nombre: data.nombre,
       nroOrden: Number(data.nroOrden)
     };
 
-    const categoriasActualizadas = categorias.map((item) =>
-      item.id === idAEditar ? { ...item, ...newState } : item
-    );
-    setCategorias(categoriasActualizadas);
-
-    setDoc(doc(categoriasCollection, categoriaToUpdate[0].id), newState).then(() => {
+    try {
+      await setDoc(doc(categoriasCollection, categoriaToUpdate.id), newState);
+      setCategorias(categorias.map((item) => (item.id === idAEditar ? { ...item, ...newState } : item)));
       setIdAEditar(null);
       reset();
       setError("");
       onCambio?.();
-    });
+    } catch (error) {
+      console.error("Error al actualizar la Categoría: ", error);
+      setError("No se pudo guardar la categoría. Revisá la conexión.");
+    }
   };
 
-  const handleDelete = async (id) => {
-    await deleteDoc(doc(categoriasCollection, id));
-    const newStates = categorias.filter((item) => item.id !== id);
-    setCategorias(newStates);
-    setError("");
-    onCambio?.();
+  const handleDelete = async (categoria) => {
+    const result = await Swal.fire({
+      title: '¿Borrar la categoría?',
+      text: `Se elimina "${categoria.nombre}". Los productos que la usan quedan sin categoría.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteDoc(doc(categoriasCollection, categoria.id));
+      setCategorias(categorias.filter((item) => item.id !== categoria.id));
+      setError("");
+      onCambio?.();
+    } catch (error) {
+      console.error("Error al borrar la Categoría: ", error);
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo borrar la categoría.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545',
+      });
+    }
   };
 
   return (
@@ -138,7 +164,7 @@ const Categorias = ({ show, onHide, categorias, setCategorias, onCambio }) => {
                 <button
                   type="button"
                   className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(categoria.id)}
+                  onClick={() => handleDelete(categoria)}
                 >
                   <i className="fa-solid fa-trash-can"></i>
                 </button>

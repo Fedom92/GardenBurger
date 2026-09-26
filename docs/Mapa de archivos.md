@@ -1,5 +1,7 @@
 ---
 tags: [gardenburger, referencia]
+aliases: [Que hace cada archivo]
+actualizado: 2026-09-14
 ---
 
 # Mapa de archivos
@@ -39,11 +41,10 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `Constantes.jsx` | `ESTADOS`, `ENVIOS_LOCALES`, `CATEGORIAS_COMBOS`, `CATEGORIAS_HAMBURGUESA`, `CANTIDAD_CARNES`, `FLUJO_PUB_ESTADOS`, `TIEMPO_MIN_PEDIDOESP`, `getCurrentStepIndex()` y **`ROLES`** (nombre + ruta inicial + `llevaMoto` de cada rol, en un solo objeto) |
 | `fechaComercial.js` | Jornada comercial y hora del servidor. Ver [[Reglas de negocio#Jornada comercial]] |
 | `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`), `fetchMenuPublico()` (lo consume, con promesa cacheada) y la bandera `menuSinPublicar` en localStorage (`marcar`/`limpiar`/`hayMenuPendiente`) |
-| `sucursales.js` | `fetchSucursales()` — lista ordenada de la colección global |
+| `sucursales.js` | `fetchSucursales()` — lista ordenada de la colección global, con la promesa cacheada. `invalidarSucursales()` la suelta cuando el ABM guarda |
 | `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table`: búsqueda, filtros por columna, orden y paginación. Exporta `quitarAcentos` |
 | `formato.js` | `fmtPesos` y `fmtPesosRedondeado`. **Único lugar** donde se formatean montos |
 | `useAccionUnica.js` | Guard contra doble ejecución de todo lo que escribe plata. Ver [[Convenciones y preferencias#Acciones que escriben plata]] |
-| `InsertarRegistros.jsx` | 🧪 **herramienta de pruebas**: botón que inserta 3 pedidos de Caja + 3 solicitudes WEB en la sucursal que se elija. Suma al arqueo igual que el flujo real. Marca todo con `esPrueba: true`. Está montado en `PanelAdmin` (solo admin) con un `TODO` para sacarlo cuando ya no haga falta |
 
 ## `components/POS/` — la Caja
 
@@ -116,7 +117,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `Asistencias/ModalCargarJornada.jsx` | La grilla de carga, compartida por las dos pantallas. `modoAdmin` habilita editar el valor hora y ver la auditoría |
 | `Asistencias/asistencias_hooks/useAsistencias.js` | `calcularHoras`, `armarRegistro`, `agregarLiquidacion` — lógica pura |
 | `Estadisticas/Historico/Estadisticas.jsx` | (753 líneas) Dashboard del **sistema viejo**: lee TSV exportados a mano, no Firestore |
-| `Estadisticas/Historico/useGoogleSheets.js` | Parseo de los TSV |
+| `Estadisticas/Historico/useGoogleSheets.js` | Baja y parsea los dos TSV de `privado/estadisticas` en Storage con `getBytes()`. **No** se leen de `public/` |
 
 > [!warning] Estadísticas lee TSV, no Firestore
 > `public/CSV/ventas.tsv` y `pagos.tsv` se exportan **a mano**. Un export incompleto de Ventas

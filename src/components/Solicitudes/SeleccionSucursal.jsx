@@ -45,9 +45,6 @@ const SeleccionSucursal = () => {
                                     className="btn btn-success btn-lg w-75"
                                 >
                                     {s.nombre || s.id}
-                                    {s.direccion && (
-                                        <small className="d-block">{s.direccion}</small>
-                                    )}
                                 </Link>
                             ))}
                         </div>

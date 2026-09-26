@@ -9,7 +9,6 @@ import Envios from "./Parametros/Envios";
 import Sucursales from "./Parametros/Sucursales";
 import { fetchSucursales } from "../../Utils/sucursales";
 import TablaGenerica from "../../Utils/TablaGenerica";
-import InsertarRegistros from "../../Utils/InsertarRegistros";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
@@ -100,13 +99,25 @@ const PanelAdmin = () => {
       } : {}),
     };
 
-    await updateDoc(doc(db, "usuarios", id), cambios);
-    setEmpleados((prevEmpleados) =>
-      prevEmpleados.map((empleado) =>
-        empleado.id === id ? { ...empleado, ...cambios } : empleado
-      )
-    );
-    handleCloseModal();
+    // Sin try/catch un fallo era una unhandled rejection: el modal se quedaba
+    // abierto sin explicación y el usuario no sabía si había guardado.
+    try {
+      await updateDoc(doc(db, "usuarios", id), cambios);
+      setEmpleados((prevEmpleados) =>
+        prevEmpleados.map((empleado) =>
+          empleado.id === id ? { ...empleado, ...cambios } : empleado
+        )
+      );
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error al editar el empleado: ", error);
+      Swal.fire({
+        title: "Error",
+        text: "No se pudieron guardar los cambios. Revisá la conexión.",
+        icon: "error",
+        confirmButtonColor: "#d33",
+      });
+    }
   };
 
   const handleOpenEditModal = (empleado) => {
@@ -134,11 +145,9 @@ const PanelAdmin = () => {
     setEdicion((prev) => ({ ...prev, [campo]: e.target.value }));
 
   const agregarEmpleado = (nuevoEmpleado) => {
-    const nuevosEmpleados = [...empleados, nuevoEmpleado];
-
-    nuevosEmpleados.sort((a, b) => a.rol - b.rol);
-
-    setEmpleados(nuevosEmpleados);
+    // Sin sort: los roles son strings, asi que la resta daba NaN y no ordenaba
+    // nada. La tabla ya ordena por nombreCompleto.
+    setEmpleados([...empleados, nuevoEmpleado]);
   };
 
   const confirmeDelete = (e, empleado) => {
@@ -301,8 +310,6 @@ const PanelAdmin = () => {
                     </div>
 
                     <div className="d-flex justify-content-end align-items-center gap-2">
-                      {/*TODO: ELIMINAR PRUEBAS CUANDO SE IMPLEMENTE. RECORDAR ELIMINARLO DE TODOS LADOS*/}
-                      <InsertarRegistros />
                       <button
                         variant="primary"
                         className="btn-contorno m-2"
@@ -371,7 +378,6 @@ const PanelAdmin = () => {
                       <option value={process.env.REACT_APP_cajero}>Cajero</option>
                       <option value={process.env.REACT_APP_cocina}>Cocina</option>
                       <option value={process.env.REACT_APP_delivery}>Delivery</option>
-                      <option value={process.env.REACT_APP_contador}>Contador</option>
                       <option value={process.env.REACT_APP_atp}>ATP</option>
                     </select>
                   </div>

@@ -1,0 +1,260 @@
+{
+  "nodes": [
+    {
+      "id": "a1f3c9d24b6e8057",
+      "type": "group",
+      "x": -60,
+      "y": -280,
+      "width": 2400,
+      "height": 1120,
+      "label": "Pipeline del pedido — de dónde entra a dónde termina",
+      "color": "6"
+    },
+    {
+      "id": "b2e4d8a16c9f3705",
+      "type": "text",
+      "x": 0,
+      "y": 0,
+      "width": 380,
+      "height": 200,
+      "color": "2",
+      "text": "## PENDIENTE\n**Solicitud web**\n\nEl cliente la armó en `/crear-solicitud/:sucursal`.\n\nNo tiene ticket ni `timestamp`, así que **no aparece en los buscadores** hasta que el cajero la confirma."
+    },
+    {
+      "id": "c3d5e9b27a1f4806",
+      "type": "text",
+      "x": 0,
+      "y": 260,
+      "width": 380,
+      "height": 200,
+      "color": "4",
+      "text": "## Caja — el cobro\n**`guardarBD`**\n\nUna sola transacción: contador + pedido + arqueo. O entran los tres, o no entra ninguno.\n\n💰 **Suma al arqueo**"
+    },
+    {
+      "id": "d4c6f0a38b2e5917",
+      "type": "text",
+      "x": 480,
+      "y": 0,
+      "width": 380,
+      "height": 200,
+      "color": "5",
+      "text": "## CONFIRMADO\nCobrado y validado. Espera que cocina lo tome.\n\nPantalla: **Cocina → En Espera**"
+    },
+    {
+      "id": "e5b7a1c49d3f6028",
+      "type": "text",
+      "x": 480,
+      "y": 260,
+      "width": 380,
+      "height": 200,
+      "color": "2",
+      "text": "## PENDIENTEMP\nMP o pago dividido.\n\nEl cajero **coteja la transferencia a mano** en su Mercado Pago (**F2**).\n\n⚠️ El sistema no verifica nada: lo mira una persona."
+    },
+    {
+      "id": "f6a8b2d50c4e7139",
+      "type": "text",
+      "x": 960,
+      "y": 0,
+      "width": 380,
+      "height": 200,
+      "color": "5",
+      "text": "## COCINA\nEn producción.\n\nPantalla: **Cocina → Cocinando**\n\nSolo se marca **todo junto** — es deliberado, cada cocinero ve solo los suyos."
+    },
+    {
+      "id": "0719c3e61d5f8240",
+      "type": "text",
+      "x": 1440,
+      "y": -160,
+      "width": 380,
+      "height": 180,
+      "color": "5",
+      "text": "## ATP\nListo y esperando en el mostrador.\n\nZona ∈ `ENVIOS_LOCALES`\n(Retira · Espera Afuera)"
+    },
+    {
+      "id": "182ad4f72e609351",
+      "type": "text",
+      "x": 1440,
+      "y": 180,
+      "width": 380,
+      "height": 180,
+      "color": "5",
+      "text": "## DELIVERY\nEn manos del jefe de deliverys.\n\nSub-estado propio: `estadoDelivery` SALIO → VOLVIO"
+    },
+    {
+      "id": "293be5081f71a462",
+      "type": "text",
+      "x": 1920,
+      "y": 0,
+      "width": 380,
+      "height": 200,
+      "color": "4",
+      "text": "## ENTREGADO\nCerrado. `ESTADOS.FINAL`\n\nAl cerrar un delivery se escriben además las **métricas del repartidor** en el arqueo."
+    },
+    {
+      "id": "3a4cf6192082b573",
+      "type": "text",
+      "x": 480,
+      "y": 560,
+      "width": 380,
+      "height": 200,
+      "color": "1",
+      "text": "## CANCELADO\nRechazo de solicitud web (**F1**) o de transferencia MP (**F2**).\n\n💸 **Descuenta del arqueo solo si venía de PENDIENTEMP** — una solicitud web nunca sumó."
+    },
+    {
+      "id": "4b5d072a3193c684",
+      "type": "text",
+      "x": 960,
+      "y": 560,
+      "width": 380,
+      "height": 200,
+      "color": "1",
+      "text": "## ELIMINADO\nEl cajero borra el ticket desde **F3**.\n\n💸 **Descuenta**, pero solo si el pedido tiene `cajeroID` (o sea, si alguien lo cobró)."
+    },
+    {
+      "id": "5c6e183b42a4d795",
+      "type": "text",
+      "x": -60,
+      "y": 900,
+      "width": 500,
+      "height": 260,
+      "text": "## Cómo leer este mapa\n\n🟠 Espera una **acción humana**\n🟢 **Mueve plata** hacia el arqueo\n🔵 Producción y entrega — no toca plata\n🔴 **Revierte** plata\n\nLas flechas dicen **quién dispara** cada paso.\n\n`F1`–`F4` son los atajos de la Caja."
+    },
+    {
+      "id": "6d7f294c53b5e8a6",
+      "type": "text",
+      "x": 500,
+      "y": 900,
+      "width": 500,
+      "height": 260,
+      "color": "1",
+      "text": "## Lo que este mapa NO dice\n\n**Ninguna escritura valida el estado de origen.** Las flechas son el recorrido *previsto*, no el único posible: con dos pantallas abiertas, casi cualquier estado puede saltar a cualquier otro.\n\nLas transiciones indebidas que sí existen están en [[Modelo de estados]]."
+    },
+    {
+      "id": "7e803a5d64c6f9b7",
+      "type": "file",
+      "x": 1060,
+      "y": 900,
+      "width": 400,
+      "height": 260,
+      "file": "Modelo de estados.md"
+    },
+    {
+      "id": "8f914b6e75d70ac8",
+      "type": "file",
+      "x": 1520,
+      "y": 900,
+      "width": 400,
+      "height": 260,
+      "file": "Flujo del pedido.md"
+    },
+    {
+      "id": "90a25c7f86e81bd9",
+      "type": "file",
+      "x": 1980,
+      "y": 900,
+      "width": 400,
+      "height": 260,
+      "file": "Glosario.md"
+    }
+  ],
+  "edges": [
+    {
+      "id": "aa01b3c5d7e9f002",
+      "fromNode": "b2e4d8a16c9f3705",
+      "fromSide": "bottom",
+      "toNode": "c3d5e9b27a1f4806",
+      "toSide": "top",
+      "label": "el cajero la Revisa (F1)"
+    },
+    {
+      "id": "bb12c4d6e8f0a113",
+      "fromNode": "b2e4d8a16c9f3705",
+      "fromSide": "right",
+      "toNode": "3a4cf6192082b573",
+      "toSide": "left",
+      "label": "la rechaza (F1)"
+    },
+    {
+      "id": "cc23d5e7f901b224",
+      "fromNode": "c3d5e9b27a1f4806",
+      "fromSide": "right",
+      "toNode": "d4c6f0a38b2e5917",
+      "toSide": "left",
+      "label": "efectivo"
+    },
+    {
+      "id": "dd34e6f80a12c335",
+      "fromNode": "c3d5e9b27a1f4806",
+      "fromSide": "right",
+      "toNode": "e5b7a1c49d3f6028",
+      "toSide": "left",
+      "label": "MP o dividido"
+    },
+    {
+      "id": "ee45f7091b23d446",
+      "fromNode": "e5b7a1c49d3f6028",
+      "fromSide": "top",
+      "toNode": "d4c6f0a38b2e5917",
+      "toSide": "bottom",
+      "label": "coteja la transferencia (F2)"
+    },
+    {
+      "id": "ff56081a2c34e557",
+      "fromNode": "e5b7a1c49d3f6028",
+      "fromSide": "bottom",
+      "toNode": "3a4cf6192082b573",
+      "toSide": "top",
+      "label": "la rechaza (F2)",
+      "color": "1"
+    },
+    {
+      "id": "0067192b3d45f668",
+      "fromNode": "d4c6f0a38b2e5917",
+      "fromSide": "right",
+      "toNode": "f6a8b2d50c4e7139",
+      "toSide": "left",
+      "label": "cocina: Empezar a Cocinar"
+    },
+    {
+      "id": "11782a3c4e560779",
+      "fromNode": "f6a8b2d50c4e7139",
+      "fromSide": "right",
+      "toNode": "0719c3e61d5f8240",
+      "toSide": "left",
+      "label": "zona local"
+    },
+    {
+      "id": "22893b4d5f67188a",
+      "fromNode": "f6a8b2d50c4e7139",
+      "fromSide": "right",
+      "toNode": "182ad4f72e609351",
+      "toSide": "left",
+      "label": "resto de las zonas"
+    },
+    {
+      "id": "339a4c5e6078299b",
+      "fromNode": "0719c3e61d5f8240",
+      "fromSide": "right",
+      "toNode": "293be5081f71a462",
+      "toSide": "top",
+      "label": "ATP entrega en mostrador"
+    },
+    {
+      "id": "44ab5d6f71893aac",
+      "fromNode": "182ad4f72e609351",
+      "fromSide": "right",
+      "toNode": "293be5081f71a462",
+      "toSide": "bottom",
+      "label": "el jefe registra el regreso"
+    },
+    {
+      "id": "55bc6e70829a4bbd",
+      "fromNode": "f6a8b2d50c4e7139",
+      "fromSide": "bottom",
+      "toNode": "4b5d072a3193c684",
+      "toSide": "top",
+      "label": "F3 — desde casi cualquier estado",
+      "color": "1"
+    }
+  ]
+}

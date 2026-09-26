@@ -126,14 +126,25 @@ const Productos = () => {
       confirmButtonColor: '#198754',
       confirmButtonText: 'Si',
       cancelButtonText: 'No'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        actualizarVisibilidad(id, !visible);
+    }).then(async (result) => {
+      if (!result.isConfirmed) return;
+      // El éxito salía sin esperar la escritura: decía "Producto Desactivado"
+      // aunque Firestore hubiera fallado, y la tarjeta cambiaba igual.
+      try {
+        await actualizarVisibilidad(id, !visible);
         Swal.fire({
           title: 'Éxito!',
           text: visible ? 'Producto Desactivado.' : 'Producto Activado.',
           icon: 'success',
           confirmButtonColor: '#198754'
+        });
+      } catch (error) {
+        console.error('Error cambiando la visibilidad:', error);
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo cambiar la visibilidad del producto.',
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
         });
       }
     })
@@ -317,7 +328,7 @@ const Productos = () => {
 
                     <button
                       variant="secondary"
-                      className={`btn-contorno m-1 ${menuPendiente ? "parpadeo" : ""}`}
+                      className={`btn-contorno m-1 ${menuPendiente ? "btn-blink" : ""}`}
                       onClick={handlePublicarMenu}
                       disabled={publicando}
                       title={menuPendiente

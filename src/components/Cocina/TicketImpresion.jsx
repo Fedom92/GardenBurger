@@ -2,20 +2,13 @@ import React from 'react';
 import './TicketImpresion.css';
 import icono from "../../img/logo_blanco_corto.webp";
 import moment from "moment";
+import { fmtPesos } from '../../Utils/formato';
 
 const TicketImpresion = ({ pedido, pedidos, onClose }) => {
     const isMultiple = Array.isArray(pedidos);
     const list = isMultiple ? pedidos : (pedido ? [pedido] : []);
 
     if (list.length === 0) return null;
-
-    const formatPrice = (price) => {
-        return new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: 'ARS',
-            minimumFractionDigits: 2
-        }).format(price);
-    };
 
     const formatMetodoPago = (metodo) => {
         switch (metodo) {
@@ -98,7 +91,7 @@ const TicketImpresion = ({ pedido, pedidos, onClose }) => {
                                 </div>
                                 <div className="customer-name">{p.nombre}</div>
                                 <div className="delivery-address-bold">{p.direccion}</div>
-                                <div className="delivery-address-detail">{p.entrecalles}</div>
+                                <div className="delivery-address-detail">{p.entreCalles}</div>
                                 <div className="phone-number">{p.telefono}</div>
                             </div>
 
@@ -121,7 +114,7 @@ const TicketImpresion = ({ pedido, pedidos, onClose }) => {
                                     <div key={index} className="ticket-item">
                                         <div className="ticket-col-cant">{item.cantidad}</div>
                                         <div className="ticket-col-desc">{item.descripcion}</div>
-                                        <div className="ticket-col-subtotal">{formatPrice(item.subtotal)}</div>
+                                        <div className="ticket-col-subtotal">{fmtPesos(item.subtotal)}</div>
                                     </div>
                                 ))}
                             </div>
@@ -139,10 +132,10 @@ const TicketImpresion = ({ pedido, pedidos, onClose }) => {
                             {/* Resumen y pago */}
                             <div className="ticket-summary">
                                 <div className="delivery-info">
-                                    Envio {p.envio?.zona_envio} : {formatPrice(p.envio?.costo_envio || 0)}
+                                    Envio {p.envio?.zona_envio} : {fmtPesos(p.envio?.costo_envio || 0)}
                                 </div>
                                 <div className="total-amount">
-                                    Total: {formatPrice(p.total)}
+                                    Total: {fmtPesos(p.total)}
                                 </div>
                                 <div className="payment-method">
                                     Metodo Pago: {formatMetodoPago(p.metodoPago)}

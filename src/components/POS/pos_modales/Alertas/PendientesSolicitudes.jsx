@@ -7,6 +7,7 @@ import moment from 'moment';
 import 'moment/locale/es';
 import { useAuth } from "../../../../context/AuthContext";
 import { ESTADOS } from "../../../../Utils/Constantes";
+import { fmtPesos } from "../../../../Utils/formato";
 
 // Busqueda de Google Maps por texto libre. Es una URL comun, no la API con key que se
 // saco del proyecto: no necesita SDK ni se factura. Google resuelve el texto como puede,
@@ -210,7 +211,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
                                                     <strong>Método de pago:</strong> {solicitud.cliente?.metodoPago}
                                                 </p>
                                                 <p className="mb-1">
-                                                    <strong>Total:</strong> <span className="text-success fw-bold">${solicitud.total || 0}</span>
+                                                    <strong>Total:</strong> <span className="text-success fw-bold">{fmtPesos(solicitud.total)}</span>
                                                 </p>
                                             </div>
                                         </div>
@@ -228,7 +229,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
                                                                 {producto.descripcion}
                                                             </small>
                                                             <small className="fw-semibold small">
-                                                                ${producto.precio}
+                                                                {fmtPesos(producto.precio)}
                                                             </small>
                                                         </div>
                                                     ))}

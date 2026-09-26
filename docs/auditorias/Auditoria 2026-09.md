@@ -1,11 +1,18 @@
 ---
 tags: [gardenburger, auditoria]
+aliases: [Primera auditoria, Auditoria septiembre 9]
 fecha: 2026-09-09
 ---
 
 # Auditoría integral — septiembre 2026
 
 ← [[GardenBurger]]
+
+> [!warning] Superada por [[Auditoria 2026-09-15]]
+> Sus 11 hallazgos están cerrados, pero la auditoría posterior encontró **dos errores en esta**:
+> no vio que la base de clientes está publicada como archivo estático (el P0 del 15-09), y afirmó
+> que la convención de `fmtPesos` se cumplía cuando quedan 15 archivos sin migrar. Se conserva
+> como registro de lo que se corrigió.
 
 > [!info] Esto es una foto, no un documento vivo
 > Refleja el estado del sistema al **09-09-2026**. Las notas del vault sí se mantienen al día; esta

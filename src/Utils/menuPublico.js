@@ -11,15 +11,23 @@ export const URL_MENU_PUBLICO =
     `https://firebasestorage.googleapis.com/v0/b/${process.env.REACT_APP_storageBucket}/o/${encodeURIComponent(MENU_PATH)}?alt=media`;
 
 export const publicarMenu = async () => {
-    const [productosSnap, categoriasSnap] = await Promise.all([
+    // Las sucursales viajan dentro del JSON a propósito: el menú público necesita
+    // sus direcciones para el pie, y así las tiene sin pagar una lectura por
+    // visita. El costo es de 2-3 documentos y solo cuando el admin publica.
+    const [productosSnap, categoriasSnap, sucursalesSnap] = await Promise.all([
         getDocs(query(collection(db, "productos"), where("visible", "==", true))),
         getDocs(query(collection(db, "categorias"), orderBy("nroOrden", "asc"))),
+        getDocs(collection(db, "sucursales")),
     ]);
 
     const menu = {
         generadoEl: Date.now(),
         productos: productosSnap.docs.map(d => ({ id: d.id, ...d.data() })),
         categorias: categoriasSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+        sucursales: sucursalesSnap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(s => s.activa !== false)
+            .sort((a, b) => (a.nombre || a.id).localeCompare(b.nombre || b.id)),
     };
 
     const blob = new Blob([JSON.stringify(menu)], { type: "application/json" });

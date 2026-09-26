@@ -8,6 +8,7 @@ import TablaGenerica from "../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../Utils/fechaComercial";
 import AuditoriaPedido from "./AuditoriaPedido";
 import moment from "moment";
+import { fmtPesos } from "../../Utils/formato";
 
 const toInputDate = (d) => moment(d).format("YYYY-MM-DD");
 
@@ -85,7 +86,7 @@ const HistorialPedidos = () => {
       header: "Envío",
       cell: ({ getValue }) => {
         const envio = getValue();
-        return envio ? `$${envio.costo_envio}` : "—";
+        return envio ? fmtPesos(envio.costo_envio) : "—";
       },
     },
     {

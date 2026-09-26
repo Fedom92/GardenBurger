@@ -1,10 +1,12 @@
 ---
 tags: [gardenburger, negocio]
+aliases: [Negocio]
+actualizado: 2026-09-14
 ---
 
 # Reglas de negocio
 
-← [[GardenBurger]] · relacionado: [[Flujo del pedido]], [[Modelo de datos Firestore]]
+← [[GardenBurger]] · relacionado: [[Flujo del pedido]], [[Modelo de datos Firestore]] · vocabulario en [[Glosario]]
 
 ## Jornada comercial
 
@@ -198,8 +200,11 @@ negativo y el pedido se guardaría subcobrado con el arqueo corrido.
 Módulo aparte, con su propia nota: [[Asistencias y liquidacion]]. Las tres reglas que no se pueden
 deducir del código de un vistazo:
 
-1. **El turno cruza la medianoche**: `calcularHoras` suma 24 h si `salida <= entrada`. 19:00 → 02:00
-   son 7 horas.
+1. **El turno cruza la medianoche**: `calcularHoras` suma 24 h cuando la salida es *anterior* a la
+   entrada, así 19:00 → 02:00 son 7 horas. La comparación es estricta: entrada igual a salida son
+   **0 horas**, no 24.
+   **Sin horas no se liquida ni cuenta como día trabajado**: un presente al que nunca se le cargó
+   la salida queda fuera de la liquidación, en vez de sumar un día con 0 horas.
 2. **`valorHora` se congela** dentro de cada registro al cargar la jornada. Subirle el sueldo a
    alguien no reescribe sus liquidaciones pasadas.
 3. **El bruto se acumula día por día**, no como `horasTotales × unValorHora`.

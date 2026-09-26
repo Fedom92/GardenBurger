@@ -51,7 +51,6 @@ export const CartProvider = ({ children }) => {
   const [varianteElegida, setVarianteElegida] = useState(null);
   const [extrasSeleccionados, setExtrasSeleccionados] = useState([]);
   const [extrasGenericosSeleccionados, setExtrasGenericosSeleccionados] = useState([]);
-  const [hamburguesaEnProceso, setHamburguesaEnProceso] = useState(null);
   const [productoEnProceso, setProductoEnProceso] = useState(null);
 
   // Estados para datos del menú
@@ -150,7 +149,7 @@ export const CartProvider = ({ children }) => {
     setCarrito(prevCarrito =>
       prevCarrito.map((prod) =>
         esMismoProducto(prod, productoParam)
-          ? { ...prod, cantidad: prod.cantidad + 1 }
+          ? { ...prod, cantidad: prod.cantidad + 1, subtotal: (prod.cantidad + 1) * prod.precio }
           : prod
       )
     );
@@ -160,7 +159,7 @@ export const CartProvider = ({ children }) => {
     setCarrito(prevCarrito =>
       prevCarrito.map((prod) =>
         esMismoProducto(prod, productoParam) && prod.cantidad > 1
-          ? { ...prod, cantidad: prod.cantidad - 1 }
+          ? { ...prod, cantidad: prod.cantidad - 1, subtotal: (prod.cantidad - 1) * prod.precio }
           : prod
       )
     );
@@ -237,19 +236,6 @@ export const CartProvider = ({ children }) => {
     return carrito.some(item => item.id === hamburguesaId);
   }, [carrito]);
 
-  // Función para eliminar extras anteriores de hamburguesas
-  const eliminarExtrasAnteriores = useCallback(() => {
-    if (hamburguesaEnProceso) {
-      const extrasAEliminar = carrito.filter(item =>
-        item.categoria === "EXTRA" && item.tipoExtra === "HAMBURGUESA"
-      );
-
-      extrasAEliminar.forEach(extra => {
-        eliminar(extra);
-      });
-    }
-  }, [carrito, hamburguesaEnProceso, eliminar]);
-
   // Función para eliminar extras genéricos anteriores de un producto
   const eliminarExtrasGenericosAnteriores = useCallback(() => {
     if (productoEnProceso) {
@@ -274,7 +260,6 @@ export const CartProvider = ({ children }) => {
       setVariantesHamburguesa(hamburguesa.variantes);
       setVarianteElegida(hamburguesa.variantes[0]);
       setExtrasSeleccionados([]);
-      setHamburguesaEnProceso(null);
       setProductoEnProceso(null);
       setShowModalVariante(true);
       document.body.style.overflow = 'hidden';
@@ -350,14 +335,6 @@ export const CartProvider = ({ children }) => {
   const finalizarHamburguesa = useCallback(() => {
     if (!varianteElegida) return;
 
-    // Si estaba editando una hamburguesa existente, eliminarla primero
-    if (hamburguesaEnProceso && hamburguesaYaEnCarrito(hamburguesaEnProceso.id)) {
-      eliminar(hamburguesaEnProceso);
-    }
-
-    // Eliminar extras anteriores si existían
-    eliminarExtrasAnteriores();
-
     agregarAlCarrito(varianteElegida);
     extrasSeleccionados.forEach(extra => {
       agregarAlCarrito({
@@ -368,7 +345,7 @@ export const CartProvider = ({ children }) => {
 
     setShowModalExtras(false);
 
-  }, [varianteElegida, hamburguesaEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasAnteriores, extrasSeleccionados, agregarAlCarrito]);
+  }, [varianteElegida, extrasSeleccionados, agregarAlCarrito]);
 
   // Función para finalizar producto con extras genéricos
   const finalizarProductoConExtras = useCallback(() => {
@@ -431,7 +408,6 @@ export const CartProvider = ({ children }) => {
     setVarianteElegida(null);
     setExtrasSeleccionados([]);
     setExtrasGenericosSeleccionados([]);
-    setHamburguesaEnProceso(null);
     setProductoEnProceso(null);
     document.body.style.overflow = 'auto';
   }, []);
@@ -512,7 +488,6 @@ export const CartProvider = ({ children }) => {
     varianteElegida,
     extrasSeleccionados,
     extrasGenericosSeleccionados,
-    hamburguesaEnProceso,
     productoEnProceso,
     extrasHamburguesas,
     extrasGenericos,
@@ -566,7 +541,6 @@ export const CartProvider = ({ children }) => {
     varianteElegida,
     extrasSeleccionados,
     extrasGenericosSeleccionados,
-    hamburguesaEnProceso,
     productoEnProceso,
     extrasHamburguesas,
     extrasGenericos,

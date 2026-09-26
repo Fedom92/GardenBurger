@@ -110,6 +110,8 @@ export const avanzarContador = async (transaction, coleccion, sucursal) => {
 };
 
 // Para quien solo necesita el número y no tiene una transacción propia en la que
-// meterlo: la abre él. Hoy lo usa InsertarRegistros.
+// meterlo: la abre él. Hoy no la usa nadie —la Caja participa de su propia
+// transacción con avanzarContador—, pero se queda para quien numere fuera de ese
+// flujo, como la gestión de pedidos de otras jornadas que está pendiente.
 export const getNextSequence = (coleccion, sucursal) =>
   runTransaction(db, (transaction) => avanzarContador(transaction, coleccion, sucursal));

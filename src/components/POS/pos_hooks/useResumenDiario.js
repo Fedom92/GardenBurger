@@ -1,6 +1,6 @@
 import { increment } from "firebase/firestore";
 import { docSucursal, docDeSucursal } from "../../../firebaseConfig/firebase";
-import { getFechaComercial } from "../../../Utils/fechaComercial";
+import { getFechaComercial, getFechaComercialDe } from "../../../Utils/fechaComercial";
 import { CATEGORIAS_COMBOS, ENVIOS_LOCALES } from "../../../Utils/Constantes";
 
 // Cuenta unidades y no renglones: un item con cantidad 3 son 3 combos. Los productos que
@@ -17,11 +17,18 @@ const contarCombos = (carrito = []) =>
 // `sucursal` es un override opcional: sin él usa la del usuario logueado, que es
 // lo que hacen Caja, BuscarPedido y PendientesMP. Lo pasa solo el admin, que
 // opera sobre una sucursal ajena.
-export const getResumenOperation = ({ metodoPago, total, montoEfectivo, montoMPConRecargo, envio, carrito, descontar = false, sucursal }) => {
-    const hoy = getFechaComercial();
+//
+// `timestampPedido` es el Timestamp del pedido. Lo pasan los que REVIERTEN
+// —eliminar y rechazar MP—, para que el descuento vaya a la jornada en que ese
+// pedido sumó y no a la de ahora: eliminar hoy un pedido de ayer descontaba del
+// día equivocado. La Caja no lo pasa porque ahí el pedido nace en este momento.
+export const getResumenOperation = ({ metodoPago, total, montoEfectivo, montoMPConRecargo, envio, carrito, descontar = false, sucursal, timestampPedido }) => {
+    const jornada = timestampPedido?.toDate
+        ? getFechaComercialDe(timestampPedido.toDate())
+        : getFechaComercial();
     const resumenRef = sucursal
-        ? docDeSucursal(sucursal, "resumenDiario", hoy)
-        : docSucursal("resumenDiario", hoy);
+        ? docDeSucursal(sucursal, "resumenDiario", jornada)
+        : docSucursal("resumenDiario", jornada);
     const signo = descontar ? -1 : 1;
 
     const montoEfectivoFinal = metodoPago === "EFECTIVO" ? total

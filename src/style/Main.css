@@ -367,18 +367,6 @@ select {
 
 /*<!------------Termina Estilo Loading---------------->*/
 
-/*<!------------Parpadeo (Publicar Menú con cambios sin publicar)---------------->*/
-.parpadeo {
-  animation: parpadeo 1.2s ease-in-out infinite;
-}
-
-@keyframes parpadeo {
-  50% {
-    opacity: 0.35;
-  }
-}
-
-/*<!------------Termina Parpadeo---------------->*/
 
 
 

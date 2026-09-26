@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal } from "react-bootstrap";
 import moment from "moment";
+import { fmtPesos } from "../../Utils/formato";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -101,10 +102,10 @@ const AuditoriaPedido = ({ pedido: p, isOpen, onClose }) => {
                         { label: "Cliente",      valor: p.nombre || null },
                         { label: "Teléfono",     valor: p.telefono || null },
                         { label: "Método pago",  valor: p.metodoPago || null },
-                        { label: "Total",        valor: p.total != null ? `$${p.total}` : null },
+                        { label: "Total",        valor: p.total != null ? fmtPesos(p.total) : null },
                         { label: "Origen",       valor: [p.sucursal, p.origen].filter(Boolean).join(" - ") || null },
                         { label: "Dirección",    valor: [p.direccion, p.entreCalles].filter(Boolean).join(", ") || null },
-                        { label: "Envío",        valor: p.envio?.zona_envio ? `${p.envio.zona_envio} | $${p.envio.costo_envio}` : null },
+                        { label: "Envío",        valor: p.envio?.zona_envio ? `${p.envio.zona_envio} | ${fmtPesos(p.envio.costo_envio)}` : null },
                         // El campo es `esHorarioEspecial` (booleano) y la hora pactada
                         // quedó en `timestamp`: `p.hora` nunca existió, así que esta
                         // fila no se mostraba jamás.
@@ -251,7 +252,7 @@ const AuditoriaPedido = ({ pedido: p, isOpen, onClose }) => {
                             titulo="Entrega a domicilio"
                             campos={[
                                 { label: "Fecha/hora",   valor: fmt(p.deliveryFinTimestamp) },
-                                { label: "Cliente pagó", valor: p.pagoRepartidorCon ? `$${p.pagoRepartidorCon}` : null },
+                                { label: "Cliente pagó", valor: p.pagoRepartidorCon ? fmtPesos(p.pagoRepartidorCon) : null },
                             ]}
                         />
                     </Grupo>
@@ -274,7 +275,7 @@ const AuditoriaPedido = ({ pedido: p, isOpen, onClose }) => {
                                                 <small className="text-muted"> — {item.observaciones}</small>
                                             )}
                                         </span>
-                                        <span className="fw-semibold">${item.subtotal}</span>
+                                        <span className="fw-semibold">{fmtPesos(item.subtotal)}</span>
                                     </div>
                                 ))}
                             </div>

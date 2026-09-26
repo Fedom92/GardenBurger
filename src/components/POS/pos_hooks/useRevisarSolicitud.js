@@ -1,6 +1,6 @@
 // pos_hooks/useRevisarSolicitud.js
 import { useCallback } from "react";
-import { getDoc, updateDoc, deleteField } from "firebase/firestore";
+import { updateDoc, deleteField } from "firebase/firestore";
 import { docSucursal } from "../../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import { useAuth } from "../../../context/AuthContext";
@@ -12,16 +12,23 @@ import { ENVIOS_LOCALES } from "../../../Utils/Constantes";
 // Libera solo si la asignacion sigue siendo de este cajero: si mientras tanto otro
 // se la reasigno, cancelar tiene que limpiar el ticket local y nada mas, no pisarle
 // la asignacion al que la tiene ahora.
+//
+// Eso lo garantiza la regla asignacionValida() de firestore.rules, asi que se
+// intenta y listo: el getDoc previo que hacia esta funcion era una lectura
+// facturada por cada Cancelar para comprobar algo que el servidor ya rechaza.
 export const liberarSolicitud = async (solicitudId, cajeroID) => {
-    const solicitudRef = docSucursal("pedidos", solicitudId);
-    const snap = await getDoc(solicitudRef);
-
-    if (snap.data()?.cajeroRevisaID !== cajeroID) return;
-
-    await updateDoc(solicitudRef, {
-        cajeroRevisaID: deleteField(),
-        cajeroRevisa: deleteField(),
-    });
+    try {
+        await updateDoc(docSucursal("pedidos", solicitudId), {
+            cajeroRevisaID: deleteField(),
+            cajeroRevisa: deleteField(),
+        });
+    } catch (error) {
+        // permission-denied = la solicitud ya es de otro cajero. No hay nada que
+        // liberar y no es un error para el usuario: su ticket local se limpia igual.
+        if (error.code !== "permission-denied") {
+            console.error("Error liberando la solicitud:", error);
+        }
+    }
 };
 
 const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios, productos }) => {

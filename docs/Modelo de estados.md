@@ -1,10 +1,12 @@
 ---
 tags: [gardenburger, workflow]
+aliases: [Estados, Transiciones, Maquina de estados]
+actualizado: 2026-09-14
 ---
 
 # Modelo de estados del pedido
 
-← [[GardenBurger]] · relacionado: [[Flujo del pedido]], [[Modelo de datos Firestore]], [[Auditoria 2026-09]]
+← [[GardenBurger]] · relacionado: [[Flujo del pedido]], [[Modelo de datos Firestore]], [[Auditoria 2026-09]] · vocabulario en [[Glosario]]
 
 [[Flujo del pedido]] cuenta el **recorrido feliz**: quién toca qué pantalla y en qué orden. Esta
 nota mira lo mismo como **máquina de estados**: qué transiciones existen, cuáles el sistema permite
@@ -58,6 +60,11 @@ Los dos últimos son terminales **en la intención**, no en el código: nada imp
 **El arqueo se mueve en cuatro lugares**, y solo cuatro: guardar en Caja (suma), rechazar MP
 (descuenta), eliminar un ticket (descuenta) y cerrar un delivery (métricas). Todos pasan por
 `getResumenOperation()`.
+
+> [!important] El descuento va a la jornada DEL PEDIDO
+> Los dos caminos que revierten pasan el `timestamp` del pedido a `getResumenOperation`, que
+> deriva la jornada de ahí con `getFechaComercialDe()`. Antes usaba siempre la jornada actual:
+> eliminar hoy un pedido de ayer habría descontado del día equivocado.
 
 > [!note] El descuento depende de si el pedido llegó a cobrarse, no del estado
 > `BuscarPedido.jsx:86` condiciona el descuento a `if (pedido.cajeroID)`, así que borrar una

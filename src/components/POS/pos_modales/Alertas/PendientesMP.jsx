@@ -8,6 +8,7 @@ import moment from "moment";
 import { ESTADOS } from "../../../../Utils/Constantes";
 import { getResumenOperation } from "../../pos_hooks/useResumenDiario";
 import { useAccionUnica } from "../../../../Utils/useAccionUnica";
+import { fmtPesos } from "../../../../Utils/formato";
 
 const PendientesMP = ({ isOpen, onClose }) => {
     const { userData } = useAuth();
@@ -107,6 +108,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                 envio: pedido.envio,
                 carrito: pedido.carrito,
                 descontar: true,
+                timestampPedido: pedido.timestamp,
             });
 
             const batch = writeBatch(db);
@@ -187,14 +189,14 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                                 </p>
                                                 {pedido.metodoPago === "%" && (
                                                     <p className="mb-1">
-                                                        <strong>Monto Efectivo:</strong> ${pedido.montoEfectivo || 0}
+                                                        <strong>Monto Efectivo:</strong> {fmtPesos(pedido.montoEfectivo)}
                                                     </p>
                                                 )}
                                                 <p className="mb-1">
-                                                    <strong>Envío:</strong> {pedido.envio?.zona_envio} - ${pedido.envio?.costo_envio}
+                                                    <strong>Envío:</strong> {pedido.envio?.zona_envio} - {fmtPesos(pedido.envio?.costo_envio)}
                                                 </p>
                                                 <p className="mb-1">
-                                                    <strong>Total:</strong> ${pedido.total}
+                                                    <strong>Total:</strong> {fmtPesos(pedido.total)}
                                                 </p>
                                             </div>
                                         </div>

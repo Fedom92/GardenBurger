@@ -1,10 +1,12 @@
 ---
 tags: [gardenburger, workflow]
+aliases: [Pipeline, Recorrido del pedido]
+actualizado: 2026-09-14
 ---
 
 # Flujo del pedido
 
-← [[GardenBurger]] · relacionado: [[Modelo de estados]], [[Modelo de datos Firestore]], [[Reglas de negocio]]
+← [[GardenBurger]] · relacionado: [[Modelo de estados]], [[Modelo de datos Firestore]], [[Reglas de negocio]] · vocabulario en [[Glosario]]
 
 Los valores están en `ESTADOS` de `src/Utils/Constantes.jsx`. **Nunca hardcodear los strings.**
 

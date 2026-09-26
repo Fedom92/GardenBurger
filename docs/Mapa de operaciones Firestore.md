@@ -1,10 +1,12 @@
 ---
 tags: [gardenburger, firestore, costos]
+aliases: [Costos, Lecturas y escrituras]
+actualizado: 2026-09-23
 ---
 
 # Mapa de operaciones Firestore
 
-← [[GardenBurger]] · relacionado: [[Modelo de datos Firestore]], [[Deuda tecnica]]
+← [[GardenBurger]] · relacionado: [[Modelo de datos Firestore]], [[Deuda tecnica]] · vocabulario en [[Glosario]]
 
 > [!important] Prioridad de primer orden
 > El proyecto vive con un límite de lecturas ajustado. Antes de agregar cualquier consulta,
@@ -41,19 +43,20 @@ tags: [gardenburger, firestore, costos]
 | `usePendientes` | 2 listeners con `limit(1)` | permanentes en Caja | 1 c/u | ✅ correcta y barata |
 | `PendientesSolicitudes` | listener de `estado==PENDIENTE` | mientras el modal está abierto | pendientes | se solapa con `usePendientes`, pero son queries distintas |
 | `PendientesMP` | listener de `estado==PENDIENTEMP` | ídem | pendientes | ídem |
-| `BuscarPedido` | pedidos de la jornada | por búsqueda | jornada | ✅ se unificó con EliminarTickets y ahorró la mitad |
+| `BuscarPedido` | por **código**: consulta directa. Por teléfono o dirección: la jornada, **una vez por apertura del modal** | al abrir F3, no en cada búsqueda | 1 doc, o la jornada | ✅ era el mayor costo recurrente: releía la jornada entera en cada búsqueda |
 | `Caja.verResumen` (F4) | `resumenDiario/{jornada}` | al abrir el modal | 1 | ✅ con guard: mantener F4 no repite la lectura |
 | `PedidosEspera` / `PedidosCocinando` / `ATP` / `JefeDeliverys` | listeners por `estado` | mientras la pantalla está abierta | los del estado | ✅ real-time justificado |
 | `JefeDeliverys` | repartidores activos de la sucursal, desde `usuarios` | al montar | pocos | ✅ one-time |
 | `HistorialPedidos` | pedidos por rango de fechas, **sin filtro de estado** | por búsqueda | según rango | ⚠ sin `limit`: un rango largo lee miles |
 | `Productos` / `PanelAdmin` / `Envios` | su colección entera | al montar | acotado | pantallas de admin, poco frecuentes |
 | `Parametros/Categorias` (modal) | — | — | **0** | ✅ recibe las categorías de `Productos` por props; antes releía la colección al montar |
-| `sucursales.js` | `sucursales` | selector público y de admin | pocas | ✅ |
+| `sucursales.js` | `sucursales` | selector público y de admin | pocas | ✅ promesa cacheada: 1 vez por sesión |
 | `PaginaDetalle` | 1 pedido | por visita pública | 1 | ✅ |
 | `Asistencias` | el doc de la jornada | al entrar | **1** | ✅ el mapa `registros` trae a todos |
 | `ModalCargarJornada` | empleados de la sucursal | **solo al abrir el formulario** | N | ✅ editar un renglón cuesta 0 |
 | `LiquidacionAsistencias` | rango de jornadas | por búsqueda | D días | ✅ un mes ≈ 30, y **no lee `usuarios`** |
 | `Crearsolicitud` | 1 sucursal, para validarla | al confirmar el pedido | 1 | ✅ evita subcolecciones huérfanas |
+| `Estadisticas` | — | — | **0** | ✅ lee dos TSV de Storage (`getBytes`), no Firestore. 10,5 MB la primera vez; después el navegador revalida con `If-None-Match` y Storage responde **304 con cuerpo vacío** |
 
 **No hay ningún patrón N+1.** No existe ningún bucle que haga `getDoc` por cada ítem de una
 lista. Verificado sobre los 42 puntos de acceso.
@@ -68,10 +71,16 @@ lista. Verificado sobre los 42 puntos de acceso.
   botón, no traerlos. Los trae el modal cuando se abre.
 - **`runTransaction` en Caja** — contador, pedido y resumen viajan juntos: atómico, y el número de
   ticket no se quema si el guardado falla. Los otros movimientos del arqueo van en `writeBatch`.
-- **`liberarSolicitud`** — el `getDoc` previo es deliberado: sin él, un cajero le pisaría la
-  asignación a otro.
 - **Refs de queries en `useRef`** — evitan recrear la referencia en cada render y que el
   `useEffect` se redispare.
+
+- **`liberarSolicitud` sin lectura previa** — la regla `asignacionValida()` ya garantiza que un
+  cajero no pise la asignación de otro, así que se intenta el `updateDoc` y se trata
+  `permission-denied` como "no era mía". Antes hacía un `getDoc` por cada Cancelar.
+- **`fetchSucursales` cachea la promesa** — PanelAdmin la disparaba dos veces al montar y cada
+  pantalla con selector pagaba la suya. El ABM de Sucursales la invalida al guardar.
+- **`menu.json` incluye las sucursales** — el pie del menú público muestra las direcciones sin
+  pagar una lectura por visita. El costo es de 2-3 documentos, y solo cuando el admin publica.
 
 ## Escrituras que mueven plata
 
