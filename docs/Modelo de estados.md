@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, workflow]
 aliases: [Estados, Transiciones, Maquina de estados]
-actualizado: 2026-09-26
+actualizado: 2026-09-28
 ---
 
 # Modelo de estados del pedido
@@ -55,7 +55,7 @@ Los dos últimos son terminales **en la intención**, no en el código: nada imp
 | `COCINA` | `DELIVERY` | Cocina, "Cocinados TODOS", resto de zonas | `PedidosCocinando` | — |
 | `ATP` | `ENTREGADO` | ATP, al entregar en mostrador | `ATP.jsx` | — |
 | `DELIVERY` | `ENTREGADO` | Jefe de deliverys, al registrar el regreso | `JefeDeliverys` | Métricas en `deliverys` |
-| *(casi cualquiera)* | `ELIMINADO` | **Encargado**, desde F3 | `BuscarPedido` | **Sale** del cálculo |
+| *(casi cualquiera)* | `ELIMINADO` | **Encargado**, desde F3 — no un delivery con el repartidor en la calle | `BuscarPedido` | **Sale** del cálculo |
 
 **Ninguna transición escribe el arqueo.** Desde el 26-09-2026 el arqueo se calcula desde los
 pedidos de la jornada: la columna de arriba dice si el pedido **entra** al cálculo, no qué se
@@ -123,6 +123,12 @@ cajeroElimina*                     ← quién borró el ticket
 **`estadoDelivery` es una sub-máquina dentro de `DELIVERY`**: el pedido no cambia de `estado` entre
 que sale y que vuelve, solo avanza este campo. Por eso un delivery en curso y uno listo para salir
 se ven iguales si solo se mira `estado`.
+
+**Desde el 28-09-2026 hay una combinación nueva: `DELIVERY` + `VOLVIO` + `sinEntregar`.** Es un
+viaje que volvió sin entregar: el viaje está cerrado —se paga el envío— pero el pedido no pasa a
+`ENTREGADO`, y espera en la lista de la jefa a que el encargado lo anule. Y con `SALIO`, F3 no deja
+anular: primero la jefa marca que volvió. Ver
+[[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].
 
 ## Qué ve el cliente
 

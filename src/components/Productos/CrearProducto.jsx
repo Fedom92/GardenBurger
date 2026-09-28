@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { collection, addDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../../firebaseConfig/firebase";
+import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
 import { soloEnteros } from "../../Utils/formato";
+import { subirImagenProducto, IMAGEN_ILEGIBLE } from "../../Utils/imagenes";
 
 const CrearProducto = (props) => {
   const { register, handleSubmit, reset, watch } = useForm();
-  const { agregar_producto, categorias_options, ...propsModal } = props;
+  // onGuardado solo avisa que hubo un cambio (el menú queda sin publicar): la tabla
+  // de Productos se entera sola por su listener.
+  const { onGuardado, categorias_options, ...propsModal } = props;
   const [error, setError] = useState("");
   const [modoImagen, setModoImagen] = useState("link"); // "link" | "upload"
   const [archivoImagen, setArchivoImagen] = useState(null);
@@ -17,14 +19,6 @@ const CrearProducto = (props) => {
   const categoriaSeleccionada = watch("categoria");
 
   const productosCollection = collection(db, "productos");
-
-  const subirImagenStorage = async (archivo) => {
-    const nombreArchivo = `productos/${Date.now()}_${archivo.name}`;
-    const storageRef = ref(storage, nombreArchivo);
-    const metadata = { cacheControl: "public, max-age=31536000" };
-    await uploadBytes(storageRef, archivo, metadata);
-    return await getDownloadURL(storageRef);
-  };
 
   // addDoc genera un id por llamada: un doble click daba dos productos.
   const { ejecutar } = useAccionUnica();
@@ -40,7 +34,7 @@ const CrearProducto = (props) => {
           setSubiendoImagen(false);
           return;
         }
-        urlImagen = await subirImagenStorage(archivoImagen);
+        urlImagen = await subirImagenProducto(archivoImagen);
       }
 
       if (!urlImagen) {
@@ -60,12 +54,12 @@ const CrearProducto = (props) => {
         tipoExtra: data.categoria === "EXTRA" ? data.tipoExtra : "",
       };
 
-      const docRef = await addDoc(productosCollection, nuevoProducto);
-      agregar_producto({ id: docRef.id, ...nuevoProducto });
+      await addDoc(productosCollection, nuevoProducto);
+      onGuardado();
       clearForm();
     } catch (err) {
       console.error("Error al agregar producto: ", err);
-      setError("Error al guardar el producto.");
+      setError(err.message === IMAGEN_ILEGIBLE ? IMAGEN_ILEGIBLE : "Error al guardar el producto.");
     } finally {
       setSubiendoImagen(false);
     }
@@ -156,16 +150,10 @@ const CrearProducto = (props) => {
                       type="file"
                       className="form-control"
                       accept="image/*"
+                      // Sin tope de peso: la foto se achica antes de subirla (Utils/imagenes.js).
                       onChange={(e) => {
-                        const archivo = e.target.files[0] || null;
-                        if (archivo && archivo.size > 5 * 1024 * 1024) {
-                          setError("La imagen es pesada, no puede superar los 5MB.");
-                          e.target.value = "";
-                          setArchivoImagen(null);
-                        } else {
-                          setError("");
-                          setArchivoImagen(archivo);
-                        }
+                        setError("");
+                        setArchivoImagen(e.target.files[0] || null);
                       }}
                     />
                   )}

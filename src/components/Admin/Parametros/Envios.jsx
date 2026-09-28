@@ -11,7 +11,9 @@ import { useAccionUnica } from "../../../Utils/useAccionUnica";
 // "Retira" y "Espera Afuera" no son zonas cualquiera: el codigo las compara POR
 // TEXTO contra ENVIOS_LOCALES para decidir el ruteo de cocina (mostrador vs
 // reparto), el desglose del arqueo (efectivoLocal vs efectivoEnvio) y los tabs de
-// la Caja. Renombrarlas o borrarlas desde aca rompia las tres cosas en silencio.
+// la Caja. Renombrarlas o borrarlas desde aca rompia las tres cosas en silencio,
+// asi que ni se muestran. Siguen en `envios` para el chequeo de repetidas: no se
+// puede crear otra "Retira".
 const esZonaLocal = (envio) => ENVIOS_LOCALES.includes(envio.zona_envio);
 
 // ABM de zonas de envío. Colección global: las zonas las centraliza el admin
@@ -173,7 +175,7 @@ const Envios = ({ show, onHide }) => {
         </form>
 
         <div className="row g-2 mt-1">
-          {envios.map((envio) => (
+          {envios.filter((envio) => !esZonaLocal(envio)).map((envio) => (
             <div key={envio.id} className="col-4">
               <div className="border p-1 d-flex justify-content-between align-items-center">
                 <div>
@@ -185,10 +187,7 @@ const Envios = ({ show, onHide }) => {
                     type="button"
                     className="btn btn-success btn-sm"
                     onClick={() => handleEdit(envio)}
-                    disabled={esZonaLocal(envio)}
-                    title={esZonaLocal(envio)
-                      ? "Zona fija del sistema: el nombre decide el ruteo de cocina y el arqueo"
-                      : "Editar"}
+                    title="Editar"
                   >
                     <i className="fa-solid fa-edit"></i>
                   </button>
@@ -196,10 +195,7 @@ const Envios = ({ show, onHide }) => {
                     type="button"
                     className="btn btn-danger btn-sm"
                     onClick={() => handleDelete(envio)}
-                    disabled={esZonaLocal(envio)}
-                    title={esZonaLocal(envio)
-                      ? "Zona fija del sistema: no se puede borrar"
-                      : "Borrar"}
+                    title="Borrar"
                   >
                     <i className="fa-solid fa-trash-can"></i>
                   </button>

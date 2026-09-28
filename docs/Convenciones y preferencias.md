@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, convenciones]
 aliases: [Convenciones, Estilo de codigo]
-actualizado: 2026-09-26
+actualizado: 2026-09-28
 ---
 
 # Convenciones y preferencias
@@ -121,8 +121,16 @@ const fecha = ahoraServidor().set({ hour: h, minute: m, second: 0, millisecond: 
   eso el navegador ignora el click pero el botón parece habilitado: pasó con la Liquidación de
   deliverys. Una clase de botón nueva que se pueda deshabilitar necesita las dos reglas.
 - Tema oscuro: `--color-primario-normal: #272727`, `--color-primario-fuerte: #000000`.
-- Sidebar colapsable en desktop, drawer en mobile (`mobile-open`). Topbar fija en mobile con
-  `FaUserCog`.
+- Sidebar colapsable en desktop, drawer en mobile (`mobile-open`). En el celular el menú se abre
+  con un botón flotante arriba a la izquierda (`.nav-handle`: logo + flecha), que reemplazó a una
+  topbar negra para no gastar alto. Como tapa la esquina, lo que tiene algo ahí se corre 115px: el
+  buscador de Caja (`.search-bar`) y el título de las dos pantallas pensadas para el celular,
+  Métricas y Estadísticas viejas (`.est-titulo-pantalla`, 28-09-2026). **El resto de los módulos
+  son de PC.**
+- El **cajón del celular** abierto (28-09-2026): encabezado con logo, nombre, rol y una X para
+  cerrar; ítems de 48px de alto para el dedo; la pantalla actual marcada (`NavLink` → `nav-actual`);
+  los submenús con una flecha que gira; "Salir" abajo de todo y en rojo. Todo en la media query
+  móvil de `Main.css`: en la PC el menú no cambia.
 - Bootstrap grid + flexbox custom. Estilos y animaciones en `style/Main.css`.
 
 ## Variables de entorno
@@ -135,7 +143,7 @@ Todas con prefijo `REACT_APP_`. **Nunca hardcodear sus valores.**
 | `REACT_APP_gardenAppCheck` | site key de reCAPTCHA Enterprise |
 | `REACT_APP_appCheckDebug` | debug token para localhost |
 | `REACT_APP_admin`, `_encargado`, `_cajero`, `_cocina`, `_jefeDeliverys`, `_delivery`, `_atp` | valores de rol |
-| `REACT_APP_fijoDeliverys` | lo que cobra cada repartidor por noche, además del envío de cada entrega |
+| ~~`REACT_APP_fijoDeliverys`~~ | **ya no existe** desde el 28-09-2026: el repartidor cobra su asistencia más los envíos |
 | `REACT_APP_recargoMP` | % de recargo de Mercado Pago |
 | ~~`REACT_APP_horaAbre` / `_horaCierre`~~ | **ya no se usan** desde el 26-09-2026: el horario está en `HORARIO` de `Constantes.jsx`. Se pueden borrar del `.env` |
 | ~~`REACT_APP_celular`~~ | **ya no se usa** desde el 26-09-2026: cada sucursal tiene su teléfono en `sucursales/{id}.telefono`. Se puede borrar del `.env` |

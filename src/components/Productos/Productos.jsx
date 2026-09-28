@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { collection, updateDoc, deleteDoc, doc, query, orderBy, getDocs } from "firebase/firestore";
+import { collection, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CrearProducto from "./CrearProducto";
 import EditProducto from "./EditProducto";
@@ -8,7 +8,7 @@ import "../../style/Main.css"
 import Swal from "sweetalert2";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import { publicarMenu, marcarMenuPendiente, limpiarMenuPendiente, hayMenuPendiente } from "../../Utils/menuPublico";
-import { avisarErrorDeCarga } from "../../Utils/avisos";
+import { avisarSinConexion } from "../../Utils/avisos";
 import { CATEGORIAS_HAMBURGUESA } from "../../Utils/Constantes";
 
 const Productos = () => {
@@ -18,7 +18,7 @@ const Productos = () => {
   const [productoSeleccionado, setProductoSeleccionado] = useState([]);
   // Las categorias crudas viven aca y el modal Categorias las recibe por props:
   // antes el modal las releia entero al montar (dos lecturas de la coleccion por
-  // visita) y los <option> de Crear/Editar quedaban viejos hasta recargar.
+  // visita).
   const [categorias, setCategorias] = useState([]);
   const [modalShowCategorias, setModalShowCategorias] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,25 +27,12 @@ const Productos = () => {
   // sobrevive a salir de la pantalla. Ver marcarPendiente.
   const [menuPendiente, setMenuPendiente] = useState(hayMenuPendiente);
 
-  const productosCollection = useRef(query(collection(db, "productos"), orderBy("descripcion", "desc")));
+  // Todos los productos, ocultos incluidos (la Caja escucha solo los visibles). Sin
+  // orderBy: la lista se ordena abajo con localeCompare, que respeta los acentos.
+  const productosCollection = useRef(collection(db, "productos"));
+  // La MISMA consulta que useTraerDatos: en una PC que abre Caja y Productos, las
+  // dos pantallas comparten la caché de categorías.
   const categoriasCollection = useRef(query(collection(db, "categorias"), orderBy("nroOrden", "asc")));
-
-  const getProductos = useCallback((snapshot) => {
-    const productosArray = snapshot.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }))
-      .sort((a, b) => a.descripcion.localeCompare(b.descripcion));
-    setProductos(productosArray);
-  }, []);
-
-  const getCategorias = useCallback((snapshot) => {
-    setCategorias(snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })));
-  }, []);
 
   const categoriasOptions = useMemo(() => categorias.map((categoria) => (
     <option key={categoria.id} value={categoria.nombre}>{categoria.nombre}</option>
@@ -59,50 +46,43 @@ const Productos = () => {
   }, []);
 
 
+  // Productos y categorías por listener, igual que el catálogo de la Caja: con
+  // getDocs cada visita releía las dos colecciones enteras. Con la caché persistente,
+  // al volver a entrar Firestore manda solo lo que cambió (si no pasaron más de 30
+  // minutos). Y la tabla no se toca a mano: cada alta, edición o borrado aparece al
+  // instante por el listener, y si la escritura falla, el listener la vuelve atrás.
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const gastosSnapshot = await getDocs(productosCollection.current);
-        await getProductos(gastosSnapshot);
+    const parseDocs = (snapshot) => snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-        const categoriasSnapshot = await getDocs(categoriasCollection.current);
-        await getCategorias(categoriasSnapshot);
-
-      } catch (error) {
-        console.error('Error fetching data Productos:', error);
-        avisarErrorDeCarga("los productos");
-      } finally {
-        // Antes esto vivía dentro de getProductos, o sea solo en el camino feliz:
-        // si Firestore fallaba, el loader giraba para siempre sin explicación.
-        setIsLoading(false);
-      }
+    // El loader se apaga cuando llegaron las dos. Un error también cuenta como
+    // listo: si no, la pantalla queda girando para siempre sin explicación.
+    const listos = { productos: false, categorias: false };
+    const marcarListo = (clave) => {
+      listos[clave] = true;
+      if (listos.productos && listos.categorias) setIsLoading(false);
     };
 
-    fetchData();
+    const alFallar = (clave) => (error) => {
+      console.error(`Error escuchando ${clave} en Productos:`, error);
+      avisarSinConexion(`el catálogo (${clave})`);
+      marcarListo(clave);
+    };
 
-  }, [getProductos, getCategorias]);
+    const unsubProductos = onSnapshot(productosCollection.current, (snap) => {
+      setProductos(parseDocs(snap).sort((a, b) => a.descripcion.localeCompare(b.descripcion)));
+      marcarListo("productos");
+    }, alFallar("productos"));
 
+    const unsubCategorias = onSnapshot(categoriasCollection.current, (snap) => {
+      setCategorias(parseDocs(snap));
+      marcarListo("categorias");
+    }, alFallar("categorias"));
 
-
-  //Agrega y Edita en vista Local
-  const agregarProducto = (nuevoProducto) => {
-    const nuevosProductos = [...productos, nuevoProducto];
-    nuevosProductos.sort((a, b) =>
-      a.descripcion.localeCompare(b.descripcion)
-    );
-    setProductos(nuevosProductos);
-    marcarPendiente();
-  };
-
-  const editarProducto = (nuevoProductoActualizado) => {
-    const productosActualizados = productos.map((producto) =>
-      producto.id === nuevoProductoActualizado.id ? { ...producto, ...nuevoProductoActualizado } : producto);
-    productosActualizados.sort((a, b) =>
-      a.descripcion.localeCompare(b.descripcion)
-    );
-    setProductos(productosActualizados);
-    marcarPendiente();
-  };
+    return () => {
+      unsubProductos();
+      unsubCategorias();
+    };
+  }, []);
 
 
 
@@ -142,11 +122,6 @@ const Productos = () => {
   const actualizarVisibilidad = async (id, nuevoEstado) => {
     const productoDoc = doc(db, 'productos', id);
     await updateDoc(productoDoc, { visible: nuevoEstado });
-    setProductos((prevProductos) =>
-      prevProductos.map((producto) =>
-        producto.id === id ? { ...producto, visible: nuevoEstado } : producto
-      )
-    );
     marcarPendiente();
   };
 
@@ -164,10 +139,9 @@ const Productos = () => {
     if (!result.isConfirmed) return;
 
     // El Swal de éxito salía sin esperar el borrado y sin catch: decía "¡Borrado!"
-    // aunque hubiera fallado, y la fila desaparecía de la tabla igual.
+    // aunque hubiera fallado.
     try {
       await deleteDoc(doc(db, "productos", id));
-      setProductos((prevProductos) => prevProductos.filter((producto) => producto.id !== id));
       marcarPendiente();
       Swal.fire({
         title: '¡Borrado!',
@@ -309,7 +283,14 @@ const Productos = () => {
                       className="btn-contorno m-1"
                       onClick={() => setModalShowProducto(true)}
                     >
-                      Agregar Producto
+                      + Agregar Producto
+                    </button>
+
+                    <button
+                      className="btn-contorno m-1"
+                      onClick={() => setModalShowCategorias(true)}
+                    >
+                      Categorías
                     </button>
 
                     <button
@@ -322,13 +303,6 @@ const Productos = () => {
                         : "Genera el menú que ven los clientes en la web"}
                     >
                       {publicando ? "Publicando..." : "Publicar Menú"}
-                    </button>
-
-                    <button
-                      className="btn-contorno m-1"
-                      onClick={() => setModalShowCategorias(true)}
-                    >
-                      Categorías
                     </button>
                   </div>
                 </div>
@@ -353,13 +327,13 @@ const Productos = () => {
       <CrearProducto
         show={modalShowProducto}
         categorias_options={categoriasOptions}
-        agregar_producto={agregarProducto}
+        onGuardado={marcarPendiente}
         onHide={() => setModalShowProducto(false)}
       />
       {productoSeleccionado && (<EditProducto
         producto={productoSeleccionado}
         categorias_options={categoriasOptions}
-        editar_producto={editarProducto}
+        onGuardado={marcarPendiente}
         show={modalShowEditProducto}
         onHide={() => setModalShowEditProducto(false)}
       />)}
@@ -367,7 +341,6 @@ const Productos = () => {
         show={modalShowCategorias}
         onHide={() => setModalShowCategorias(false)}
         categorias={categorias}
-        setCategorias={setCategorias}
         onCambio={marcarPendiente}
       />
     </>

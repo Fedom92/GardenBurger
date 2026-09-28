@@ -26,10 +26,6 @@ export const CATEGORIAS_COMBOS = [
 // camino es una casilla "solo en Caja" en el producto.
 export const CATEGORIAS_SOLO_CAJA = ["COMBO GARDEN", "GARDEN SIN PAPAS"];
 
-// Si una categoría se puede mostrar en la web. Tolera mayúsculas y espacios de
-// más, que aparecen al copiar y pegar nombres.
-export const esCategoriaWeb = (categoria) =>
-  !CATEGORIAS_SOLO_CAJA.includes(String(categoria || "").trim().toUpperCase());
 
 export const CANTIDAD_CARNES = {
   TRIPLE: 3,
@@ -56,21 +52,37 @@ export const SUBESTADOS_MOTODELIVERY = {
   FIN: "VOLVIO",
 };
 
-// Cuándo abre el local. Define la jornada comercial de TODO el sistema —arqueo,
-// buscadores, historial, asistencias— y el horario de la web pública.
+// La jornada comercial: de horaAbre de un día a horaCierre del siguiente. Es lo que
+// significa "hoy" en TODO el sistema —arqueo, fotos, Métricas, Estadísticas,
+// buscadores, historial, asistencias—: un pedido de las 00:30 es de la noche
+// anterior, y a horaCierre el sistema pasa al día siguiente.
+//
+// NO es el horario de atención. Los días y horas en que cada sucursal toma pedidos
+// por la web están en su documento (`sucursales/{id}.horario`), editables desde el
+// ABM, y tienen que caer dentro de este rango: es el margen que agrupa los pedidos
+// de una noche, abra la sucursal a la hora que abra.
 //
 // Vive en código y no en el .env: no es un secreto, y las REACT_APP_ se meten en
 // el bundle al hacer el build igual, así que el .env no daba ninguna flexibilidad
 // extra. Acá queda versionado y en un solo lugar. Cambiarlo es un build y un deploy.
 export const HORARIO = {
-  // Formato de moment: 0 = domingo ... 6 = sábado. Se cuentan por JORNADA: el
-  // domingo a las 00:30 sigue siendo la noche del domingo aunque el reloj diga
-  // lunes. Solo lo mira la web pública: la Caja trabaja cualquier día.
-  diasApertura: [3, 4, 5, 6, 0],   // miércoles a domingo
   horaAbre: 19,
-  // El cierre es margen: no se trabaja pasada la 1. La web deja de tomar pedidos
-  // una hora antes (HORA_CIERRE_WEB en fechaComercial).
   horaCierre: 2,
+};
+
+// Desde qué hora se puede mirar el arqueo (F4), hasta horaCierre. El arqueo cuesta
+// leer los pedidos de la noche: la ventana evita pagarlo por curiosidad a las 21.
+// Igual para todas las sucursales, por decisión del dueño (28-09-2026): atarla al
+// cierre de cada una obligaba a la Caja a leer el horario de su sucursal.
+export const HORA_HABILITA_STATS = 0;
+
+// Qué pasa con la diferencia cuando el cliente de un delivery paga en efectivo con
+// un billete más grande. La moto no lleva cambio: o el repartidor trae esa plata y
+// los admins le transfieren el vuelto al cliente, o queda de propina para él. Lo
+// elige el cajero al tomar el pedido. Mismo formato que METODOS_PAGO.
+export const DESTINO_VUELTO = {
+  VUELTO:  { key: "VUELTO",  label: "Vuelto" },
+  PROPINA: { key: "PROPINA", label: "Propina" },
 };
 
 // Los métodos de pago: `key` es el valor que se guarda en el pedido y `label` lo
@@ -78,8 +90,8 @@ export const HORARIO = {
 // mano. El "%" del pago dividido es el que más se presta a errores.
 export const METODOS_PAGO = {
   EFECTIVO: { key: "EFECTIVO", label: "Efectivo" },
-  MP:       { key: "MP",       label: "Mercado Pago" },
-  DIVIDIDO: { key: "%",        label: "Dividido" },
+  MP:       { key: "MP",      label: "Mercado Pago" },
+  DIVIDIDO: { key: "%",       label: "Dividido" },
 };
 
 // La etiqueta de un valor guardado: "%" -> "Dividido". Si el valor no es uno de
@@ -124,14 +136,15 @@ export const ENVIOS_LOCALES = ["Retira", "Espera Afuera"];
 // - `llevaMoto` (opcional): si el alta y la edición le piden datos de la moto
 
 export const ROLES = {
-  [process.env.REACT_APP_admin]: { nombre: "Admin", rutaInicial: "/productos" },
-  [process.env.REACT_APP_encargado]: { nombre: "Encargado", rutaInicial: "/pedidos-caja" },
-  [process.env.REACT_APP_cajero]: { nombre: "Cajero", rutaInicial: "/pedidos-caja" },
-  [process.env.REACT_APP_cocina]: { nombre: "Cocina", rutaInicial: "/gestion-cocina" },
+  [process.env.REACT_APP_admin]:      { nombre: "Admin",      rutaInicial: "/productos" },
+  [process.env.REACT_APP_encargado]:  { nombre: "Encargado",  rutaInicial: "/pedidos-caja" },
+  [process.env.REACT_APP_cajero]:     { nombre: "Cajero",     rutaInicial: "/pedidos-caja" },
+  [process.env.REACT_APP_cocina]:     { nombre: "Cocina",     rutaInicial: "/gestion-cocina" },
+  [process.env.REACT_APP_atp]:        { nombre: "ATP",        rutaInicial: "/gestion-atp" },
+
+  [process.env.REACT_APP_jefeDeliverys]: { nombre: "Jefe de Deliverys", rutaInicial: "/jefe-deliverys" },
   // Los repartidores no usan el sistema: existen como empleados para la asistencia
   // y para asignarles pedidos. Sin rutaInicial, porque no tienen modulo, y
   // `sinAcceso`: el alta no les crea cuenta de Auth (lo decide el rol, no un check).
   [process.env.REACT_APP_delivery]: { nombre: "Delivery", llevaMoto: true, sinAcceso: true },
-  [process.env.REACT_APP_jefeDeliverys]: { nombre: "Jefe de Deliverys", rutaInicial: "/jefe-deliverys" },
-  [process.env.REACT_APP_atp]: { nombre: "ATP", rutaInicial: "/gestion-atp" },
 };

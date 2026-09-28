@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
-import { getDoc, updateDoc, doc } from "firebase/firestore";
+import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
 
 const EditCliente = (props) => {
     const { onUpdated, cliente, ...propsModal } = props;
@@ -18,20 +19,24 @@ const EditCliente = (props) => {
     }, [cliente, reset]);
 
     const update = async (data) => {
-        const clienteRef = doc(db, "clientes", cliente.id);
-        const clienteDoc = await getDoc(clienteRef);
-        const clienteData = clienteDoc.data();
-
+        // El cliente ya está en memoria: es el resultado de la búsqueda. Releerlo acá
+        // costaba una lectura en cada edición.
         const newData = {
-            nombre: data.nombre || clienteData.nombre,
-            direccion: data.direccion || clienteData.direccion,
-            entreCalles: data.entreCalles || clienteData.entreCalles,
-            telefono: data.telefono || clienteData.telefono,
+            nombre: data.nombre || cliente.nombre,
+            direccion: data.direccion || cliente.direccion,
+            entreCalles: data.entreCalles || cliente.entreCalles,
+            telefono: data.telefono || cliente.telefono,
         };
 
-        await updateDoc(clienteRef, newData);
-        onUpdated && onUpdated({ id: cliente.id, ...newData });
-        clearForm();
+        // Sin esto, un fallo dejaba el modal abierto sin decir nada.
+        try {
+            await updateDoc(doc(db, "clientes", cliente.id), newData);
+            onUpdated && onUpdated({ id: cliente.id, ...newData });
+            clearForm();
+        } catch (error) {
+            console.error("Error al editar cliente:", error);
+            Swal.fire({ title: "Error", text: "No se pudo guardar el cliente. Revisá la conexión e intentá de nuevo.", icon: "error", confirmButtonColor: "#dc3545" });
+        }
     };
 
     const clearForm = () => {

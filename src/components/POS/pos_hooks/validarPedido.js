@@ -11,7 +11,8 @@ export const errorPagoDividido = (montoEfectivo, totalBase) => {
     return null;
 };
 
-const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo }) => {
+// `pideVuelto` lo calcula la Caja: delivery en efectivo que paga con más del total.
+const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo, pideVuelto = false }) => {
     if (data.telefono.length < 10) {
         Swal.fire({
             title: 'Advertencia',
@@ -56,6 +57,18 @@ const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal, totalBase
         Swal.fire({
             title: 'Advertencia',
             text: `El monto "Paga Con" debe ser igual o mayor al total ($${totalFinal})`,
+            icon: 'warning',
+            confirmButtonColor: '#ffc107',
+        });
+        return false;
+    }
+
+    // La moto no lleva cambio: sin esto, la jefa no sabe si el repartidor tiene que
+    // traer la diferencia o se la queda de propina.
+    if (pideVuelto && !data.destinoVuelto) {
+        Swal.fire({
+            title: 'Advertencia',
+            text: 'El cliente paga con más del total: marcá si quiere el vuelto o lo deja de propina.',
             icon: 'warning',
             confirmButtonColor: '#ffc107',
         });

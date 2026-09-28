@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, deuda, auditoria]
 aliases: [Pendientes, Que falta]
-actualizado: 2026-09-26
+actualizado: 2026-09-28
 ---
 
 # Deuda técnica
@@ -35,15 +35,20 @@ Cosas que las auditorías marcaron y el dueño decidió dejar como están. **No 
   `HORARIO.horaAbre`.
 - **Re-precificar en silencio** al Revisar una solicitud web, sin avisar al cajero. El cliente ve
   el total definitivo en `/ver-pedido` y en el ticket.
-- **El fijo de los repartidores y el recargo de MP son constantes del `.env`**
-  (`REACT_APP_fijoDeliverys`, `REACT_APP_recargoMP`). Cambiarlos es un build y un deploy, y el dueño
-  lo prefiere así antes que editarlos desde el admin (26-09-2026).
+- **El recargo de MP es una constante del `.env`** (`REACT_APP_recargoMP`). Cambiarlo es un build
+  y un deploy, y el dueño lo prefiere así antes que editarlo desde el admin (26-09-2026). El fijo
+  de los repartidores, que iba igual, dejó de existir el 28-09-2026.
 - **`usuarios` es legible por todo el staff**, con `valorHora` y DNI incluidos. Los usuarios
   internos no son la preocupación, y el externo no puede leerla (la regla exige sesión). Separar
   esos campos costaría lecturas extra al cargar asistencias (26-09-2026).
-- **Un repartidor que cobra fijo más envíos va con `valorHora` en 0.** La carga de asistencias lo
-  incluye igual —sirve para registrar quién vino—, y con valor hora 0 la liquidación de asistencias
-  no le paga horas encima. Es configuración del alta, no código (26-09-2026).
+- **El repartidor cobra como cualquier empleado, más sus envíos** (28-09-2026): `horas ×
+  valorHora − descuentos` de su asistencia, más el envío de cada viaje. No hay fijo: llegar tarde
+  es un descuento. Le paga el encargado cada noche, con el F4. Ver
+  [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].
+- **Un viaje se paga siempre, se haya entregado o no** (28-09-2026): si el cliente canceló o no
+  se encontró la dirección, el viaje se hizo. Cerró el "Por confirmar" que había quedado abierto.
+- **El F4 se habilita a la misma hora en todas las sucursales** (`HORA_HABILITA_STATS`, 00:00),
+  no una hora antes del cierre de cada una: eso obligaba a la Caja a leer su sucursal (28-09-2026).
 - **La creación pública de solicitudes usa lista negra, no blanca.** Una lista blanca (`hasOnly`)
   obliga a tocar la regla cada vez que la web agrega un campo, y el dueño no quiere mantenerla.
   Queda el riesgo de que alguien arme a mano una solicitud con `cajeroRevisaID` y nazca trabada:
@@ -101,6 +106,13 @@ se hizo sobre CRA (14-09-2026) sin necesitar la migración.
 
 ## Riesgos latentes (no son bugs hoy)
 
+- **Un viaje "sin entregar" suma al arqueo hasta que el encargado lo anula.** La jefa cierra el
+  viaje, pero anular es del encargado (F3). El F4 lo avisa y la jefa lo sigue viendo en rojo en su
+  lista, así que no pasa desapercibido; si nadie lo anula, la caja muestra de más.
+- **"No anular en la calle" vive en el front.** F3 lo bloquea y relee el pedido antes de anular,
+  pero las reglas no lo impiden: con las devtools se podría. Llevarlo a `firestore.rules` no cuesta
+  lecturas —usa el documento que ya se está escribiendo—, pero repite ahí los valores de `estado`
+  y `estadoDelivery`, y las reglas se despliegan aparte.
 - **Divergencia de combos.** `contarCombos` compara la descripción del producto **textual** contra
   `CATEGORIAS_COMBOS.excludes`, mientras `esComboConta` en Estadísticas normaliza la categoría
   porque los TSV vienen sucios. Si la descripción difiere entre Firestore y el export, la
@@ -110,6 +122,11 @@ se hizo sobre CRA (14-09-2026) sin necesitar la migración.
   tiene guarda `|| 0` a propósito, para que un dato faltante se vea como `NaN` en pantalla en vez
   de pasar por un `0` legítimo — no "arreglarlo" unificándolo con
   [[Convenciones y preferencias|fmtPesos]].
+
+- **El modo "Link URL" de las fotos acepta cualquier dirección.** Un link de Google Drive anda un
+  rato y después Google responde **429** y la foto no carga, en la Caja y en la web. Se decidió
+  no rechazarlos (28-09-2026): la salida es "Subir archivo". Ver
+  [[Decisiones tecnicas#Las fotos de producto se achican en el navegador]].
 
 ## Deuda de mantenibilidad (sin urgencia)
 
@@ -149,10 +166,10 @@ rápido; esto es lo detallado. Se especificó el 26-09-2026 y quedó para la pr�
   filtro. Rango: de `primeraJornadaConPedidos(sucursal)` hasta ayer. Series por año, por mes, con
   pestañas Combos / Tickets / Monto, igual que el Histórico. Cuesta 1 lectura por noche y sucursal
   (~520 por año con 2 sucursales).
-- **Reusar lo visual del Histórico:** mover `KpiCard`, `BarChart` y `Section` de
-  `Historico/Estadisticas.jsx` a un `Estadisticas/componentes.jsx` compartido, e importar
-  `Historico/Estadisticas.css`. El Histórico no cambia de comportamiento. Montos con `fmtPesos`
-  (la excepción `fmt$`/`fmtN` sin guarda es solo del Histórico).
+- **Reusar lo visual del Histórico:** `KpiCard`, `BarChart` y `Section` **ya están** en
+  `Estadisticas/componentes.jsx` (28-09-2026, los usan el Histórico y Métricas); falta importar
+  `Historico/Estadisticas.css` y usarlos. Montos con `fmtPesos` (la excepción `fmt$`/`fmtN` sin
+  guarda es solo del Histórico).
 
 ### Eliminar pedidos desde el Historial (solo admin)
 
@@ -174,12 +191,6 @@ va o cierra el navegador. Las otras cajas la ven "Asignada a …" y no pueden to
 (26-09-2026): guardar `cajeroRevisaTimestamp` al tomarla y que la regla `asignacionValida()` deje
 tomarla a cualquiera pasados ~15 minutos. No depende del rol —las reglas no saben quién es el
 encargado— y no cuesta lecturas. Sin implementar.
-
-### Por confirmar: ¿se paga el envío de una entrega anulada?
-
-Dos casos que hoy se comportan distinto: anulada **después** de que el repartidor volvió, se paga;
-anulada **mientras está en la calle**, no se paga (sale del listener del jefe y nunca llega a
-`VOLVIO`). El dueño va a averiguar qué corresponde; si cambia, es una línea en `liquidarDeliverys()`.
 
 ### Para el final
 

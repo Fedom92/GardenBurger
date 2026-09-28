@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, decisiones, adr]
 aliases: [ADR, Por que esta asi]
-actualizado: 2026-09-26
+actualizado: 2026-09-28
 ---
 
 # Decisiones técnicas
@@ -140,9 +140,12 @@ paquete: el build de 10 años se regenera con cada versión.
 
 **Qué**: en Productos, el botón "Publicar Menú" **parpadea** mientras haya cambios en el catálogo
 que la web pública todavía no ve. La bandera (`menuSinPublicar`) vive en `localStorage`: la
-prenden `agregarProducto`, `editarProducto`, `actualizarVisibilidad`, `confirmeDelete` y los tres
+prenden `onGuardado` de Crear/Editar producto, `actualizarVisibilidad`, `confirmeDelete` y los tres
 handlers del modal `Categorias` (vía `onCambio`); la apaga `handlePublicarMenu` en el camino feliz.
 Helpers en `menuPublico.js`.
+
+También la prenden los productos de `CATEGORIAS_SOLO_CAJA`, aunque no estén en `menu.json`: se
+probó filtrarlos y el dueño prefirió lo simple (28-09-2026). Publicar de más no rompe nada.
 
 **Por qué así y no de otra forma**:
 
@@ -156,6 +159,46 @@ Helpers en `menuPublico.js`.
 **Consecuencia, aceptada**: es por navegador. Si se edita en una PC y se publica desde otra, la
 primera sigue parpadeando hasta que publique desde ahí. Inofensivo: publicar dos veces no rompe
 nada.
+
+## Las fotos de producto se achican en el navegador
+
+**Qué**: al elegir "Subir archivo" en Crear/Editar producto, `subirImagenProducto()`
+(`Utils/imagenes.js`) achica la foto a **1200 px de lado** y la pasa a **WebP** (calidad 0,85) en el
+Chrome del admin, y recién ahí la sube a `productos/` de Storage. A Storage llega solo la versión
+liviana; el original queda en la PC. No hay tope de peso al elegir el archivo.
+
+**Por qué**: la foto de una cámara pesa 4-6 MB y tiene ~4000 px, pero se ve a 86 px en la Caja y
+a 128 px en la web (384 px en un celular ×3). Subirla entera solo hace lenta la web con datos
+móviles. Medido en Chrome con una foto sintética de 4000×3000: **5 MB → 200 KB** a 1200 px; en
+WebP pero sin achicar quedaba en **2,6 MB**, o sea que lo que baja el peso es la resolución, no el
+formato. Cero lecturas de Firestore, y menos descarga de Storage que antes.
+
+**Alternativas descartadas**:
+
+| Opción | Por qué no |
+|---|---|
+| `browser-image-compression` | Ahorra ~10 líneas, pero sin versiones desde marzo de 2023, y por defecto baja su propio código de `cdn.jsdelivr.net` en cada uso. Lo que suma (peso máximo garantizado, navegadores viejos, límites de iPhone) sirve cuando suben fotos los clientes, no un admin en Chrome |
+| Extensión "Resize Images" de Firebase | Sube el original y lo achica una Cloud Function: hay que subir el tope de 5 MB en las reglas, la URL achicada no vuelve al navegador, se paga cada ejecución y se guarda todo dos veces |
+| CDN de imágenes (Cloudinary, ImageKit) | Otra cuenta y otro servicio de terceros para algo que resuelve el navegador |
+
+**Consecuencias, aceptadas**:
+
+- Las **HEIC** del iPhone no se abren en Chrome de Windows: el admin ve `IMAGEN_ILEGIBLE` y tiene
+  que exportarla a JPG.
+- **Safari no genera WebP desde un canvas** (sí los muestra, desde la versión 14): devuelve PNG. Si
+  alguien sube desde Safari, pesa más pero funciona, y la extensión sale del tipo real.
+- Si la original ya pesaba menos que el WebP (una imagen chica y optimizada), se sube la original.
+- Las fotos que ya estaban en Storage no se convierten solas: se vuelven a subir desde Editar.
+- El tope de 5 MB de `storage.rules` sigue igual, pero el admin ya no llega a él: queda como red
+  para lo que no pase por `imagenes.js`. Ver [[Reglas de seguridad]].
+
+> [!warning] Links de Google Drive: **429 Too Many Requests**
+> El modo "Link URL" acepta cualquier dirección, y algunas fotos apuntaban a
+> `drive.google.com/thumbnail?id=…`. Drive no es un servidor de imágenes: redirige a
+> `lh3.googleusercontent.com`, que limita los pedidos por IP. Las PCs del local comparten IP y la
+> Caja pide todas las fotos de golpe, así que corta enseguida. Ninguna otra URL de Drive lo evita.
+> La salida es "Subir archivo" y después **Publicar Menú**. Por decisión del dueño (28-09-2026) el
+> campo **no** rechaza links de Drive.
 
 ## `html2pdf` se carga al tocar "Exportar a PDF"
 
@@ -182,6 +225,19 @@ descarga hasta que alguien exporta. Se mantiene la dependencia porque la exporta
 desde localhost hace falta el debug token. Se imprime en consola en **cada** `initializeAppCheck()`
 mientras el modo debug esté activo (verificado en el SDK instalado) — que aparezca no significa
 que se esté regenerando. Guardado en `REACT_APP_appCheckDebug` deja de cambiar.
+
+> [!note] Ruido de consola que no es un error
+> El script de reCAPTCHA deja dos avisos en cada arranque: `Unrecognized feature: 'private-token'` y
+> un `POST .../recaptcha/enterprise/pat 401`. Son intentos de Google de usar funciones del navegador
+> que Chrome no tiene o no reconoce; sigue por el camino normal y el token de App Check sale igual.
+> No se pueden silenciar desde la app.
+
+> [!warning] La API key tiene que admitir `gardenburger.firebaseapp.com`
+> La key del navegador está restringida por referrer en Google Cloud (Credenciales). Además de los
+> dominios de la app, tiene que figurar **`https://gardenburger.firebaseapp.com/*`**: desde ahí
+> carga Auth su iframe y, sobre todo, se abre la página del link de **"Olvidé mi contraseña"**. Sin
+> ese dominio la consola muestra `getProjectConfig 403 ... API_KEY_HTTP_REFERRER_BLOCKED` y el
+> restablecimiento de contraseña no funciona (28-09-2026).
 
 ## La configuración de Firebase se versiona
 
@@ -280,9 +336,9 @@ meses dejan de ser comparables. Regla del dueño, y es la correcta: *"modificar 
 NO"*.
 
 **Y para que valga sin importar cuándo se saca la foto**, lo que depende de reglas que cambian se
-**congela en el pedido** al escribirlo: `combos` y `esLocal` al cobrar, `fijoDelivery` al cerrar
-la entrega. Es el mismo criterio que el `valorHora` en asistencias. Sin eso, la foto de una noche
-vieja se calculaba con el menú y el fijo del día en que alguien la abría por primera vez (26-09-2026,
+**congela en el pedido** al escribirlo: `combos`, `esLocal` y el costo del envío al cobrar. Es el
+mismo criterio que el `valorHora` en asistencias. Sin eso, la foto de una noche vieja se
+calculaba con el menú del día en que alguien la abría por primera vez (26-09-2026,
 ver [[Auditoria 2026-09-26#A · P2 · La foto promete una historia exacta, pero hoy nadie la saca]]).
 
 **El costo**, con los volúmenes reales (davinci ~60 pedidos/noche, pico de 101; 2 arqueos por
@@ -320,14 +376,18 @@ solicitud web rechazada sin `cajeroID`—. **Los 6 campos coinciden en los 8 cas
 
 **Qué**: las pantallas de varios días leen la foto de cada noche (`obtenerResumenes`), no los
 pedidos. Las noches sin foto se calculan una vez —en tandas de noches seguidas, una consulta por
-tanda— y se guardan, incluidas las que dan cero. La noche en curso no entra en los rangos.
+tanda— y se guardan, incluidas las que dan cero. La noche en curso no tiene foto (todavía se
+mueve): Métricas la calcula en el momento desde sus pedidos cuando el período llega a hoy —"Hoy",
+"Semana actual", "Mes actual"—, sin guardarla. Cuesta lo mismo que un F4 (~60-100 por sucursal).
 
 **Por qué**: un mes de 2 sucursales son ~44 lecturas con fotos contra ~2.000-2.400 con pedidos; un
 año, ~520 contra ~25.000 (media cuota diaria). La foto se diseñó desde el inventario del Histórico,
 para servir a las dos pantallas sin agregar campos después.
 
 **Nombres**: **Métricas** (`/metricas`) es el vistazo rápido, pensado para el celular: combos,
-ventas (efectivo/MP), pedidos (eliminados), delivery vs mostrador y top 3 combos. **Estadísticas**
+ventas (efectivo/MP), pedidos (eliminados), delivery vs mostrador y top 3 combos. Se maneja con
+botones, como una app (28-09-2026): primero la sucursal, después un período fijo, y busca sola;
+sin fechas a mano ni botón "Ver". Al entrar no lee nada. **Estadísticas**
 es lo completo: las Generales (pendientes, ver [[Deuda tecnica#Funcionalidad pendiente]]) y el
 Histórico de los TSV.
 
@@ -344,15 +404,55 @@ los pedidos viejos conservan el de entonces, que es irrelevante: el link vence a
 
 ## El horario vive en código, no en el `.env`
 
-**Qué**: los días de apertura y las horas de apertura y cierre están en `HORARIO`, en
-`Utils/Constantes.jsx`. Hasta el 26-09-2026 las horas eran `REACT_APP_horaAbre` y
-`REACT_APP_horaCierre`.
+**Qué**: la **jornada comercial** —de 19 a 02, lo que significa "hoy" para todo el sistema— está
+en `HORARIO`, en `Utils/Constantes.jsx`, junto con `HORA_HABILITA_STATS` (desde qué hora se ve el
+F4). Hasta el 26-09-2026 las horas eran `REACT_APP_horaAbre` y `REACT_APP_horaCierre`.
 
 **Por qué**: no son secretos, y las variables `REACT_APP_` se meten en el bundle al hacer el
 build, así que el `.env` no daba ninguna flexibilidad: cambiar cualquiera de las dos cosas es un
 build y un deploy. En código quedan versionadas, juntas y en un solo lugar. El `.env`, que git
-ignora, queda para la configuración de Firebase y para lo que el dueño decidió dejar ahí: el fijo
-de los repartidores y el recargo de MP.
+ignora, queda para la configuración de Firebase y para lo que el dueño decidió dejar ahí: el
+recargo de MP.
+
+**El horario de atención, en cambio, es de cada sucursal** (28-09-2026): días, apertura, cierre y
+corte de la web, en su documento, editables desde el ABM. Las sucursales tienen horarios distintos
+(Davinci cierra a las 00, Luro a la 01), y cambiarlos no tiene que ser un deploy. Viaja en
+`menu.json`, así que la web lo mira sin leer Firestore.
+
+**Y el F4 no mira el horario de la sucursal**: se habilita a `HORA_HABILITA_STATS` en todas.
+Atarlo al cierre de cada una obligaba a la Caja a leer su sucursal (2-3 lecturas por sesión), y el
+dueño prefirió la constante.
+
+## Las Métricas de la jefa van por listener
+
+**Qué**: las Métricas del módulo de deliverys salen de un `onSnapshot` sobre los viajes cerrados
+de la noche —`where("deliveryFinTimestamp", ">=", inicioDeLaJornada)`—, además del listener de
+siempre sobre los pedidos en `DELIVERY`. Los totales se calculan con `liquidarDeliverys()` sobre
+esos documentos, filtrados a los pedidos de la jornada, igual que en el F4.
+
+**Por qué**: la jefa tiene que poder ir viendo pedidos, envíos y totales durante la noche. Antes
+el botón leía la noche entera al abrirse (~60-100 lecturas), y por eso tenía ventana horaria. El
+listener cuesta ~1 lectura por viaje cerrado, más los cambios: en una noche de 60 deliverys son
+~60 en vez de ~100, y abrir las Métricas no cuesta nada. Al recargar dentro de los 30 minutos,
+Firestore manda solo los cambios.
+
+**Detalle**: es un rango sobre **un solo campo**, así que alcanza el índice automático. Filtrar
+por `estadoDelivery` y por fecha a la vez habría pedido un índice compuesto.
+
+## Al repartidor le paga el encargado, desde el F4
+
+**Qué**: el F4 lee, además de los pedidos, el documento de asistencia de la noche (1 lectura), y
+muestra a cada repartidor su **base** (`horas × valorHora − descuento` de su registro) más sus
+**envíos**. Ya no hay fijo: `REACT_APP_fijoDeliverys` se eliminó el 28-09-2026.
+
+**Por qué**: a los repartidores se les paga cada noche, y quien cierra la noche es el encargado.
+Antes la jefa anotaba los envíos a mano y se los pasaba; ahora salen de los pedidos. La base sale
+de la asistencia porque el repartidor es un empleado más: llegar tarde o devolver un préstamo son
+descuentos, como para cualquiera. Un registro sin salida todavía no tiene base, y el F4 lo avisa.
+
+**Consecuencia**: la Liquidación de Asistencias del admin también les suma los envíos, de las
+fotos de cada noche. Es un registro del trabajo hecho —una noche da lo de esa noche; un período,
+la suma—, no de a quién se le pagó.
 
 ## Una solicitud web, un solo cajero
 
@@ -402,6 +502,19 @@ abierta sin recargar.
 > Cuánto tiempo el servidor honra un resume token es política suya, no algo verificable desde el
 > SDK. Tras una noche cerrado, la primera carga probablemente sea completa igual — que es
 > exactamente el objetivo: una lectura del catálogo por PC por noche en vez de una por montaje.
+
+**Productos (el ABM del admin) va igual desde el 28-09-2026.** Con `getDocs`, cada visita
+releía todos los productos y las categorías; con listener, volver a entrar trae solo lo que
+cambió. Firebase cobra como consulta nueva un listener que estuvo desconectado más de 30 minutos.
+Además **se borró código**: la tabla ya no se actualiza a mano después de cada alta, edición,
+ocultamiento o borrado (ni la de productos ni la del modal Categorías). El listener muestra cada
+escritura al instante y la vuelve atrás si falla. Crear y Editar solo avisan con `onGuardado`, para
+que titile "Publicar Menú". Detalles:
+
+- La consulta de productos **no filtra `visible`** (el admin ve los ocultos), así que no comparte
+  caché con la de la Caja. La de categorías es **idéntica** a la de `useTraerDatos`: en una PC
+  que abre las dos pantallas, se comparte.
+- Se fue el `orderBy("descripcion", "desc")`: la lista se ordena igual con `localeCompare`.
 
 ## Numeración de tickets dentro de la transacción del pedido
 

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { esHoraDeArqueo } from "./fechaComercial";
 
-// Si ya es hora de mirar un arqueo: de 00:00 a horaCierre. Lo usan el F4 de la
-// Caja y la liquidacion de deliverys, que cuestan un barrido de la jornada.
+// Si ya es hora de mirar el arqueo: de HORA_HABILITA_STATS a horaCierre. Lo usa el
+// F4 de la Caja, que cuesta un barrido de la jornada.
 //
 // Este valor es SOLO para el `disabled` de un boton. La funcion que lee tiene que
 // volver a preguntar esHoraDeArqueo() en el momento: un atajo de teclado no pasa
@@ -10,7 +10,8 @@ import { esHoraDeArqueo } from "./fechaComercial";
 //
 // Por que un intervalo de 60 s y no un timeout al instante exacto:
 // - La pantalla queda abierta desde las 19 y el turno cruza la medianoche, asi que
-//   el valor tiene que cambiar solo, en los dos sentidos (00:00 y horaCierre).
+//   el valor tiene que cambiar solo, en los dos sentidos (HORA_HABILITA_STATS y
+//   horaCierre).
 // - ahoraServidor() puede no estar sincronizado cuando la pantalla monta: el offset
 //   lo trae LayoutStaff y los efectos de los hijos corren primero. Un timeout
 //   calculado con el reloj torcido dispara a destiempo; releyendo se corrige solo.

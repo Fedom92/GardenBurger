@@ -166,6 +166,13 @@
     background: rgba(255, 255, 255, .05);
 }
 
+/* KpiCard compacto (Métricas): lo mismo con menos aire. */
+.kpi-card--compacto .kpi-icon-wrap {
+    font-size: 1.15rem;
+    padding: 5px 7px;
+    border-radius: 8px;
+}
+
 /* ── Bar Chart ─────────────────────────────────────────────────────────── */
 .bar-label {
     font-size: .78rem;
@@ -228,6 +235,26 @@
 
 .obs-table tr:hover td {
     background: rgba(255, 255, 255, .02);
+}
+
+/* ── Título de pantalla en el celular ──────────────────────────────────────
+   Ahí el menú es un botón flotante arriba a la izquierda (.nav-handle, en
+   Main.css) y tapaba el título. El título se corre a su derecha, en la misma
+   franja: no queda tapado y no gasta alto. Es el mismo corrimiento que ya usa el
+   buscador de Caja (.search-bar), y la misma media query que el cajón móvil.
+   Lo usan el Histórico y Métricas; el resto de los módulos son de PC. */
+@media (max-width: 768px),
+(orientation: landscape) and (max-height: 500px) {
+    .est-wrap {
+        padding-top: 0;
+    }
+
+    .est-titulo-pantalla {
+        display: flex;
+        align-items: center;
+        min-height: 42px;
+        padding-left: 115px;
+    }
 }
 
 /* Ajustes Responsive Mini */

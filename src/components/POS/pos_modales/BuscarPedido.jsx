@@ -1,11 +1,11 @@
 import React, { useState, useRef } from "react";
-import { query, getDocs, where, orderBy, serverTimestamp, updateDoc } from "firebase/firestore";
+import { query, getDocs, getDoc, where, orderBy, serverTimestamp, updateDoc } from "firebase/firestore";
 import { colSucursal, docSucursal } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
 import { useAuth } from "../../../context/AuthContext";
-import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO } from "../../../Utils/Constantes";
+import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO, SUBESTADOS_MOTODELIVERY } from "../../../Utils/Constantes";
 import { invalidarFotoDePedido } from "../pos_hooks/useResumenDiario";
 import { quitarAcentos } from "../../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../../Utils/fechaComercial";
@@ -30,6 +30,13 @@ const BuscarPedido = ({ isOpen, onClose }) => {
     // hace UNA sola persona por sucursal: el encargado, al fiscalizar el cierre.
     // Estaba abierto a cualquier cajero solo porque el modal vive dentro de Caja.
     const puedeEliminar = userData?.rol === process.env.REACT_APP_encargado;
+
+    // Un pedido con el repartidor en la calle no se anula: primero la jefa de
+    // deliverys marca que volvió —entregado o no—, y así queda registrado que el
+    // viaje se hizo y se le paga el envío. Si todavía no salió, se anula como
+    // cualquier otro: no hubo viaje.
+    const enLaCalle = (pedido) =>
+        pedido.estado === ESTADOS.DELIVERY && pedido.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA;
 
     // La jornada se trae UNA vez por apertura del modal y las búsquedas siguientes
     // filtran sobre eso. Antes cada búsqueda releía la jornada entera: con ~130
@@ -104,7 +111,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
     const eliminarPedido = (pedido) => ejecutar(async () => {
         // El botón ya no se muestra a un cajero, pero la función es lo que
         // realmente escribe: sin esto alcanza con llamarla desde la consola.
-        if (!puedeEliminar) return;
+        if (!puedeEliminar || enLaCalle(pedido)) return;
 
         try {
             const result = await Swal.fire({
@@ -119,6 +126,19 @@ const BuscarPedido = ({ isOpen, onClose }) => {
             });
 
             if (result.isConfirmed) {
+                // F3 trabaja con la jornada leída al abrir el modal: el repartidor
+                // pudo salir después. Se relee el pedido (1 lectura, solo al anular).
+                const actual = await getDoc(docSucursal("pedidos", pedido.id));
+                if (enLaCalle(actual.data() || {})) {
+                    Swal.fire({
+                        title: 'El repartidor está en la calle',
+                        text: 'La jefa de deliverys tiene que marcar que volvió antes de anular el pedido.',
+                        icon: 'warning',
+                        confirmButtonColor: '#ffc107',
+                    });
+                    return;
+                }
+
                 await updateDoc(docSucursal("pedidos", pedido.id), {
                     estado: ESTADOS.ELIMINADO,
                     cajeroEliminaID: userData.id,
@@ -272,6 +292,12 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                     {pedido.estado}
                                                 </span>
                                             </p>
+                                            {pedido.sinEntregar && ![ESTADOS.ELIMINADO, ESTADOS.CANCELADO].includes(pedido.estado) && (
+                                                <p className="mb-2 fw-bold text-danger">
+                                                    <i className="fa-solid fa-rotate-left me-1"></i>
+                                                    Volvió sin entregar: falta anularlo
+                                                </p>
+                                            )}
                                             <p className="mb-2">
                                                 <strong>Envío:</strong> {pedido.envio?.zona_envio} - {fmtPesos(pedido.envio?.costo_envio)}
                                             </p>
@@ -296,6 +322,13 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                         <small className="fw-bold">
                                                             <i className="fa fa-info-circle me-1"></i>
                                                             Ya está {pedido.estado === ESTADOS.ELIMINADO ? "eliminado" : "cancelado"}
+                                                        </small>
+                                                    </div>
+                                                ) : puedeEliminar && enLaCalle(pedido) ? (
+                                                    <div className="alert alert-warning mb-0 p-2 w-75" role="alert">
+                                                        <small className="fw-bold">
+                                                            <i className="fa fa-motorcycle me-1"></i>
+                                                            El repartidor todavía no volvió: la jefa de deliverys tiene que marcar que volvió antes de anularlo.
                                                         </small>
                                                     </div>
                                                 ) : puedeEliminar ? (

@@ -1,35 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { fetchSucursales } from "../../Utils/sucursales";
+import { fetchMenuPublico } from "../../Utils/menuPublico";
 import logo from '../../img/logo_negro4.png';
 import logoMobile from '../../img/logo_negro.webp';
 import Footer from "./Footer";
 import '../../style/Main.css';
-import { webRecibePedidos } from "../../Utils/fechaComercial";
-import WebCerrada from "./WebCerrada";
+import { webRecibePedidos, textoHorarioWeb } from "../../Utils/fechaComercial";
 
 // Pantalla pública: el cliente elige la sucursal antes de armar su pedido.
 // Los links con sucursal precargada (/crear-solicitud/luro) salteán esta pantalla.
+//
+// Cada sucursal tiene su horario, así que una puede estar abierta y la otra no: se
+// listan todas, y la cerrada muestra cuándo toma pedidos. Las sucursales salen de
+// menu.json, que está en Storage: elegir sucursal no lee Firestore. Solo si el
+// JSON falla se leen de Firestore (2-3 lecturas).
 const SeleccionSucursal = () => {
     const [sucursales, setSucursales] = useState([]);
     const [loading, setLoading] = useState(true);
     const [errorCarga, setErrorCarga] = useState(false);
-    // Se decide al entrar: fuera de horario ni se eligen sucursales.
-    const [abierta] = useState(webRecibePedidos);
 
     useEffect(() => {
-        // Cerrada no lee nada: una visita fuera de horario no cuesta lecturas.
-        if (!abierta) return;
-        fetchSucursales()
+        fetchMenuPublico()
+            .then((menu) => menu?.sucursales || fetchSucursales())
+            .catch(() => fetchSucursales())
             .then((lista) => setSucursales(lista.filter((s) => s.activa !== false)))
             .catch((error) => {
                 console.error("Error cargando sucursales:", error);
                 setErrorCarga(true);
             })
             .finally(() => setLoading(false));
-    }, [abierta]);
-
-    if (!abierta) return <WebCerrada />;
+    }, []);
 
     if (loading) {
         return <p>Cargando...</p>;
@@ -52,7 +53,7 @@ const SeleccionSucursal = () => {
                         </div>
                     ) : (
                         <div className="d-flex flex-column align-items-center gap-3 py-4 w-100">
-                            {sucursales.map((s) => (
+                            {sucursales.map((s) => webRecibePedidos(s) ? (
                                 <Link
                                     key={s.id}
                                     to={`/crear-solicitud/${s.id}`}
@@ -60,6 +61,13 @@ const SeleccionSucursal = () => {
                                 >
                                     {s.nombre || s.id}
                                 </Link>
+                            ) : (
+                                <div key={s.id} className="btn btn-secondary btn-lg w-75 disabled" aria-disabled="true">
+                                    {s.nombre || s.id}
+                                    <small className="d-block fs-6">
+                                        Cerrada{textoHorarioWeb(s) ? ` · Pedidos ${textoHorarioWeb(s)}` : ""}
+                                    </small>
+                                </div>
                             ))}
                         </div>
                     )}

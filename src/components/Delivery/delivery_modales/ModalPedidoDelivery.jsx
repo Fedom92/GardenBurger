@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { SUBESTADOS_MOTODELIVERY, METODOS_PAGO, etiquetaPago } from "../../../Utils/Constantes";
+import { SUBESTADOS_MOTODELIVERY, METODOS_PAGO, DESTINO_VUELTO, etiquetaPago } from "../../../Utils/Constantes";
 import { repartirPago } from "../../POS/pos_hooks/useResumenDiario";
 import { fmtPesos } from "../../../Utils/formato";
 
 // Lo que ve el jefe es lo que el repartidor tiene que COBRAR en la puerta, no el
 // total del pedido:
-// - EFECTIVO: el total, con lo que el cliente dijo que paga y el vuelto a llevar.
+// - EFECTIVO: el total, con lo que el cliente dijo que paga. La moto no lleva
+//   cambio: la diferencia la trae el repartidor (los admins le transfieren el
+//   vuelto al cliente) o se la queda de propina, según eligió el cajero.
 // - Pago dividido: solo la parte en efectivo, que es también su pagaCon. El resto
 //   ya entró por MP.
 // - MP: nada. No se muestran ni el total ni pagaCon: no hay plata que manejar.
-const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDelivery, onMarcarEstado, procesando = false }) => {
+const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDelivery, onMarcarEstado, onVolvioSinEntregar, procesando = false }) => {
     // Se carga a mano y sin precargar: con pagaCon ya escrito, confirmar sin mirar
     // es un error humano que no se ve. Por ahora el monto es libre.
     const [pagaronConInput, setPagaronConInput] = useState(pedido?.pagaronCon || "");
@@ -21,6 +23,9 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
     const p = pedido;
     const estadoDelivery = p.estadoDelivery || "";
     const salio = estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA;
+    // Volvió sin entregar: el viaje ya se cerró y el pedido espera que el encargado
+    // lo anule. No se puede volver a asignar ni a despachar.
+    const cerrado = estadoDelivery === SUBESTADOS_MOTODELIVERY.FIN;
     const tieneAsignado = Boolean(p.deliveryAsignado);
     // El selector va por `deliveryID`, que es lo que guarda el pedido. Por nombre,
     // corregir el nombre de un repartidor dejaba sus pedidos como "Sin asignar".
@@ -29,9 +34,14 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
     const esDividido = p.metodoPago === METODOS_PAGO.DIVIDIDO.key;
     const aCobrar = repartirPago(p).efectivo;
     const pagaCon = Number(p.pagaCon) || 0;
-    // El cambio que el repartidor tiene que llevar encima. En el pago dividido
-    // pagaCon es justo la parte en efectivo, así que no hay vuelto.
-    const vuelto = pagaCon > aCobrar ? pagaCon - aCobrar : 0;
+    // Lo que el cliente paga de más. En el pago dividido pagaCon es justo la parte
+    // en efectivo, así que no hay diferencia.
+    const diferencia = pagaCon > aCobrar ? pagaCon - aCobrar : 0;
+    const textoDiferencia = p.destinoVuelto === DESTINO_VUELTO.VUELTO.key
+        ? <>Vuelto: <strong>{fmtPesos(diferencia)}</strong> (lo trae el repartidor)</>
+        : p.destinoVuelto === DESTINO_VUELTO.PROPINA.key
+            ? <>Propina: <strong>{fmtPesos(diferencia)}</strong> (se la queda el repartidor)</>
+            : <>Diferencia: <strong>{fmtPesos(diferencia)}</strong></>;
 
     const confirmarEntrega = () => {
         // Tiene que estar cargado —si no, la entrega se cerraba sin registrar con
@@ -108,7 +118,7 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                                 {pagaCon > 0 && (
                                     <div className="mt-1">
                                         Paga con: <strong>{fmtPesos(pagaCon)}</strong>
-                                        {vuelto > 0 && <> · Vuelto a llevar: <strong>{fmtPesos(vuelto)}</strong></>}
+                                        {diferencia > 0 && <> · {textoDiferencia}</>}
                                     </div>
                                 )}
                             </div>
@@ -119,6 +129,13 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                 <hr />
 
                 {/* Gestión */}
+                {cerrado ? (
+                    <div className="alert alert-danger mb-0" role="alert">
+                        <i className="fa-solid fa-rotate-left me-1"></i>
+                        Volvió sin entregar. El envío ya cuenta para <strong>{p.deliveryAsignado}</strong>;
+                        falta que el encargado anule el pedido desde F3.
+                    </div>
+                ) : (
                 <div className="row">
                     <div className="col-md-6 mb-2">
                         <div className="d-flex align-items-center gap-2 mb-1">
@@ -155,16 +172,28 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                         </div>
                     )}
                 </div>
+                )}
 
             </Modal.Body>
             <Modal.Footer>
-                {tieneAsignado && !salio && (
+                {tieneAsignado && !salio && !cerrado && (
                     <button
                         className="btn btn-warning"
                         onClick={() => onMarcarEstado(p.id, SUBESTADOS_MOTODELIVERY.SALIDA, "")}
                         disabled={procesando}
                     >
                         <i className="fa-solid fa-motorcycle"></i> Marcar Salida
+                    </button>
+                )}
+                {/* Sin cobro no hay "Pagaron con": este camino cierra el viaje igual,
+                    porque se hizo y el envío se paga. */}
+                {salio && (
+                    <button
+                        className="btn btn-outline-danger me-auto"
+                        onClick={() => onVolvioSinEntregar(p.id)}
+                        disabled={procesando}
+                    >
+                        <i className="fa-solid fa-rotate-left"></i> Volvió sin entregar
                     </button>
                 )}
                 {salio && (

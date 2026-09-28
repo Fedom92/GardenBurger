@@ -4,7 +4,7 @@
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../firebaseConfig/firebase";
-import { esCategoriaWeb } from "./Constantes";
+import { CATEGORIAS_SOLO_CAJA } from "./Constantes";
 
 const MENU_PATH = "publico/menu.json";
 
@@ -12,9 +12,10 @@ export const URL_MENU_PUBLICO =
     `https://firebasestorage.googleapis.com/v0/b/${process.env.REACT_APP_storageBucket}/o/${encodeURIComponent(MENU_PATH)}?alt=media`;
 
 export const publicarMenu = async () => {
-    // Las sucursales viajan dentro del JSON a propósito: el menú público necesita
-    // sus direcciones para el pie, y así las tiene sin pagar una lectura por
-    // visita. El costo es de 2-3 documentos y solo cuando el admin publica.
+    // Las sucursales viajan dentro del JSON a propósito: la web necesita su
+    // horario para saber si toma pedidos, y su dirección y teléfono para el pie. Así
+    // los tiene sin pagar una lectura por visita. El costo es de 2-3 documentos y
+    // solo cuando el admin publica.
     const [productosSnap, categoriasSnap, sucursalesSnap] = await Promise.all([
         getDocs(query(collection(db, "productos"), where("visible", "==", true))),
         getDocs(query(collection(db, "categorias"), orderBy("nroOrden", "asc"))),
@@ -24,8 +25,8 @@ export const publicarMenu = async () => {
     const menu = {
         generadoEl: Date.now(),
         // Los productos para empleados se venden solo en la Caja: no se publican.
-        productos: productosSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => esCategoriaWeb(p.categoria)),
-        categorias: categoriasSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => esCategoriaWeb(c.nombre)),
+        productos: productosSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => !CATEGORIAS_SOLO_CAJA.includes(p.categoria)),
+        categorias: categoriasSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => !CATEGORIAS_SOLO_CAJA.includes(c.nombre)),
         sucursales: sucursalesSnap.docs
             .map(d => ({ id: d.id, ...d.data() }))
             .filter(s => s.activa !== false)

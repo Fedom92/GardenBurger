@@ -1,42 +1,59 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { collection, updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { collection, updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, Timestamp } from "firebase/firestore";
 import { db, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
-import { traerPedidosDeJornada, liquidarDeliverys, repartirPago, invalidarFotoDePedido, FIJO_DELIVERY } from "../POS/pos_hooks/useResumenDiario";
-import { getFechaComercial, esHoraDeArqueo } from "../../Utils/fechaComercial";
+import { liquidarDeliverys, repartirPago, invalidarFotoDePedido } from "../POS/pos_hooks/useResumenDiario";
+import { getFechaComercial, getFechaComercialDe, getRangoDeJornada } from "../../Utils/fechaComercial";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
 import ModalPedidoDelivery from "./delivery_modales/ModalPedidoDelivery";
 import ModalMetricasDelivery from "./delivery_modales/ModalMetricasDelivery";
 import Swal from "sweetalert2";
 import moment from "moment";
-import { ESTADOS, SUBESTADOS_MOTODELIVERY, METODOS_PAGO, etiquetaPago } from "../../Utils/Constantes";
+import { ESTADOS, SUBESTADOS_MOTODELIVERY, METODOS_PAGO, DESTINO_VUELTO, etiquetaPago } from "../../Utils/Constantes";
 import { useAuth } from "../../context/AuthContext";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
-import { useHoraDeArqueo } from "../../Utils/useHoraDeArqueo";
 import { fmtPesos } from "../../Utils/formato";
 import { avisarSinConexion } from "../../Utils/avisos";
+
+// La columna "Vuelto": qué pasa con la diferencia cuando el cliente paga con un
+// billete más grande. La moto no lleva cambio: o el repartidor trae esa plata (los
+// admins le transfieren el vuelto al cliente) o se la queda de propina.
+const textoVuelto = (p) => {
+    if (p.metodoPago === METODOS_PAGO.MP.key) return "";
+    const diferencia = (Number(p.pagaCon) || 0) - repartirPago(p).efectivo;
+    if (diferencia <= 0) return "";
+    if (p.destinoVuelto === DESTINO_VUELTO.VUELTO.key) return `Vuelto ${fmtPesos(diferencia)}`;
+    if (p.destinoVuelto === DESTINO_VUELTO.PROPINA.key) return `Propina ${fmtPesos(diferencia)}`;
+    return "";
+};
 
 const JefeDeliverys = () => {
     const { userData } = useAuth();
     const [pedidos, setPedidos] = useState([]);
+    const [cerrados, setCerrados] = useState([]);
     const [deliverys, setDeliverys] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showMetricas, setShowMetricas] = useState(false);
-    const [liquidacion, setLiquidacion] = useState(null);
-    const [jornadaMetricas, setJornadaMetricas] = useState("");
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
     // Asignar y marcar estado comparten el guard: son la misma fila y dos clicks
     // rapidos dejarian el pedido a medio camino entre dos estados.
     const { procesando, ejecutar } = useAccionUnica();
-    // La liquidacion va aparte: es una lectura, no tiene por que bloquear la gestion.
-    const { procesando: cargandoLiquidacion, ejecutar: ejecutarLiquidacion } = useAccionUnica();
-    // Solo para el disabled del boton; handleVerMetricas vuelve a preguntar la hora.
-    const horaDeArqueo = useHoraDeArqueo();
+
+    // La noche de las Métricas. Se fija al entrar: la pantalla se abre cada noche.
+    const [jornada] = useState(getFechaComercial);
 
     const pedidosCollection = useRef(query(
         colSucursal("pedidos"),
         where("estado", "==", ESTADOS.DELIVERY),
         orderBy("timestamp", "asc")
+    ));
+    // Los viajes que volvieron desde que empezó la noche, para las Métricas en vivo.
+    // Es un rango sobre UN campo, así que alcanza el índice automático. Cuesta ~1
+    // lectura por viaje cerrado, en vez de leer la noche entera cada vez que se
+    // abrían las Métricas; al recargar dentro de los 30 minutos, solo los cambios.
+    const cerradosCollection = useRef(query(
+        colSucursal("pedidos"),
+        where("deliveryFinTimestamp", ">=", Timestamp.fromDate(getRangoDeJornada(jornada).inicio))
     ));
     // Los repartidores viven en `usuarios` como cualquier otro empleado, con
     // rol delivery y sin cuenta de Auth. El alta la hace el admin desde el
@@ -68,10 +85,27 @@ const JefeDeliverys = () => {
             setIsLoading(false);
         });
 
+        const unsubCerrados = onSnapshot(cerradosCollection.current, (snap) => {
+            setCerrados(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        }, (error) => {
+            console.error('Error listener viajes cerrados:', error);
+            avisarSinConexion("las métricas de delivery");
+        });
+
         getDocs(deliverysCollection.current).then(snap => getDeliverys(snap));
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            unsubCerrados();
+        };
     }, [getDeliverys]);
+
+    // Las Métricas: la misma cuenta que ve el encargado en su F4. Solo los pedidos de
+    // ESTA noche: uno de anoche que se cerró hoy es de la foto de anoche, igual que
+    // en el arqueo.
+    const liquidacion = useMemo(() => liquidarDeliverys(
+        cerrados.filter((p) => p.timestamp?.toDate && getFechaComercialDe(p.timestamp.toDate()) === jornada)
+    ), [cerrados, jornada]);
 
     const asignarDelivery = (pedidoId, deliveryId) => ejecutar(async () => {
         try {
@@ -123,9 +157,6 @@ const JefeDeliverys = () => {
             } else if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
                 updates.estado = ESTADOS.FINAL;
                 updates.deliveryFinTimestamp = serverTimestamp();
-                // El fijo de esta noche queda en el pedido: si mañana cambia la
-                // constante, la liquidación de hoy sigue diciendo lo que se pagó.
-                updates.fijoDelivery = FIJO_DELIVERY;
                 const monto = Number(pagaronCon);
                 if (!isNaN(monto) && monto > 0) {
                     updates.pagaronCon = monto;
@@ -153,24 +184,43 @@ const JefeDeliverys = () => {
         }
     });
 
-    // La liquidacion se mira al cierre, igual que el arqueo de la Caja: cuesta un
-    // barrido de la jornada (~60-100 lecturas) y a las 21 todavia no significa nada.
-    // Se lee de los pedidos y no de la foto: el detalle necesita las direcciones, y
-    // la jornada en curso no tiene foto de todos modos.
-    const handleVerMetricas = () => ejecutarLiquidacion(async () => {
-        // El boton se deshabilita fuera de hora, pero la verdad se relee aca.
-        if (!esHoraDeArqueo()) return;
-        const jornada = getFechaComercial();
-        try {
-            const pedidosJornada = await traerPedidosDeJornada(jornada);
-            setLiquidacion(liquidarDeliverys(pedidosJornada));
-            setJornadaMetricas(jornada);
-            setShowMetricas(true);
-        } catch (error) {
-            console.error('Error cargando la liquidacion de deliverys:', error);
-            Swal.fire('Error', 'No se pudo cargar la liquidación. Revisá la conexión e intentá de nuevo.', 'error');
-        }
-    });
+    // El repartidor volvió con el pedido: el cliente canceló o no se encontró la
+    // dirección. El viaje se cierra —se hizo, así que se paga el envío— pero el
+    // pedido NO se anula acá: eso es del encargado, desde F3. Por eso el estado queda
+    // en DELIVERY: sigue en esta lista, marcado, hasta que el encargado lo elimine, y
+    // el cliente no ve "Entregado" en /ver-pedido.
+    const volvioSinEntregar = async (pedidoId) => {
+        const pedido = pedidos.find(p => p.id === pedidoId);
+        if (!pedido) return;
+
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Volvió sin entregar?',
+            text: `El viaje del pedido ${pedido.codigo} se cierra y el envío se le paga al repartidor. Después el encargado tiene que anular el pedido desde F3.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, volvió sin entregar',
+            cancelButtonText: 'Cancelar',
+        });
+        if (!isConfirmed) return;
+
+        await ejecutar(async () => {
+            try {
+                await updateDoc(docSucursal("pedidos", pedidoId), {
+                    estadoDelivery: SUBESTADOS_MOTODELIVERY.FIN,
+                    deliveryFinTimestamp: serverTimestamp(),
+                    sinEntregar: true,
+                });
+                await invalidarFotoDePedido(pedido);
+                setPedidoSeleccionado(null);
+                Swal.fire('Viaje cerrado', 'Avisale al encargado para que anule el pedido desde F3.', 'success');
+            } catch (error) {
+                console.error('Error cerrando el viaje sin entregar:', error);
+                Swal.fire('Error', 'No se pudo cerrar el viaje. Revisá la conexión e intentá de nuevo.', 'error');
+            }
+        });
+    };
 
     // La tabla muestra lo que el repartidor tiene que COBRAR, no el total del
     // pedido: en MP no cobra nada y en el pago dividido solo la parte en efectivo.
@@ -179,7 +229,12 @@ const JefeDeliverys = () => {
         ...p,
         pagoLegible: etiquetaPago(p.metodoPago),
         aCobrar: repartirPago(p).efectivo,
+        vueltoLegible: textoVuelto(p),
     })), [pedidos]);
+
+    // Los que siguen en la calle o esperando repartidor: no entran en las Métricas
+    // hasta que vuelvan. Los que volvieron sin entregar ya están cerrados.
+    const enCurso = pedidos.filter((p) => p.estadoDelivery !== SUBESTADOS_MOTODELIVERY.FIN).length;
 
     const columnasPedidos = [
         { columnasBasicas: ["codigo", "nombre"] },
@@ -217,9 +272,16 @@ const JefeDeliverys = () => {
                 : <span className="text-muted">—</span>,
         },
         {
+            accessorKey: "vueltoLegible",
+            header: "Vuelto",
+            cell: ({ getValue }) => getValue() || <span className="text-muted">—</span>,
+        },
+        {
             accessorKey: "deliveryAsignado",
             header: "Repartidor",
-            cell: ({ getValue }) => getValue() || <span className="text-muted fst-italic">Sin asignar</span>,
+            cell: ({ row }) => row.original.sinEntregar
+                ? <span className="fw-semibold text-danger">Volvió sin entregar · falta anularlo (F3)</span>
+                : row.original.deliveryAsignado || <span className="text-muted fst-italic">Sin asignar</span>,
         },
         {
             id: "acciones",
@@ -254,15 +316,14 @@ const JefeDeliverys = () => {
                                         style={{ maxHeight: "40px", marginLeft: "10px" }}
                                     >
                                         <h1>Delivery</h1>
-                                        {/* Pasada la medianoche, igual que el F4 de la Caja: cuesta
-                                            leer los pedidos de la jornada. */}
+                                        {/* Siempre habilitado: las Métricas salen de un listener,
+                                            así que abrirlas no cuesta ninguna lectura. */}
                                         <button
                                             className="btn-contorno m-1"
-                                            onClick={handleVerMetricas}
-                                            disabled={!horaDeArqueo || cargandoLiquidacion}
-                                            title={horaDeArqueo ? "Liquidación de la jornada" : "La liquidación se habilita a las 00:00"}
+                                            onClick={() => setShowMetricas(true)}
+                                            title="Viajes, envíos y efectivo de la noche, por repartidor"
                                         >
-                                            {cargandoLiquidacion ? "Cargando..." : "Liquidación"}
+                                            Métricas
                                         </button>
                                     </div>
 
@@ -276,7 +337,8 @@ const JefeDeliverys = () => {
                                     camposBusqueda={["codigo", "direccion", "nombre"]}
                                     camposFiltros={["deliveryAsignado", "pagoLegible"]}
                                     rowClassName={(row) =>
-                                        row.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA ? 'bg-warning' : ''
+                                        row.sinEntregar ? 'bg-danger-subtle'
+                                            : row.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA ? 'bg-warning' : ''
                                     }
                                 />
                             </div>
@@ -294,6 +356,7 @@ const JefeDeliverys = () => {
                 onClose={() => setPedidoSeleccionado(null)}
                 onAsignarDelivery={asignarDelivery}
                 onMarcarEstado={marcarEstado}
+                onVolvioSinEntregar={volvioSinEntregar}
                 procesando={procesando}
             />
 
@@ -301,8 +364,8 @@ const JefeDeliverys = () => {
                 isOpen={showMetricas}
                 onClose={() => setShowMetricas(false)}
                 liquidacion={liquidacion}
-                jornada={jornadaMetricas}
-                sinCerrar={pedidos.length}
+                jornada={jornada}
+                enCurso={enCurso}
             />
         </>
     );

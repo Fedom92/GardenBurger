@@ -2,7 +2,7 @@ import moment from "moment";
 import { getDocs, getDoc, setDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, writeBatch, Timestamp } from "firebase/firestore";
 import { db, colSucursal, docSucursal, colDeSucursal, docDeSucursal } from "../../../firebaseConfig/firebase";
 import { getFechaComercial, getFechaComercialDe, getRangoDeJornada, jornadaEstaAbierta } from "../../../Utils/fechaComercial";
-import { CATEGORIAS_COMBOS, ENVIOS_LOCALES, ESTADOS, SUBESTADOS_MOTODELIVERY, METODOS_PAGO } from "../../../Utils/Constantes";
+import { CATEGORIAS_COMBOS, ENVIOS_LOCALES, ESTADOS, SUBESTADOS_MOTODELIVERY, METODOS_PAGO, DESTINO_VUELTO } from "../../../Utils/Constantes";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EL ARQUEO SE CALCULA DESDE LOS PEDIDOS, NO SE ACUMULA
@@ -34,9 +34,9 @@ import { CATEGORIAS_COMBOS, ENVIOS_LOCALES, ESTADOS, SUBESTADOS_MOTODELIVERY, ME
 //     mire la reconstruye con los pedidos corregidos.
 //
 // Cambiar CÓDIGO no cambia la historia. Lo que depende de reglas que cambian —qué
-// cuenta como combo, qué zona cobra en mostrador, el fijo del repartidor— se
-// CONGELA en el pedido al escribirlo (`combos`, `esLocal`, `fijoDelivery`), igual
-// que el valorHora en asistencias. Así una foto da lo mismo la saque quien la saque
+// cuenta como combo, qué zona cobra en mostrador, cuánto cuesta el envío— se
+// CONGELA en el pedido al escribirlo (`combos`, `esLocal`, `envio`), igual que el
+// valorHora en asistencias. Así una foto da lo mismo la saque quien la saque
 // y cuando la saque: es un caché de lecturas, no la que guarda la historia.
 //
 // Por eso se puede VERSIONAR: si mañana Estadísticas necesita un campo nuevo, se
@@ -86,51 +86,48 @@ export const repartirPago = (p) => {
     return { efectivo: 0, mp: total };   // MP
 };
 
-// Lo que cobra cada repartidor por noche: un fijo mas el costo de envio de cada
-// entrega que hizo. Se lee una vez: el .env no cambia con la app andando.
-export const FIJO_DELIVERY = Number(process.env.REACT_APP_fijoDeliverys) || 0;
+const estaAnulado = (p) => [ESTADOS.CANCELADO, ESTADOS.ELIMINADO].includes(p.estado);
 
-// Qué hizo cada repartidor en la jornada y cuánto hay que pagarle. Función pura.
+// Los viajes de cada repartidor en la jornada. Función pura: la usan el F4 del
+// encargado —que le suma la base de Asistencias (horas × valorHora − descuentos)
+// para pagarle cada noche— y las Métricas de la jefa de deliverys, así los dos ven
+// los mismos números. No hay fijo: el sueldo es esa base más los envíos.
 //
-// Cuentan solo las entregas CERRADAS (estadoDelivery == FIN): es cuando el
-// repartidor volvió y rindió la plata. Una que sigue en la calle no se paga todavía.
-// Se cuenta aunque el pedido se haya anulado después: el viaje se hizo igual.
-// PENDIENTE: confirmar con el negocio qué pasa en ese caso.
+// Cuentan los viajes CERRADOS (estadoDelivery == FIN): el repartidor volvió. Cada
+// viaje paga su envío, se haya entregado o no: si el cliente canceló o no se
+// encontró la dirección, el viaje se hizo igual. El encargado no puede anular un
+// pedido con el repartidor en la calle (F3): primero la jefa marca que volvió, así
+// todo viaje hecho llega acá.
 //
-// Un repartidor aparece si hizo al menos una entrega: sin entregas no cobra el
-// fijo, por regla del negocio. El fijo va una vez por repartidor y por noche,
-// no por entrega.
+// Un viaje sin entregar (`sinEntregar`) o un pedido anulado no suma efectivo: no
+// hubo cobro.
 //
-// `entregas` es el detalle para la pantalla del jefe (con las direcciones). La foto
-// del arqueo lo descarta: ya está en los pedidos y no hace falta duplicarlo.
-export const liquidarDeliverys = (pedidos = [], fijo = FIJO_DELIVERY) => {
+// `entregas` es el detalle para la pantalla de la jefa (con las direcciones). La
+// foto del arqueo lo descarta: ya está en los pedidos y no hace falta duplicarlo.
+export const liquidarDeliverys = (pedidos = []) => {
     const porRepartidor = {};
 
     for (const p of pedidos) {
         if (!p.deliveryID || p.estadoDelivery !== SUBESTADOS_MOTODELIVERY.FIN) continue;
 
         if (!porRepartidor[p.deliveryID]) {
-            // El fijo que quedó congelado en la entrega, si lo tiene: es el de esa
-            // noche. El de la constante solo para pedidos sin el campo.
-            const fijoNoche = Number(p.fijoDelivery ?? fijo) || 0;
             porRepartidor[p.deliveryID] = {
                 nombre: "",
                 cantidadPedidos: 0,
                 totalEnvios: 0,
                 efectivoCobrado: 0,
-                fijo: fijoNoche,
-                aPagar: fijoNoche,
                 entregas: [],
             };
         }
         const r = porRepartidor[p.deliveryID];
         const envio = Number(p.envio?.costo_envio) || 0;
-        const { efectivo } = repartirPago(p);
+        const anulado = estaAnulado(p);
+        const sinEntregar = !!p.sinEntregar;
+        const efectivo = sinEntregar || anulado ? 0 : repartirPago(p).efectivo;
 
         r.nombre = p.deliveryAsignado || r.nombre;
         r.cantidadPedidos += 1;
         r.totalEnvios += envio;
-        r.aPagar += envio;
         r.efectivoCobrado += efectivo;
         r.entregas.push({
             id: p.id,
@@ -140,6 +137,8 @@ export const liquidarDeliverys = (pedidos = [], fijo = FIJO_DELIVERY) => {
             envio,
             metodoPago: p.metodoPago,
             efectivo,
+            sinEntregar,
+            anulado,
             pagaronCon: Number(p.pagaronCon) || 0,
             finTimestamp: p.deliveryFinTimestamp || null,
         });
@@ -147,6 +146,33 @@ export const liquidarDeliverys = (pedidos = [], fijo = FIJO_DELIVERY) => {
 
     return porRepartidor;
 };
+
+// Los viajes que volvieron sin entregar y todavía no se anularon. Mientras el
+// encargado no los elimine desde F3, el arqueo los sigue sumando como cobrados: el
+// F4 los muestra para que no se escapen.
+export const sinEntregarPendientes = (pedidos = []) =>
+    pedidos.filter((p) => p.sinEntregar && !estaAnulado(p));
+
+// Los vueltos que los admins tienen que transferir al cierre: deliverys en efectivo
+// donde el cliente pidió el vuelto. El monto es el real si el repartidor ya volvió
+// (`pagaronCon`), y si no el que anunció el cliente (`pagaCon`), marcado como
+// estimado. Un viaje sin entregar o un pedido anulado no deja vuelto: no hubo cobro.
+export const vueltosATransferir = (pedidos = []) =>
+    pedidos
+        .filter((p) => p.destinoVuelto === DESTINO_VUELTO.VUELTO.key && !p.sinEntregar && !estaAnulado(p))
+        .map((p) => {
+            const pagaronCon = Number(p.pagaronCon) || 0;
+            const pagoCon = pagaronCon || Number(p.pagaCon) || 0;
+            return {
+                id: p.id,
+                codigo: p.codigo,
+                nombre: p.nombre || "",
+                alias: p.aliasVuelto || "",
+                monto: Math.max(pagoCon - repartirPago(p).efectivo, 0),
+                estimado: !pagaronCon,
+            };
+        })
+        .filter((v) => v.monto > 0);
 
 // El nombre del método en METODOS_PAGO (EFECTIVO, MP, DIVIDIDO) a partir del valor
 // guardado. Es la clave de `porMetodo`: "%" no es un buen nombre de campo.
@@ -378,26 +404,29 @@ export const traerPedidosDeJornada = async (jornada, sucursal) => {
 
 // El arqueo de UNA jornada, con la foto como caché. Ver las reglas de arriba.
 //
-// Devuelve { arqueo, calculado }: `calculado` dice si salió de los pedidos (true)
-// o de la foto (false), para que la pantalla pueda avisar que es provisorio.
+// Devuelve { arqueo, calculado, pedidos }: `calculado` dice si salió de los pedidos
+// (true) o de la foto (false), para que la pantalla pueda avisar que es
+// provisorio. `pedidos` viene solo cuando se leyeron: el F4 arma con ellos la lista
+// de vueltos y los viajes sin entregar, sin volver a leer.
 export const obtenerArqueo = async (jornada = getFechaComercial(), sucursal) => {
     const abierta = jornadaEstaAbierta(jornada);
 
     if (!abierta) {
         const foto = await getDoc(refFoto(jornada, sucursal));
         if (foto.exists() && fotoVigente(foto.data())) {
-            return { arqueo: foto.data(), calculado: false };
+            return { arqueo: foto.data(), calculado: false, pedidos: null };
         }
     }
 
-    const arqueo = calcularArqueo(await traerPedidosDeJornada(jornada, sucursal));
+    const pedidos = await traerPedidosDeJornada(jornada, sucursal);
+    const arqueo = calcularArqueo(pedidos);
 
     // La jornada abierta no se congela: el número cambia con cada pedido.
     if (!abierta) {
         await setDoc(refFoto(jornada, sucursal), armarFoto(jornada, arqueo));
     }
 
-    return { arqueo, calculado: true };
+    return { arqueo, calculado: true, pedidos };
 };
 
 // Las fotos de un RANGO de noches de una sucursal, para Métricas y Estadísticas.

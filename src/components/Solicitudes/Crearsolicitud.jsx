@@ -27,11 +27,12 @@ const CrearSolicitud = () => {
   const [loading, setLoading] = useState(true);
   const [errorEnvio, setErrorEnvio] = useState("");
   const [errorCarga, setErrorCarga] = useState(false);
-  // Dirección y teléfono de la sucursal, para el pie.
+  // La sucursal de la URL: su horario decide si la web toma pedidos, y su dirección
+  // y teléfono van al pie.
   const [sucursalInfo, setSucursalInfo] = useState(null);
-  // Se decide al entrar, y se vuelve a mirar al comprar: la página pudo quedar
-  // abierta mientras pasaba la hora de cierre.
-  const [abierta] = useState(webRecibePedidos);
+  // undefined mientras se carga la sucursal. Se decide al entrar, y se vuelve a
+  // mirar al comprar: la página pudo quedar abierta mientras pasaba el corte.
+  const [abierta, setAbierta] = useState(undefined);
   // Un useState no alcanza: entre dos toques rapidos el boton todavia figura
   // habilitado y salian DOS solicitudes con ids distintos, que el cajero ve
   // duplicadas en F1. useAccionUnica corta en el mismo tick.
@@ -64,10 +65,17 @@ const CrearSolicitud = () => {
 
   const navigate = useNavigate();
 
+  const avisarCerrada = (datosSucursal) => {
+    const horario = textoHorarioWeb(datosSucursal);
+    setErrorEnvio(horario ? `Ya no estamos tomando pedidos. Tomamos pedidos ${horario}.` : "Ya no estamos tomando pedidos.");
+  };
+
   const comprar = (data) => ejecutar(async () => {
     setErrorEnvio("");
-    if (!webRecibePedidos()) {
-      setErrorEnvio(`Ya no estamos tomando pedidos. Tomamos pedidos ${textoHorarioWeb()}.`);
+    // Con lo que ya está en memoria, sin leer nada: la página pudo quedar abierta
+    // pasado el corte.
+    if (!webRecibePedidos(sucursalInfo)) {
+      avisarCerrada(sucursalInfo);
       return;
     }
 
@@ -107,8 +115,16 @@ const CrearSolicitud = () => {
       // una subcolección huérfana bajo un documento que no existe, y ese pedido no
       // lo veía nadie. Una lectura de un solo documento, solo al confirmar.
       const sucursalDoc = await getDoc(doc(db, "sucursales", sucursal));
-      if (!sucursalDoc.exists()) {
-        setErrorEnvio("La sucursal de este link no existe. Volvé a elegirla y armá el pedido de nuevo.");
+      if (!sucursalDoc.exists() || sucursalDoc.data().activa === false) {
+        setErrorEnvio("La sucursal de este link no está disponible. Volvé a elegirla y armá el pedido de nuevo.");
+        return;
+      }
+
+      // El horario se vuelve a mirar con el documento recién leído, sin lecturas
+      // extra: el de menu.json puede estar viejo si el admin lo cambió y todavía no
+      // publicó el menú.
+      if (!webRecibePedidos(sucursalDoc.data())) {
+        avisarCerrada(sucursalDoc.data());
         return;
       }
 
@@ -135,6 +151,28 @@ const CrearSolicitud = () => {
     }
   });
 
+  // La sucursal sale de menu.json, en Storage: decidir si abre no lee Firestore. Si
+  // el JSON falla o todavía no la tiene (una sucursal nueva sin publicar), se lee su
+  // documento: 1 lectura, solo en ese caso. Sin sucursal, queda cerrada. Una
+  // desactivada tampoco está en el JSON, y por el link directo no tiene que abrir.
+  useEffect(() => {
+    let vigente = true;
+    const leerDocumento = () => getDoc(doc(db, "sucursales", sucursal))
+      .then((d) => (d.exists() && d.data().activa !== false ? { id: d.id, ...d.data() } : null));
+
+    fetchMenuPublico()
+      .then((menu) => menu?.sucursales?.find((s) => s.id === sucursal) || leerDocumento())
+      .catch(() => leerDocumento())
+      .catch(() => null)
+      .then((info) => {
+        if (!vigente) return;
+        setSucursalInfo(info);
+        setAbierta(webRecibePedidos(info));
+      });
+
+    return () => { vigente = false; };
+  }, [sucursal]);
+
   useEffect(() => {
     // Cerrada no carga el menú: fuera de horario la visita no cuesta nada.
     if (!abierta) return;
@@ -149,12 +187,6 @@ const CrearSolicitud = () => {
         setCategorias(categoriasDataOrdenada);
         setProductos(productosData);
 
-        // Los datos de la sucursal para el pie salen de menu.json, que ya se
-        // descargó para el menú: no cuesta lecturas. Si falla, el pie va sin ellos.
-        fetchMenuPublico()
-          .then((menu) => setSucursalInfo(menu?.sucursales?.find((s) => s.id === sucursal) || null))
-          .catch(() => {});
-
       } catch (error) {
         console.error("Error fetching data:", error);
         setErrorCarga(true);
@@ -166,7 +198,11 @@ const CrearSolicitud = () => {
     fetchData();
   }, [abierta, sucursal]);
 
-  if (!abierta) return <WebCerrada sucursal={sucursal} />;
+  if (abierta === undefined) {
+    return <p>Cargando...</p>;
+  }
+
+  if (!abierta) return <WebCerrada sucursal={sucursalInfo} />;
 
   if (loading) {
     return <p>Cargando...</p>;

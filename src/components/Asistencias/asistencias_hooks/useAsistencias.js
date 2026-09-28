@@ -57,6 +57,21 @@ export const armarRegistro = (fila = {}) => {
 export const fechaJornadaATimestamp = (jornadaStr) =>
     Timestamp.fromDate(moment(jornadaStr, "DD-MM-YYYY").startOf("day").toDate());
 
+// Los envíos de cada repartidor en un período, a partir de las fotos de cada noche
+// (`deliverys` de resumenDiario, que arma liquidarDeliverys). Van aparte del bruto:
+// no son horas. { empleadoId: { nombre, envios } }.
+export const enviosPorRepartidor = (resumenes = []) => {
+    const porId = {};
+    for (const resumen of resumenes) {
+        for (const [id, d] of Object.entries(resumen.deliverys || {})) {
+            if (!porId[id]) porId[id] = { nombre: "", envios: 0 };
+            porId[id].nombre = d.nombre || porId[id].nombre;
+            porId[id].envios += Number(d.totalEnvios) || 0;
+        }
+    }
+    return porId;
+};
+
 // Acumula los documentos de un rango en una fila por empleado.
 //
 // El bruto se suma día por día (`horas * valorHora` de ESE día) y no como
@@ -64,7 +79,11 @@ export const fechaJornadaATimestamp = (jornadaStr) =>
 // período, multiplicar al final daría un número que nunca se pagó. Por lo mismo
 // se guardan los valores distintos vistos, para que la columna pueda avisar en
 // vez de mostrar uno solo y mentir.
-export const agregarLiquidacion = (docsJornada = []) => {
+//
+// `envios` (de enviosPorRepartidor) suma a los repartidores lo que cobran por
+// viaje: el total es lo que se le debe a cada uno en el período —en una noche, lo
+// de esa noche—. Es un registro del trabajo hecho, no de a quién se le pagó.
+export const agregarLiquidacion = (docsJornada = [], envios = {}) => {
     const porEmpleado = new Map();
 
     for (const jornada of docsJornada) {
@@ -102,13 +121,27 @@ export const agregarLiquidacion = (docsJornada = []) => {
         }
     }
 
+    // Un repartidor con viajes pero sin asistencia cargada aparece igual, con sus
+    // envíos: si no, esa plata no figuraría en ningún lado.
+    for (const [empleadoId, e] of Object.entries(envios)) {
+        if (!porEmpleado.has(empleadoId)) {
+            porEmpleado.set(empleadoId, {
+                empleadoId, nombre: e.nombre || "—", dias: 0, horas: 0, bruto: 0, descuentos: 0, neto: 0, valoresHora: new Set(),
+            });
+        }
+    }
+
     const filas = [...porEmpleado.values()]
         .map((fila) => {
             const valores = [...fila.valoresHora];
+            const neto = fila.bruto - fila.descuentos;
+            const enviosFila = envios[fila.empleadoId]?.envios || 0;
             return {
                 ...fila,
                 horas: Math.round(fila.horas * 100) / 100,
-                neto: fila.bruto - fila.descuentos,
+                neto,
+                envios: enviosFila,
+                total: neto + enviosFila,
                 // null = cambió dentro del período; la columna lo muestra como "varios".
                 valorHora: valores.length === 1 ? valores[0] : null,
                 valoresHora: valores,
@@ -121,7 +154,9 @@ export const agregarLiquidacion = (docsJornada = []) => {
         bruto: acum.bruto + f.bruto,
         descuentos: acum.descuentos + f.descuentos,
         neto: acum.neto + f.neto,
-    }), { horas: 0, bruto: 0, descuentos: 0, neto: 0 });
+        envios: acum.envios + f.envios,
+        total: acum.total + f.total,
+    }), { horas: 0, bruto: 0, descuentos: 0, neto: 0, envios: 0, total: 0 });
 
     total.horas = Math.round(total.horas * 100) / 100;
 

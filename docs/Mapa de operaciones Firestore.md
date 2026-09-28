@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, costos]
 aliases: [Costos, Lecturas y escrituras]
-actualizado: 2026-09-26
+actualizado: 2026-09-28
 ---
 
 # Mapa de operaciones Firestore
@@ -25,7 +25,7 @@ actualizado: 2026-09-26
   vez de la query entera. **No ayuda a `getDocs`.** Ver
   [[Decisiones tecnicas#Persistencia en IndexedDB, modo una sola pestaña]].
 - Corolario: para algo que se relee seguido, **un listener sale más barato que un `getDocs`**. Es
-  lo que se hizo con el catálogo de Caja:
+  lo que se hizo con el catálogo de Caja y con Productos:
   [[Decisiones tecnicas#El catálogo de Caja va por listener]].
 - `deleteField()` dentro de un `batch.set(..., {merge:true})` **no cuesta operación extra**.
 - `increment()` es atómico del lado del servidor, pero **no es idempotente**: si la misma
@@ -46,19 +46,22 @@ actualizado: 2026-09-26
 | `PendientesSolicitudes` | listener de `estado==PENDIENTE` | mientras el modal está abierto | pendientes | se solapa con `usePendientes`, pero son queries distintas |
 | `PendientesMP` | listener de `estado==PENDIENTEMP` | ídem | pendientes | ídem |
 | `BuscarPedido` | por **código**: consulta directa. Por teléfono o dirección: la jornada, **una vez por apertura del modal** | al abrir F3, no en cada búsqueda | 1 doc, o la jornada | ✅ era el mayor costo recurrente: releía la jornada entera en cada búsqueda |
-| `Caja.verResumen` (F4) | los **pedidos** de la jornada, y los suma | al abrir el modal, y solo el encargado entre las 00 y `horaCierre` | la jornada (~60-100) | el arqueo se calcula, no se lee de un contador. Jornada cerrada: **1 lectura** de la foto. La ventana horaria está para no pagar el barrido por curiosidad: [[Reglas de negocio#Quién mira el arqueo, y cuándo]] |
+| `Caja.verResumen` (F4) | los **pedidos** de la jornada, y los suma; y el documento de **asistencia** de la noche, para la base de los repartidores | al abrir el modal, y solo el encargado entre `HORA_HABILITA_STATS` (00) y `horaCierre` | la jornada (~60-100) + 1 | el arqueo se calcula, no se lee de un contador. Jornada cerrada: **1 lectura** de la foto. La ventana horaria está para no pagar el barrido por curiosidad: [[Reglas de negocio#Quién mira el arqueo, y cuándo]] |
 | `PedidosEspera` / `PedidosCocinando` / `ATP` / `JefeDeliverys` | listeners por `estado` | mientras la pantalla está abierta | los del estado | ✅ real-time justificado |
 | `JefeDeliverys` | repartidores activos de la sucursal, desde `usuarios` | al montar | pocos | ✅ one-time |
-| `JefeDeliverys.handleVerMetricas` | los pedidos de la jornada, para `liquidarDeliverys()` | al abrir la liquidación, de 00:00 a `horaCierre` | la jornada (~60-100) | misma ventana que F4. Lee pedidos y no la foto: el detalle necesita las direcciones |
+| `JefeDeliverys` (Métricas) | listener sobre los viajes cerrados de la noche (`deliveryFinTimestamp >= inicio`) | mientras la pantalla está abierta | ~1 por viaje cerrado | ✅ en vivo y sin ventana; reemplazó al barrido de la noche al abrir la liquidación (~60-100). Rango sobre un campo: índice automático |
 | `HistorialPedidos` | pedidos por rango de fechas, **sin filtro de estado** | por búsqueda | según rango | **solo el admin**: sin `limit` a propósito, sabe lo que pide |
-| `Productos` / `PanelAdmin` / `Envios` | su colección entera | al montar | acotado | pantallas de admin, poco frecuentes |
-| `Parametros/Categorias` (modal) | — | — | **0** | ✅ recibe las categorías de `Productos` por props; antes releía la colección al montar |
-| `sucursales.js` | `sucursales` | selector público (solo en horario) y de admin | pocas | ✅ promesa cacheada: 1 vez por sesión |
+| `Productos` | productos (ocultos incluidos) y categorías, por **listener** | mientras la pantalla está abierta | acotado | ✅ volver a entrar trae solo lo que cambió (antes, `getDocs` en cada visita). Ver [[Decisiones tecnicas#El catálogo de Caja va por listener]] |
+| `PanelAdmin` / `Envios` | su colección entera | al montar | acotado | pantallas de admin, poco frecuentes |
+| `Parametros/Categorias` (modal) | — | — | **0** | ✅ recibe las categorías del listener de `Productos` por props; antes releía la colección al montar |
+| `EditProducto` / `EditCliente` | — | — | **0** | ✅ completan con la fila que ya está en pantalla; antes releían el documento en cada edición (28-09-2026) |
+| `sucursales.js` | `sucursales` | selectores del admin, el ABM de Sucursales, y el selector público solo si `menu.json` falla | pocas | ✅ promesa cacheada: 1 vez por sesión. El ABM la usa desde el 28-09-2026 (antes releía en cada apertura) y la invalida al guardar |
 | `PaginaDetalle` | 1 pedido | por visita pública, durante 48 h | 1 | ✅ pasado el plazo la regla lo niega |
 | `Asistencias` | el doc de la jornada | al entrar | **1** | ✅ el mapa `registros` trae a todos |
 | `ModalCargarJornada` | empleados de la sucursal | **solo al abrir el formulario** | N | ✅ editar un renglón cuesta 0 |
-| `LiquidacionAsistencias` | rango de jornadas | por búsqueda | D días | ✅ un mes ≈ 30, y **no lee `usuarios`** |
-| `Crearsolicitud` | 1 sucursal, para validarla | al confirmar el pedido | 1 | ✅ evita subcolecciones huérfanas, y de ahí sale el teléfono para el WhatsApp. Fuera de horario la web no lee **nada** |
+| `LiquidacionAsistencias` | rango de jornadas, y las fotos del rango para los envíos de los repartidores | por búsqueda | 2 × D días | ✅ un mes ≈ 60, y **no lee `usuarios`**. Las fotos que falten se calculan una vez |
+| `Crearsolicitud` | 1 sucursal, para validarla y controlar su horario | al confirmar el pedido | 1 | ✅ evita subcolecciones huérfanas, y de ahí sale el teléfono para el WhatsApp. Al entrar, el horario sale de `menu.json` (Storage): fuera de horario no lee Firestore. Solo si la sucursal no está en el JSON, 1 lectura |
+| `SeleccionSucursal` | — | — | **0** | ✅ las sucursales y su horario salen de `menu.json`; de Firestore solo si el JSON falla |
 | `Estadisticas` | — | — | **0** | ✅ lee dos TSV de Storage (`getBytes`), no Firestore. 10,5 MB la primera vez; después el navegador revalida con `If-None-Match` y Storage responde **304 con cuerpo vacío** |
 
 **No hay ningún patrón N+1.** No existe ningún bucle que haga `getDoc` por cada ítem de una
@@ -95,8 +98,9 @@ solo el pedido, y el arqueo se calcula desde ahí cuando alguien lo mira. Ver
 |---|---|---|
 | `Caja.guardarBD` | contador + pedido, en una `runTransaction` | el pedido entra al cálculo porque tiene `cajeroID` |
 | `PendientesMP.rechazarPedido` | `updateDoc` → `CANCELADO` | el cálculo lo saltea |
-| `BuscarPedido.eliminarPedido` | `updateDoc` → `ELIMINADO` (**solo el encargado**) | ídem |
-| `JefeDeliverys.marcarEstado` (VOLVIO) | `updateDoc` → `estadoDelivery: FIN` | habilita las métricas de ese repartidor |
+| `BuscarPedido.eliminarPedido` | relee el pedido (1 lectura) y `updateDoc` → `ELIMINADO` (**solo el encargado**; no con el repartidor en la calle) | ídem |
+| `JefeDeliverys.marcarEstado` (VOLVIO) | `updateDoc` → `estadoDelivery: FIN` | el viaje entra en las Métricas (listener) |
+| `JefeDeliverys.volvioSinEntregar` | `updateDoc` → `estadoDelivery: FIN`, `sinEntregar: true`; el `estado` sigue en `DELIVERY` | el envío se paga; el encargado lo anula después desde F3 |
 
 Los **tres que corrigen un pedido ya existente** —rechazar MP, eliminar el ticket y cerrar el
 delivery— llaman además a `invalidarFotoDePedido(pedido)`: si ese pedido es de una jornada ya

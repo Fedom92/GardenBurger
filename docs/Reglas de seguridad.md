@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, seguridad]
 aliases: [firestore.rules, storage.rules, Seguridad]
-actualizado: 2026-09-26
+actualizado: 2026-09-28
 ---
 
 # Reglas de seguridad
@@ -199,8 +199,8 @@ Dos detalles que rompen si se tocan:
 ## Storage: el resto del bucket solo acepta imágenes de hasta 5 MB
 
 ```
-match /{allPaths=**} {
-  allow read: if request.auth != null;
+match /{carpeta}/{ruta=**} {
+  allow read: if request.auth != null && carpeta != 'privado';
   allow create, update: if esAdmin() && esImagenValida();
   allow delete: if esAdmin();
 }
@@ -211,17 +211,18 @@ function esImagenValida() {
 }
 ```
 
-Es el mismo tope de 5 MB que ya valida el front en `CrearProducto` y `EditProducto`, pero del lado
-del servidor, que es lo único que no se saltea con las devtools. Es lo único que se sube por esta
-vía (`productos/…`); `menu.json` entra por la regla de `/publico`, que se combina con OR y ya lo
+El admin nunca llega a este tope: `Utils/imagenes.js` sube la foto ya achicada (1200 px en WebP,
+~200 KB), sin importar cuánto pesara el original. La regla es la red para lo que no pase por ahí,
+como las devtools. Ver [[Decisiones tecnicas#Las fotos de producto se achican en el navegador]].
+Es lo único que se sube por esta vía (`productos/…`); `menu.json` entra por la regla de `/publico`, que se combina con OR y ya lo
 permite aunque no sea imagen.
 
 Dos detalles que rompen si se tocan:
 
 - **`create, update` van separados de `delete`** porque en un borrado `request.resource` es null y
   `esImagenValida()` tiraría. La app no borra archivos, pero la regla queda correcta.
-- **`uploadBytes` sin `contentType` en metadata** usa el `type` del `File` (`image/png`,
-  `image/webp`…). Si alguna vez se pasa metadata con `contentType` explícito, tiene que seguir
+- **`uploadBytes` sin `contentType` en metadata** usa el `type` del archivo: `image/webp` en el que
+  genera `imagenes.js`, o el del original (`image/png`…) si pesaba menos. Si alguna vez se pasa metadata con `contentType` explícito, tiene que seguir
   siendo `image/*` o la regla lo rechaza.
 
 Ver

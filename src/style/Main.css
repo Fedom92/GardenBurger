@@ -732,7 +732,15 @@ select {
     position: fixed;
     top: 0;
     left: -100%;
-    width: 240px;
+    width: min(290px, 85vw);
+    /* Alto exacto de la pantalla (dvh: sin la barra del navegador del celular),
+       para que "Salir" quede abajo de todo con margin-top: auto. */
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding: 0 10px 12px;
+    border-radius: 0 18px 18px 0;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, .45);
     z-index: 1060;
     transition: left 0.3s ease;
     overflow-y: auto;
@@ -743,17 +751,129 @@ select {
     left: 0;
   }
 
+  /* El logo grande del escritorio: en el cajón lo reemplaza el encabezado
+     (.mobile-close), con el logo chico, quién está y el botón de cerrar. */
   .navigation header {
-    padding: 10px 0;
-    margin-bottom: 5px;
+    display: none;
+  }
+
+  .mobile-close {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 4px 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+    background-color: var(--color-menu);
+  }
+
+  .mobile-close-logo {
+    height: 36px;
+    width: 36px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .mobile-usuario {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.25;
+  }
+
+  .mobile-usuario-nombre {
+    font-weight: 700;
+    font-size: .95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-usuario-rol {
+    font-size: .75rem;
+    color: rgba(255, 255, 255, .6);
+  }
+
+  .mobile-close-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    font-size: 1.05rem;
   }
 
   .sidebar-title {
     margin: 0;
   }
 
+  /* Ítems grandes para el dedo: 48px de alto como mínimo. */
   .navigation .nav {
-    padding: 6px 12px;
+    min-height: 48px;
+    padding: 12px 14px;
+    gap: 14px;
+    border-radius: 12px;
+    margin-bottom: 2px !important;
+  }
+
+  .navigation .nav h6 {
+    font-size: 1rem;
+    font-weight: 500 !important;
+  }
+
+  .navigation .icon {
+    width: 22px;
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+
+  /* La pantalla en la que se está (NavLink le pone nav-actual). */
+  .navigation .nav-actual .nav {
+    background-color: rgba(255, 255, 255, .14);
+    box-shadow: inset 3px 0 0 #fff;
+  }
+
+  /* Submenús (Estadísticas, Configuración): una flecha que gira al abrir, y los
+     hijos con sangría y una línea que los agrupa. */
+  .navigation .sidebar-item>.sidebar-title .nav::after {
+    content: "";
+    margin-left: auto;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    opacity: .7;
+    transform: rotate(45deg);
+    transition: transform .2s;
+  }
+
+  .navigation .sidebar-item.open>.sidebar-title .nav::after {
+    transform: rotate(-135deg);
+  }
+
+  .navigation .sidebar-item.open>.sidebar-content {
+    background-color: transparent;
+    margin-left: 24px;
+    padding-left: 6px;
+    width: auto;
+    border-left: 1px solid rgba(255, 255, 255, .15);
+  }
+
+  /* Salir, abajo de todo y separado del resto. */
+  .navigation .sidebar-salir {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+  }
+
+  .navigation .sidebar-salir .nav {
+    color: #ff8a8a;
   }
 
   /* Bootstrap se carga después de Main.css, de ahí los !important: sin esto
@@ -762,7 +882,10 @@ select {
     display: flex !important;
   }
 
-  .mobile-close,
+  .mobile-close {
+    display: flex !important;
+  }
+
   .mobile-overlay {
     display: block !important;
   }

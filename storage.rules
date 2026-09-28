@@ -30,8 +30,9 @@ service firebase.storage {
     // las imagenes se sirven por URL con token de descarga, que saltea las reglas,
     // asi que el menu publico las muestra igual sin sesion.
     //
-    // La ESCRITURA exige imagen de hasta 5 MB: es el mismo tope que valida el
-    // front en CrearProducto/EditProducto, pero aca no se saltea con las devtools.
+    // La ESCRITURA exige imagen de hasta 5 MB. El front ya sube la foto achicada
+    // (Utils/imagenes.js: 1200 px en WebP, ~200 KB), asi que el admin nunca llega
+    // a este tope: es la red para lo que no pase por ahi, como las devtools.
     // Es lo unico que se sube por esta via (productos/...); menu.json entra por la
     // regla de /publico, que se combina con OR. `delete` va aparte porque en un
     // borrado request.resource es null y esImagenValida() tiraria.
@@ -55,8 +56,8 @@ service firebase.storage {
       return request.auth != null && request.auth.token.admin == true;
     }
 
-    // uploadBytes sin contentType en metadata usa el `type` del File (image/png,
-    // image/webp...), asi que los uploads actuales pasan sin tocar el front.
+    // uploadBytes sin contentType en metadata usa el `type` del archivo: image/webp
+    // en el que genera imagenes.js, o el del original (image/png...) si pesaba menos.
     function esImagenValida() {
       return request.resource.size <= 5 * 1024 * 1024
           && request.resource.contentType.matches('image/.*');

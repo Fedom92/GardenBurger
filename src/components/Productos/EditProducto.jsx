@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { getDoc, updateDoc, doc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../../firebaseConfig/firebase";
+import { updateDoc, doc } from "firebase/firestore";
+import { db } from "../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import { soloEnteros } from "../../Utils/formato";
+import { subirImagenProducto, IMAGEN_ILEGIBLE } from "../../Utils/imagenes";
 
 const EditProducto = (props) => {
-  const { editar_producto, categorias_options, producto, ...propsModal } = props;
+  // onGuardado solo avisa que hubo un cambio (el menú queda sin publicar): la tabla
+  // de Productos se entera sola por su listener.
+  const { onGuardado, categorias_options, producto, ...propsModal } = props;
   const { register, handleSubmit, reset, watch } = useForm();
   const categoriaSeleccionada = watch("categoria");
 
   const [modoImagen, setModoImagen] = useState("link"); // "link" | "upload"
   const [archivoImagen, setArchivoImagen] = useState(null);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
-  const [errorImagen, setErrorImagen] = useState("");
 
   useEffect(() => {
     setModoImagen("link");
@@ -31,46 +32,37 @@ const EditProducto = (props) => {
     });
   }, [producto, reset]);
 
-  const subirImagenStorage = async (archivo) => {
-    const nombreArchivo = `productos/${Date.now()}_${archivo.name}`;
-    const storageRef = ref(storage, nombreArchivo);
-    const metadata = { cacheControl: "public, max-age=31536000" };
-    await uploadBytes(storageRef, archivo, metadata);
-    return await getDownloadURL(storageRef);
-  };
-
   const update = async (data) => {
     try {
       setSubiendoImagen(true);
-      const productoRef = doc(db, "productos", producto.id);
-      const productoDoc = await getDoc(productoRef);
-      const productoData = productoDoc.data();
-
-      let urlImagen = productoData.imagen; // conservar la actual por defecto
+      // El producto ya está en memoria: es la fila de la tabla. Releerlo acá costaba
+      // una lectura y un viaje al servidor en cada edición.
+      let urlImagen = producto.imagen; // conservar la actual por defecto
 
       if (modoImagen === "link" && data.imagen) {
         urlImagen = data.imagen;
       } else if (modoImagen === "upload" && archivoImagen) {
-        urlImagen = await subirImagenStorage(archivoImagen);
+        urlImagen = await subirImagenProducto(archivoImagen);
       }
 
       const newData = {
-        categoria: data.categoria || productoData.categoria,
-        descripcion: (data.descripcion || productoData.descripcion).trim(),
-        precio: Number(data.precio) || Number(productoData.precio),
+        categoria: data.categoria || producto.categoria,
+        descripcion: (data.descripcion || producto.descripcion).trim(),
+        precio: Number(data.precio) || Number(producto.precio),
         imagen: urlImagen,
-        ingredientes: data.ingredientes || productoData.ingredientes,
+        ingredientes: data.ingredientes || producto.ingredientes,
         oferta: data.oferta || false,
-        tipoExtra: data.categoria === "EXTRA" ? (data.tipoExtra || productoData.tipoExtra) : "",
+        tipoExtra: data.categoria === "EXTRA" ? (data.tipoExtra || producto.tipoExtra) : "",
       };
 
-      await updateDoc(productoRef, newData);
-      editar_producto({ id: producto.id, ...newData });
+      await updateDoc(doc(db, "productos", producto.id), newData);
+      onGuardado();
       clearForm();
     } catch (err) {
       console.error("Error al editar producto: ", err);
       // Sin esto el modal quedaba abierto sin decir nada, y el precio viejo seguía.
-      Swal.fire({ title: 'Error', text: 'No se pudo guardar el producto. Revisá la conexión e intentá de nuevo.', icon: 'error', confirmButtonColor: '#dc3545' });
+      const texto = err.message === IMAGEN_ILEGIBLE ? IMAGEN_ILEGIBLE : 'No se pudo guardar el producto. Revisá la conexión e intentá de nuevo.';
+      Swal.fire({ title: 'Error', text: texto, icon: 'error', confirmButtonColor: '#dc3545' });
     } finally {
       setSubiendoImagen(false);
     }
@@ -157,25 +149,13 @@ const EditProducto = (props) => {
                       {...register("imagen")}
                     />
                   ) : (
-                    <>
-                      <input
-                        type="file"
-                        className="form-control"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const archivo = e.target.files[0] || null;
-                          if (archivo && archivo.size > 5 * 1024 * 1024) {
-                            setErrorImagen("La imagen es pesada,no puede superar los 5MB.");
-                            e.target.value = "";
-                            setArchivoImagen(null);
-                          } else {
-                            setErrorImagen("");
-                            setArchivoImagen(archivo);
-                          }
-                        }}
-                      />
-                      {errorImagen && <small className="text-danger">{errorImagen}</small>}
-                    </>
+                    <input
+                      type="file"
+                      className="form-control"
+                      accept="image/*"
+                      // Sin tope de peso: la foto se achica antes de subirla (Utils/imagenes.js).
+                      onChange={(e) => setArchivoImagen(e.target.files[0] || null)}
+                    />
                   )}
                 </div>
 

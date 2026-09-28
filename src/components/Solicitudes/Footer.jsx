@@ -1,11 +1,13 @@
 import React from "react";
 import { textoHorarioWeb } from "../../Utils/fechaComercial";
 
-// El pie de la web pública. Muestra la dirección y el teléfono de la sucursal
-// cuando la página sabe cuál es (`sucursal`: de menu.json o del pedido). En el
-// selector y en la pantalla de cerrado todavía no hay sucursal elegida. El horario
-// sale de HORARIO, el mismo que decide si la web abre.
+// El pie de la web pública. Muestra la dirección, el teléfono y el horario de la
+// sucursal cuando la página sabe cuál es (`sucursal`: de menu.json o del pedido). En
+// el selector todavía no hay sucursal elegida, y cada una muestra su horario en su
+// botón. El horario es el mismo que decide si la web abre.
 const Footer = ({ sucursal = null }) => {
+    const horario = textoHorarioWeb(sucursal);
+
     return (
         <footer className="m-auto bg-dark text-white py-4 position-relative z-3 w-100">
             <div className="container m-auto p-2">
@@ -25,10 +27,12 @@ const Footer = ({ sucursal = null }) => {
                                 {sucursal.telefono}
                             </p>
                         )}
-                        <p className="small text-white-50 mb-0">
-                            <span className="me-2">🕒</span>
-                            Pedidos {textoHorarioWeb()}
-                        </p>
+                        {horario && (
+                            <p className="small text-white-50 mb-0">
+                                <span className="me-2">🕒</span>
+                                Pedidos {horario}
+                            </p>
+                        )}
                     </div>
 
                     {/* Columna 2 - Enlaces rápidos */}

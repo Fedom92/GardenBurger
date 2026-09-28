@@ -7,25 +7,55 @@ import { obtenerResumenes, obtenerArqueo, sumarResumenes, esCombo } from "../POS
 import { useAccionUnica } from "../../Utils/useAccionUnica";
 import { avisarErrorDeCarga } from "../../Utils/avisos";
 import { fmtPesos } from "../../Utils/formato";
+import { KpiCard, BarChart } from "../Estadisticas/componentes";
+import "../Estadisticas/Historico/Estadisticas.css";
+import "./Metricas.css";
 
 // Métricas: el vistazo rápido del admin, de todas las sucursales, desde el celular.
+// Se maneja con botones, como una app: primero la sucursal y después el período;
+// con los dos elegidos busca solo, y cambiar cualquiera vuelve a buscar. Al entrar
+// no lee nada: las tarjetas arrancan en cero. Tiene el aspecto del Histórico
+// (tarjetas y barras compartidas en Estadisticas/componentes.jsx).
+//
 // Lee las fotos de cada noche (1 lectura por noche y sucursal); las que faltan se
-// calculan una vez y se guardan. Al entrar NO lee nada: todo arranca con "Ver".
-// El detalle de los pedidos está en Historial; lo completo, en Estadísticas.
+// calculan una vez y se guardan. La noche en curso no tiene foto: los períodos que
+// llegan a hoy la calculan en el momento desde sus pedidos (~60-100 lecturas por
+// sucursal), igual que el F4. El detalle de los pedidos está en Historial; lo
+// completo, en Estadísticas.
 
 const F = "YYYY-MM-DD";
+// "Hoy" es la jornada en curso: a las 00:30 todavía es la noche de ayer.
 const hoy = () => moment(getFechaComercial(), "DD-MM-YYYY");
-const fmtDia = (s) => moment(s, F).format("DD/MM/YYYY");
 const pct = (n, total) => (total > 0 ? Math.round((n / total) * 100) : 0);
+const fmtN = (n) => (Number(n) || 0).toLocaleString("es-AR");
 
-// Atajos de rango. "Este mes" y "Este año" terminan ayer: la noche en curso tiene
-// su propio botón y no entra en los rangos.
-const ATAJOS = [
-    ["Semana pasada", () => { const l = hoy().startOf("isoWeek").subtract(1, "week"); return [l, l.clone().endOf("isoWeek")]; }],
-    ["Este mes", () => [hoy().startOf("month"), hoy().subtract(1, "day")]],
-    ["Mes pasado", () => { const m = hoy().subtract(1, "month"); return [m.clone().startOf("month"), m.clone().endOf("month")]; }],
-    ["Este año", () => [hoy().startOf("year"), hoy().subtract(1, "day")]],
+const PERIODOS = [
+    { id: "hoy", label: "Hoy", rango: () => [hoy(), hoy()] },
+    { id: "ayer", label: "Ayer", rango: () => [hoy().subtract(1, "day"), hoy().subtract(1, "day")] },
+    { id: "semana", label: "Semana actual", rango: () => [hoy().startOf("isoWeek"), hoy()] },
+    { id: "semanaPasada", label: "Semana pasada", rango: () => { const l = hoy().startOf("isoWeek").subtract(1, "week"); return [l, l.clone().endOf("isoWeek")]; } },
+    { id: "mes", label: "Mes actual", rango: () => [hoy().startOf("month"), hoy()] },
+    { id: "mesPasado", label: "Mes pasado", rango: () => { const m = hoy().subtract(1, "month"); return [m.clone().startOf("month"), m.clone().endOf("month")]; } },
 ];
+
+const incluyeHoy = (hasta) => !hasta.isBefore(hoy(), "day");
+
+// Las fotos del rango, más la noche en curso si el rango llega a hoy. La noche en
+// curso se calcula y no se guarda: todavía se mueve.
+const leerPeriodo = async (sucursalId, [desde, hasta]) => {
+    const [fotos, enCurso] = await Promise.all([
+        obtenerResumenes(desde.format(F), hasta.format(F), sucursalId),
+        incluyeHoy(hasta) ? obtenerArqueo(getFechaComercial(), sucursalId).then((r) => r.arqueo) : null,
+    ]);
+    return sumarResumenes(enCurso ? [...fotos, enCurso] : fotos);
+};
+
+const tituloDe = (periodo, [desde, hasta]) => {
+    const fechas = desde.isSame(hasta, "day")
+        ? desde.format("DD/MM")
+        : `${desde.format("DD/MM")} al ${hasta.format("DD/MM")}`;
+    return `${periodo.label} · ${fechas}${incluyeHoy(hasta) ? " · con la noche en curso" : ""}`;
+};
 
 // Las cifras que muestra Métricas, a partir de una foto (o de varias sumadas).
 const cifras = (r = {}) => ({
@@ -41,49 +71,37 @@ const cifras = (r = {}) => ({
     topCombos: Object.entries(r.productos || {})
         .filter(([descripcion, p]) => esCombo({ descripcion, categoria: p.categoria }))
         .sort((a, b) => b[1].unidades - a[1].unidades)
-        .slice(0, 3),
+        .slice(0, 3)
+        .map(([descripcion, p]) => ({ label: descripcion, valor: p.unidades })),
 });
 
-function Tarjeta({ titulo, valor, detalle, destacada = false }) {
-    return (
-        <div className="col">
-            <div className={`border rounded p-3 h-100 ${destacada ? "bg-dark text-white" : "bg-white"}`}>
-                <div className="small text-uppercase opacity-75">{titulo}</div>
-                <div className="fs-3 fw-bold lh-sm">{valor}</div>
-                {detalle && <div className="small opacity-75">{detalle}</div>}
-            </div>
-        </div>
-    );
-}
-
-function Panel({ c }) {
+// El subtítulo de la tarjeta Delivery: delivery contra mostrador, con los números y
+// la barra doble del Histórico en chico. Sin pedidos, la barra queda vacía.
+function DeliveryVsMostrador({ c }) {
+    const pctDelivery = pct(c.delivery, c.pedidos);
+    const pctMostrador = c.pedidos > 0 ? 100 - pctDelivery : 0;
     return (
         <>
-            <div className="row row-cols-2 row-cols-lg-4 g-2">
-                <Tarjeta titulo="Combos" valor={c.combos.toLocaleString("es-AR")} destacada />
-                <Tarjeta titulo="Ventas" valor={fmtPesos(c.efectivo + c.mp)} detalle={`Efectivo ${fmtPesos(c.efectivo)} · MP ${fmtPesos(c.mp)}`} />
-                <Tarjeta titulo="Pedidos" valor={c.pedidos.toLocaleString("es-AR")} detalle={c.eliminados ? `${c.eliminados} eliminados` : "Sin eliminados"} />
-                <Tarjeta titulo="Delivery / Mostrador" valor={`${pct(c.delivery, c.pedidos)}% / ${pct(c.mostrador, c.pedidos)}%`} detalle={`${c.delivery} delivery · ${c.mostrador} mostrador`} />
-            </div>
-            <div className="border rounded p-3 mt-2 bg-white">
-                <div className="small text-uppercase opacity-75 mb-1">Top 3 combos</div>
-                {c.topCombos.length === 0
-                    ? <div className="small text-muted">Sin combos en el período</div>
-                    : c.topCombos.map(([desc, p], i) => (
-                        <div key={desc} className="d-flex justify-content-between">
-                            <span>{i + 1}. {desc}</span>
-                            <strong>{p.unidades.toLocaleString("es-AR")}</strong>
-                        </div>
-                    ))}
+            <span className="d-block">
+                {fmtN(c.delivery)} delivery ({pctDelivery}%) · {fmtN(c.mostrador)} mostrador ({pctMostrador}%)
+            </span>
+            <div className="dual-bar w-100 mt-1" style={{ height: "6px" }}>
+                <div style={{ width: `${pctDelivery}%`, background: "#f97316" }} />
+                <div style={{ width: `${pctMostrador}%`, background: "#6366f1" }} />
             </div>
         </>
     );
 }
 
+// Con "Todas", una línea con cada sucursal: "DaVinci 60 · Luro 70". La comparación
+// va en el subtítulo y no en secciones aparte, para que la pantalla entre sin scroll.
+const lineaPorSucursal = (lista, valor, fmt) =>
+    lista.map((s) => `${s.nombre} ${fmt(valor(s))}`).join(" · ");
+
 export default function Metricas() {
     const [sucursales, setSucursales] = useState([]);
-    const [sucursal, setSucursal] = useState("TODAS");
-    const [[desde, hasta], setRango] = useState(() => ATAJOS[0][1]().map((m) => m.format(F)));
+    const [sucursal, setSucursal] = useState(null);   // "TODAS" o un id
+    const [periodo, setPeriodo] = useState(null);     // un id de PERIODOS
     const [resultado, setResultado] = useState(null);
     const { procesando, ejecutar } = useAccionUnica();
 
@@ -94,88 +112,119 @@ export default function Metricas() {
         });
     }, []);
 
-    const cargar = (titulo, leer) => ejecutar(async () => {
-        const elegidas = sucursal === "TODAS" ? sucursales : sucursales.filter((s) => s.id === sucursal);
+    // Recibe la sucursal y el período, y no los lee del estado: el click que la
+    // dispara acaba de cambiar uno de los dos, y el estado todavía no se aplicó.
+    const cargar = (sucursalId, periodoId) => ejecutar(async () => {
+        const p = PERIODOS.find((x) => x.id === periodoId);
+        const rango = p.rango();
+        const elegidas = sucursalId === "TODAS" ? sucursales : sucursales.filter((s) => s.id === sucursalId);
         try {
             const porSucursal = await Promise.all(elegidas.map(async (s) => ({
                 id: s.id,
                 nombre: s.nombre || s.id,
-                resumen: await leer(s.id),
+                resumen: await leerPeriodo(s.id, rango),
             })));
-            setResultado({ titulo, porSucursal, total: sumarResumenes(porSucursal.map((p) => p.resumen)) });
+            setResultado({ titulo: tituloDe(p, rango), porSucursal, total: sumarResumenes(porSucursal.map((x) => x.resumen)) });
         } catch (error) {
             console.error("Error cargando métricas:", error);
             Swal.fire({ title: "Error", text: "No se pudieron cargar las métricas. Revisá la conexión e intentá de nuevo.", icon: "error", confirmButtonColor: "#dc3545" });
         }
     });
 
-    const ver = () => {
-        if (!desde || !hasta || desde > hasta) {
-            Swal.fire({ title: "Rango inválido", text: "La fecha desde tiene que ser anterior o igual a la fecha hasta.", icon: "warning", confirmButtonColor: "#198754" });
-            return;
-        }
-        cargar(`Del ${fmtDia(desde)} al ${fmtDia(hasta)}`,
-            async (id) => sumarResumenes(await obtenerResumenes(desde, hasta, id)));
+    const elegirSucursal = (id) => {
+        setSucursal(id);
+        if (periodo) cargar(id, periodo);
     };
 
-    // La noche en curso: se calcula a pedido y no se guarda (todavía se mueve).
-    const verEstaNoche = () => cargar("Esta noche (en curso)",
-        async (id) => (await obtenerArqueo(getFechaComercial(), id)).arqueo);
+    const elegirPeriodo = (id) => {
+        setPeriodo(id);
+        cargar(sucursal, id);
+    };
+
+    const titulo = procesando
+        ? "Cargando..."
+        : resultado?.titulo || (!sucursal ? "Elegí una sucursal" : "Elegí un período");
+
+    const c = cifras(resultado?.total);
+    // Con "Todas", cada sucursal por separado para los subtítulos. El detalle de una
+    // se ve eligiéndola.
+    const comparar = resultado?.porSucursal.length > 1
+        ? resultado.porSucursal.map((s) => ({ nombre: s.nombre, ...cifras(s.resumen) }))
+        : null;
 
     return (
-        <div className="container py-3" style={{ maxWidth: "960px" }}>
-            <h1 className="mb-3">Métricas</h1>
+        <div className="est-wrap met-wrap container-fluid">
+            <h1 className="est-title est-titulo-pantalla fw-bolder met-titulo">Métricas</h1>
 
-            <div className="border rounded p-3 mb-3 bg-light">
-                <div className="row g-2">
-                    <div className="col-12 col-md-4">
-                        <label className="form-label small mb-1">Sucursal</label>
-                        <select className="form-select" value={sucursal} onChange={(e) => setSucursal(e.target.value)}>
-                            <option value="TODAS">Todas</option>
-                            {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre || s.id}</option>)}
-                        </select>
-                    </div>
-                    <div className="col-6 col-md-4">
-                        <label className="form-label small mb-1">Desde</label>
-                        <input type="date" className="form-control" value={desde} onChange={(e) => setRango([e.target.value, hasta])} />
-                    </div>
-                    <div className="col-6 col-md-4">
-                        <label className="form-label small mb-1">Hasta</label>
-                        <input type="date" className="form-control" value={hasta} onChange={(e) => setRango([desde, e.target.value])} />
-                    </div>
-                </div>
-                <div className="d-flex flex-wrap gap-1 mt-2">
-                    {ATAJOS.map(([label, rango]) => (
-                        <button key={label} className="btn btn-sm btn-outline-secondary" onClick={() => setRango(rango().map((m) => m.format(F)))}>
-                            {label}
+            <div className="est-card p-2 mb-2">
+                <div className="met-etiqueta">Sucursal</div>
+                {/* Deshabilitados hasta que llegan las sucursales: "Todas" sin la lista
+                    buscaría sobre nada y mostraría ceros. */}
+                <div className="met-opciones met-opciones--sucursal mb-2">
+                    {[{ id: "TODAS", nombre: "Todas" }, ...sucursales].map((s) => (
+                        <button
+                            key={s.id}
+                            type="button"
+                            className={`met-opcion ${sucursal === s.id ? "activa" : ""}`}
+                            onClick={() => elegirSucursal(s.id)}
+                            disabled={procesando || !sucursales.length}
+                        >
+                            {s.nombre || s.id}
                         </button>
                     ))}
                 </div>
-                <div className="d-flex gap-2 mt-3">
-                    <button className="btn btn-dark flex-fill" onClick={ver} disabled={procesando}>
-                        {procesando ? "Cargando..." : "Ver"}
-                    </button>
-                    <button className="btn btn-outline-dark flex-fill" onClick={verEstaNoche} disabled={procesando}>
-                        Esta noche
-                    </button>
+
+                <div className="met-etiqueta">Período</div>
+                {/* Se habilita con la sucursal elegida: primero la sucursal, después el período. */}
+                <div className="met-opciones met-opciones--periodo">
+                    {PERIODOS.map((p) => (
+                        <button
+                            key={p.id}
+                            type="button"
+                            className={`met-opcion ${periodo === p.id ? "activa" : ""}`}
+                            onClick={() => elegirPeriodo(p.id)}
+                            disabled={!sucursal || procesando}
+                        >
+                            {p.label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {!resultado ? (
-                <p className="text-muted text-center py-4">Elegí el rango y tocá <strong>Ver</strong>. No se lee nada hasta entonces.</p>
-            ) : (
-                <>
-                    <h6 className="fw-bold mb-2">{resultado.titulo}</h6>
-                    <Panel c={cifras(resultado.total)} />
+            <div className="met-estado">{titulo}</div>
 
-                    {resultado.porSucursal.length > 1 && resultado.porSucursal.map((p) => (
-                        <div key={p.id} className="mt-4">
-                            <h6 className="fw-bold mb-2">{p.nombre}</h6>
-                            <Panel c={cifras(p.resumen)} />
-                        </div>
-                    ))}
-                </>
-            )}
+            {/* En el celular: Pedidos y Combos lado a lado, Ventas, Delivery y el Top 3;
+                todo en una pantalla. En la PC las cuatro tarjetas van en una fila. */}
+            <div className={`met-resultado ${procesando ? "met-resultado--cargando" : ""}`}>
+                <div className="row g-2 mb-2">
+                    <div className="col-6 col-lg-3">
+                        <KpiCard compacto icon="🎫" label="Pedidos" value={fmtN(c.pedidos)} color="#6366f1"
+                            sub={c.eliminados ? `${fmtN(c.eliminados)} eliminados` : "Sin eliminados"} />
+                    </div>
+                    <div className="col-6 col-lg-3">
+                        <KpiCard compacto icon="🍔" label="Combos" value={fmtN(c.combos)} color="#e85d04"
+                            sub={comparar
+                                ? lineaPorSucursal(comparar, (s) => s.combos, fmtN)
+                                : c.pedidos ? `${(c.combos / c.pedidos).toFixed(1)} por pedido` : null} />
+                    </div>
+                    <div className="col-12 col-sm-6 col-lg-3">
+                        <KpiCard compacto icon="💰" label="Ventas" value={fmtPesos(c.efectivo + c.mp)} color="#22c55e"
+                            sub={<>
+                                <span className="d-block">Efectivo {fmtPesos(c.efectivo)} · MP {fmtPesos(c.mp)}</span>
+                                {comparar && <span className="d-block">{lineaPorSucursal(comparar, (s) => s.efectivo + s.mp, fmtPesos)}</span>}
+                            </>} />
+                    </div>
+                    <div className="col-12 col-sm-6 col-lg-3">
+                        <KpiCard compacto icon="🛵" label="Delivery" value={`${pct(c.delivery, c.pedidos)}%`} color="#a855f7"
+                            sub={<DeliveryVsMostrador c={c} />} />
+                    </div>
+                </div>
+
+                <div className="est-card p-3">
+                    <div className="met-etiqueta mb-2">🏆 Top 3 combos</div>
+                    <BarChart items={c.topCombos} fmt={fmtN} color="#e85d04" />
+                </div>
+            </div>
         </div>
     );
 }

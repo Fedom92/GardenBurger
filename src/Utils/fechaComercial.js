@@ -2,7 +2,7 @@
 import moment from "moment";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "../firebaseConfig/firebase";
-import { HORARIO } from "./Constantes";
+import { HORARIO, HORA_HABILITA_STATS } from "./Constantes";
 
 // Diferencia entre la hora del servidor (Cloud Function "horaServidor") y la de esta PC.
 // Evita que un reloj desconfigurado impute ventas a la jornada equivocada.
@@ -30,6 +30,11 @@ export const sincronizarHoraServidor = async () => {
 export const ahoraServidor = () => moment(Date.now() + offsetMs);
 
 export const HORA_CIERRE = HORARIO.horaCierre;
+
+// Cuántas horas pasaron desde el inicio de la jornada (horaAbre): con horaAbre 19,
+// 19 → 0, 20 → 1, 00 → 5, 02 → 7. Sirve para comparar horas de una noche que cruza
+// la medianoche sin casos especiales. Las horas fuera de la jornada dan 7 o más.
+export const horaEnJornada = (hora) => (hora - HORARIO.horaAbre + 24) % 24;
 
 // Jornada comercial a la que pertenece una fecha cualquiera, en DD-MM-YYYY: el
 // mismo formato que usa el id de los documentos de resumenDiario y asistencias.
@@ -71,45 +76,59 @@ export const getRangoDeJornada = (jornada) => {
 
 export const getRangoJornada = () => getRangoDeJornada(getFechaComercial());
 
-// Si la jornada ya entro en su madrugada, que es cuando se cierra la caja. Es la
-// MISMA condicion que usa getFechaComercialDe para decidir que "ahora" todavia
-// pertenece a la noche anterior: antes de las 00 el turno sigue vendiendo y el
-// arqueo no significa nada, y pasado horaCierre la jornada ya es otra.
+// Si ya se puede mirar el arqueo (F4): de HORA_HABILITA_STATS a horaCierre, igual
+// para todas las sucursales. Pasado horaCierre la jornada ya es otra.
 //
 // El arqueo cuesta un barrido de la jornada, asi que la ventana no es solo una
 // regla de negocio: evita que se pague esa lectura cada vez que alguien tiene
 // curiosidad a las 21.
-export const esHoraDeArqueo = () => ahoraServidor().hour() < HORA_CIERRE;
+export const esHoraDeArqueo = () => {
+    const hora = horaEnJornada(ahoraServidor().hour());
+    return hora >= horaEnJornada(HORA_HABILITA_STATS) && hora < horaEnJornada(HORA_CIERRE);
+};
 
 
 // ── Horario de la web pública ──────────────────────────────────────────────
-// La web toma pedidos desde horaAbre hasta UNA HORA ANTES de horaCierre. El
-// cierre es margen —no se trabaja esa última hora—, y una solicitud que entrara
-// sobre el cierre se confirmaría pasado horaCierre y caería en el hueco de las
-// 02 a las 19, fuera de todo arqueo.
-export const HORA_CIERRE_WEB = HORA_CIERRE - 1;
+// Cada sucursal tiene el suyo en su documento, editable desde el ABM de
+// Sucursales: `horario: { dias, abre, cierra, horasCorte }`. La web toma pedidos
+// desde `abre` hasta `horasCorte` horas antes de `cierra`: una solicitud que entrara
+// sobre el cierre ya no se llega a cocinar. Viaja en menu.json, así que la web lo
+// mira sin leer Firestore.
 
-// Los días van por JORNADA, no por calendario (ver HORARIO.diasApertura).
-export const webRecibePedidos = () => {
+// La hora en que la web deja de tomar pedidos.
+export const horaCorteWeb = (horario) => (horario.cierra - (horario.horasCorte ?? 1) + 24) % 24;
+
+// Los días van por JORNADA, no por calendario: el lunes a las 00:30 todavía es la
+// noche del domingo. Sin horario cargado la sucursal no toma pedidos: mejor
+// cerrada que abierta a cualquier hora.
+export const webRecibePedidos = (sucursal) => {
+    const horario = sucursal?.horario;
+    if (!horario) return false;
     const ahora = ahoraServidor();
-    const hora = ahora.hour();
-    const enHorario = hora >= HORARIO.horaAbre || hora < HORA_CIERRE_WEB;
-    if (!enHorario) return false;
+    const hora = horaEnJornada(ahora.hour());
+    if (hora < horaEnJornada(horario.abre) || hora >= horaEnJornada(horaCorteWeb(horario))) return false;
     const diaJornada = moment(getFechaComercialDe(ahora), "DD-MM-YYYY").day();
-    return HORARIO.diasApertura.includes(diaJornada);
+    return (horario.dias || []).includes(diaJornada);
 };
 
-const NOMBRES_DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+export const NOMBRES_DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
-// "de miércoles a domingo, de 19 a 1 hs", armado con las mismas constantes que
-// deciden si la web abre: si cambian, el cartel cambia solo.
-export const textoHorarioWeb = () => {
-    const dias = HORARIO.diasApertura.map((d) => NOMBRES_DIAS[d]);
-    const seguidos = HORARIO.diasApertura.every((d, i) => i === 0 || d === (HORARIO.diasApertura[i - 1] + 1) % 7);
+const dosDigitos = (hora) => String(hora).padStart(2, "0");
+
+// "de miércoles a domingo, de 20 a 23 hs", armado con el mismo horario que decide
+// si la web abre: si el admin lo cambia, el cartel cambia solo. Vacío si la
+// sucursal no tiene horario.
+export const textoHorarioWeb = (sucursal) => {
+    const horario = sucursal?.horario;
+    if (!horario?.dias?.length) return "";
+    // Desde el lunes, que es como se leen: el domingo va al final.
+    const orden = [...horario.dias].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
+    const dias = orden.map((d) => NOMBRES_DIAS[d]);
+    const seguidos = orden.every((d, i) => i === 0 || d === (orden[i - 1] + 1) % 7);
     const textoDias = seguidos && dias.length > 2
         ? `de ${dias[0]} a ${dias[dias.length - 1]}`
         : dias.length > 1 ? `${dias.slice(0, -1).join(", ")} y ${dias[dias.length - 1]}` : dias[0];
-    return `${textoDias}, de ${HORARIO.horaAbre} a ${HORA_CIERRE_WEB} hs`;
+    return `${textoDias}, de ${dosDigitos(horario.abre)} a ${dosDigitos(horaCorteWeb(horario))} hs`;
 };
 
 // La jornada en curso todavía se está moviendo: su arqueo no se puede congelar.

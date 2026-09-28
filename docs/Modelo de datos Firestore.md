@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, datos]
 aliases: [Colecciones, Esquema Firestore, Campos]
-actualizado: 2026-09-26
+actualizado: 2026-09-28
 ---
 
 # Modelo de datos Firestore
@@ -28,7 +28,12 @@ Doc ID = slug usado en las URLs públicas, generado solo desde el nombre (el ABM
 
 ```js
 { nombre: "Luro", direccion: "Av. Luro 3300", activa: true,
-  telefono: "1134567890" }   // de atención: 10 dígitos, sin 0 ni 15. La web le antepone el 549
+  telefono: "1134567890",    // de atención: 10 dígitos, sin 0 ni 15. La web le antepone el 549
+  horario: {                 // el de la web pública (28-09-2026). Sin él, la web la muestra cerrada
+    dias: [0, 3, 4, 5, 6],   // de atención, 0 = domingo, por JORNADA
+    abre: 20, cierra: 1,     // horas enteras, dentro de la jornada comercial (19 a 02)
+    horasCorte: 1,           // la web deja de tomar pedidos 1 h antes del cierre
+  } }                        // todo viaja en menu.json: la web lo lee de ahí
 ```
 
 Se desactiva en vez de borrarse, para conservar las subcolecciones.
@@ -59,6 +64,8 @@ envio: { zona_envio: "0-1", costo_envio: 500 }   // copia de un doc de `envios`
 carrito: [...]                           // ver más abajo
 combos: 3                                // CONGELADO al cobrar: contarCombos(carrito) de ese día
 esLocal: false                           // CONGELADO al cobrar: si la zona cobra en mostrador
+destinoVuelto: "VUELTO" | "PROPINA"      // solo delivery en efectivo que paga con más del total
+aliasVuelto: "juan.mp"                   // opcional, con "VUELTO": los admins le transfieren
 ```
 
 ### Estado y tiempos
@@ -88,7 +95,8 @@ Cada paso deja `<actor>ID`, `<actor>` (nombre) y `<actor>Timestamp`:
 | `estadoDelivery` | `JefeDeliverys` | `"SALIO"` / `"VOLVIO"` |
 | `deliverySalidaTimestamp`, `deliveryFinTimestamp` | `JefeDeliverys` | salida y regreso |
 | `pagaronCon` | `JefeDeliverys` | con cuánto pagó **al final** el cliente (hasta sep-2026, `pagoRepartidorCon`). Hace par con `pagaCon` |
-| `fijoDelivery` | `JefeDeliverys` | el fijo del repartidor, **congelado** al cerrar la entrega |
+| `sinEntregar` | `JefeDeliverys` | `true` si el repartidor **volvió sin entregar**: cierra el viaje (`estadoDelivery: VOLVIO`, se paga el envío) y el pedido sigue en `DELIVERY` hasta que el encargado lo anule |
+| ~~`fijoDelivery`~~ | — | **en desuso** desde el 28-09-2026: ya no hay fijo. Los pedidos viejos lo tienen y se ignora |
 
 ### Solo si `origen === "WEB"`
 ```js
@@ -151,14 +159,12 @@ guarda ese resultado para no tener que releerlos. Desde el 26-09-2026: antes se 
   mp: 10000,
   totalPedidos: 12,
   totalCombos: 9,         // unidades, no renglones del carrito
-  deliverys: {            // liquidarDeliverys(): entregas cerradas (estadoDelivery == FIN)
+  deliverys: {            // liquidarDeliverys(): viajes cerrados (estadoDelivery == FIN)
     "<deliveryID>": {
-      nombre, cantidadPedidos,
-      totalEnvios,          // suma de envio.costo_envio, MP incluido
-      efectivoCobrado,      // lo que tiene que rendir: total, montoEfectivo o 0 según el método
-      fijo,                 // el fijoDelivery congelado en las entregas de esa noche
-      aPagar,               // fijo + totalEnvios
-    }
+      nombre, cantidadPedidos,  // viajes, entregados o no
+      totalEnvios,          // suma de envio.costo_envio, MP y "sin entregar" incluidos
+      efectivoCobrado,      // lo que rinde: total, montoEfectivo, o 0 (MP, sin entregar, anulado)
+    }                       // hasta el 28-09-2026 también `fijo` y `aPagar`: ya no hay fijo
   },
   generadoEl: Timestamp,  // serverTimestamp() del cálculo. Sin este campo no es una foto
 }
@@ -175,7 +181,7 @@ hechos— y el siguiente que la mire la reconstruye. Cambiar código no regenera
 agrega una categoría a `CATEGORIAS_COMBOS`, agosto sigue diciendo lo que era cierto en agosto.
 
 > [!note] El detalle de cada entrega no está en la foto
-> La liquidación del Jefe de Deliverys muestra cada entrega con su dirección, pero la foto guarda
+> Las Métricas de la jefa de deliverys muestran cada viaje con su dirección, pero la foto guarda
 > solo el resumen por repartidor: el detalle ya está en los pedidos. Hasta sep-2026 este bloque
 > tenía `totalMonto` y `totalCobrado`, que sumaban el total aunque fuera MP. Ver
 > [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].
@@ -236,7 +242,7 @@ que en `updateDoc` **sí** navega el mapa. En `setDoc` los puntos serían parte 
 ```js
 { descripcion, categoria, precio, visible, oferta,
   ingredientes,        // se muestra en el menú público
-  imagen: "url_storage",
+  imagen: "url",        // Storage (productos/…, WebP de 1200 px) o un link externo pegado a mano
   tipoExtra: "HAMBURGUESA" | "GENERAL"   // solo si categoria === "EXTRA"
 }
 ```

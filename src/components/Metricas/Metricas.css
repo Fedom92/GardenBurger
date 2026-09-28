@@ -1,0 +1,97 @@
+/* Métricas usa la base visual del Histórico (Estadisticas.css: colores, tarjetas,
+   barras). Acá solo lo propio: que entre entera en la pantalla del celular sin
+   scrollear, y los botones de sucursal y de período que reemplazan a los selects. */
+
+.est-wrap.met-wrap {
+    padding-top: 10px;
+    padding-bottom: 16px;
+}
+
+.met-titulo {
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+}
+
+/* En el celular el título va a la derecha del botón del menú: lo hace la clase
+   compartida .est-titulo-pantalla (Estadisticas.css). Acá solo se ajusta el aire. */
+@media (max-width: 768px),
+(orientation: landscape) and (max-height: 500px) {
+    .est-wrap.met-wrap {
+        padding-top: 0;
+    }
+
+    .met-titulo {
+        margin-bottom: 8px;
+    }
+}
+
+.met-etiqueta {
+    color: var(--text-sec);
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+/* El renglón que dice qué se está mirando (o qué falta elegir). */
+.met-estado {
+    color: var(--text-sec);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.met-opciones {
+    display: grid;
+    gap: 6px;
+}
+
+.met-opciones--sucursal {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+}
+
+/* Tres por fila también en el celular: dos filas en vez de tres. */
+.met-opciones--periodo {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.met-opcion {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text-sec);
+    font-size: .78rem;
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 8px 4px;
+    transition: all .2s;
+}
+
+.met-opcion:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--text-pri);
+}
+
+.met-opcion.activa {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+/* Deshabilitado se ve deshabilitado: opacidad y sin la mano del cursor. */
+.met-opcion:disabled {
+    cursor: default;
+    opacity: .45;
+}
+
+/* Mientras busca, los números anteriores quedan atenuados en vez de desaparecer. */
+.met-resultado {
+    transition: opacity .2s;
+}
+
+.met-resultado--cargando {
+    opacity: .45;
+}

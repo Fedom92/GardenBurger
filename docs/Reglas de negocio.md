@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, negocio]
 aliases: [Negocio]
-actualizado: 2026-09-26
+actualizado: 2026-09-28
 ---
 
 # Reglas de negocio
@@ -10,10 +10,15 @@ actualizado: 2026-09-26
 
 ## Jornada comercial
 
-**La jornada va de `HORARIO.horaAbre` (19) a `HORARIO.horaCierre` (2), SIEMPRE.** Las dos
-horas viven en `HORARIO`, en `Utils/Constantes.jsx`, junto con los días de apertura: no en el
-`.env`. Ver [[Decisiones tecnicas#El horario vive en código, no en el `.env`]].
-Un pedido de las 00:30 pertenece a la noche anterior.
+**La jornada va de `HORARIO.horaAbre` (19) a `HORARIO.horaCierre` (2), SIEMPRE.** Es lo que
+significa "hoy" en todo el sistema —arqueo, fotos, Métricas, buscadores, historial,
+asistencias—, y vive en `HORARIO`, en `Utils/Constantes.jsx`, no en el `.env`. Un pedido de las
+00:30 pertenece a la noche anterior.
+
+**No es el horario de atención**: es el rango que agrupa los pedidos de una noche, con margen.
+Los días y horas en que cada sucursal toma pedidos por la web están en su documento y se editan
+desde el ABM (28-09-2026). Ver [[Reglas de negocio#La web pública solo toma pedidos en horario]] y
+[[Decisiones tecnicas#El horario vive en código, no en el `.env`]].
 
 `src/Utils/fechaComercial.js`:
 
@@ -24,13 +29,14 @@ Un pedido de las 00:30 pertenece a la noche anterior.
 | `getRangoDeJornada(jornada)` | `{inicio, fin}` de cualquier jornada, de 19 a 2. Lo usan F3 **y el arqueo** (ver la nota de abajo) |
 | `getRangoJornada()` | lo mismo para la jornada en curso |
 | `jornadaEstaAbierta(jornada)` | si es la jornada en curso: la abierta no tiene foto de arqueo |
-| `esHoraDeArqueo()` | si ya es de 00:00 a `horaCierre`, la ventana del F4 y de la liquidación |
+| `esHoraDeArqueo()` | si ya es de `HORA_HABILITA_STATS` (00:00) a `horaCierre`: la ventana del F4 |
 | `getJornadaDeFecha(date)` | versión pura para datos históricos (Estadísticas) |
 | `ahoraServidor()` | `moment()` corregido por el offset del servidor |
 | `sincronizarHoraServidor()` | llama a la Cloud Function `horaServidor` y calcula el offset |
 | `HORA_CIERRE` | `HORARIO.horaCierre` |
-| `webRecibePedidos()` | si la web pública puede tomar un pedido ahora: día de la jornada y hora |
-| `HORA_CIERRE_WEB` / `textoHorarioWeb()` | el corte de la web (`horaCierre - 1`) y el texto del cartel de cerrado |
+| `horaEnJornada(hora)` | horas desde el inicio de la jornada (19 → 0, 00 → 5): compara horas de una noche que cruza la medianoche |
+| `webRecibePedidos(sucursal)` | si esa sucursal toma pedidos por la web ahora: su día de atención y su horario |
+| `horaCorteWeb(horario)` / `textoHorarioWeb(sucursal)` | la hora de corte de la web (`horasCorte` antes del cierre) y el texto del cartel |
 
 > [!warning] El hueco de 18 horas es intencional
 > Los buscadores de Caja (`BuscarPedido`) solo ven pedidos dentro de la jornada. Entre las 02:00
@@ -66,18 +72,21 @@ Esta constante decide tres cosas distintas:
 
 ## Quién mira el arqueo, y cuándo
 
-El **F4 de la Caja es del encargado y de la madrugada** —y la liquidación del módulo de
-deliverys, en la misma ventana—: el botón solo se le muestra a quien
-tenga rol `encargado`, y solo queda habilitado entre las **00:00 y `horaCierre`**. Antes de la
-medianoche el turno sigue vendiendo y el número no significa nada; pasada `horaCierre` la jornada
-ya es otra y F4 mostraría una noche vacía.
+El **F4 de la Caja es del encargado y de la madrugada**: el botón solo se le muestra a quien
+tenga rol `encargado`, y solo queda habilitado desde **`HORA_HABILITA_STATS` (00:00) hasta
+`horaCierre`**, a la misma hora en todas las sucursales. Antes el turno sigue vendiendo y el
+número no significa nada; pasada `horaCierre` la jornada ya es otra y F4 mostraría una noche vacía.
+
+La hora es una constante y no el cierre de cada sucursal por decisión del dueño (28-09-2026):
+atarla al horario de la sucursal obligaba a la Caja a leerlo. Las **Métricas** de la jefa de
+deliverys **no tienen ventana**: salen de un listener y abrirlas no cuesta nada. Ver
+[[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].
 
 No es solo una regla de negocio: ver el arqueo cuesta **leer los pedidos de la jornada** (~60-100
 lecturas), así que la ventana evita pagar ese barrido cada vez que alguien tiene curiosidad a las
-21. La condición es `esHoraDeArqueo()` en `Utils/fechaComercial.js`, y es la **misma** que usa
-`getFechaComercialDe` para decidir que "ahora" todavía pertenece a la noche anterior.
+21. La condición es `esHoraDeArqueo()` en `Utils/fechaComercial.js`.
 
-Los dos usan el hook `Utils/useHoraDeArqueo.js`. El guard está en `verResumen`, no solo en el
+Usa el hook `Utils/useHoraDeArqueo.js`. El guard está en `verResumen`, no solo en el
 botón: el atajo F4 llama a la función directo, y ahí la
 hora se **relee** en el momento. El `useState` de la Caja existe solo para el `disabled` del botón.
 
@@ -117,33 +126,47 @@ El recargo se calcula en `useCarrito.getResumen`, siempre sobre `subtotal + cost
 
 ## La web pública solo toma pedidos en horario
 
-Elegir sucursal y armar el pedido (`/crear-solicitud`) funciona solo **los días de
-`HORARIO.diasApertura` —miércoles a domingo—, desde `horaAbre` hasta una hora antes de
-`horaCierre`**: de 19 a 1. Fuera de eso se ve "Ahora estamos cerrados", con el horario. Lo decide
-`webRecibePedidos()`.
+**Cada sucursal tiene su horario** en su documento (`sucursales/{id}.horario`), editable desde el
+ABM de Sucursales sin deploy (28-09-2026). Hasta entonces era uno solo para todas, y Davinci —que
+cierra a las 00— recibía pedidos web hasta la 01.
+
+| Campo | Qué es | Davinci | Luro |
+|---|---|---|---|
+| `dias` | días de atención (0 = domingo) | miércoles a domingo | miércoles a domingo |
+| `abre` / `cierra` | horas enteras | 20 / 00 | 20 / 01 |
+| `horasCorte` | cuántas horas antes del cierre la web deja de tomar pedidos | 1 → hasta las 23 | 1 → hasta las 00 |
+
+Lo decide `webRecibePedidos(sucursal)`:
 
 - **Los días van por jornada**, no por calendario: el lunes a las 00:30 todavía es la noche del
-  domingo y está abierta; el miércoles a las 00:30 es la noche del martes y está cerrada.
-- **El corte es una hora antes del cierre** (`HORA_CIERRE_WEB`): esa última hora no se trabaja,
-  y una solicitud que entrara sobre el cierre se confirmaría pasado `horaCierre`, en el hueco de
-  las 02 a las 19, fuera de todo arqueo.
-- **Se mira al entrar y otra vez al confirmar la compra**, por si el cliente dejó la página
-  abierta pasado el corte.
-- **Cerrada no lee nada de Firestore**: ni sucursales ni menú.
+  domingo.
+- **El corte es `horasCorte` antes del cierre**: una solicitud que entrara sobre el cierre ya no
+  se llega a cocinar. El F4 no depende de esto: ver [[Reglas de negocio#Quién mira el arqueo, y cuándo]].
+- **El horario tiene que caer dentro de la jornada comercial** (19 a 02): el ABM solo ofrece esas
+  horas y valida que el corte quede entre la apertura y el cierre.
+- **Sin horario cargado, la sucursal no toma pedidos**: mejor cerrada que abierta a cualquier hora.
+- **Una sucursal desactivada no toma pedidos, ni por el link directo** (`/crear-solicitud/luro`):
+  no está en `menu.json`, y el respaldo que lee su documento la trata como inexistente. Al
+  confirmar se vuelve a controlar.
+- **Viaja en `menu.json`**, así que la web lo mira sin leer Firestore. Por eso un cambio de horario
+  llega a la web **al publicar el menú**: guardar una sucursal hace parpadear "Publicar Menú".
+- **Se mira al entrar y otra vez al confirmar la compra**; la segunda, con el documento de la
+  sucursal que la web ya lee para validarla (0 lecturas extra): si el admin cambió el horario y
+  todavía no publicó, manda el documento.
+- **El selector lista todas las sucursales**: la cerrada aparece deshabilitada, con su horario. La
+  pantalla de cerrado de una sucursal ofrece volver al selector, porque capaz otra sigue abierta.
+  Las sucursales salen de `menu.json`; solo si falla, de Firestore.
 - `/ver-pedido` **sigue abierto**. `/menu` también entra por URL, pero **sin ningún link**: todavía
-  no está terminado. La Caja no mira los días: trabaja cualquier día.
+  no está terminado. La Caja no mira el horario: trabaja cualquier día.
 - **El WhatsApp va al teléfono de la sucursal** (`sucursales/{id}.telefono`). Al confirmar, la web
   ya lee ese documento para validar la sucursal, así que el teléfono sale sin lecturas extra, y
   queda guardado en la solicitud (`telefonoSucursal`) para el botón de `/ver-pedido`. Si la
   sucursal no tiene teléfono cargado, el pedido se registra igual y no se abre WhatsApp.
-- **El pie de la web** muestra la dirección y el teléfono de la sucursal elegida —salen de
-  `menu.json`, sin lecturas— y el horario desde `HORARIO`. También en la pantalla de cerrado,
-  si el link trae la sucursal (`/crear-solicitud/davinci`): es cuando el cliente más necesita el
-  teléfono. En el selector todavía no hay sucursal elegida, así que muestra solo el horario. Los datos nuevos de una
-  sucursal llegan al pie **después de republicar el menú**.
+- **El pie de la web** muestra la dirección, el teléfono y el horario de la sucursal elegida, de
+  `menu.json`. En el selector todavía no hay sucursal: cada botón muestra su horario.
 - **Solo en el front, por decisión.** Alguien que arme el pedido a mano podría crear una
-  solicitud fuera de horario: aparecería pendiente la noche siguiente y el cajero la rechaza.
-  Cerrarlo en las reglas obligaría a repetir días y horas ahí, en UTC: dos fuentes para lo mismo.
+  solicitud fuera de horario: aparecería pendiente y el cajero la rechaza. Cerrarlo en las reglas
+  obligaría a repetir días y horas ahí, en UTC: dos fuentes para lo mismo.
 - Usa el reloj del celular del cliente, en hora argentina aunque el teléfono tenga otra zona.
 
 **El link de `/ver-pedido` vence a las 48 horas** de hecho el pedido. No se borra nada: la regla
@@ -161,11 +184,28 @@ para la asistencia y para que el jefe les asigne pedidos.
 Lo que el repartidor tiene que **cobrar**, no el total. Sale de `repartirPago(p).efectivo`, la
 misma función que arma el arqueo, así que la calle y la caja no pueden discrepar:
 
-| Método | A cobrar | `pagaCon` y vuelto |
+| Método | A cobrar | `pagaCon` y diferencia |
 |---|---|---|
-| `EFECTIVO` | el total | se muestran: "Paga con $10.000 · Vuelto a llevar $2.500" |
-| `%` (dividido) | **solo `montoEfectivo`** | "Paga con" igual a `montoEfectivo`: no hay vuelto |
+| `EFECTIVO` | el total | "Paga con $12.500 · Vuelto: $2.500 (lo trae el repartidor)", o "Propina" |
+| `%` (dividido) | **solo `montoEfectivo`** | "Paga con" igual a `montoEfectivo`: no hay diferencia |
 | `MP` | nada — "No se cobra" | no se muestran ni el total ni `pagaCon` |
+
+### La moto no lleva cambio: vuelto o propina
+
+Si el cliente de un delivery paga en efectivo con más de lo que sale, el repartidor **no da
+cambio**. El cajero se lo avisa al tomar el pedido y marca en la Caja qué pasa con la diferencia
+(`DESTINO_VUELTO`, 28-09-2026). Es **obligatorio**: `validarPedido` no deja guardar sin elegir.
+
+- **Vuelto**: el repartidor trae la plata, y los admins le transfieren el vuelto al cliente al
+  cierre. El cajero puede anotar el **alias** (opcional; el cliente se lo pasa por WhatsApp).
+- **Propina**: se la queda el repartidor.
+
+En Retira y Espera Afuera no se pregunta: el cambio se da en mano. La jefa ve "Vuelto" o
+"Propina" en su tabla y en el pedido, pero no el alias: la transferencia no es suya. Los vueltos
+**no** entran en lo que cobra el repartidor. El encargado ve la lista de **vueltos a transferir**
+en el F4 —ticket, cliente, monto y alias, con un botón **Copiar** para pasársela al admin—. El
+monto es el real si el repartidor ya volvió (`pagaronCon` menos lo que había que cobrar), y si no
+el que anunció el cliente, marcado como estimado.
 
 ### `pagaCon` y `pagaronCon`
 
@@ -179,33 +219,44 @@ misma función que arma el arqueo, así que la calle y la caja no pueden discrep
 Hasta sep-2026 `pagaronCon` se llamaba `pagoRepartidorCon`. Se renombró cuando el sistema
 todavía no tenía datos productivos, para que forme par con `pagaCon`.
 
+### Un viaje en la calle no se anula
+
+Si el cliente cancela o no se encuentra la dirección, **el viaje se hizo y se paga**. Para que
+quede registrado, el encargado **no puede anular** desde F3 un pedido cuyo repartidor salió y no
+volvió (`estadoDelivery == SALIO`): primero la jefa marca que volvió. F3 relee el pedido antes de
+anular (1 lectura), porque trabaja con la jornada que leyó al abrirse. Si el pedido todavía no
+salió, se anula como cualquier otro: no hubo viaje.
+
+Cuando vuelve sin entregar, la jefa usa **"Volvió sin entregar"**: cierra el viaje
+(`estadoDelivery: VOLVIO`, `sinEntregar: true`) sin pedir `pagaronCon`. El pedido **sigue en
+`DELIVERY`** —en su lista, marcado en rojo, y el cliente no ve "Entregado"— hasta que el encargado
+lo anula desde F3, donde aparece como "Volvió sin entregar: falta anularlo". Mientras tanto suma al
+arqueo como cobrado, y el F4 lo avisa.
+
 ### Cuánto se le paga a cada repartidor
 
-**Un fijo por noche (`REACT_APP_fijoDeliverys`) más el costo de envío de cada entrega que
-hizo.** El envío se paga aunque el pedido haya sido por MP: el viaje es el mismo. Es aparte de la
-asistencia que cargan los encargados.
+**Sueldo de la noche = base de Asistencias + envíos. No hay fijo** (28-09-2026; hasta entonces era
+`REACT_APP_fijoDeliverys` más los envíos).
 
-Lo calcula `liquidarDeliverys()` en `useResumenDiario.js`, con estas reglas:
+- **La base** es la de cualquier empleado: `horas × valorHora − descuentos`, de la asistencia que
+  carga el encargado. Llegar tarde o devolver un préstamo son descuentos.
+- **Los envíos** son el `envio.costo_envio` de cada viaje **cerrado** (`VOLVIO`), entregado o no:
+  el viaje se hizo. Se paga aunque el pedido haya sido por MP. El costo queda congelado en el
+  pedido al cobrarlo.
+- Un viaje sin entregar o un pedido anulado **no suma efectivo a rendir**: no hubo cobro.
 
-- Cuentan solo las entregas **cerradas** (`estadoDelivery == VOLVIO`). La que sigue en la calle no
-  se paga todavía, y el modal lo avisa arriba.
-- El fijo va **una vez por repartidor y por noche**, no por entrega.
-- Un repartidor sin entregas **no cobra el fijo**. Es regla del negocio, y en la práctica no pasa:
-  todo repartidor que viene hace entregas.
-- Una entrega que se anuló después **se paga igual**, porque el viaje se hizo. **Pendiente de
-  confirmar** con el negocio: [[Deuda tecnica#Funcionalidad pendiente]].
+Lo calcula `liquidarDeliverys()` en `useResumenDiario.js`, y lo usan tres pantallas con los mismos
+números:
 
-Cada entrega guarda **el fijo de esa noche** (`fijoDelivery`) al cerrarse, y la liquidación usa
-ese: si mañana cambia la constante, las noches viejas siguen diciendo cuánto se pagó, sin
-importar cuándo se saque la foto del arqueo. El detalle con las direcciones no va en la foto,
-porque ya está en los pedidos.
+| Dónde | Quién | Qué muestra |
+|---|---|---|
+| **F4** de la Caja | encargado, al cierre | por repartidor: viajes, envíos, **base** (de la asistencia de la noche, 1 lectura) y **a pagar**. Es con lo que se le paga cada noche |
+| **Métricas** del módulo de deliverys | jefa, toda la noche | viajes, envíos y efectivo a rendir por repartidor, con el detalle de cada viaje. Es el control del sector: no paga nada |
+| **Liquidación de Asistencias** | admin, por período | a los repartidores les suma sus envíos, de las fotos de cada noche. Registra el trabajo hecho, no a quién se le pagó |
 
-### La liquidación
-
-El botón "Liquidación" del módulo se habilita **de 00:00 a `horaCierre`**, igual que el F4 de la
-Caja y por la misma razón: cuesta un barrido de la jornada. Muestra arriba el total de la noche
-—entregas, envíos, fijos, total a pagar y efectivo a rendir— y un acordeón con cada repartidor;
-al desplegarlo, el detalle de sus entregas con dirección, zona, envío, método y `pagaronCon`.
+Las **Métricas** van **en vivo**: salen de un listener sobre los viajes cerrados de la noche, así
+que abrirlas no cuesta nada y no tienen ventana horaria. Ver
+[[Decisiones tecnicas#Las Métricas de la jefa van por listener]].
 
 ## Qué producto se ve dónde
 
@@ -327,8 +378,9 @@ decisiones que estaban implementadas y sin escribir, y sorprenden a quien lee el
    descartó el control `− +` por línea.
 3. **El teléfono se valida por longitud, no por contenido** (`validarPedido.js:5`): pide 10
    caracteres, sin verificar que sean dígitos.
-4. **El vuelto se exige pero no se muestra.** En efectivo se pide `pagaCon >= total` para poder
-   calcularlo, y después la pantalla no lo informa.
+4. **La Caja no muestra el vuelto.** En efectivo se pide `pagaCon >= total`, y en un delivery que
+   paga con más hay que elegir "Vuelto" o "Propina" (la moto no lleva cambio), pero el monto no se
+   informa: lo ve la jefa de deliverys, y los vueltos a transferir, el encargado en el F4.
 5. **Un pedido `ELIMINADO` o `CANCELADO` sigue apareciendo en los buscadores**, a propósito: el
    cajero tiene que poder auditarlo.
 
@@ -365,3 +417,6 @@ deducir del código de un vistazo:
 2. **`valorHora` se congela** dentro de cada registro al cargar la jornada. Subirle el sueldo a
    alguien no reescribe sus liquidaciones pasadas.
 3. **El bruto se acumula día por día**, no como `horasTotales × unValorHora`.
+4. **A los repartidores se les suman sus envíos** (28-09-2026): el total de la liquidación es
+   `neto + envíos`. Los envíos salen de las fotos de cada noche. Ver
+   [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].

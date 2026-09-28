@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { serverTimestamp, runTransaction, doc, Timestamp, deleteField } from "firebase/firestore";
-import { db, avanzarContador, colSucursal } from "../../firebaseConfig/firebase";
+import { serverTimestamp, runTransaction, doc, getDoc, Timestamp, deleteField } from "firebase/firestore";
+import { db, avanzarContador, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
@@ -22,8 +22,8 @@ import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
 import useTicketLayout from './pos_hooks/useTicketLayout';
 import validarPedido from './pos_hooks/validarPedido';
 import useRevisarSolicitud, { liberarSolicitud } from './pos_hooks/useRevisarSolicitud';
-import { obtenerArqueo, contarCombos } from './pos_hooks/useResumenDiario';
-import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO } from '../../Utils/Constantes';
+import { obtenerArqueo, contarCombos, vueltosATransferir, sinEntregarPendientes } from './pos_hooks/useResumenDiario';
+import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO, DESTINO_VUELTO } from '../../Utils/Constantes';
 import { ahoraServidor, getFechaComercial, esHoraDeArqueo } from '../../Utils/fechaComercial';
 import { fmtPesos } from '../../Utils/formato';
 import { useAccionUnica } from '../../Utils/useAccionUnica';
@@ -62,6 +62,7 @@ const Caja = () => {
     // Seteado solo cuando el ticket vino de una solicitud web: cambia Limpiar por Cancelar.
     const idSolicitud = watch("id");
     const pagaCon = watch("pagaCon");
+    const destinoVuelto = watch("destinoVuelto");
 
     const { userData } = useAuth();
     const [search, setSearch] = useState("");
@@ -106,6 +107,13 @@ const Caja = () => {
 
     const { totalBase, total: totalFinal, montoMPConRecargo } = getResumen;
 
+    // La moto no lleva cambio: si el cliente de un delivery paga en efectivo con más
+    // de lo que sale, el cajero tiene que marcar si quiere el vuelto —el repartidor
+    // trae la plata y los admins se lo transfieren al alias— o si lo deja de propina.
+    // En Retira y Espera Afuera no se pregunta: el cambio se da en mano.
+    const esReparto = !!envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio);
+    const pideVuelto = metodoPago === METODOS_PAGO.EFECTIVO.key && esReparto && Number(pagaCon) > totalFinal;
+
     const gruposCarrito = useMemo(() => agruparCarrito(carrito), [carrito]);
     const unidades = useMemo(() => carrito.reduce((acum, p) => acum + (p.cantidad || 1), 0), [carrito]);
 
@@ -127,7 +135,7 @@ const Caja = () => {
     // ticket. Es la unica escritura del sistema donde repetirla no es inofensiva:
     // el id del documento se genera por llamada.
     const guardarBD = (data) => ejecutar(async () => {
-        if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo })) return;
+        if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo, pideVuelto })) return;
 
         try {
             const isWebOrder = !!data.id;
@@ -170,6 +178,13 @@ const Caja = () => {
                     envio: envioSeleccionado,
                     metodoPago: data.metodoPago,
                     pagaCon: data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? Number(montoEfectivo) : Number(data.pagaCon) || 0,
+                    // Vuelto o propina: solo si hay diferencia en un delivery en
+                    // efectivo (ver `pideVuelto`). El alias lo usan los admins para
+                    // transferir el vuelto al cierre; lo ven en el F4.
+                    ...(pideVuelto ? {
+                        destinoVuelto: data.destinoVuelto,
+                        aliasVuelto: data.destinoVuelto === DESTINO_VUELTO.VUELTO.key ? (data.aliasVuelto || "").trim() : "",
+                    } : {}),
                     montoEfectivo: data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? Number(montoEfectivo) : 0,
                     total: Number(totalFinal),
                     carrito: carrito,
@@ -208,8 +223,10 @@ const Caja = () => {
 
     const limpiarCamposMetodoPago = useCallback(() => {
         resetField("pagaCon");
+        setValue("destinoVuelto", "");
+        resetField("aliasVuelto");
         setMontoEfectivo(0);
-    }, [resetField, setMontoEfectivo]);
+    }, [resetField, setValue, setMontoEfectivo]);
 
     // Los tabs reemplazaron al <select>, asi que recibe el valor y no el evento.
     const seleccionarMetodoPago = (nuevoMetodo) => {
@@ -230,8 +247,8 @@ const Caja = () => {
     // numero que ve el encargado al fiscalizar el cierre es el de los pedidos que
     // quedaron. Si no cuadra con la caja, falta plata — no puede ser el sistema.
     //
-    // Cuesta los pedidos de la noche (~60-100 lecturas) en vez de 1, y se abre una
-    // o dos veces por turno. No es un listener a proposito: el arqueo se mira al
+    // Cuesta los pedidos de la noche (~60-100 lecturas) más la asistencia (1), y se
+    // abre una o dos veces por turno. No es un listener a proposito: el arqueo se mira al
     // cerrar, no necesita ir cambiando solo mientras el modal esta abierto.
     const verResumen = useCallback(async () => {
         // El boton es solo el pixel: la verdad se relee aca, con el reloj del
@@ -244,8 +261,26 @@ const Caja = () => {
         setCargandoResumen(true);
         setShowResumen(true);
         try {
-            const { arqueo } = await obtenerArqueo();
-            setResumenDiario(arqueo);
+            // La asistencia de la noche (1 lectura) trae la base de cada repartidor:
+            // horas × valorHora − descuentos, que el encargado le suma a los envíos
+            // para pagarle. Si falla, el arqueo se muestra igual y lo avisa.
+            const jornada = getFechaComercial();
+            const [{ arqueo, pedidos }, registros] = await Promise.all([
+                obtenerArqueo(jornada),
+                getDoc(docSucursal("asistencias", jornada))
+                    .then((d) => (d.exists() ? d.data().registros || {} : {}))
+                    .catch((error) => {
+                        console.error("Error leyendo la asistencia de la noche:", error);
+                        return null;
+                    }),
+            ]);
+            setResumenDiario({
+                arqueo,
+                registros,
+                // Salen de los pedidos que el arqueo ya leyó: no cuestan lecturas.
+                vueltos: vueltosATransferir(pedidos || []),
+                sinEntregar: sinEntregarPendientes(pedidos || []),
+            });
         } catch (error) {
             console.error("Error cargando el resumen del dia:", error);
             // Nunca un arqueo vacío por un error: "sin movimientos" a las 00:30
@@ -641,6 +676,33 @@ const Caja = () => {
                                     </div>
                                 )}
 
+                                {/* Obligatorio: validarPedido no deja guardar sin elegir. */}
+                                {pideVuelto && (<>
+                                    <div className="pos-seg-group">
+                                        {[DESTINO_VUELTO.VUELTO, DESTINO_VUELTO.PROPINA].map((opcion) => (
+                                            <button
+                                                key={opcion.key}
+                                                type="button"
+                                                className={`pos-seg ${destinoVuelto === opcion.key ? 'is-on' : ''}`}
+                                                onClick={() => setValue("destinoVuelto", opcion.key)}
+                                            >
+                                                {opcion.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {destinoVuelto === DESTINO_VUELTO.VUELTO.key && (
+                                        <div className="pos-fila">
+                                            <input
+                                                type="text"
+                                                className="pos-select"
+                                                autoComplete="off"
+                                                placeholder="Alias para el vuelto (opcional)"
+                                                {...register("aliasVuelto")}
+                                            />
+                                        </div>
+                                    )}
+                                </>)}
+
                                 {metodoPago === METODOS_PAGO.MP.key && (
                                     <div className="pos-desglose">
                                         <span>Recargo MP {recargo}%</span>
@@ -770,7 +832,10 @@ const Caja = () => {
             <ResumenDiario
                 isOpen={showResumen}
                 onClose={() => setShowResumen(false)}
-                resumen={resumenDiario}
+                resumen={resumenDiario?.arqueo}
+                registros={resumenDiario?.registros}
+                vueltos={resumenDiario?.vueltos}
+                sinEntregar={resumenDiario?.sinEntregar}
                 fecha={getFechaComercial()}
                 isLoading={cargandoResumen}
             />

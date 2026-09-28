@@ -5,7 +5,8 @@ import { fetchSucursales } from "../../Utils/sucursales";
 import { getFechaComercial } from "../../Utils/fechaComercial";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import ModalCargarJornada from "./ModalCargarJornada";
-import { agregarLiquidacion, fechaJornadaATimestamp } from "./asistencias_hooks/useAsistencias";
+import { agregarLiquidacion, enviosPorRepartidor, fechaJornadaATimestamp } from "./asistencias_hooks/useAsistencias";
+import { obtenerResumenes } from "../POS/pos_hooks/useResumenDiario";
 // El bruto sale de horas × valorHora, así que puede traer decimales: se redondea.
 import { fmtPesosRedondeado as pesos } from "../../Utils/formato";
 import "../../style/Main.css";
@@ -27,8 +28,10 @@ const LiquidacionAsistencias = () => {
 
     const [rango, setRango] = useState(null);
     const [jornadas, setJornadas] = useState([]);
+    const [envios, setEnvios] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const [errorEnvios, setErrorEnvios] = useState(false);
     const [modalAbierto, setModalAbierto] = useState(false);
 
     useEffect(() => {
@@ -56,12 +59,29 @@ const LiquidacionAsistencias = () => {
             orderBy("fecha", "asc")
         );
 
-        getDocs(q)
-            .then((snap) => setJornadas(snap.docs.map((d) => d.data())))
+        // Los envíos de los repartidores salen de las fotos de cada noche: 1 lectura
+        // por noche del período (las que falten se calculan una vez y se guardan). La
+        // noche en curso no tiene foto: esa la ve el encargado en su F4. Si falla, la
+        // liquidación de horas se muestra igual y lo avisa.
+        setErrorEnvios(false);
+        const traerEnvios = obtenerResumenes(rango.desde, rango.hasta, sucursalSel)
+            .then(enviosPorRepartidor)
+            .catch((e) => {
+                console.error("Error trayendo los envíos del período:", e);
+                setErrorEnvios(true);
+                return {};
+            });
+
+        Promise.all([getDocs(q), traerEnvios])
+            .then(([snap, enviosPeriodo]) => {
+                setJornadas(snap.docs.map((d) => d.data()));
+                setEnvios(enviosPeriodo);
+            })
             .catch((e) => {
                 console.error("Error liquidando asistencias:", e);
                 setError("No se pudo traer el período. Revisá la conexión.");
                 setJornadas([]);
+                setEnvios({});
             })
             .finally(() => setIsLoading(false));
     }, [sucursalSel, rango]);
@@ -70,6 +90,8 @@ const LiquidacionAsistencias = () => {
         setRango({
             inicio: fechaJornadaATimestamp(moment(desdeStr).format("DD-MM-YYYY")),
             fin: fechaJornadaATimestamp(moment(hastaStr).format("DD-MM-YYYY")),
+            desde: desdeStr,
+            hasta: hastaStr,
         });
     };
 
@@ -77,7 +99,7 @@ const LiquidacionAsistencias = () => {
     // puede haber entrado o salido del período que está en pantalla.
     const refrescar = () => setRango((prev) => (prev ? { ...prev } : prev));
 
-    const { filas, total } = agregarLiquidacion(jornadas);
+    const { filas, total } = agregarLiquidacion(jornadas, envios);
 
     const columnas = [
         { accessorKey: "nombre", header: "Empleado" },
@@ -101,18 +123,25 @@ const LiquidacionAsistencias = () => {
                 return v ? <span className="text-danger">−{pesos(v)}</span> : "—";
             },
         },
+        { accessorKey: "neto", header: "Neto", cell: ({ getValue }) => pesos(getValue()) },
         {
-            accessorKey: "neto",
-            header: "Neto",
+            // Solo los repartidores: lo que cobran por viaje, aparte de las horas.
+            accessorKey: "envios",
+            header: "Envíos",
+            cell: ({ getValue }) => (Number(getValue()) ? pesos(getValue()) : "—"),
+        },
+        {
+            accessorKey: "total",
+            header: "Total",
             cell: ({ getValue }) => <span className="fw-bold">{pesos(getValue())}</span>,
         },
     ];
 
     const tarjetas = [
         { label: "Horas trabajadas", valor: total.horas },
-        { label: "Bruto", valor: pesos(total.bruto) },
-        { label: "Descuentos", valor: pesos(total.descuentos) },
-        { label: "Total neto", valor: pesos(total.neto), destacada: true },
+        { label: "Neto (horas − descuentos)", valor: pesos(total.neto) },
+        { label: "Envíos", valor: pesos(total.envios) },
+        { label: "Total", valor: pesos(total.total), destacada: true },
     ];
 
     return (
@@ -188,6 +217,11 @@ const LiquidacionAsistencias = () => {
                             {error && (
                                 <div className="alert alert-danger py-2" role="alert">
                                     <small>{error}</small>
+                                </div>
+                            )}
+                            {errorEnvios && !error && (
+                                <div className="alert alert-warning py-2" role="alert">
+                                    <small>No se pudieron traer los envíos de los repartidores: la columna Envíos está incompleta.</small>
                                 </div>
                             )}
 

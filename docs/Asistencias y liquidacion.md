@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, negocio, modulo]
 aliases: [Sueldos, Horas trabajadas, Liquidacion]
-actualizado: 2026-09-14
+actualizado: 2026-09-28
 ---
 
 # Asistencias y liquidación
@@ -67,7 +67,14 @@ valores en el tooltip: poner uno solo sería mentir.
 | Bruto | suma de `horas × valorHora` por día |
 | Descuentos | suma de `descuento` (monto en pesos) |
 | Neto | bruto − descuentos |
-| **Total** | suma de los netos de todos los empleados del período y la sucursal |
+| Envíos | solo repartidores: la suma de sus envíos en el período, de las fotos de cada noche (`deliverys[id].totalEnvios`) |
+| Total por empleado | neto + envíos |
+| **Total** | suma de los totales de todos los empleados del período y la sucursal |
+
+Es un **registro del trabajo hecho**, no de a quién se le pagó: una noche da lo de esa noche, un
+período suma las noches. A los repartidores se les paga cada noche, y lo ve el encargado en el F4
+con la misma cuenta: la base de su registro de esa noche más sus envíos. Un repartidor con viajes y
+sin asistencia cargada aparece igual, con sus envíos.
 
 Los registros con `ausente: true` no suman horas ni días ni bruto.
 
