@@ -1,7 +1,7 @@
 ---
 tags: [moc, gardenburger]
 aliases: [GardenBurger MOC, Indice GardenBurger, Inicio]
-actualizado: 2026-09-26
+actualizado: 2026-10-04
 ---
 
 # GardenBurger — Mapa del proyecto
@@ -40,6 +40,7 @@ Según qué vengas a hacer, con esto alcanza:
 | Agregar o cambiar una pantalla | [[Arquitectura y rutas]] + [[Mapa de archivos]] + [[Convenciones y preferencias]] |
 | Tocar datos o reglas | [[Modelo de datos Firestore]] + [[Reglas de seguridad]] |
 | Sueldos y horas | [[Asistencias y liquidacion]] |
+| Tocar la web pública (selector, carrito, seguimiento, carta) | [[Web publica]] ← código heredado: el contrato con la Caja y los bugs conocidos |
 | Entender por qué algo está "raro" | [[Decisiones tecnicas]] ← **leer antes de "arreglar" nada** |
 | Saber qué falta | [[Deuda tecnica]] |
 | Ver el diagnóstico completo | [[Auditoria 2026-09-26]] ← la última, con la evidencia y las preguntas abiertas |

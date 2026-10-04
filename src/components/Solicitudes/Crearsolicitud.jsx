@@ -363,7 +363,7 @@ const CrearSolicitud = () => {
           <h2 id='finalizarCompra' className="w-75 tituloCategoria">Finalizar Compra</h2>
           <div className='itemsConteiner position-relative z-3'>
             {carrito.map((producto) => {
-              const key = `${producto.id}-${producto.combo}`;
+              const key = `${producto.id}-${producto.grupo}`;
               return (
                 <div className='itemCarrito' key={key}>
                   <div className="imagen">

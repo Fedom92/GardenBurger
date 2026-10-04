@@ -11,15 +11,18 @@ export const CartContext = createContext();
 // Inicializar carrito fuera del componente para evitar re-inicializaciones
 const getCarritoInicial = () => {
   try {
-    return JSON.parse(localStorage.getItem("carrito")) || [];
+    return JSON.parse(localStorage.getItem("carritoWeb")) || [];
   } catch {
     return [];
   }
 };
 
-const getComboInicial = () => {
+// El último número de grupo usado (ver `grupo` en el provider). Las dos claves de
+// localStorage cambiaron de nombre junto con el campo (04-10-2026; eran "carrito" y
+// "combo"): un carrito guardado con la forma vieja no se carga.
+const getGrupoInicial = () => {
   try {
-    return JSON.parse(localStorage.getItem("combo")) || 0;
+    return JSON.parse(localStorage.getItem("carritoWebGrupo")) || 0;
   } catch {
     return 0;
   }
@@ -37,7 +40,11 @@ const limpiarNombreHamburguesa = (nombre) => {
 
 export const CartProvider = ({ children }) => {
   const [carrito, setCarrito] = useState(getCarritoInicial);
-  const [combo, setCombo] = useState(getComboInicial);
+  // Cada "Agregar al pedido" abre un grupo nuevo: el producto y sus extras salen con
+  // el mismo número, y el par (id, grupo) identifica cada línea para aumentar,
+  // disminuir y eliminar. No son los combos del arqueo (CATEGORIAS_COMBOS): hasta el
+  // 04-10-2026 este campo se llamaba `combo` y se confundía. La Caja no lo usa.
+  const [grupo, setGrupo] = useState(getGrupoInicial);
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
 
@@ -129,21 +136,21 @@ export const CartProvider = ({ children }) => {
 
       return [...prevCarrito, {
         ...producto,
-        combo: combo,
+        grupo,
         cantidad: 1,
         subtotal: producto.precio
       }];
     });
 
-  }, [combo]);
+  }, [grupo]);
 
 
-  const aumentarCombo = useCallback(() => setCombo(prev => prev + 1), []);
+  const aumentarGrupo = useCallback(() => setGrupo(prev => prev + 1), []);
 
-  const disminuirCombo = useCallback(() => setCombo(prev => prev - 1), []);
+  const disminuirGrupo = useCallback(() => setGrupo(prev => prev - 1), []);
 
   const esMismoProducto = (prod, producto) => {
-    return prod.id === producto.id && prod.combo === producto.combo;
+    return prod.id === producto.id && prod.grupo === producto.grupo;
   };
 
   const aumentar = useCallback((productoParam) => {
@@ -166,10 +173,23 @@ export const CartProvider = ({ children }) => {
     );
   }, []);
 
+  // Una línea se elimina junto con sus extras: los que tiene inmediatamente debajo.
+  // Es la misma regla con la que la Caja y Cocina los asocian (por posición): si
+  // quedaran sueltos, se le pegarían al producto de arriba. Antes se borraba solo la
+  // línea, y el bacon de una hamburguesa eliminada terminaba en otra. No alcanza con
+  // mirar el grupo: una bebida, o un producto que entra sin modal, puede llevar el
+  // mismo número que la hamburguesa de arriba.
   const eliminar = useCallback((productoParam) => {
-    setCarrito(prevCarrito =>
-      prevCarrito.filter(prod => !esMismoProducto(prod, productoParam))
-    );
+    setCarrito(prevCarrito => {
+      const desde = prevCarrito.findIndex(prod => esMismoProducto(prod, productoParam));
+      if (desde === -1) return prevCarrito;
+
+      let hasta = desde + 1;
+      if (prevCarrito[desde].categoria !== "EXTRA") {
+        while (hasta < prevCarrito.length && prevCarrito[hasta].categoria === "EXTRA") hasta++;
+      }
+      return [...prevCarrito.slice(0, desde), ...prevCarrito.slice(hasta)];
+    });
   }, []);
 
   const totalCarrito = useCallback(() => {
@@ -178,7 +198,7 @@ export const CartProvider = ({ children }) => {
 
   const vaciarCarrito = useCallback(() => {
     setCarrito([]);
-    setCombo(0);
+    setGrupo(0);
   }, []);
 
   // ========== FUNCIONES AUXILIARES ==========
@@ -231,26 +251,6 @@ export const CartProvider = ({ children }) => {
       };
     });
   }, []);
-
-  // Función para verificar si una hamburguesa ya está en el carrito
-  const hamburguesaYaEnCarrito = useCallback((hamburguesaId) => {
-    return carrito.some(item => item.id === hamburguesaId);
-  }, [carrito]);
-
-  // Función para eliminar extras genéricos anteriores de un producto
-  const eliminarExtrasGenericosAnteriores = useCallback(() => {
-    if (productoEnProceso) {
-      const extrasAEliminar = carrito.filter(item =>
-        item.categoria === "EXTRA" &&
-        item.tipoExtra === "GENERAL" &&
-        item.productoAsociado === productoEnProceso.id
-      );
-
-      extrasAEliminar.forEach(extra => {
-        eliminar(extra);
-      });
-    }
-  }, [carrito, productoEnProceso, eliminar]);
 
   // ========== FUNCIONES DE SELECCIÓN ==========
 
@@ -348,17 +348,13 @@ export const CartProvider = ({ children }) => {
 
   }, [varianteElegida, extrasSeleccionados, agregarAlCarrito]);
 
-  // Función para finalizar producto con extras genéricos
+  // Función para finalizar producto con extras genéricos.
+  // Cada producto que se agrega es una línea nueva con sus propios extras, igual que
+  // una hamburguesa. Antes intentaba "reemplazar" al mismo producto si ya estaba: la
+  // línea vieja quedaba (la comparación nunca coincidía), pero se le borraban sus
+  // extras, y una segunda Caja Papas le sacaba el cheddar a la primera.
   const finalizarProductoConExtras = useCallback(() => {
     if (!productoEnProceso) return;
-
-    // Si el producto ya está en el carrito, eliminarlo primero
-    if (hamburguesaYaEnCarrito(productoEnProceso.id)) {
-      eliminar(productoEnProceso);
-    }
-
-    // Eliminar extras genéricos anteriores
-    eliminarExtrasGenericosAnteriores();
 
     //Agregar
     agregarAlCarrito(productoEnProceso);
@@ -378,7 +374,7 @@ export const CartProvider = ({ children }) => {
     // setExtrasGenericosSeleccionados([]);
     // setProductoEnProceso(null);
 
-  }, [productoEnProceso, hamburguesaYaEnCarrito, eliminar, eliminarExtrasGenericosAnteriores, extrasGenericosSeleccionados, agregarAlCarrito]);
+  }, [productoEnProceso, extrasGenericosSeleccionados, agregarAlCarrito]);
 
   // Función para agregar producto normal
   const agregarProductoNormal = useCallback((producto) => {
@@ -396,7 +392,7 @@ export const CartProvider = ({ children }) => {
   }, [extrasGenericos, extrasHamburguesas, agregarAlCarrito, iniciarSeleccionExtrasGenericos, iniciarSeleccionPolloExtrasHamburguesa]);
 
   const cancelar = useCallback(() => {
-    disminuirCombo();
+    disminuirGrupo();
     cerrarModales();
   }, []);
 
@@ -450,12 +446,12 @@ export const CartProvider = ({ children }) => {
   }, [showModalVariante, showModalExtras, showModalExtrasGenericos]);
 
   useEffect(() => {
-    localStorage.setItem("carrito", JSON.stringify(carrito));
+    localStorage.setItem("carritoWeb", JSON.stringify(carrito));
   }, [carrito]);
 
   useEffect(() => {
-    localStorage.setItem("combo", JSON.stringify(combo));
-  }, [combo]);
+    localStorage.setItem("carritoWebGrupo", JSON.stringify(grupo));
+  }, [grupo]);
 
   // ========== MEMOIZACIÓN DEL CONTEXTO ==========
 
@@ -469,8 +465,8 @@ export const CartProvider = ({ children }) => {
     vaciarCarrito,
     disminuir,
     aumentar,
-    aumentarCombo,
-    disminuirCombo,
+    aumentarGrupo,
+    disminuirGrupo,
     eliminar,
     totalCarrito,
     obtenerCategorias,
@@ -519,7 +515,6 @@ export const CartProvider = ({ children }) => {
 
     // Funciones auxiliares
     limpiarNombreHamburguesa,
-    hamburguesaYaEnCarrito,
 
     // Función para cargar datos
     cargarExtrasYBebidas
@@ -530,8 +525,8 @@ export const CartProvider = ({ children }) => {
     vaciarCarrito,
     disminuir,
     aumentar,
-    aumentarCombo,
-    disminuirCombo,
+    aumentarGrupo,
+    disminuirGrupo,
     eliminar,
     totalCarrito,
     showModalVariante,
@@ -566,7 +561,6 @@ export const CartProvider = ({ children }) => {
     cancelar,
     agregarProductoNormal,
     limpiarNombreHamburguesa,
-    hamburguesaYaEnCarrito,
     cargarExtrasYBebidas,
     obtenerCategorias,
     obtenerProductos,

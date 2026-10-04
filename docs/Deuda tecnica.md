@@ -164,14 +164,22 @@ hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó e
 - **`Caja.jsx` (779 líneas)** — ya extrajo nueve hooks, que era lo importante. Lo que queda por
   separar es el **render**: el panel de productos y el ticket son dos componentes conviviendo en un
   archivo.
-- **`CartContext.jsx` (582 líneas)** — 20 `useState`, once de los cuales son en realidad una máquina
-  de estados de modales. Caso de manual para un `useReducer`: hoy no se puede razonar sobre qué
-  combinaciones de esos once estados son válidas.
+- **La web pública entera** (`Solicitudes/` + `CartContext.jsx`) — código heredado: `CartContext`
+  tiene 16 `useState`, nueve de los cuales son una máquina de estados de modales, y expone 49 cosas
+  de las que 13 nadie usa. Está anotada para rehacer al 100% (abajo, en **A futuro**). El análisis
+  completo, con los bugs conocidos, está en [[Web publica]].
 
 ## Funcionalidad pendiente
 
 ### A futuro
 
+- **Rehacer la web pública al 100%.** `Solicitudes/` y `CartContext.jsx` los escribió otro
+  desarrollador (`PaginaDetalle` lo mejoramos un poco; `SeleccionSucursal` y `WebCerrada` los
+  hicimos nosotros sobre sus ejemplos). Funciona, pero la lógica no convence, está poco
+  modularizada, el front es pobre y de ahí salen los 6 avisos del lint del proyecto. Decisión del
+  dueño (04-10-2026): algún día se rehace entera; hasta entonces, arreglos puntuales. El mapa para
+  ese día —qué hace cada pieza, el contrato con la Caja, los bugs conocidos (los dos que afectaban
+  a la cocina ya se arreglaron, el 04-10-2026) y una propuesta de orden— está en [[Web publica]].
 - **CRM de clientes.** El módulo Clientes (ya solo del admin) tendrá su propio CRM. Sin diseñar.
 - **Menú público** (`/menu`). Su fondo ya quedó optimizado (03-10-2026).
 - **Ticket impreso.**

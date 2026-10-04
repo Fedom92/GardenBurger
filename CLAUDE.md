@@ -8,7 +8,7 @@ SPA en React 19 (CRA) + Firebase 12 modular.
 
 **`docs/` es la única fuente de documentación del proyecto**, y también es un vault de Obsidian.
 Antes de recorrer `src/`, abrir **`docs/GardenBurger.md`**: tiene una tabla "vengo a… → leer esto"
-que dice qué nota leer según la tarea. Leer *una* nota, no las catorce.
+que dice qué nota leer según la tarea. Leer *una* nota, no las quince.
 
 Si el término no se entiende —"arqueo", "solicitud", "jornada comercial", "ATP"—, está en
 **`docs/Glosario.md`**: una línea por término y el enlace a la nota que lo desarrolla. Las

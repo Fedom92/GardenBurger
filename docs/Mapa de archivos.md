@@ -23,7 +23,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | Archivo | Qué hace |
 |---|---|
 | `context/AuthContext.js` | `useAuth() → {userData, login, logout}`. Lee `usuarios/{uid}`, desloguea inactivos, setea la sucursal del staff |
-| `context/CartContext.jsx` | (608 líneas, de otro dev) Todo el estado del menú público: carrito en localStorage, combos, y el flujo de modales hamburguesa → extras |
+| `context/CartContext.jsx` | (577 líneas, de otro dev) Todo el estado del menú público: carrito en localStorage, el contador `grupo` (antes `combo`) y el flujo de modales hamburguesa → extras. Montado en `App.js` sobre toda la app. Ver [[Web publica]] |
 
 ## `Login_Navs/`
 
@@ -92,10 +92,13 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 
 ## `components/Solicitudes/` — la web pública
 
+Código heredado de otro desarrollador, anotado para rehacer: el análisis completo está en
+[[Web publica]].
+
 | Archivo | Qué hace |
 |---|---|
 | `SeleccionSucursal.jsx` | El cliente elige sucursal. Las lista todas desde `menu.json`: la cerrada, deshabilitada y con su horario |
-| `Crearsolicitud.jsx` | (410 líneas) Menú por acordeones + formulario + creación de la solicitud |
+| `Crearsolicitud.jsx` | (504 líneas) Menú por acordeones + formulario + creación de la solicitud |
 | `WebCerrada.jsx` | El cartel de sucursal cerrada, con su horario y un link para ver las otras |
 | `Card.jsx` | Tarjeta de producto; decide qué modal abrir |
 | `ModalHamburguesa.jsx` / `ModalExtras.jsx` / `ModalExtrasGenericos.jsx` | Flujo de variantes y extras |

@@ -82,16 +82,22 @@ estado:
 
 ## Cómo el cliente arma el carrito (menú público)
 
-`CartContext` (608 líneas, de otro desarrollador) es el estado central del menú online. Las reglas
-del flujo de modales, que no se deducen leyéndolo de corrido:
+`CartContext` (577 líneas, de otro desarrollador) es el estado central del menú online. El resumen
+del flujo de modales:
 
 1. **Hamburguesas** tienen variantes (SIMPLE / DOBLE / TRIPLE). Al agregar una se abre
    `ModalHamburguesa` y después `ModalExtras`.
 2. **Pollo Crispy** usa directamente el flujo de extras de hamburguesa.
-3. **Otros productos**: si tienen `extrasGenericos`, se abre `ModalExtrasGenericos`.
+3. **Otros productos**: si existe algún extra `GENERAL` en el catálogo, se abre
+   `ModalExtrasGenericos`.
 4. **Bebidas**: se acumula la cantidad en el ítem existente en vez de crear un renglón nuevo.
-5. El campo `combo` es un número que **agrupa los ítems relacionados** de un mismo combo.
+5. El campo `grupo` de cada línea es un contador que, junto con el `id`, identifica la línea.
+   Hasta el 04-10-2026 se llamaba `combo`, y no tiene nada que ver con los combos del arqueo. La
+   Caja no lo usa: agrupa los extras por posición.
 6. El carrito se persiste en `localStorage`.
+
+El detalle —el documento que escribe, lo que la Caja usa de él, los bugs conocidos y por qué está
+anotado para rehacer— está en [[Web publica]].
 
 > [!caution] `handleAgregarAlCarrito` solo acumula sobre el último ítem
 > Por eso el rediseño de Caja descartó el control `− 2 +` por línea: en una fila del medio, el `+`

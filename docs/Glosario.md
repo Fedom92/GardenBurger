@@ -49,7 +49,7 @@ Una línea cada una y el enlace a la nota que la desarrolla.
 | **Volvió sin entregar** | Un viaje que se cerró sin entrega: canceló el cliente o no se encontró la dirección. Se paga el envío; el pedido sigue en `DELIVERY` hasta que el encargado lo anula desde F3. |
 | **Solicitud liberada** | Una solicitud web que un cajero tomó y no terminó en 15 minutos: las demás cajas la ven libre, como cualquier otra, y pueden tomarla. → [[Flujo del pedido#Asignación de solicitudes web — un solo dueño]] |
 | **Corte de la web** | La hora en que una sucursal deja de tomar pedidos web: `horasCorte` antes de su cierre, dato de la sucursal. No habilita el F4, que va con `HORA_HABILITA_STATS`. → [[Reglas de negocio#La web pública solo toma pedidos en horario]] |
-| **Combo** | Unidad de conteo del arqueo, no un producto. Se cuentan **unidades**: un ítem con cantidad 3 son 3 combos. Qué categorías cuentan sale de `CATEGORIAS_COMBOS`. → [[Reglas de negocio#Combos]] |
+| **Combo** | Unidad de conteo del arqueo, no un producto. Se cuentan **unidades**: un ítem con cantidad 3 son 3 combos. Qué categorías cuentan sale de `CATEGORIAS_COMBOS`. El carrito web tenía un campo `combo` que no tenía nada que ver: era un contador para identificar cada línea, y desde el 04-10-2026 se llama `grupo` ([[Web publica#El campo `grupo`]]). → [[Reglas de negocio#Combos]] |
 | **Extra** | Producto de categoría `EXTRA` que se cuelga de otro (`tipoExtra: HAMBURGUESA` o `GENERAL`). En el carrito es una fila propia, aunque se muestre sangrado bajo su producto. |
 | **`esPrueba`** | Marca de los pedidos que insertaba la herramienta de pruebas, eliminada el 24-09-2026. Cuentan en el arqueo igual que los reales, así que los que quedaron en Firestore siguen contando. |
 

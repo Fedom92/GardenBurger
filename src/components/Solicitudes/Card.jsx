@@ -8,7 +8,7 @@ export const Card = ({ producto }) => {
     agregarProductoNormal,
     iniciarSeleccionHamburguesa,
     limpiarNombreHamburguesa,
-    aumentarCombo,
+    aumentarGrupo,
     agregarAlCarrito,
   } = useContext(CartContext);
 
@@ -22,13 +22,13 @@ export const Card = ({ producto }) => {
 
   const handleAgregar = () => {
     if (esHamburguesa && producto.variantes) {
-      aumentarCombo();
+      aumentarGrupo();
       iniciarSeleccionHamburguesa(producto);
     } else if (producto.categoria === 'BEBIDAS') {
       // Las bebidas se agregan directamente (se consolidan si ya están en carrito)
       agregarAlCarrito(producto);
     } else {
-      aumentarCombo();
+      aumentarGrupo();
       agregarProductoNormal(producto);
     }
   };

@@ -38,7 +38,7 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 | Ruta | Componente | Guard |
 |---|---|---|
 | `/crear-solicitud` | `SeleccionSucursal` | **pública**, cerrada fuera de horario ([[Reglas de negocio#La web pública solo toma pedidos en horario]]) |
-| `/crear-solicitud/:sucursal` | `CrearSolicitud` | **pública**, cerrada fuera de horario |
+| `/crear-solicitud/:sucursal` | `CrearSolicitud` | **pública**, cerrada fuera de horario. Código heredado: ver [[Web publica]] |
 | `/menu` | `Menu` | **pública**, pero sin links: todavía no está terminado |
 | `/ver-pedido/:sucursal/:id` | `PaginaDetalle` | **pública**; el link vence a las 48 h |
 | `/` | `Login` | staff (sin guard) |
