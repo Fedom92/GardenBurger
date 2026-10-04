@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, referencia]
 aliases: [Vocabulario, Terminos, arqueo, jornada comercial, ATP, solicitud, combo, PENDIENTEMP, envio local, pago dividido, horario especial]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Glosario
@@ -40,12 +40,14 @@ Una línea cada una y el enlace a la nota que la desarrolla.
 | **Envío local** | Las zonas en las que el cliente viene al local: **"Retira"** y **"Espera Afuera"** (la constante `ENVIOS_LOCALES`). Deciden tres cosas: si el pedido va a mostrador o a reparto, cómo se arquea el efectivo, y qué campos pide la Caja. |
 | **Zona de envío** | El documento de `envios` que define distancia y costo. La zona —y no lo que eligió el cliente— es lo que decide el ruteo de cocina. |
 | **Foto del arqueo** | El documento de `resumenDiario` de una jornada **cerrada**: el arqueo calculado una vez y guardado. No se recalcula solo; solo se borra si alguien corrige un pedido de esa jornada. → [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]] |
+| **Estadísticas Generales** | Las estadísticas completas del sistema nuevo (`/estadisticas`), con el aspecto del Histórico. Leen las fotos de cada noche, no los pedidos. → [[Mapa de archivos]] |
 | **Métricas** | El vistazo rápido del admin (`/metricas`), de todas las sucursales y desde el celular: combos, ventas, pedidos, delivery vs mostrador y top 3 combos. Botones de sucursal y de período (Hoy, Ayer, semana, mes). Lee fotos. Lo completo es **Estadísticas**. → [[Decisiones tecnicas#Métricas y Estadísticas leen fotos, no pedidos]] |
 | **`pagaCon` / `pagaronCon`** | Con cuánto **dijo** el cliente que iba a pagar (lo carga el cajero en efectivo; en el pago dividido es la parte en efectivo) y con cuánto **pagó al final** (lo carga el jefe cuando vuelve el repartidor). La diferencia con lo que hay que cobrar es el **vuelto** o la **propina**: la moto no lleva cambio. |
 | **Métricas de deliverys** | El control de la jefa de deliverys: viajes, envíos y efectivo a rendir por repartidor, **en vivo** (listener). No paga nada: al repartidor le paga el encargado desde el F4. Hasta el 28-09-2026 se llamaba "Liquidación" y sumaba un fijo. → [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]] |
 | **Sueldo del repartidor** | `horas × valorHora − descuentos` de su asistencia, **más el envío de cada viaje**, entregado o no. No hay fijo. Lo ve el encargado en el F4, cada noche. → [[Decisiones tecnicas#Al repartidor le paga el encargado, desde el F4]] |
 | **Vuelto / Propina** | Qué pasa con la diferencia cuando el cliente de un delivery paga en efectivo con un billete más grande: el repartidor la trae y los admins le transfieren el **vuelto** al alias del cliente, o se la queda de **propina**. Lo marca el cajero, obligatorio (`DESTINO_VUELTO`). |
 | **Volvió sin entregar** | Un viaje que se cerró sin entrega: canceló el cliente o no se encontró la dirección. Se paga el envío; el pedido sigue en `DELIVERY` hasta que el encargado lo anula desde F3. |
+| **Solicitud liberada** | Una solicitud web que un cajero tomó y no terminó en 15 minutos: las demás cajas la ven libre, como cualquier otra, y pueden tomarla. → [[Flujo del pedido#Asignación de solicitudes web — un solo dueño]] |
 | **Corte de la web** | La hora en que una sucursal deja de tomar pedidos web: `horasCorte` antes de su cierre, dato de la sucursal. No habilita el F4, que va con `HORA_HABILITA_STATS`. → [[Reglas de negocio#La web pública solo toma pedidos en horario]] |
 | **Combo** | Unidad de conteo del arqueo, no un producto. Se cuentan **unidades**: un ítem con cantidad 3 son 3 combos. Qué categorías cuentan sale de `CATEGORIAS_COMBOS`. → [[Reglas de negocio#Combos]] |
 | **Extra** | Producto de categoría `EXTRA` que se cuelga de otro (`tipoExtra: HAMBURGUESA` o `GENERAL`). En el carrito es una fila propia, aunque se muestre sangrado bajo su producto. |

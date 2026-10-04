@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, arquitectura]
 aliases: [Rutas, Guards, Multi-sucursal]
-actualizado: 2026-09-26
+actualizado: 2026-10-03
 ---
 
 # Arquitectura y rutas
@@ -45,7 +45,8 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 | `/admin` | `PanelAdmin` | `RequireAuth` + `RequireAdmin` |
 | `/productos` | `Productos` | `RequireAuth` + `RequireAdmin` |
 | `/clientes` | `Clientes` | `RequireAuth` + `RequireAdmin` |
-| `/estadisticas-viejas` | `Estadisticas` | `RequireAuth` + `RequireAdmin` |
+| `/estadisticas` | `EstadisticasGenerales` | `RequireAuth` + `RequireAdmin`: las estadísticas del sistema nuevo, desde las fotos |
+| `/estadisticas-viejas` | `Estadisticas` | `RequireAuth` + `RequireAdmin`: el Histórico, desde los TSV |
 | `/metricas` | `Metricas` | `RequireAuth` + `RequireAdmin`: el vistazo rápido de todas las sucursales |
 | `/pedidos-caja` | `Caja` | `RequireAuth` + `RequireSucursal` |
 | `/gestion-cocina` | `Cocina` | `RequireAuth` + `RequireSucursal` |

@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, decisiones, adr]
 aliases: [ADR, Por que esta asi]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Decisiones técnicas
@@ -21,7 +21,8 @@ con `browserSessionPersistence` (sesión de Auth por pestaña), si la primaria e
 anónima en `/ver-pedido` conviviendo con la de Caja, las lecturas del staff salían con esa
 credencial y volvían `permission-denied`, de forma aleatoria y dificilísima de diagnosticar.
 
-**Por qué ahora sí se puede**, verificado en el SDK instalado (`@firebase/firestore` 3.13.0):
+**Por qué ahora sí se puede**, verificado en el SDK instalado (`@firebase/firestore` 3.13.0, y de
+nuevo en 4.17.2 al pasar a firebase 12, 04-10-2026):
 
 - En **single-tab no hay pestaña primaria ni delegación**: cada pestaña usa su propia conexión y
   sus propias credenciales, así que ese bug no puede repetirse.
@@ -204,8 +205,8 @@ formato. Cero lecturas de Firestore, y menos descarga de Storage que antes.
 
 **Qué**: `Menu.jsx` hace `await import('html2pdf.js')` dentro de `exportarPDF`, no arriba.
 
-**Por qué**: `html2pdf` arrastra `jspdf` con un advisory crítico y pesa varios cientos de KB, y
-solo sirve para ese botón. Con el import dinámico queda en su propio chunk y el menú público no lo
+**Por qué**: `html2pdf` arrastra `jspdf` y pesa varios cientos de KB, y solo sirve para ese botón
+(jspdf tenía además un advisory crítico, que se cerró al pasar a html2pdf 0.14 el 04-10-2026). Con el import dinámico queda en su propio chunk y el menú público no lo
 descarga hasta que alguien exporta. Se mantiene la dependencia porque la exportación **se usa**.
 
 ## App Check está "Aplicada"
@@ -234,10 +235,27 @@ que se esté regenerando. Guardado en `REACT_APP_appCheckDebug` deja de cambiar.
 
 > [!warning] La API key tiene que admitir `gardenburger.firebaseapp.com`
 > La key del navegador está restringida por referrer en Google Cloud (Credenciales). Además de los
-> dominios de la app, tiene que figurar **`https://gardenburger.firebaseapp.com/*`**: desde ahí
-> carga Auth su iframe y, sobre todo, se abre la página del link de **"Olvidé mi contraseña"**. Sin
-> ese dominio la consola muestra `getProjectConfig 403 ... API_KEY_HTTP_REFERRER_BLOCKED` y el
-> restablecimiento de contraseña no funciona (28-09-2026).
+> dominios de la app, tiene que figurar **`https://gardenburger.firebaseapp.com/*`**: desde ahí se
+> abre la página del link de **"Olvidé mi contraseña"**. Sin ese dominio la consola muestra
+> `getProjectConfig 403 ... API_KEY_HTTP_REFERRER_BLOCKED` y el restablecimiento de contraseña no
+> funciona (28-09-2026). Hasta el 04-10-2026 Auth cargaba además un iframe desde ahí (ver abajo).
+
+## Auth con initializeAuth, sin iframe
+
+**Qué**: `firebase.js` arranca Auth con `initializeAuth(app, { persistence: browserSessionPersistence })`
+y no con `getAuth()` (04-10-2026).
+
+**Por qué**: `getAuth()` suma un `popupRedirectResolver`, y con él Auth carga al arrancar un iframe
+de `gardenburger.firebaseapp.com/__/auth/iframe`. Ese iframe solo sirve para entrar con Google,
+Facebook u otro proveedor en ventana emergente o redirección. Acá se entra con correo y contraseña,
+y **no se prevé otro proveedor**: es una descarga menos en cada carga, también en la web pública.
+
+**De paso**, la sesión por pestaña se declara ahí, una vez, en lugar de con `setPersistence` en cada
+login. Un login por nombre de usuario tampoco necesitaría el iframe: se resuelve convirtiendo el
+usuario en un correo interno.
+
+**Si algún día** se suma un proveedor, va `popupRedirectResolver: browserPopupRedirectResolver` en
+el mismo `initializeAuth`.
 
 ## La configuración de Firebase se versiona
 
@@ -388,7 +406,7 @@ para servir a las dos pantallas sin agregar campos después.
 ventas (efectivo/MP), pedidos (eliminados), delivery vs mostrador y top 3 combos. Se maneja con
 botones, como una app (28-09-2026): primero la sucursal, después un período fijo, y busca sola;
 sin fechas a mano ni botón "Ver". Al entrar no lee nada. **Estadísticas**
-es lo completo: las Generales (pendientes, ver [[Deuda tecnica#Funcionalidad pendiente]]) y el
+es lo completo: las Generales (`/estadisticas`, 03-10-2026, desde las fotos) y el
 Histórico de los TSV.
 
 ## El teléfono de la sucursal viaja en la solicitud web
@@ -459,6 +477,10 @@ la suma—, no de a quién se le pagó.
 Ver [[Flujo del pedido#Asignación de solicitudes web — un solo dueño]]. Se descartaron el
 timeout de 5 minutos, `runTransaction` y los campos extra por over-engineering. La solución
 final no agrega **ninguna** lectura ni escritura.
+
+El 03-10-2026 se sumó la liberación a los **15 minutos**, porque una solicitud trabada no tenía
+salida: la hora de la toma (`cajeroRevisaTimestamp`) va en la misma escritura de la toma, y la
+regla compara contra ella. Sigue sin lecturas.
 
 La atomicidad la garantiza la regla `asignacionValida()` desde el 14-09-2026, no el front: el
 chequeo del modal contra el snapshot local tenía una ventana de carrera. Ver

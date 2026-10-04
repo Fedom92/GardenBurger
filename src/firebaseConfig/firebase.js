@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, runTransaction, collection, doc } from "firebase/firestore";
-import { getAuth, EmailAuthProvider } from "firebase/auth";
+import { initializeAuth, browserSessionPersistence, EmailAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 export const firebaseConfig = {
@@ -57,7 +57,16 @@ export const db = initializeFirestore(app, {
     //persistentMultipleTabManager
   }),
 });
-export const auth = getAuth();
+// Auth con initializeAuth y no con getAuth(): getAuth() suma un popupRedirectResolver
+// que al arrancar carga un iframe de <authDomain>/__/auth/iframe, y ese iframe solo
+// sirve para entrar con Google o Facebook en ventana emergente. Acá se entra con
+// correo y contraseña, y no se prevé otro proveedor: es una descarga menos en cada
+// carga, también en la web pública. Si algún día se suma uno, se agrega
+// `popupRedirectResolver: browserPopupRedirectResolver`.
+//
+// La sesión es por pestaña (ver el comentario de Firestore, arriba): se declara acá,
+// una sola vez, en lugar de en cada login.
+export const auth = initializeAuth(app, { persistence: browserSessionPersistence });
 export const storage = getStorage(app);
 
 export const verifCredenciales = EmailAuthProvider.credential;

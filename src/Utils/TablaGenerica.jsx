@@ -1,5 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useReactTable, getCoreRowModel, getSortedRowModel, getPaginationRowModel, flexRender } from "@tanstack/react-table";
+import {
+    useTable, tableFeatures, rowSortingFeature, rowPaginationFeature,
+    createSortedRowModel, createPaginatedRowModel,
+    sortFn_alphanumeric, sortFn_text, sortFn_datetime, flexRender,
+} from "@tanstack/react-table";
+
+// react-table v9 no trae todo incluido: se registra solo lo que la tabla usa, orden y
+// paginación, con sus modelos de filas. Los sortFns son los que el orden automático
+// elige mirando el dato (texto, texto con números, fecha); sin registrarlos, toda
+// columna caería al orden básico. Es configuración fija: va fuera del componente.
+const FEATURES = tableFeatures({
+    rowSortingFeature,
+    rowPaginationFeature,
+    sortedRowModel: createSortedRowModel(),
+    paginatedRowModel: createPaginatedRowModel(),
+    sortFns: { alphanumeric: sortFn_alphanumeric, text: sortFn_text, datetime: sortFn_datetime },
+});
 
 export function quitarAcentos(str) {
     // String() antes de normalizar: si llega un número, (123).normalize no existe.
@@ -105,7 +121,8 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data, search, busquedaKey, filtrosActivos]);
 
-    const table = useReactTable({
+    const table = useTable({
+        features: FEATURES,
         data: datosFiltrados,
         columns: columnasProcesadas,
         state: {
@@ -114,9 +131,6 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
         },
         onPaginationChange: setPagination,
         onSortingChange: setSorting,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         autoResetPageIndex: false,
     });
 
@@ -217,7 +231,9 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
                                     className={rowClassName(row.original)}
                                     key={row.id}
                                 >
-                                    {row.getVisibleCells().map((cell) => (
+                                    {/* getAllCells y no getVisibleCells: en v9 la segunda es de la
+                                        feature de visibilidad, y esta tabla no oculta columnas. */}
+                                    {row.getAllCells().map((cell) => (
                                         <td key={cell.id}>
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </td>

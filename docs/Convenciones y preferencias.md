@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, convenciones]
 aliases: [Convenciones, Estilo de codigo]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Convenciones y preferencias
@@ -166,7 +166,7 @@ automatizados por decisión: [[Deuda tecnica#Sin tests]]. Los source maps van ap
 
 Lo que queda por hacer en el proyecto:
 
-- Dashboard cross-sucursal para el admin, sobre `resumenDiario` de todas las sucursales — datos
-  del sistema nuevo, desde Firestore. **No reemplaza a `/estadisticas-viejas`**, que es el
-  histórico del sistema anterior y se queda.
+- El dashboard cross-sucursal ya existe: Métricas (vistazo) y Estadísticas Generales (completo),
+  sobre `resumenDiario`. **No reemplazan a `/estadisticas-viejas`**, el histórico del sistema
+  anterior, que se queda.
 - Lo que queda abierto en [[Deuda tecnica]].

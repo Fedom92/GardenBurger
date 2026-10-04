@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, workflow]
 aliases: [Estados, Transiciones, Maquina de estados]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Modelo de estados del pedido
@@ -35,7 +35,7 @@ Los valores están en `ESTADOS` de `src/Utils/Constantes.jsx`. **Nunca hardcodea
 | `DELIVERY` | Listo, en manos del jefe de deliverys | No |
 | `ENTREGADO` (`ESTADOS.FINAL`) | Cerrado | **Sí** |
 | `CANCELADO` | Rechazo de solicitud web o de transferencia MP | **Sí**, de hecho no |
-| `ELIMINADO` | El cajero borró el ticket desde F3 | **Sí**, de hecho no |
+| `ELIMINADO` | Lo anuló el encargado desde F3 o el admin desde el Historial | **Sí**, de hecho no |
 
 Los dos últimos son terminales **en la intención**, no en el código: nada impide salir de ellos.
 
@@ -55,7 +55,7 @@ Los dos últimos son terminales **en la intención**, no en el código: nada imp
 | `COCINA` | `DELIVERY` | Cocina, "Cocinados TODOS", resto de zonas | `PedidosCocinando` | — |
 | `ATP` | `ENTREGADO` | ATP, al entregar en mostrador | `ATP.jsx` | — |
 | `DELIVERY` | `ENTREGADO` | Jefe de deliverys, al registrar el regreso | `JefeDeliverys` | Métricas en `deliverys` |
-| *(casi cualquiera)* | `ELIMINADO` | **Encargado**, desde F3 — no un delivery con el repartidor en la calle | `BuscarPedido` | **Sale** del cálculo |
+| *(casi cualquiera)* | `ELIMINADO` | **Encargado** desde F3 (la jornada) o **admin** desde el Historial (cualquier fecha) — nunca un delivery con el repartidor en la calle (lo rechazan también las reglas) | `BuscarPedido` / `HistorialPedidos` | **Sale** del cálculo |
 
 **Ninguna transición escribe el arqueo.** Desde el 26-09-2026 el arqueo se calcula desde los
 pedidos de la jornada: la columna de arriba dice si el pedido **entra** al cálculo, no qué se
@@ -110,6 +110,7 @@ El pedido guarda **quién y cuándo** en cada paso. Sirve para auditar después:
 
 ```
 cajeroRevisa / cajeroRevisaID      ← quién tiene tomada la solicitud web (se borra al guardar)
+cajeroRevisaTimestamp              ← desde cuándo: a los 15 minutos se libera
 cajero / cajeroID / timestamp      ← quién cobró
 cajeroApruebaMP*                   ← quién coteó la transferencia
 cocinero* / cocinaFinTimestamp     ← quién cocinó y cuándo terminó

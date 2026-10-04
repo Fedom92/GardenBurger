@@ -5,8 +5,8 @@ import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from 'moment';
 import { useAuth } from "../../../context/AuthContext";
-import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO, SUBESTADOS_MOTODELIVERY } from "../../../Utils/Constantes";
-import { invalidarFotoDePedido } from "../pos_hooks/useResumenDiario";
+import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO } from "../../../Utils/Constantes";
+import { invalidarFotoDePedido, enLaCalle } from "../pos_hooks/useResumenDiario";
 import { quitarAcentos } from "../../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../../Utils/fechaComercial";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
@@ -30,13 +30,6 @@ const BuscarPedido = ({ isOpen, onClose }) => {
     // hace UNA sola persona por sucursal: el encargado, al fiscalizar el cierre.
     // Estaba abierto a cualquier cajero solo porque el modal vive dentro de Caja.
     const puedeEliminar = userData?.rol === process.env.REACT_APP_encargado;
-
-    // Un pedido con el repartidor en la calle no se anula: primero la jefa de
-    // deliverys marca que volvió —entregado o no—, y así queda registrado que el
-    // viaje se hizo y se le paga el envío. Si todavía no salió, se anula como
-    // cualquier otro: no hubo viaje.
-    const enLaCalle = (pedido) =>
-        pedido.estado === ESTADOS.DELIVERY && pedido.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA;
 
     // La jornada se trae UNA vez por apertura del modal y las búsquedas siguientes
     // filtran sobre eso. Antes cada búsqueda releía la jornada entera: con ~130

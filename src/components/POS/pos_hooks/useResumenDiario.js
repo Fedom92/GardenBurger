@@ -88,6 +88,13 @@ export const repartirPago = (p) => {
 
 const estaAnulado = (p) => [ESTADOS.CANCELADO, ESTADOS.ELIMINADO].includes(p.estado);
 
+// Un delivery con el repartidor en la calle: salió y todavía no volvió. No se anula
+// —ni desde F3 ni desde el Historial—: primero la jefa de deliverys marca que volvió
+// (entregado o no), así el viaje queda registrado y se le paga el envío. Un pedido
+// que todavía no salió se anula como cualquier otro: no hubo viaje.
+export const enLaCalle = (p) =>
+    p?.estado === ESTADOS.DELIVERY && p?.estadoDelivery === SUBESTADOS_MOTODELIVERY.SALIDA;
+
 // Los viajes de cada repartidor en la jornada. Función pura: la usan el F4 del
 // encargado —que le suma la base de Asistencias (horas × valorHora − descuentos)
 // para pagarle cada noche— y las Métricas de la jefa de deliverys, así los dos ven

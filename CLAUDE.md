@@ -2,7 +2,7 @@
 
 Sistema de gestión para una hamburguesería **multi-sucursal**: POS (Caja), Cocina, ATP
 (mostrador), Delivery, asistencias y sueldos, menú online público y panel de administración.
-SPA en React 18 (CRA) + Firebase 9.23.0 modular.
+SPA en React 19 (CRA) + Firebase 12 modular.
 
 ## El contexto vive en `docs/`
 
@@ -15,7 +15,7 @@ Si el término no se entiende —"arqueo", "solicitud", "jornada comercial", "AT
 auditorías viven aparte, en `docs/auditorias/`: son fotos fechadas, no contexto vivo.
 
 No hay documentación en ningún otro lado. Si algo falta, la nota correspondiente va actualizada —
-no se crea un `.md` suelto.
+no se crea un `.md` suelto, si se puede crear uno nuevo pero bien referenciado/conectado.
 
 El vault es la fuente rápida; el código es la fuente de verdad. Si se contradicen, **gana el
 código** y hay que corregir la nota.
@@ -51,7 +51,7 @@ ves una alternativa mejor, proponela. El detalle y el porqué están en el vault
   a propósito: se manejan desde la Consola.
 - **El rol admin no se asigna desde la app.** Los administradores se crean a mano en la Consola de
   Firebase, y ser admin se resuelve con un custom claim en el token, no con una lectura.
-- Tablas con `TablaGenerica`, montos con `fmtPesos`, confirmaciones destructivas con `Swal.fire`.
+- Tablas con `TablaGenerica`, montos con `fmtPesos`, las confirmaciones con `Swal.fire`.
   Un `console.error` sin aviso visible al usuario cuenta como bug.
 - **Los finales de línea están mezclados** en el working tree, y da igual: `core.autocrlf=true`
   normaliza todo a LF al commitear, así que el diff sale limpio igual. Pero un patrón multilínea

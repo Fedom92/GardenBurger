@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, deuda, auditoria]
 aliases: [Pendientes, Que falta]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Deuda técnica
@@ -51,8 +51,8 @@ Cosas que las auditorías marcaron y el dueño decidió dejar como están. **No 
   no una hora antes del cierre de cada una: eso obligaba a la Caja a leer su sucursal (28-09-2026).
 - **La creación pública de solicitudes usa lista negra, no blanca.** Una lista blanca (`hasOnly`)
   obliga a tocar la regla cada vez que la web agrega un campo, y el dueño no quiere mantenerla.
-  Queda el riesgo de que alguien arme a mano una solicitud con `cajeroRevisaID` y nazca trabada:
-  se rechaza desde F1 (26-09-2026).
+  Una solicitud armada a mano con `cajeroRevisaID` ya no nace trabada: sin hora de toma cuenta
+  como vencida y cualquier cajero la toma (03-10-2026).
 - **El horario de la web se controla solo en el front.** Cerrarlo en las reglas obligaría a
   repetir días y horas en `firestore.rules`, en UTC. Una solicitud armada a mano fuera de horario
   aparece pendiente la noche siguiente y se rechaza (26-09-2026).
@@ -99,20 +99,51 @@ pedido queda en `ELIMINADO` y `calcularArqueo` lo saltea, en su jornada y no en 
 
 ### Sobre CRA
 
-`react-scripts` está discontinuado y origina la mayoría de las 83 vulnerabilidades de `npm audit`
+`react-scripts` está discontinuado y origina la mayoría de las ~80 vulnerabilidades de `npm audit`
 —todas de herramientas de build, ninguna llega al navegador—. Migrar a Vite es un proyecto en sí
 mismo y **no se recomienda ahora**: no hay riesgo real en producción. El code splitting por ruta ya
 se hizo sobre CRA (14-09-2026) sin necesitar la migración.
+
+> [!danger] No correr `npm update` a secas
+> Actualiza **todo el árbol**, incluidas las dependencias internas de CRA, y CRA ya no se mantiene.
+> El 04-10-2026 subió TypeScript de 4.9 a 7, que no tiene la API que usa el ESLint de CRA: el lint
+> (y con él `npm start` y el build) dejó de funcionar. Se actualiza **paquete por paquete**,
+> cambiando la versión en `package.json` y corriendo `npm install`, que deja el resto del árbol como
+> está en `package-lock.json`.
+
+#### Todo a la última versión, antes de producción (04-10-2026)
+
+Se actualizó todo el front sobre CRA 5, revisando el changelog de cada paquete contra lo que la
+app usa:
+
+| Paquete | De → a | Qué hubo que tocar |
+|---|---|---|
+| `firebase` | 9.23 → 12.19 | Nada por la versión. Aparte, Auth pasó a `initializeAuth` (ver [[Decisiones tecnicas#Auth con initializeAuth, sin iframe]]) |
+| `react` / `react-dom` | 18.2 → 19.3 | Nada: la app ya usaba `createRoot` y ninguna API que la 19 quitó (`findDOMNode`, `defaultProps` en funciones, refs de texto). react-bootstrap 2.10 pasa `nodeRef` a sus transiciones y lee los refs según la versión de React, así que tampoco depende de lo quitado |
+| `react-router-dom` | 6.14 → 7.18 | Nada: la app usa `BrowserRouter` (no las APIs de datos) y no tiene rutas comodín ni links relativos, que son lo único que cambia de comportamiento |
+| `@tanstack/react-table` | 8 → 9 | `TablaGenerica` —el único archivo que la importa— migró a `useTable` + `tableFeatures`. Las columnas de las pantallas no cambian |
+| `react-icons` | 4 → 5 | Nada: los 20 íconos de `react-icons/fa` que se usan siguen existiendo |
+| `html2pdf.js` | 0.12 → 0.14 | Nada. Trae jspdf 4, que **cierra el advisory crítico** de jspdf |
+| resto | — | Última versión de su mayor: react-hook-form, recharts, sweetalert2, moment, react-toastify |
+| `functions/`: `firebase-admin` | 13 → 14 | La 14 quitó `import * as admin`: cada servicio sale de su entrada (`firebase-admin/app`, `/auth`, `/firestore`). Unas 13 líneas, la lógica igual. Los códigos de error que se chequean (`auth/user-not-found`, `auth/email-already-exists`) no cambiaron. Pide Node 22+, y las funciones corren en 24 |
+| `functions/`: `firebase-functions` / `typescript` | 7.2 → 7.4 / 6 → 7 | Nada: compila igual con TypeScript 7. Se sacó `firebase-functions-test`, que venía de la plantilla de `firebase init`, no tenía tests y no acepta admin 14 |
+
+> [!warning] react-table v9 registra solo lo que se le pide
+> Una API "que no existe" casi siempre es una feature sin registrar en `FEATURES` de
+> `TablaGenerica`, no algo que la v9 sacó: `row.getVisibleCells()`, por ejemplo, es de
+> `columnVisibilityFeature` (por eso se usa `getAllCells()`). Y los `sortFns` del orden automático
+> también se registran: sin ellos toda columna ordena con el criterio básico.
+
+CRA (`react-scripts` 5.0.1) sigue siendo el techo: no hay versión nueva. Lo verificable sin build
+se verificó (imports contra los paquetes instalados, resolución de los paquetes solo-ESM como la
+hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó en pantalla con
+`npm start` y `npm run build`: tablas, navegación, modales, login y exportar a PDF, todo OK.
 
 ## Riesgos latentes (no son bugs hoy)
 
 - **Un viaje "sin entregar" suma al arqueo hasta que el encargado lo anula.** La jefa cierra el
   viaje, pero anular es del encargado (F3). El F4 lo avisa y la jefa lo sigue viendo en rojo en su
   lista, así que no pasa desapercibido; si nadie lo anula, la caja muestra de más.
-- **"No anular en la calle" vive en el front.** F3 lo bloquea y relee el pedido antes de anular,
-  pero las reglas no lo impiden: con las devtools se podría. Llevarlo a `firestore.rules` no cuesta
-  lecturas —usa el documento que ya se está escribiendo—, pero repite ahí los valores de `estado`
-  y `estadoDelivery`, y las reglas se despliegan aparte.
 - **Divergencia de combos.** `contarCombos` compara la descripción del producto **textual** contra
   `CATEGORIAS_COMBOS.excludes`, mientras `esComboConta` en Estadísticas normaliza la categoría
   porque los TSV vienen sucios. Si la descripción difiere entre Firestore y el export, la
@@ -139,62 +170,15 @@ se hizo sobre CRA (14-09-2026) sin necesitar la migración.
 
 ## Funcionalidad pendiente
 
-### Estadísticas Generales (sistema nuevo) — especificada, sin implementar
+### A futuro
 
-Las estadísticas **completas** del sistema nuevo, al estilo de `/estadisticas-viejas` (el Histórico),
-pero leyendo las **fotos** de cada noche en vez de los TSV. Métricas (`/metricas`) es solo el vistazo
-rápido; esto es lo detallado. Se especificó el 26-09-2026 y quedó para la próxima sesión.
+- **CRM de clientes.** El módulo Clientes (ya solo del admin) tendrá su propio CRM. Sin diseñar.
+- **Menú público** (`/menu`). Su fondo ya quedó optimizado (03-10-2026).
+- **Ticket impreso.**
 
-- **Ruta** `/estadisticas`, solo admin (`RequireAdmin`), lazy. En el menú, el grupo Estadísticas
-  pasa a tener dos opciones: **Generales** (esta) e **Histórico** (la de los TSV).
-- **Datos:** `obtenerResumenes(desde, hasta, sucursal)` y `sumarResumenes()` de
-  `useResumenDiario.js`, que **ya existen** y están verificados. La foto v1 ya guarda todo lo que
-  hace falta (ver [[Modelo de datos Firestore]]). No hay que agregar campos.
-- **Filtros:** sucursal (Todas o una) y modo **Mes / Año / Rango** de días. Sin filtro de horas
-  (casi no se usa); si algún día hace falta, `porHora` ya tiene las cifras principales por hora.
-  Botón **Ver**: al entrar no se lee nada.
-- **Tarjetas** (las del Histórico): Total tickets (válidos, eliminados, cancelados), Efectivo en
-  caja (mostrador / delivery), MercadoPago (% de pedidos), Total facturado (ticket promedio),
-  Stock vendido (`unidades`, ítems por ticket), Combos, Delivery % (`porCanal`), Con observaciones.
-- **Secciones:** Delivery vs Mostrador · Métodos de pago (`porMetodo`, etiqueta con
-  `METODOS_PAGO[k].label`) · Ventas por categoría (sumar `productos` por `categoria`) · Zonas
-  (`porZona`, % por resto mayor como el Histórico) · Top 10 productos (`productos` sin
-  `BEBIDAS`) · Top 10 clientes (`porCliente`: **solo nombre y pedidos**, nunca el teléfono) · Top 10
-  bebidas · Día de la semana (el día de cada foto × su `totalPedidos`) · Franja horaria
-  (`porHora`, ordenada desde `horaAbre`) · Stock de artículos y de bebidas (lista completa, de a 25).
-- **Evolución histórica anual:** con **botón propio**, para no leer todo cada vez que cambia un
-  filtro. Rango: de `primeraJornadaConPedidos(sucursal)` hasta ayer. Series por año, por mes, con
-  pestañas Combos / Tickets / Monto, igual que el Histórico. Cuesta 1 lectura por noche y sucursal
-  (~520 por año con 2 sucursales).
-- **Reusar lo visual del Histórico:** `KpiCard`, `BarChart` y `Section` **ya están** en
-  `Estadisticas/componentes.jsx` (28-09-2026, los usan el Histórico y Métricas); falta importar
-  `Historico/Estadisticas.css` y usarlos. Montos con `fmtPesos` (la excepción `fmt$`/`fmtN` sin
-  guarda es solo del Histórico).
-
-### Eliminar pedidos desde el Historial (solo admin)
-
-El admin puede **eliminar** —no editar— cualquier pedido de cualquier fecha desde el Historial. El
-encargado ya lo hace desde F3, pero solo en la jornada. Botón en la columna de acciones, solo si
-el pedido no está `ELIMINADO` ni `CANCELADO`; `Swal` de confirmación; `updateDoc` con
-`docDeSucursal(sucursal, "pedidos", id)` (el admin no tiene sucursal propia) marcando `ELIMINADO` y
-`cajeroElimina*`; después `invalidarFotoDePedido(pedido, sucursal)`, para que Métricas y
-Estadísticas recalculen esa noche. Con `useAccionUnica`. Decidido el 26-09-2026.
-
-### CRM de clientes
-
-El módulo Clientes (ya solo del admin) tendrá su propio CRM. Sin diseñar.
-
-### Solicitudes web trabadas
-
-Pasa cuando un cajero toma una solicitud ("Revisar") y no la termina: se le reinicia la PC, se
-va o cierra el navegador. Las otras cajas la ven "Asignada a …" y no pueden tomarla. **Propuesta**
-(26-09-2026): guardar `cajeroRevisaTimestamp` al tomarla y que la regla `asignacionValida()` deje
-tomarla a cualquiera pasados ~15 minutos. No depende del rol —las reglas no saben quién es el
-encargado— y no cuesta lecturas. Sin implementar.
-
-### Para el final
-
-El menú público (`/menu`) y el ticket impreso.
+Lo que estaba acá y ya se hizo: Estadísticas Generales, eliminar pedidos desde el Historial y la
+liberación de solicitudes web trabadas (03-10-2026). Ver [[Mapa de archivos]] y
+[[Flujo del pedido#Asignación de solicitudes web — un solo dueño]].
 
 ## Sin tests
 

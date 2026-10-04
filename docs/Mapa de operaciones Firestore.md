@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, costos]
 aliases: [Costos, Lecturas y escrituras]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Mapa de operaciones Firestore
@@ -18,7 +18,7 @@ actualizado: 2026-09-28
 - **`getDocs()` / `getDoc()` siempre van al servidor** y se facturan. El caché local no los
   evita. Compilan a `firestoreClientGetDocumentViaSnapshotListener`.
 - **`getDocsFromCache()` / `getDocFromCache()`** no contactan al servidor: no hay documentos
-  servidos que facturar. Existen en el SDK instalado (firebase **9.23.0**, verificado).
+  servidos que facturar. Existen en el SDK instalado (firebase **12.19.0**, verificado).
 - **`onSnapshot`** factura cada documento del set inicial, y después solo los que cambian.
 - El cliente usa **`persistentLocalCache` en modo una sola pestaña**. Eso hace que los
   `onSnapshot` persistan su `resumeToken`: al recargar, el servidor manda **solo los cambios** en
@@ -50,6 +50,7 @@ actualizado: 2026-09-28
 | `PedidosEspera` / `PedidosCocinando` / `ATP` / `JefeDeliverys` | listeners por `estado` | mientras la pantalla está abierta | los del estado | ✅ real-time justificado |
 | `JefeDeliverys` | repartidores activos de la sucursal, desde `usuarios` | al montar | pocos | ✅ one-time |
 | `JefeDeliverys` (Métricas) | listener sobre los viajes cerrados de la noche (`deliveryFinTimestamp >= inicio`) | mientras la pantalla está abierta | ~1 por viaje cerrado | ✅ en vivo y sin ventana; reemplazó al barrido de la noche al abrir la liquidación (~60-100). Rango sobre un campo: índice automático |
+| `EstadisticasGenerales` | las **fotos** del período, por sucursal; la evolución anual, de la primera noche con pedidos a ayer | al tocar Ver / Cargar evolución | 1 por noche y sucursal | ✅ no lee pedidos; las noches sin foto se calculan una vez |
 | `HistorialPedidos` | pedidos por rango de fechas, **sin filtro de estado** | por búsqueda | según rango | **solo el admin**: sin `limit` a propósito, sabe lo que pide |
 | `Productos` | productos (ocultos incluidos) y categorías, por **listener** | mientras la pantalla está abierta | acotado | ✅ volver a entrar trae solo lo que cambió (antes, `getDocs` en cada visita). Ver [[Decisiones tecnicas#El catálogo de Caja va por listener]] |
 | `PanelAdmin` / `Envios` | su colección entera | al montar | acotado | pantallas de admin, poco frecuentes |
@@ -99,6 +100,7 @@ solo el pedido, y el arqueo se calcula desde ahí cuando alguien lo mira. Ver
 | `Caja.guardarBD` | contador + pedido, en una `runTransaction` | el pedido entra al cálculo porque tiene `cajeroID` |
 | `PendientesMP.rechazarPedido` | `updateDoc` → `CANCELADO` | el cálculo lo saltea |
 | `BuscarPedido.eliminarPedido` | relee el pedido (1 lectura) y `updateDoc` → `ELIMINADO` (**solo el encargado**; no con el repartidor en la calle) | ídem |
+| `HistorialPedidos.eliminarPedido` | lo mismo, del **admin** y de cualquier fecha; después `invalidarFotoDePedido(pedido, sucursal)` | ídem, y la foto de esa noche se recalcula |
 | `JefeDeliverys.marcarEstado` (VOLVIO) | `updateDoc` → `estadoDelivery: FIN` | el viaje entra en las Métricas (listener) |
 | `JefeDeliverys.volvioSinEntregar` | `updateDoc` → `estadoDelivery: FIN`, `sinEntregar: true`; el `estado` sigue en `DELIVERY` | el envío se paga; el encargado lo anula después desde F3 |
 

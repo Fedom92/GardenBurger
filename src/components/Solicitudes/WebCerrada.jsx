@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import logo from '../../img/logo_negro4.png';
-import logoMobile from '../../img/logo_negro.webp';
+import logo from '../../img/logo_negro.webp';
+import logoMobile from '../../img/logo_pub_mobile.webp';
 import Footer from "./Footer";
 import { textoHorarioWeb } from "../../Utils/fechaComercial";
 import '../../style/Main.css';

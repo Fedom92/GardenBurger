@@ -21,7 +21,7 @@ service cloud.firestore {
         allow get: if estaAutenticado() || (esOrigenWeb() && sigueVisibleParaElPublico());
         allow list: if estaAutenticado();
         allow create: if estaAutenticado() || esCreacionPublicaValida();
-        allow update: if estaAutenticado() && asignacionValida();
+        allow update: if estaAutenticado() && asignacionValida() && !anulaViajeEnLaCalle();
         allow delete: if false;
       }
 
@@ -111,10 +111,37 @@ service cloud.firestore {
     // la asignación del otro: el front chequeaba contra el snapshot local y los
     // dos pasaban, los dos cargaban el pedido y el arqueo lo sumaba dos veces.
     // Toda escritura que no toque el campo pasa igual (despues == antes).
+    //
+    // Una toma abandonada se libera sola (asignacionVencida): pasados 15 minutos
+    // desde que se tomó, cualquiera puede tomarla. Una toma nueva reescribe la hora,
+    // así que el que la tomó último queda protegido otros 15 minutos, incluso del
+    // cajero original si vuelve e intenta guardar.
     function asignacionValida() {
       let antes = resource.data.get('cajeroRevisaID', null);
       let despues = request.resource.data.get('cajeroRevisaID', null);
-      return despues == antes || antes == null || antes == request.auth.uid;
+      return despues == antes || antes == null || antes == request.auth.uid
+        || asignacionVencida();
+    }
+
+    // Mismo valor que MINUTOS_SOLICITUD_TOMADA en Constantes.jsx: si cambia uno,
+    // cambiar el otro. Una toma sin hora (anterior a este cambio) cuenta como
+    // vencida: si no, quedaría trabada para siempre. No cuesta lecturas: compara la
+    // hora guardada con la de la escritura.
+    function asignacionVencida() {
+      let tomada = resource.data.get('cajeroRevisaTimestamp', null);
+      return tomada == null || request.time > tomada + duration.value(15, 'm');
+    }
+
+    // Un viaje en la calle no se anula: el pedido saldría de la lista de la jefa de
+    // deliverys, no podría marcar que volvió y el envío no se le pagaría al repartidor.
+    // F3 y el Historial ya lo bloquean (enLaCalle() en useResumenDiario.js); esto cubre
+    // una Caja que no se recargó o una escritura desde la consola del navegador.
+    // Mismos valores que ESTADOS y SUBESTADOS_MOTODELIVERY en Constantes.jsx: si
+    // cambian allá, cambiar acá. No cuesta lecturas: compara el pedido con el cambio.
+    function anulaViajeEnLaCalle() {
+      return resource.data.get('estado', null) == 'DELIVERY'
+        && resource.data.get('estadoDelivery', null) == 'SALIO'
+        && request.resource.data.get('estado', null) in ['ELIMINADO', 'CANCELADO'];
     }
 
     function estaAutenticado() {

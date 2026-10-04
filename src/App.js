@@ -26,6 +26,7 @@ const Clientes = lazy(() => import("./components/Clientes/Clientes"));
 const Cocina = lazy(() => import("./components/Cocina/Cocina"));
 const HistorialPedidos = lazy(() => import("./components/Pedidos/HistorialPedidos"));
 const Estadisticas = lazy(() => import("./components/Estadisticas/Historico/Estadisticas"));
+const EstadisticasGenerales = lazy(() => import("./components/Estadisticas/Generales/EstadisticasGenerales"));
 const Metricas = lazy(() => import("./components/Metricas/Metricas"));
 const ATP = lazy(() => import("./components/ATP/ATP"));
 const Asistencias = lazy(() => import("./components/Asistencias/Asistencias"));
@@ -61,6 +62,7 @@ function App() {
                 <Route path="/" element={<Login />} />
                 <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
                 <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
+                <Route path="/estadisticas" element={<RequireAuth><RequireAdmin><EstadisticasGenerales /></RequireAdmin></RequireAuth>} />
                 <Route path="/estadisticas-viejas" element={<RequireAuth><RequireAdmin><Estadisticas /></RequireAdmin></RequireAuth>} />
                 <Route path="/metricas" element={<RequireAuth><RequireAdmin><Metricas /></RequireAdmin></RequireAuth>} />
                 <Route path="/liquidacion" element={<RequireAuth><RequireAdmin><LiquidacionAsistencias /></RequireAdmin></RequireAuth>} />

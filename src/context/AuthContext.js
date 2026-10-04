@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { onAuthStateChanged, signOut, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "firebase/auth";
+import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db, setSucursalStaff } from "../firebaseConfig/firebase";
 
@@ -90,7 +90,7 @@ export function AuthContextProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     try {
-      await setPersistence(auth, browserSessionPersistence);
+      // La persistencia por pestaña la fija initializeAuth en firebase.js.
       const credential = await signInWithEmailAndPassword(auth, email, password);
       // Validamos y obtenemos datos antes de retornar para evitar navegación prematura
       const data = await fetchUserData(credential.user);

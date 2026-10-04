@@ -1321,9 +1321,10 @@ input::placeholder {
   cursor: pointer;
 }
 
-.fab-whatsapp img {
+.fab-whatsapp-icono {
   width: 35px;
   height: 35px;
+  color: #fff;
 }
 
 /*<!------------Termina Estilo Botón Flotante WhatsApp---------------->*/

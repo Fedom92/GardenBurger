@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, workflow]
 aliases: [Pipeline, Recorrido del pedido]
-actualizado: 2026-09-26
+actualizado: 2026-10-03
 ---
 
 # Flujo del pedido
@@ -68,7 +68,7 @@ estado:
 | Paso | Componente | Escribe |
 |---|---|---|
 | Cliente arma pedido web | `Crearsolicitud` | doc nuevo `PENDIENTE`, `clienteTimestamp`, `mensajeWsp`, `cliente{}` |
-| Cajero toma la solicitud | `useRevisarSolicitud` | `cajeroRevisaID`, `cajeroRevisa` |
+| Cajero toma la solicitud | `useRevisarSolicitud` | `cajeroRevisaID`, `cajeroRevisa`, `cajeroRevisaTimestamp` |
 | Cajero cancela el ticket | `Caja.cancelarTicket` | borra `cajeroRevisa*` (solo si es suyo) |
 | Cajero guarda | `Caja.guardarBD` | todo el pedido + `codigo` + estado; **borra** `cajeroRevisa*`. El arqueo no se escribe: se calcula |
 | Confirma MP | `PendientesMP.aprobarPedido` | `estado: CONFIRMADO` + `cajeroApruebaMP*` |
@@ -123,9 +123,9 @@ Si dos cajeros cargaran la misma solicitud, los dos podrían guardarla: **dos pe
 para el mismo cliente, dos números de ticket quemados y el arqueo contando las dos ventas. Por
 eso:
 
-- Tomar una solicitud escribe `cajeroRevisaID` + `cajeroRevisa`.
+- Tomar una solicitud escribe `cajeroRevisaID` + `cajeroRevisa` + `cajeroRevisaTimestamp` (la hora de la toma).
 - `esDeOtroCajero()` deshabilita **Revisar y Rechazar** en las demás cajas. El badge dice de
-  quién es. No hay reasignación forzada.
+  quién es. No hay reasignación forzada, salvo que la toma tenga más de 15 minutos (abajo).
 - El mismo cajero **sí** puede retomarla: si se le reinicia la PC, vuelve a entrar, ve
   "Asignada a vos" y Revisar le recarga el ticket.
 - El botón "Limpiar" de Caja pasa a decir **"Cancelar"** cuando el ticket vino de una solicitud,
@@ -148,9 +148,12 @@ eso:
 > que la Caja ya tiene en memoria), en silencio. El precio que trae la solicitud lo puso el
 > navegador del cliente desde un `menu.json` que puede estar viejo o editado.
 
-> [!caution] Caso abierto: la solicitud trabada
-> Un cajero que se asigna una solicitud y no vuelve (terminó el turno) la deja trabada: nadie
-> más puede revisarla ni rechazarla. **El encargado no la destraba, por decisión** (14-09-2026).
-> Lo va a poder hacer el admin desde `HistorialPedidos`, todavía sin desarrollar — ver
-> [[Deuda tecnica#Funcionalidad pendiente]]. Ojo al implementarlo: la regla `asignacionValida()`
-> hoy rechaza que alguien que no es el dueño borre `cajeroRevisaID`; necesita `|| esAdmin()`.
+> [!note] La solicitud trabada se libera sola a los 15 minutos (03-10-2026)
+> Un cajero que toma una solicitud y no vuelve (se le reinició la PC, terminó el turno) ya no la
+> deja trabada: pasados `MINUTOS_SOLICITUD_TOMADA` (15) desde la toma, las demás cajas la ven libre
+> —sin cartel de asignada— y cualquiera puede tomarla o rechazarla. Lo hace cumplir
+> `asignacionVencida()` en las reglas, con la hora de la toma: no cuesta lecturas. El que la toma
+> de nuevo reescribe la hora, así que queda protegido otros 15 minutos, también del cajero
+> original: si vuelve e intenta guardar, ve "La tomó otro cajero". Una toma sin hora (anterior al
+> cambio, o armada a mano) cuenta como vencida. Ver
+> [[Reglas de seguridad#`update`: valida la asignación, no el estado]].

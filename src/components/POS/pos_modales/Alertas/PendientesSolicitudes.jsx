@@ -6,8 +6,9 @@ import Swal from "sweetalert2";
 import moment from 'moment';
 import 'moment/locale/es';
 import { useAuth } from "../../../../context/AuthContext";
-import { ESTADOS } from "../../../../Utils/Constantes";
+import { ESTADOS, MINUTOS_SOLICITUD_TOMADA } from "../../../../Utils/Constantes";
 import { fmtPesos } from "../../../../Utils/formato";
+import { ahoraServidor } from "../../../../Utils/fechaComercial";
 
 // Busqueda de Google Maps por texto libre. Es una URL comun, no la API con key que se
 // saco del proyecto: no necesita SDK ni se factura. Google resuelve el texto como puede,
@@ -60,12 +61,29 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
     }, [isOpen, onClose]);
 
 
+    // Una toma abandonada se libera sola: pasados MINUTOS_SOLICITUD_TOMADA desde que
+    // otro cajero la tomó, cualquiera puede tomarla (la regla asignacionValida() lo
+    // permite con la misma cuenta). Una toma sin hora —anterior a este cambio— cuenta
+    // como vencida, igual que en la regla. El tick refresca la tarjeta mientras el
+    // modal está abierto: si no, seguiría "asignada" hasta que llegue otro snapshot.
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        if (!isOpen) return;
+        const id = setInterval(() => setTick((n) => n + 1), 30000);
+        return () => clearInterval(id);
+    }, [isOpen]);
+
+    const tomaVencida = (solicitud) => {
+        const tomada = solicitud?.cajeroRevisaTimestamp?.toDate?.();
+        return !tomada || ahoraServidor().diff(moment(tomada), "minutes") >= MINUTOS_SOLICITUD_TOMADA;
+    };
+
     // Una solicitud tiene un solo dueño: si la tomaran dos cajeros, los dos podrian
     // guardar el pedido y el resumen del dia sumaria el mismo pedido dos veces.
     // Deshabilita los botones de la tarjeta; el badge ya dice de quien es. El
     // listener ya trae la asignacion, asi que no hace falta releer nada.
     const esDeOtroCajero = (solicitud) =>
-        !!solicitud?.cajeroRevisaID && solicitud.cajeroRevisaID !== userData.id;
+        !!solicitud?.cajeroRevisaID && solicitud.cajeroRevisaID !== userData.id && !tomaVencida(solicitud);
 
     const revisarSolicitud = async (solicitudId) => {
         const solicitud = solicitudesPendientes.find(s => s.id === solicitudId);
@@ -174,7 +192,9 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
                                                     <i className="fa-solid fa-map-location-dot" aria-hidden="true"></i>
                                                 </a>
                                             )}
-                                            {solicitud.cajeroRevisaID && (
+                                            {/* Una toma vencida de otro cajero no se muestra: la
+                                                solicitud se ve libre, como cualquier otra. */}
+                                            {solicitud.cajeroRevisaID && (solicitud.cajeroRevisaID === userData.id || !tomaVencida(solicitud)) && (
                                                 <span className="badge bg-warning text-dark ms-1">
                                                     {solicitud.cajeroRevisaID === userData.id
                                                         ? "Asignada a vos"

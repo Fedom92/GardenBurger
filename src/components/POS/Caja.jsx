@@ -23,7 +23,7 @@ import useTicketLayout from './pos_hooks/useTicketLayout';
 import validarPedido from './pos_hooks/validarPedido';
 import useRevisarSolicitud, { liberarSolicitud } from './pos_hooks/useRevisarSolicitud';
 import { obtenerArqueo, contarCombos, vueltosATransferir, sinEntregarPendientes } from './pos_hooks/useResumenDiario';
-import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO, DESTINO_VUELTO } from '../../Utils/Constantes';
+import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO, DESTINO_VUELTO, MINUTOS_SOLICITUD_TOMADA } from '../../Utils/Constantes';
 import { ahoraServidor, getFechaComercial, esHoraDeArqueo } from '../../Utils/fechaComercial';
 import { fmtPesos } from '../../Utils/formato';
 import { useAccionUnica } from '../../Utils/useAccionUnica';
@@ -200,6 +200,7 @@ const Caja = () => {
                     // La asignacion ya cumplio su funcion: no queda colgando en el pedido.
                     cajeroRevisaID: deleteField(),
                     cajeroRevisa: deleteField(),
+                    cajeroRevisaTimestamp: deleteField(),
                 }, { merge: true });
             });
             registrarCliente(data);
@@ -212,6 +213,18 @@ const Caja = () => {
             limpiar();
         } catch (error) {
             console.error("Error al agregar pedido: ", error);
+            // Una solicitud web que estuvo más de MINUTOS_SOLICITUD_TOMADA sin
+            // terminarse puede tomarla otro cajero; si lo hizo, la regla rechaza este
+            // guardado. No es un problema de conexión: hay que decirlo así.
+            if (error.code === "permission-denied" && data.id) {
+                Swal.fire({
+                    title: 'La tomó otro cajero',
+                    text: `Esta solicitud estuvo más de ${MINUTOS_SOLICITUD_TOMADA} minutos sin cargarse y la tomó otro cajero. Limpiá el ticket: la está cargando él.`,
+                    icon: 'info',
+                    confirmButtonColor: '#0d6efd',
+                });
+                return;
+            }
             Swal.fire({
                 title: '¡Error!',
                 text: 'Error al Agregar Pedido. Verifica internet, recarga e intente de nuevo.',

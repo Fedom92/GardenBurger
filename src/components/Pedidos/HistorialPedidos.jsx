@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
-import { db } from "../../firebaseConfig/firebase";
+import { collection, query, orderBy, getDocs, getDoc, updateDoc, where, serverTimestamp, Timestamp } from "firebase/firestore";
+import { db, docDeSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { fetchSucursales } from "../../Utils/sucursales";
 import "../../style/Main.css"
 import TablaGenerica from "../../Utils/TablaGenerica";
-import { getRangoJornada } from "../../Utils/fechaComercial";
+import { getRangoJornada, ahoraServidor } from "../../Utils/fechaComercial";
 import AuditoriaPedido from "./AuditoriaPedido";
 import moment from "moment";
+import Swal from "sweetalert2";
 import { fmtPesos } from "../../Utils/formato";
 import { avisarErrorDeCarga } from "../../Utils/avisos";
-import { HORARIO } from "../../Utils/Constantes";
+import { useAccionUnica } from "../../Utils/useAccionUnica";
+import { invalidarFotoDePedido, enLaCalle } from "../POS/pos_hooks/useResumenDiario";
+import { HORARIO, ESTADOS } from "../../Utils/Constantes";
 
 const toInputDate = (d) => moment(d).format("YYYY-MM-DD");
 
@@ -79,6 +82,64 @@ const HistorialPedidos = () => {
       .finally(() => setIsLoading(false));
   }, [queryRange, sucursalActiva]);
 
+  // Eliminar desde el Historial: solo el admin (la pantalla entera es suya), de
+  // cualquier fecha. Es un borrado lógico —el pedido queda en ELIMINADO, con quién y
+  // cuándo—, igual que F3, y con la misma regla: no con el repartidor en la calle.
+  // Si la noche ya cerró, se borra su foto, así Métricas y Estadísticas la recalculan.
+  const { procesando: eliminando, ejecutar } = useAccionUnica();
+  const eliminarPedido = async (pedido) => {
+    const { isConfirmed } = await Swal.fire({
+      title: '¿Eliminar el pedido?',
+      text: `El pedido ${pedido.codigo} queda como ELIMINADO: sale de las estadísticas`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!isConfirmed) return;
+
+    await ejecutar(async () => {
+      try {
+        const ref = docDeSucursal(sucursalActiva, "pedidos", pedido.id);
+        // La lista es de cuando se buscó: el pedido pudo cambiar después. Se relee
+        // (1 lectura, solo al eliminar).
+        const actual = (await getDoc(ref)).data() || {};
+        if ([ESTADOS.ELIMINADO, ESTADOS.CANCELADO].includes(actual.estado)) {
+          setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? { id: p.id, ...actual } : p)));
+          Swal.fire({ title: 'Ya estaba anulado', text: `El pedido ya figura como ${actual.estado}.`, icon: 'info', confirmButtonColor: '#0d6efd' });
+          return;
+        }
+        if (enLaCalle(actual)) {
+          Swal.fire({ title: 'El repartidor está en la calle', text: 'La jefa de deliverys tiene que marcar que volvió antes de eliminar el pedido.', icon: 'warning', confirmButtonColor: '#ffc107' });
+          return;
+        }
+
+        await updateDoc(ref, {
+          estado: ESTADOS.ELIMINADO,
+          cajeroEliminaID: userData.id,
+          cajeroElimina: userData.nombreCompleto,
+          cajeroEliminaTimestamp: serverTimestamp(),
+        });
+        await invalidarFotoDePedido(pedido, sucursalActiva);
+
+        // La fila se actualiza en el lugar, sin volver a buscar. La hora es la del
+        // servidor estimada: la exacta la tiene Firestore, y se ve al buscar de nuevo.
+        setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? {
+          ...p,
+          estado: ESTADOS.ELIMINADO,
+          cajeroEliminaID: userData.id,
+          cajeroElimina: userData.nombreCompleto,
+          cajeroEliminaTimestamp: Timestamp.fromDate(ahoraServidor().toDate()),
+        } : p)));
+      } catch (error) {
+        console.error("Error eliminando el pedido desde el Historial:", error);
+        Swal.fire({ title: 'Error', text: 'No se pudo eliminar el pedido. Revisá la conexión e intentá de nuevo.', icon: 'error', confirmButtonColor: '#dc3545' });
+      }
+    });
+  };
+
   const columnasPedidos = [
     {
       accessorKey: "timestamp",
@@ -107,15 +168,34 @@ const HistorialPedidos = () => {
     {
       id: "acciones",
       header: "Acciones",
-      cell: ({ row }) => (
-        <button
-          className="btn btn-outline-dark btn-sm"
-          title="Ver auditoría"
-          onClick={() => setAuditoriaPedido(row.original)}
-        >
-          <i className="fa-solid fa-magnifying-glass" />
-        </button>
-      ),
+      cell: ({ row }) => {
+        const pedido = row.original;
+        const anulado = [ESTADOS.ELIMINADO, ESTADOS.CANCELADO].includes(pedido.estado);
+        return (
+          <div className="d-flex gap-1 justify-content-center">
+            <button
+              className="btn btn-outline-dark btn-sm"
+              title="Ver auditoría"
+              onClick={() => setAuditoriaPedido(pedido)}
+            >
+              <i className="fa-solid fa-magnifying-glass" />
+            </button>
+            {/* Ya anulado no se ofrece: volver a eliminarlo no cambia nada. */}
+            {!anulado && (
+              <button
+                className="btn btn-outline-danger btn-sm"
+                title={enLaCalle(pedido)
+                  ? "El repartidor está en la calle: primero la jefa de deliverys marca que volvió"
+                  : "Eliminar pedido"}
+                onClick={() => eliminarPedido(pedido)}
+                disabled={eliminando || enLaCalle(pedido)}
+              >
+                <i className="fa-solid fa-trash" />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

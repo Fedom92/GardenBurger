@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, seguridad]
 aliases: [firestore.rules, storage.rules, Seguridad]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Reglas de seguridad
@@ -132,7 +132,14 @@ allow update: if estaAutenticado() && asignacionValida();
 function asignacionValida() {
   let antes = resource.data.get('cajeroRevisaID', null);
   let despues = request.resource.data.get('cajeroRevisaID', null);
-  return despues == antes || antes == null || antes == request.auth.uid;
+  return despues == antes || antes == null || antes == request.auth.uid
+    || asignacionVencida();
+}
+
+// La toma abandonada se libera a los 15 minutos (MINUTOS_SOLICITUD_TOMADA).
+function asignacionVencida() {
+  let tomada = resource.data.get('cajeroRevisaTimestamp', null);
+  return tomada == null || request.time > tomada + duration.value(15, 'm');
 }
 ```
 
@@ -145,6 +152,8 @@ escritura que no toque ese campo (cocina, MP, ATP, delivery, eliminar) pasa por 
 |---|---|---|---|
 | Tomar libre | null | yo | ✅ |
 | Tomar ajena (la carrera entre dos cajeros) | otro | yo | ❌ `permission-denied` |
+| Tomar ajena con **más de 15 minutos** (abandonada) | otro | yo | ✅ `asignacionVencida()` (03-10-2026) |
+| El cajero original guarda después de que otro la retomó | otro | null | ❌ la toma nueva tiene hora fresca |
 | Retomar la propia (PC reiniciada) | yo | yo | ✅ |
 | Liberar o guardar (`deleteField`) | yo | null | ✅ |
 | Cualquier update que no toque el campo | x | x | ✅ |
@@ -152,8 +161,31 @@ escritura que no toque ese campo (cocina, MP, ATP, delivery, eliminar) pasa por 
 Del lado del front, `useRevisarSolicitud` distingue el `permission-denied` y avisa "Otro cajero ya
 tomó esta solicitud"; el listener del modal actualiza el badge solo.
 
-**Lo que sigue sin validarse es el `estado`**: cualquier staff puede llevar un pedido de cualquier
-estado a cualquier otro. Ver [[Modelo de estados#Transiciones que el sistema permite y no debería]].
+### No anular un viaje en la calle
+
+```js
+allow update: if estaAutenticado() && asignacionValida() && !anulaViajeEnLaCalle();
+
+function anulaViajeEnLaCalle() {
+  return resource.data.get('estado', null) == 'DELIVERY'
+    && resource.data.get('estadoDelivery', null) == 'SALIO'
+    && request.resource.data.get('estado', null) in ['ELIMINADO', 'CANCELADO'];
+}
+```
+
+Es la misma regla que `enLaCalle()` en `useResumenDiario.js`, que ya aplican F3 y el Historial
+(04-10-2026). Lo que suma es cubrir lo que el front no ve: una Caja que no se recargó y sigue con
+código viejo, o una escritura desde la consola del navegador. El porqué de negocio está en
+[[Reglas de negocio#Un viaje en la calle no se anula]].
+
+- **No cuesta lecturas**: compara el pedido que hay con el cambio.
+- **Repite los valores** de `ESTADOS` y `SUBESTADOS_MOTODELIVERY` (las reglas no leen
+  `Constantes.jsx`): si cambian allá, cambiar acá.
+- Ninguna escritura legítima choca: la jefa cierra el viaje cambiando `estadoDelivery`, sin tocar
+  `estado` hacia una anulación, y rechazar solicitudes o cobros MP parte de otros estados.
+
+**Fuera de esto, el `estado` sigue sin validarse**: cualquier staff puede llevar un pedido de
+cualquier estado a cualquier otro. Ver [[Modelo de estados#Transiciones que el sistema permite y no debería]].
 
 ## `public/` del repo no tiene nada que ver con las reglas
 

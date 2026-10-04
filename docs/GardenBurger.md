@@ -7,7 +7,7 @@ actualizado: 2026-09-26
 # GardenBurger — Mapa del proyecto
 
 Sistema de gestión para una hamburguesería multi-sucursal: POS (Caja), Cocina, ATP (mostrador),
-Delivery, asistencias y sueldos, menú online público y panel de administración. SPA en React 18
+Delivery, asistencias y sueldos, menú online público y panel de administración. SPA en React 19
 (CRA) con Firebase.
 
 **Repo**: `d:\Escritorio\Proyectos\GardenBurger` · **Rama**: `main`
@@ -63,13 +63,13 @@ Según qué vengas a hacer, con esto alcanza:
 
 ## Stack
 
-- **React 18** (Create React App, no Vite) + **React Router v6**
-- **Firebase 9.23.0** modular — Firestore, Auth, Storage, Functions, App Check
+- **React 19** (Create React App, no Vite) + **React Router v7** (los dos desde el 04-10-2026)
+- **Firebase 12** modular (12.19.0 desde el 04-10-2026; venía de la 9.23) — Firestore, Auth, Storage, Functions, App Check
 - **React Bootstrap** (modales) + **Bootstrap 5.3** (grid y utilidades)
 - **SweetAlert2** para confirmaciones · **React Toastify** para avisos rápidos
 - **React Hook Form** en Caja y CrearSolicitud
 - **Moment.js** (+ moment-timezone) — formato `DD/MM/YYYY`
-- **@tanstack/react-table** debajo de `TablaGenerica`
+- **@tanstack/react-table v9** debajo de `TablaGenerica`
 - **Recharts** en Estadísticas · **html2pdf.js** para exportar el menú (se carga al tocar el botón)
 
 ## Todas las notas

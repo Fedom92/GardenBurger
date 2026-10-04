@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, negocio]
 aliases: [Negocio]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Reglas de negocio
@@ -222,10 +222,19 @@ todavía no tenía datos productivos, para que forme par con `pagaCon`.
 ### Un viaje en la calle no se anula
 
 Si el cliente cancela o no se encuentra la dirección, **el viaje se hizo y se paga**. Para que
-quede registrado, el encargado **no puede anular** desde F3 un pedido cuyo repartidor salió y no
-volvió (`estadoDelivery == SALIO`): primero la jefa marca que volvió. F3 relee el pedido antes de
-anular (1 lectura), porque trabaja con la jornada que leyó al abrirse. Si el pedido todavía no
-salió, se anula como cualquier otro: no hubo viaje.
+quede registrado, **nadie puede anular** un pedido cuyo repartidor salió y no volvió
+(`estadoDelivery == SALIO`) —ni el encargado desde F3 ni el admin desde el Historial—: primero la
+jefa marca que volvió. Los dos releen el pedido antes de anular (1 lectura), porque trabajan con
+lo que leyeron al abrir o al buscar. La regla está una sola vez, `enLaCalle()` en
+`useResumenDiario.js`, y desde el 04-10-2026 también la aplica Firestore
+(`anulaViajeEnLaCalle()`, ver [[Reglas de seguridad#No anular un viaje en la calle]]),
+así que tampoco pasa desde una Caja con código viejo. Si el pedido todavía no salió, se anula como
+cualquier otro: no hubo viaje.
+
+Se evaluó dejar anularlo y solo avisarle a la jefa (04-10-2026), y se descartó: un pedido anulado
+sale de su lista —que escucha los `DELIVERY`—, así que no podría marcar que volvió, el viaje no se
+cerraría y no se pagaría. El orden que fuerza el bloqueo es el mismo que se sigue en el local: el
+encargado le avisa a la jefa, ella cierra el viaje y recién ahí se anula.
 
 Cuando vuelve sin entregar, la jefa usa **"Volvió sin entregar"**: cierra el viaje
 (`estadoDelivery: VOLVIO`, `sinEntregar: true`) sin pedir `pagaronCon`. El pedido **sigue en

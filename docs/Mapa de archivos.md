@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, referencia]
 aliases: [Que hace cada archivo]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Mapa de archivos
@@ -42,7 +42,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `fechaComercial.js` | Jornada comercial, hora del servidor, ventana del F4 y horario web de cada sucursal (`webRecibePedidos(sucursal)`, `textoHorarioWeb(sucursal)`). Ver [[Reglas de negocio#Jornada comercial]] |
 | `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`), `fetchMenuPublico()` (lo consume, con promesa cacheada) y la bandera `menuSinPublicar` en localStorage (`marcar`/`limpiar`/`hayMenuPendiente`) |
 | `sucursales.js` | `fetchSucursales()` — lista ordenada de la colección global, con la promesa cacheada. `invalidarSucursales()` la suelta cuando el ABM guarda |
-| `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table`: búsqueda, filtros por columna, orden y paginación. Exporta `quitarAcentos` |
+| `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table` v9 (registra solo orden y paginación): búsqueda, filtros por columna, orden y paginación. Exporta `quitarAcentos` |
 | `formato.js` | `fmtPesos` y `fmtPesosRedondeado`. **Único lugar** donde se formatean montos |
 | `useAccionUnica.js` | Guard contra doble ejecución. Ver [[Convenciones y preferencias#Acciones que no se pueden repetir]] |
 | `useHoraDeArqueo.js` | Si ya es hora de mirar el arqueo (`HORA_HABILITA_STATS` a `horaCierre`), para el `disabled` del F4. Ver [[Reglas de negocio#Quién mira el arqueo, y cuándo]] |
@@ -108,7 +108,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | Archivo | Qué hace |
 |---|---|
 | `ATP/ATP.jsx` | Estado `ATP` — entrega en mostrador |
-| `Pedidos/HistorialPedidos.jsx` | Pedidos por rango de fechas, **sin filtro de estado**: también audita cancelados y eliminados. El admin elige sucursal |
+| `Pedidos/HistorialPedidos.jsx` | Pedidos por rango de fechas, **sin filtro de estado**: también audita cancelados y eliminados. El admin elige sucursal y puede **eliminar** cualquier pedido (borrado lógico, no con el repartidor en la calle) |
 | `Metricas/Metricas.jsx` | **Métricas**: botones de sucursal (Todas o una) y de período (Hoy, Ayer, Semana actual y pasada, Mes actual y pasado); con los dos elegidos busca sola. Lee fotos con `obtenerResumenes`, y la noche en curso con `obtenerArqueo` cuando el período llega a hoy. Con el aspecto del Histórico y pensada para entrar entera en el celular sin scroll: Pedidos y Combos, Ventas, Delivery (con delivery vs mostrador) y el top 3 de combos; con "Todas", cada sucursal en los subtítulos. El título se corre a la derecha del botón del menú |
 | `Pedidos/AuditoriaPedido.jsx` | Traza completa de un pedido, agrupada por etapa |
 | `Productos/Productos.jsx` | ABM de productos + botón **"Publicar Menú"**, que parpadea mientras haya cambios sin publicar (bandera en localStorage). Productos y categorías por **listener**: la tabla no se toca a mano después de guardar |
@@ -122,7 +122,9 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `Asistencias/ModalCargarJornada.jsx` | La grilla de carga, compartida por las dos pantallas. `modoAdmin` habilita editar el valor hora y ver la auditoría |
 | `Asistencias/asistencias_hooks/useAsistencias.js` | `calcularHoras`, `armarRegistro`, `enviosPorRepartidor`, `agregarLiquidacion` — lógica pura |
 | `Estadisticas/Historico/Estadisticas.jsx` | Dashboard del **sistema viejo**: lee TSV exportados a mano, no Firestore |
-| `Estadisticas/componentes.jsx` | `KpiCard` (con variante `compacto`), `BarChart` y `Section`: lo visual compartido por el Histórico, Métricas y las Estadísticas Generales que vienen. Los estilos, en `Historico/Estadisticas.css` |
+| `Estadisticas/Generales/EstadisticasGenerales.jsx` | **Estadísticas Generales** (`/estadisticas`): lo mismo que el Histórico, con los datos del sistema nuevo. Filtros Mes / Año / Rango y sucursal, botón Ver; la evolución anual con su propio botón |
+| `Estadisticas/Generales/calculos.js` | Las cuentas de Generales a partir de las fotos (`armarEstadisticas`, `armarEvolucion`, `rangoDeFiltro`). Puro, sin Firestore |
+| `Estadisticas/componentes.jsx` | `KpiCard` (con variante `compacto`), `BarChart` y `Section`: lo visual compartido por el Histórico, Métricas y las Estadísticas Generales. Los estilos, en `Historico/Estadisticas.css` |
 | `Estadisticas/Historico/useGoogleSheets.js` | Baja y parsea los dos TSV de `privado/estadisticas` en Storage con `getBytes()`. **No** se leen de `public/` |
 
 > [!warning] Estadísticas lee TSV, no Firestore

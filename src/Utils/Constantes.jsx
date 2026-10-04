@@ -76,6 +76,12 @@ export const HORARIO = {
 // cierre de cada una obligaba a la Caja a leer el horario de su sucursal.
 export const HORA_HABILITA_STATS = 0;
 
+// A los cuántos minutos una solicitud web tomada ("Revisar") y no terminada se
+// considera abandonada —al cajero se le reinició la PC, se fue, cerró el navegador—
+// y cualquier otro cajero puede tomarla. El mismo valor está en asignacionValida()
+// de firestore.rules, que es la que lo hace cumplir: si cambia, cambiar los dos.
+export const MINUTOS_SOLICITUD_TOMADA = 15;
+
 // Qué pasa con la diferencia cuando el cliente de un delivery paga en efectivo con
 // un billete más grande. La moto no lleva cambio: o el repartidor trae esa plata y
 // los admins le transfieren el vuelto al cliente, o queda de propina para él. Lo

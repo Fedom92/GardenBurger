@@ -56,7 +56,7 @@ const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal, totalBase
     if (data.metodoPago === METODOS_PAGO.EFECTIVO.key && (!data.pagaCon || data.pagaCon < totalFinal)) {
         Swal.fire({
             title: 'Advertencia',
-            text: `El monto "Paga Con" debe ser igual o mayor al total ($${totalFinal})`,
+            text: `El monto "Paga Con" debe ser igual o mayor al total`,
             icon: 'warning',
             confirmButtonColor: '#ffc107',
         });

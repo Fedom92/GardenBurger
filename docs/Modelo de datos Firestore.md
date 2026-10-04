@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, datos]
 aliases: [Colecciones, Esquema Firestore, Campos]
-actualizado: 2026-09-28
+actualizado: 2026-10-03
 ---
 
 # Modelo de datos Firestore
@@ -82,7 +82,7 @@ Cada paso deja `<actor>ID`, `<actor>` (nombre) y `<actor>Timestamp`:
 | Campo base | Lo escribe | Cuándo |
 |---|---|---|
 | `cajero*` | `Caja.guardarBD` | al crear el pedido |
-| `cajeroRevisa*` | `useRevisarSolicitud` | al tomar una solicitud web (se **borra** al guardar) |
+| `cajeroRevisa*` | `useRevisarSolicitud` | al tomar una solicitud web (se **borra** al guardar). `cajeroRevisaTimestamp` es la hora de la toma: a los 15 minutos la solicitud se libera |
 | `cajeroApruebaMP*` | `PendientesMP` | al confirmar la transferencia |
 | `cajeroCancelaMP*` | `PendientesMP` | al rechazar la transferencia |
 | `cajeroCancelaSol*` | `PendientesSolicitudes` | al rechazar una solicitud web |

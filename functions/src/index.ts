@@ -1,8 +1,12 @@
 import {setGlobalOptions} from "firebase-functions";
 import {onCall, HttpsError} from "firebase-functions/https";
-import * as admin from "firebase-admin";
+// firebase-admin 14 ya no tiene el `import * as admin`: cada servicio se importa
+// de su entrada (04-10-2026).
+import {initializeApp} from "firebase-admin/app";
+import {getAuth} from "firebase-admin/auth";
+import {getFirestore, FieldValue} from "firebase-admin/firestore";
 
-admin.initializeApp();
+initializeApp();
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -38,7 +42,7 @@ const exigirAdmin = async (
   const uid = request.auth.uid;
   if (request.auth.token?.admin === true) return uid;
 
-  const callerSnap = await admin.firestore().doc(`usuarios/${uid}`).get();
+  const callerSnap = await getFirestore().doc(`usuarios/${uid}`).get();
   if (callerSnap.data()?.rol !== process.env.ADMIN_ROL) {
     throw new HttpsError("permission-denied", "Solo un administrador puede hacer esto.");
   }
@@ -54,7 +58,7 @@ const exigirAdmin = async (
 export const sincronizarClaims = onCall({invoker: "public"}, async (request) => {
   await exigirAdmin(request);
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const {uid} = request.data ?? {};
 
   const docs = uid ?
@@ -72,7 +76,7 @@ export const sincronizarClaims = onCall({invoker: "public"}, async (request) => 
 
     const esAdmin = data.rol === process.env.ADMIN_ROL;
     try {
-      await admin.auth().setCustomUserClaims(doc.id, esAdmin ? {admin: true} : {});
+      await getAuth().setCustomUserClaims(doc.id, esAdmin ? {admin: true} : {});
       sincronizados++;
       if (esAdmin) admins++;
     } catch (error) {
@@ -103,7 +107,7 @@ export const sincronizarClaims = onCall({invoker: "public"}, async (request) => 
 export const crearUsuario = onCall({invoker: "public"}, async (request) => {
   await exigirAdmin(request);
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const {correo, password, datos} = request.data ?? {};
   if (!correo || !password || !datos || typeof datos !== "object") {
     throw new HttpsError("invalid-argument", "Faltan campos obligatorios.");
@@ -123,7 +127,7 @@ export const crearUsuario = onCall({invoker: "public"}, async (request) => {
 
   let uid: string;
   try {
-    const userRecord = await admin.auth().createUser({
+    const userRecord = await getAuth().createUser({
       email: correo,
       password,
       displayName: datos.nombreCompleto,
@@ -145,7 +149,7 @@ export const crearUsuario = onCall({invoker: "public"}, async (request) => {
     correo,
     activo: true,
     sinAcceso: false,
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
   };
 
   try {
@@ -153,7 +157,7 @@ export const crearUsuario = onCall({invoker: "public"}, async (request) => {
   } catch (error) {
     // Compensación: sin esto quedaría una cuenta de Auth sin perfil, con el
     // correo tomado y el alta fallando para siempre al reintentar.
-    await admin.auth().deleteUser(uid).catch(() => undefined);
+    await getAuth().deleteUser(uid).catch(() => undefined);
     throw new HttpsError("internal", "No se pudo guardar el empleado. No se creó ninguna cuenta.");
   }
 
@@ -168,7 +172,7 @@ export const crearUsuario = onCall({invoker: "public"}, async (request) => {
 export const darDeBajaUsuario = onCall({invoker: "public"}, async (request) => {
   const uidQuienLlama = await exigirAdmin(request);
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const {uid} = request.data ?? {};
   if (!uid) {
     throw new HttpsError("invalid-argument", "Falta el identificador del usuario.");
@@ -187,7 +191,7 @@ export const darDeBajaUsuario = onCall({invoker: "public"}, async (request) => {
   }
 
   try {
-    await admin.auth().deleteUser(uid);
+    await getAuth().deleteUser(uid);
   } catch (error) {
     // Si la cuenta ya no estaba, igual marcamos el doc como inactivo.
     if ((error as {code?: string}).code !== "auth/user-not-found") {
@@ -197,7 +201,7 @@ export const darDeBajaUsuario = onCall({invoker: "public"}, async (request) => {
 
   await destinoRef.update({
     activo: false,
-    bajaTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+    bajaTimestamp: FieldValue.serverTimestamp(),
   });
 
   return {id: uid};

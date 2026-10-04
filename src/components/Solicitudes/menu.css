@@ -26,7 +26,15 @@
   font-family: Arial, sans-serif;
   max-width: 800px;
   margin: auto;
+  /* La textura se ajusta al ancho de la carta y se ve entera arriba; abajo sigue el
+     color de su borde inferior, así no hay corte. Antes iba a tamaño natural (era de
+     4500 px) y solo se veía su esquina superior izquierda, casi negra. Es de 1600 px:
+     el doble del ancho máximo de la carta, para pantallas de alta densidad. */
+  background-color: #171817;
   background-image: url('./fondoMenu.webp');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% auto;
   color: white;
   padding: 20px;
   border-radius: 10px;

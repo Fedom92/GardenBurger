@@ -1,5 +1,5 @@
 import Nav from "./Nav";
-import { FaAngleLeft, FaTimes, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaHistory, FaChartBar, FaStore, FaClock, FaMoneyCheckAlt, FaTachometerAlt } from 'react-icons/fa';
+import { FaAngleLeft, FaTimes, FaUsers, FaUser, FaSignOutAlt, FaHamburger, FaMotorcycle, FaCashRegister, FaTools, FaCartPlus, FaHistory, FaChartBar, FaChartLine, FaStore, FaClock, FaMoneyCheckAlt, FaTachometerAlt } from 'react-icons/fa';
 import { useState, useEffect, createContext } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -68,13 +68,13 @@ const Navigation = () => {
         const rutasQueAbrenSubmenu = ["/miPerfil", "/admin"];
         setOpenConfig(rutasQueAbrenSubmenu.includes(location.pathname));
 
-        const rutasQueAbrenSubmenuEstadisticas = ["/estadisticas-viejas"];
+        const rutasQueAbrenSubmenuEstadisticas = ["/estadisticas", "/estadisticas-viejas"];
         setOpenEstadisticas(rutasQueAbrenSubmenuEstadisticas.includes(location.pathname));
 
         // Pantallas anchas: la barra arranca colapsada para no comerles ancho.
         // Va por ruta y no en el onClick del link, si no entrar por URL directa
         // o recargar la dejaba desplegada.
-        const rutasConBarraColapsada = ["/estadisticas-viejas"];
+        const rutasConBarraColapsada = ["/estadisticas", "/estadisticas-viejas"];
         if (rutasConBarraColapsada.includes(location.pathname)) setIsActive(true);
     }, [userData.rol, location.pathname]);
 
@@ -197,6 +197,7 @@ const Navigation = () => {
                                         <Nav title="Estadísticas" Icon={FaChartBar} />
                                     </div>
                                     <div className="sidebar-content">
+                                        <NavLink to="/estadisticas" className={claseLink}><Nav title="Generales" Icon={FaChartLine} /></NavLink>
                                         <NavLink to="/estadisticas-viejas" className={claseLink}><Nav title="Histórico" Icon={FaHistory} /></NavLink>
                                     </div>
                                 </div>

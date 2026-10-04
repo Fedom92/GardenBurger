@@ -1,6 +1,6 @@
 // pos_hooks/useRevisarSolicitud.js
 import { useCallback } from "react";
-import { updateDoc, deleteField } from "firebase/firestore";
+import { updateDoc, deleteField, serverTimestamp } from "firebase/firestore";
 import { docSucursal } from "../../../firebaseConfig/firebase";
 import Swal from "sweetalert2";
 import { useAuth } from "../../../context/AuthContext";
@@ -21,6 +21,7 @@ export const liberarSolicitud = async (solicitudId, cajeroID) => {
         await updateDoc(docSucursal("pedidos", solicitudId), {
             cajeroRevisaID: deleteField(),
             cajeroRevisa: deleteField(),
+            cajeroRevisaTimestamp: deleteField(),
         });
     } catch (error) {
         // permission-denied = la solicitud ya es de otro cajero. No hay nada que
@@ -40,9 +41,13 @@ const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
             // saber que ya la esta cargando alguien. La regla asignacionValida() de
             // firestore.rules rechaza la escritura si otro cajero se la asigno antes
             // de que este listener se enterara: es lo que cierra la carrera.
+            //
+            // La hora de la toma es la que la libera: pasados MINUTOS_SOLICITUD_TOMADA
+            // sin terminarla, cualquier otro cajero puede tomarla (y la regla lo deja).
             await updateDoc(docSucursal("pedidos", solicitud.id), {
                 cajeroRevisaID: userData.id,
                 cajeroRevisa: userData.nombreCompleto,
+                cajeroRevisaTimestamp: serverTimestamp(),
             });
 
             // Llenar los campos del formulario con los datos de la solicitud

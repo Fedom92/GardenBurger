@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom';
-import logo from '../../img/logo_negro3.png';
+import logo from '../../img/logo_negro.webp';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
-import whatsapp from "../../img/whatsapp.webp";
-import { FaCartPlus } from 'react-icons/fa';
+import { FaCartPlus, FaWhatsapp } from 'react-icons/fa';
 import { Link } from "react-router-dom";
 import { ESTADOS, ENVIOS_LOCALES, FLUJO_PUB_ESTADOS, getCurrentStepIndex } from '../../Utils/Constantes.jsx';
 import Footer from './Footer';
@@ -165,8 +164,11 @@ export const PaginaDetalle = () => {
                 type="button"
                 className="fab-whatsapp"
                 onClick={enviarMensajeWSP}
+                aria-label="Escribir por WhatsApp"
               >
-                <img src={whatsapp} alt="WhatsApp" />
+                {/* El ícono y no una imagen: whatsapp.webp pesaba 360 KB y lo bajaba
+                    cada cliente que miraba su pedido. */}
+                <FaWhatsapp className="fab-whatsapp-icono" aria-hidden="true" />
               </button>
             )}
           </>

@@ -9,8 +9,9 @@ import './menu.css';
 
 
 const Menu = () => {
-  // html2pdf (y jspdf debajo) solo sirven para este botón y arrastran un advisory
-  // crítico: se cargan recién al tocarlo, no con la página pública.
+  // html2pdf (y jspdf debajo) solo sirven para este botón y pesan: se cargan recién
+  // al tocarlo, no con la página pública. El advisory crítico de jspdf se cerró al
+  // pasar a html2pdf 0.14, que trae jspdf 4 (04-10-2026).
   const exportarPDF = async () => {
     try {
       const { default: html2pdf } = await import('html2pdf.js');
