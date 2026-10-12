@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, workflow]
 aliases: [Pipeline, Recorrido del pedido]
-actualizado: 2026-10-03
+actualizado: 2026-10-08
 ---
 
 # Flujo del pedido
@@ -28,8 +28,8 @@ Caja.guardarBD ──→  CONFIRMADO          (efectivo)
                            │
                            │  F2 → PendientesMP: el cajero coteja la transferencia
                            ↓
-                     CONFIRMADO
-                           ↓
+                     CONFIRMADO         (sin ítems de cocina —solo bebidas— no para acá:
+                           ↓             saltea la cocina y va directo a ATP / DELIVERY)
                    COCINA               PedidosEspera → "Empezar a Cocinar"
                            ↓
                    PedidosCocinando → "Cocinados TODOS"
@@ -60,8 +60,21 @@ estado:
 - Eliminar un ticket lo saca, y lo hace **solo el encargado**, al fiscalizar el cierre.
 
 > [!important] El ruteo de cocina define todo lo que sigue
-> `PedidosCocinando` decide entre `ATP` y `DELIVERY` mirando `pedido.envio.zona_envio` contra
-> `ENVIOS_LOCALES`. Esa es la **fuente de verdad**, no lo que eligió el cliente en la web.
+> `destinoPedidoListo(envio)` (en `Utils/ruteoPedido.js`) decide entre `ATP` y `DELIVERY` mirando
+> `pedido.envio.zona_envio` contra `ENVIOS_LOCALES`. Esa es la **fuente de verdad**, no lo que
+> eligió el cliente en la web. Lo usan `PedidosCocinando` al terminar y, para los pedidos sin
+> nada que cocinar, la Caja y `PendientesMP` al confirmar el cobro.
+
+> [!note] Un pedido sin ítems de cocina no pasa por la cocina (08-10-2026)
+> Si el carrito no tiene nada que cocinar —hoy, solo bebidas: lo define `getItemsCocina()`—, al
+> quedar cobrado va **directo** a `ATP` o `DELIVERY` en vez de a `CONFIRMADO`. Lo decide
+> `estadoAlConfirmar()` en los dos lugares donde un pedido queda cobrado: `Caja.guardarBD`
+> (efectivo) y `PendientesMP.aprobarPedido` (MP / dividido, al cotejar). Un `PENDIENTEMP` sigue
+> esperando el cotejo como cualquier otro. Antes caía en la espera de la cocina como "Sin items de
+> cocina" y el cocinero tenía que mandarlo a cocinar y marcarlo cocinado para destrabarlo.
+>
+> Esos pedidos no tienen `cocinero*` ni `cocinaFinTimestamp`. Y **no tienen ticket impreso**: el
+> ticket del cliente solo se imprime desde la cocina. Ver [[Deuda tecnica#Funcionalidad pendiente]].
 
 ## Quién escribe qué
 
@@ -70,8 +83,8 @@ estado:
 | Cliente arma pedido web | `Crearsolicitud` | doc nuevo `PENDIENTE`, `clienteTimestamp`, `mensajeWsp`, `cliente{}` |
 | Cajero toma la solicitud | `useRevisarSolicitud` | `cajeroRevisaID`, `cajeroRevisa`, `cajeroRevisaTimestamp` |
 | Cajero cancela el ticket | `Caja.cancelarTicket` | borra `cajeroRevisa*` (solo si es suyo) |
-| Cajero guarda | `Caja.guardarBD` | todo el pedido + `codigo` + estado; **borra** `cajeroRevisa*`. El arqueo no se escribe: se calcula |
-| Confirma MP | `PendientesMP.aprobarPedido` | `estado: CONFIRMADO` + `cajeroApruebaMP*` |
+| Cajero guarda | `Caja.guardarBD` | todo el pedido + `codigo` + estado (`PENDIENTEMP`, `CONFIRMADO`, o `ATP`/`DELIVERY` si no hay nada que cocinar); **borra** `cajeroRevisa*`. El arqueo no se escribe: se calcula |
+| Confirma MP | `PendientesMP.aprobarPedido` | `estado: CONFIRMADO` (o `ATP`/`DELIVERY` si no hay nada que cocinar) + `cajeroApruebaMP*` |
 | Rechaza MP | `PendientesMP.rechazarPedido` | `estado: CANCELADO` — con eso sale del arqueo |
 | Manda a cocinar | `PedidosEspera.cocinar` | `estado: COCINA` + `cocinero*` |
 | Marca cocinado | `PedidosCocinando` | `estado: ATP\|DELIVERY` + `cocinaFinTimestamp` |

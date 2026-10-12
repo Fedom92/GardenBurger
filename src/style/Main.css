@@ -282,6 +282,57 @@ tbody tr {
   background-color: gray;
 }
 
+/* Botón de contorno con el color primario de la paleta, para los que se prenden y
+   apagan (los días de atención de Sucursales). Son las mismas variables que usan
+   los btn-outline-* de Bootstrap 5.3: prendido va relleno; el hover, en gris, para
+   que no se confunda con prendido. */
+.btn-outline-primario {
+  --bs-btn-color: var(--color-primario-normal);
+  --bs-btn-border-color: var(--color-primario-normal);
+  --bs-btn-hover-color: var(--color-primario-normal);
+  --bs-btn-hover-bg: var(--color-secundario);
+  --bs-btn-hover-border-color: var(--color-primario-normal);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--color-primario-normal);
+  --bs-btn-active-border-color: var(--color-primario-normal);
+  --bs-btn-focus-shadow-rgb: 39, 39, 39;
+}
+
+/* Pestañas del Panel Admin. La regla global `.nav` (más abajo) es la de los ítems
+   del menú lateral, y también le cae al `.nav-tabs` de Bootstrap: padding, bordes
+   redondeados y overflow hidden la dejaban encajonada. Acá se deshace, y la activa
+   va rellena con el color primario para que se note de lejos. */
+.nav.tabs-admin {
+  gap: .25rem;
+  padding: 0;
+  border-radius: 0;
+  overflow: visible;
+  cursor: default;
+  border-bottom: 2px solid var(--color-primario-normal);
+}
+
+.nav.tabs-admin:hover {
+  background-color: transparent;
+}
+
+.nav-tabs.tabs-admin .nav-link {
+  color: var(--color-primario-normal);
+  font-weight: 500;
+  border: none;
+  border-radius: .5rem .5rem 0 0;
+  padding: .6rem 1.5rem;
+  margin-bottom: 0;
+}
+
+.nav-tabs.tabs-admin .nav-link:hover {
+  background-color: var(--color-secundario);
+}
+
+.nav-tabs.tabs-admin .nav-link.active {
+  background-color: var(--color-primario-normal);
+  color: #fff;
+}
+
 .nav-borders .nav-link.active {
   color: #0061f2;
   border-bottom-color: #0061f2;

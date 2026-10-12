@@ -7,8 +7,8 @@ import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
 import VerPedidoModal from './VerPedidoModal';
 import moment from "moment";
-import { ENVIOS_LOCALES, ESTADOS } from "../../Utils/Constantes";
-import { getItemsCocina } from "./cocina_hooks/useItemsCocina";
+import { ESTADOS } from "../../Utils/Constantes";
+import { getItemsCocina, destinoPedidoListo } from "../../Utils/ruteoPedido";
 import { avisarSinConexion } from "../../Utils/avisos";
 
 const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
@@ -95,12 +95,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
             pedidosCocinando.forEach(pedido => {
                 const pedidoRef = docSucursal("pedidos", pedido.id);
                 // Es la decision mas consecuente del pipeline: mostrador o reparto.
-                // Va por includes() como el resto del proyecto, no por indices fijos:
-                // una tercera zona local rompia el ruteo en silencio.
-                const nuevoEstado = ENVIOS_LOCALES.includes(pedido.envio?.zona_envio)
-                    ? ESTADOS.ATP
-                    : ESTADOS.DELIVERY;
-                batch.update(pedidoRef, { estado: nuevoEstado, cocinaFinTimestamp: serverTimestamp() });
+                batch.update(pedidoRef, { estado: destinoPedidoListo(pedido.envio), cocinaFinTimestamp: serverTimestamp() });
             });
 
             await batch.commit();

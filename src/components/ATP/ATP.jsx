@@ -80,12 +80,14 @@ const ATP = () => {
             header: "Acciones",
             cell: ({ row }) => {
                 const pedido = row.original;
-                const esRetira = pedido.envio?.zona_envio === ENVIOS_LOCALES[0];
+                // Retira y Espera Afuera por igual: el de afuera puede no estar a la
+                // vista. Sin telefono no hay a quien escribirle —en los locales no
+                // es obligatorio, ver validarPedido—.
                 const whatsappUrl = `https://api.whatsapp.com/send?phone=549${pedido.telefono}&text=${encodeURIComponent(`Hola ${pedido.nombre}, tu pedido #${pedido.codigo} está listo para retirar.`)}`;
 
                 return (
                     <div className="d-flex justify-content-center gap-1">
-                        {esRetira && (
+                        {pedido.telefono && (
                             <a
                                 href={whatsappUrl}
                                 target="_blank"

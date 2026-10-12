@@ -175,14 +175,16 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
                     </div>
                 )}
 
-                {/* Buscador general por texto */}
+                {/* Buscador general por texto. ms-auto: siempre a la derecha, haya filtros
+                    o no. Sin filtros quedaba solo y el justify-content-between lo dejaba a
+                    la izquierda. */}
                 {camposBusqueda.length > 0 && (
                     <input
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Buscar..."
-                        className="form-control w-auto p-2"
+                        className="form-control w-auto p-2 ms-auto"
                     />
                 )}
             </div>

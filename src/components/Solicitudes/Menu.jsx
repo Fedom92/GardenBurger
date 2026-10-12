@@ -12,9 +12,11 @@ const Menu = () => {
   // html2pdf (y jspdf debajo) solo sirven para este botón y pesan: se cargan recién
   // al tocarlo, no con la página pública. El advisory crítico de jspdf se cerró al
   // pasar a html2pdf 0.14, que trae jspdf 4 (04-10-2026).
+  // Va el build .min: el principal (dist/html2pdf.js) apunta a source maps de sus
+  // dependencias que el paquete no trae, y CRA tira un warning por cada uno.
   const exportarPDF = async () => {
     try {
-      const { default: html2pdf } = await import('html2pdf.js');
+      const { default: html2pdf } = await import('html2pdf.js/dist/html2pdf.min.js');
       const elemento = document.getElementById('menu');
       await html2pdf().from(elemento).set({
         margin: 10,

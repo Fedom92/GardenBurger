@@ -41,7 +41,7 @@ const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinE
     // Texto plano para pegar en el WhatsApp del admin.
     const copiarVueltos = async () => {
         const lineas = vueltos.map((v) =>
-            `${v.codigo} · ${v.nombre} · ${fmtPesos(v.monto)}${v.estimado ? " (estimado)" : ""} · ${v.alias ? `alias: ${v.alias}` : "sin alias"}`);
+            `${v.codigo} · ${v.nombre} · ${fmtPesos(v.monto)}${v.estimado ? " (a confirmar)" : ""} · ${v.alias ? `alias: ${v.alias}` : "sin alias"}`);
         const texto = [`Vueltos a transferir — ${fecha}`, ...lineas, `Total: ${fmtPesos(totalVueltos)}`].join("\n");
         try {
             await navigator.clipboard.writeText(texto);
@@ -75,7 +75,7 @@ const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinE
                                         <i className="fa fa-money-bill-wave me-1"></i> Efectivo
                                     </div>
                                     <div className="card-body">
-                                        <p className="fs-3 fw-bolder mb-3">{fmtPesos(totalEfectivo)}</p>
+                                        <p className="fs-2 fw-bolder mb-3 text-center">{fmtPesos(totalEfectivo)}</p>
                                         <div className="d-flex justify-content-between border-top pt-2">
                                             <span>Retira / Espera Afuera</span>
                                             <strong>{fmtPesos(efectivoLocal)}</strong>
@@ -94,7 +94,7 @@ const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinE
                                         <i className="fa fa-credit-card me-1"></i> Mercado Pago
                                     </div>
                                     <div className="card-body">
-                                        <p className="fs-3 fw-bolder mb-3">{fmtPesos(mp)}</p>
+                                        <p className="fs-2 fw-bolder mb-3 text-center text-center">{fmtPesos(mp)}</p>
                                         <div className="d-flex justify-content-between border-top pt-2">
                                             <span className="fw-bold">Total del día</span>
                                             <strong className="fw-bolder">{fmtPesos(totalEfectivo + mp)}</strong>
@@ -134,20 +134,20 @@ const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinE
 
                         {deliverys.length > 0 && (
                             <div className="mt-4">
-                                <h6 className="fw-bold border-bottom pb-2">Deliverys</h6>
+                                <h6 className="fw-bold border-bottom pb-2">Liquidación Deliverys</h6>
                                 {registros === null && (
                                     <small className="d-block text-danger mb-1">
                                         No se pudo leer la asistencia de la noche: el total muestra solo los envíos.
                                     </small>
                                 )}
-                                <table className="table table-sm mb-0">
+                                <table className="table table-sm align-middle text-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Repartidor</th>
-                                            <th className="text-center">Viajes</th>
-                                            <th className="text-end">Envíos</th>
-                                            <th className="text-end" title="Horas × valor hora − descuentos, de la asistencia de la noche">Base</th>
-                                            <th className="text-end">A pagar</th>
+                                            <th>Delivery</th>
+                                            <th>Viajes</th>
+                                            <th>Envíos</th>
+                                            <th title="Horas × valor hora − descuentos, de la asistencia de la noche">Base</th>
+                                            <th>A pagar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -156,14 +156,14 @@ const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinE
                                         {deliverys.map((d) => (
                                             <tr key={d.id}>
                                                 <td>{d.nombre}</td>
-                                                <td className="text-center">{d.cantidadPedidos || 0}</td>
-                                                <td className="text-end">{fmtPesos(d.totalEnvios)}</td>
-                                                <td className="text-end">
+                                                <td>{d.cantidadPedidos || 0}</td>
+                                                <td>{fmtPesos(d.totalEnvios)}</td>
+                                                <td>
                                                     {d.base !== null
                                                         ? fmtPesosRedondeado(d.base)
                                                         : <span className="text-danger small">{registros === null ? "—" : "falta la asistencia"}</span>}
                                                 </td>
-                                                <td className="text-end fw-bold">{fmtPesosRedondeado(d.total)}</td>
+                                                <td className="fw-bold">{fmtPesosRedondeado(d.total)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -179,12 +179,12 @@ const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinE
                                         <i className="fa-regular fa-copy me-1"></i> Copiar
                                     </button>
                                 </div>
-                                <table className="table table-sm mb-0">
+                                <table className="table table-sm align-middle text-center mb-0">
                                     <thead>
                                         <tr>
                                             <th>Ticket</th>
                                             <th>Cliente</th>
-                                            <th className="text-end">Vuelto</th>
+                                            <th>Vuelto</th>
                                             <th>Alias</th>
                                         </tr>
                                     </thead>
@@ -193,10 +193,18 @@ const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinE
                                             <tr key={v.id}>
                                                 <td>{v.codigo}</td>
                                                 <td>{v.nombre}</td>
-                                                <td className="text-end">
+                                                <td>
                                                     {fmtPesos(v.monto)}
-                                                    {/* El repartidor todavía no volvió: es lo que anunció el cliente. */}
-                                                    {v.estimado && <small className="d-block text-body-secondary">estimado</small>}
+                                                    {/* El repartidor todavía no cargó con cuánto le pagaron: el
+                                                        monto sale de lo que el cliente anunció al pedir. */}
+                                                    {v.estimado && (
+                                                        <small
+                                                            className="d-block text-body-secondary"
+                                                            title="Deliverys todavía no confirmó el pago."
+                                                        >
+                                                            (a confirmar)
+                                                        </small>
+                                                    )}
                                                 </td>
                                                 <td>{v.alias || <span className="text-body-secondary">sin alias</span>}</td>
                                             </tr>

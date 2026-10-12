@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, referencia]
 aliases: [Vocabulario, Terminos, arqueo, jornada comercial, ATP, solicitud, combo, PENDIENTEMP, envio local, pago dividido, horario especial]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Glosario
@@ -38,6 +38,7 @@ Una línea cada una y el enlace a la nota que la desarrolla.
 | **`PENDIENTEMP`** | Estado de un pedido cobrado por MP o pago dividido que **espera que el cajero coteje la transferencia** en su Mercado Pago. El sistema no verifica nada: lo mira una persona. → [[Modelo de estados]] |
 | **Horario especial** | Pedido encargado para más tarde. Lo raro: `timestamp` deja de ser cuándo se cargó y pasa a ser **a qué hora tiene que estar listo**. → [[Reglas de negocio#Horario especial]] |
 | **Envío local** | Las zonas en las que el cliente viene al local: **"Retira"** y **"Espera Afuera"** (la constante `ENVIOS_LOCALES`). Deciden tres cosas: si el pedido va a mostrador o a reparto, cómo se arquea el efectivo, y qué campos pide la Caja. |
+| **Ítems de cocina** | Lo que la cocina prepara: todo el carrito menos las bebidas (`getItemsCocina()`). Un pedido **sin** ítems de cocina no pasa por la cocina: al quedar cobrado va directo a ATP o Delivery. → [[Flujo del pedido#Pipeline]] |
 | **Zona de envío** | El documento de `envios` que define distancia y costo. La zona —y no lo que eligió el cliente— es lo que decide el ruteo de cocina. |
 | **Foto del arqueo** | El documento de `resumenDiario` de una jornada **cerrada**: el arqueo calculado una vez y guardado. No se recalcula solo; solo se borra si alguien corrige un pedido de esa jornada. → [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]] |
 | **Estadísticas Generales** | Las estadísticas completas del sistema nuevo (`/estadisticas`), con el aspecto del Histórico. Leen las fotos de cada noche, no los pedidos. → [[Mapa de archivos]] |
@@ -70,7 +71,8 @@ Una línea cada una y el enlace a la nota que la desarrolla.
 | Término | Qué es |
 |---|---|
 | **`menu.json`** | Una **foto** del catálogo publicada en Storage. Es lo que ve el cliente en la web, y por eso puede estar desactualizado respecto de Firestore. Ahorra todas las lecturas del tráfico público. → [[Decisiones tecnicas#`menu.json` depende de tres capas]] |
-| **Publicar menú** | El botón de Productos que regenera `menu.json`. Mientras haya cambios sin publicar, **parpadea**. Hasta que no se toca, el cliente sigue viendo los precios viejos. El JSON lleva también las sucursales, para el pie del menú. |
+| **Publicar menú** | El botón de Productos que regenera `menu.json`. Mientras haya cambios sin publicar, **parpadea**. Hasta que no se toca, el cliente sigue viendo los precios viejos. El JSON lleva también las sucursales, pero esas **se publican solas** al guardarlas desde el Panel Admin (12-10-2026): el botón quedó para el catálogo. |
+| **Excepción de horario** | Una noche en que la web de una sucursal no sigue su horario de siempre: un feriado que se abre (con el horario de siempre) o una noche que se cierra. Vale para esa jornada sola. La de cierre lleva motivo, y el admin elige si se ve en la web; la de apertura, no. → [[Reglas de negocio#Excepciones: feriados y noches puntuales]] |
 | **Variante** | Las versiones de una hamburguesa (SIMPLE / DOBLE / TRIPLE). Cada una es un producto propio en Firestore; la web las agrupa para mostrarlas juntas. |
 
 ## Palabras del código

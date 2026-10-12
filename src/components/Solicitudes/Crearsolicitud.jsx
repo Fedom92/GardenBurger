@@ -15,7 +15,7 @@ import { CATEGORIAS_HAMBURGUESA, ENVIOS_LOCALES, ESTADOS, METODOS_PAGO } from ".
 import Footer from "./Footer";
 import { fmtPesos } from "../../Utils/formato";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
-import { webRecibePedidos, textoHorarioWeb } from "../../Utils/fechaComercial";
+import { webRecibePedidos, textoHorarioWeb, textoExcepcionWeb } from "../../Utils/fechaComercial";
 import WebCerrada from "./WebCerrada";
 import { fetchMenuPublico } from "../../Utils/menuPublico";
 
@@ -67,7 +67,11 @@ const CrearSolicitud = () => {
 
   const avisarCerrada = (datosSucursal) => {
     const horario = textoHorarioWeb(datosSucursal);
-    setErrorEnvio(horario ? `Ya no estamos tomando pedidos. Tomamos pedidos ${horario}.` : "Ya no estamos tomando pedidos.");
+    // Si hoy hay una excepción, explica mejor que el horario de siempre.
+    const excepcion = textoExcepcionWeb(datosSucursal);
+    setErrorEnvio(excepcion
+      ? `Ya no estamos tomando pedidos. ${excepcion}.`
+      : horario ? `Ya no estamos tomando pedidos. Tomamos pedidos ${horario}.` : "Ya no estamos tomando pedidos.");
   };
 
   const comprar = (data) => ejecutar(async () => {

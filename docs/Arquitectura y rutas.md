@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, arquitectura]
 aliases: [Rutas, Guards, Multi-sucursal]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Arquitectura y rutas
@@ -42,7 +42,7 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 | `/menu` | `Menu` | **pública**, pero sin links: todavía no está terminado |
 | `/ver-pedido/:sucursal/:id` | `PaginaDetalle` | **pública**; el link vence a las 48 h |
 | `/` | `Login` | staff (sin guard) |
-| `/admin` | `PanelAdmin` | `RequireAuth` + `RequireAdmin` |
+| `/admin` | `PanelAdmin` | `RequireAuth` + `RequireAdmin`. En pestañas desde el 12-10-2026: `?tab=personal` (por defecto), `?tab=sucursales`, `?tab=envios` |
 | `/productos` | `Productos` | `RequireAuth` + `RequireAdmin` |
 | `/clientes` | `Clientes` | `RequireAuth` + `RequireAdmin` |
 | `/estadisticas` | `EstadisticasGenerales` | `RequireAuth` + `RequireAdmin`: las estadísticas del sistema nuevo, desde las fotos |
@@ -76,8 +76,14 @@ Los valores de rol viven en `.env` (`REACT_APP_admin`, `_encargado`, `_cajero`, 
 
 `ROLES` en `Constantes.jsx` reúne **todo lo que se sabe de cada rol** en un solo objeto: la clave
 es el valor crudo (el del `.env`, ilegible) y el valor trae `nombre` —cómo se muestra—,
-`rutaInicial` —dónde aterriza al loguearse—, `llevaMoto` y `sinAcceso`. Un rol que no figure cae en `/miPerfil`
-y se muestra como `—`.
+`nroOrden` —el orden en selects y tablas: Admin, Encargado, Cajero, Cocina, ATP, Jefe de
+Deliverys, Delivery—, `rutaInicial` —dónde aterriza al loguearse—, `editable`, `llevaMoto` y
+`sinAcceso`. Un rol que no figure cae en `/miPerfil` y se muestra como `—`.
+
+`editable` (12-10-2026) dice si el admin puede asignar el rol al dar de alta o editar un
+empleado; sin declarar, sí. Solo Admin lo declara en `false`. De ahí sale `ROLES_EDITABLES`, ya ordenado, que usan los selects de
+`CrearEmpleado` y `Personal`: antes cada uno tenía su lista escrita a mano. Admin no es editable:
+se crea a mano en la Consola. Para ordenar por rol, `ordenDeRol(rol)`.
 
 `MODULOS_POR_ROL` en `Navigation.jsx` decide qué ve cada rol en el sidebar. Es **cosmético**:
 la barrera real son los guards.

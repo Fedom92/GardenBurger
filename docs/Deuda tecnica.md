@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, deuda, auditoria]
 aliases: [Pendientes, Que falta]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Deuda técnica
@@ -180,9 +180,19 @@ hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó e
   dueño (04-10-2026): algún día se rehace entera; hasta entonces, arreglos puntuales. El mapa para
   ese día —qué hace cada pieza, el contrato con la Caja, los bugs conocidos (los dos que afectaban
   a la cocina ya se arreglaron, el 04-10-2026) y una propuesta de orden— está en [[Web publica]].
+- **Que el encargado pueda cerrar la web de su sucursal.** Las excepciones de horario
+  (12-10-2026) son solo del admin: escribir en `sucursales` lo es en las reglas, y ser encargado
+  no es un claim. Haría falta un claim `encargado` y una regla que le deje tocar solo
+  `excepcionesWeb` de su sucursal. Ver [[Reglas de negocio#Excepciones: feriados y noches puntuales]].
 - **CRM de clientes.** El módulo Clientes (ya solo del admin) tendrá su propio CRM. Sin diseñar.
 - **Menú público** (`/menu`). Su fondo ya quedó optimizado (03-10-2026).
-- **Ticket impreso.**
+- **Ticket impreso.** Hoy el ticket del cliente solo se imprime desde la cocina
+  (`PedidosCocinando` → `TicketImpresion`). Desde el 08-10-2026 un pedido **sin ítems de cocina**
+  (solo bebidas) saltea la cocina, así que **sale sin ticket**. Se aceptó así por ahora: en la
+  práctica esos pedidos son Retira o Espera Afuera. Si aparece un delivery de solo bebidas y el
+  repartidor necesita el papel, las opciones evaluadas son imprimir desde la Caja al crear el
+  pedido, o un botón Imprimir en ATP y en Deliverys (las dos, 0 lecturas). Ver
+  [[Flujo del pedido#Pipeline]].
 
 Lo que estaba acá y ya se hizo: Estadísticas Generales, eliminar pedidos desde el Historial y la
 liberación de solicitudes web trabadas (03-10-2026). Ver [[Mapa de archivos]] y
@@ -190,8 +200,11 @@ liberación de solicitudes web trabadas (03-10-2026). Ver [[Mapa de archivos]] y
 
 ## Sin tests
 
-**No hay un solo test automatizado**, y la verificación del proyecto es manual por decisión del
-dueño. La lógica pura se verifica a mano con casos cada vez que se toca:
+**Hay una sola batería**, desde el 12-10-2026: `Utils/fechaComercial.test.js`, con los bordes
+del horario web y las excepciones (`npm test`). Nació porque esos casos —el corte de las 23, el
+lunes a las 00:30, un feriado— solo se veían esperando la noche real. Fuera de eso, la
+verificación es manual por decisión del dueño. La lógica pura se verifica a mano con casos cada
+vez que se toca:
 
 - `calcularHoras` — el cruce de medianoche (19:00 → 02:00 = 7 h, no −17).
 - `agregarLiquidacion` — el bruto acumulado día por día, no `horasTotales × unValorHora`.

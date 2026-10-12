@@ -38,9 +38,9 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
     // en efectivo, así que no hay diferencia.
     const diferencia = pagaCon > aCobrar ? pagaCon - aCobrar : 0;
     const textoDiferencia = p.destinoVuelto === DESTINO_VUELTO.VUELTO.key
-        ? <>Vuelto: <strong>{fmtPesos(diferencia)}</strong> (lo trae el repartidor)</>
+        ? <>Vuelto: <strong>{fmtPesos(diferencia)}</strong></>
         : p.destinoVuelto === DESTINO_VUELTO.PROPINA.key
-            ? <>Propina: <strong>{fmtPesos(diferencia)}</strong> (se la queda el repartidor)</>
+            ? <>Propina: <strong>{fmtPesos(diferencia)}</strong></>
             : <>Diferencia: <strong>{fmtPesos(diferencia)}</strong></>;
 
     const confirmarEntrega = () => {
@@ -82,19 +82,21 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                             )}
                         </p>
                         <p className="mb-1">
-                            <strong>Dirección:</strong> {p.direccion || "—"}
+                            <strong>Dirección:</strong> <span className="text-primary fw-bold">{p.direccion || "—"}</span>
                         </p>
                         {p.entreCalles && (
-                            <p className="mb-1"><strong>Entre calles:</strong> {p.entreCalles}</p>
+                            <p className="mb-1"><strong>Entre calles:</strong> <span className="text-primary fw-semibold">{p.entreCalles}</span></p>
                         )}
                         {p.observaciones && (
                             <p className="mb-1">
                                 <strong>Observaciones:</strong>{" "}
-                                <span className="text-warning fw-semibold">{p.observaciones}</span>
+                                <span className="fw-semibold">{p.observaciones}</span>
                             </p>
                         )}
-                        <p className="mb-1"><strong>Zona:</strong> {p.envio?.zona_envio}</p>
-                        <p className="mb-1"><strong>Costo envío:</strong> {fmtPesos(p.envio?.costo_envio)}</p>
+                        <div className="d-flex">
+                            <p className="mb-1"><strong>Zona:</strong> {p.envio?.zona_envio} km</p>
+                            <p className="mb-1 mx-3"><strong>Costo envío:</strong> {fmtPesos(p.envio?.costo_envio)}</p>
+                        </div>
                     </div>
 
                     {/* Cobro: lo único que le importa al repartidor en la puerta */}
@@ -105,16 +107,13 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                         {esMP ? (
                             <div className="border rounded p-2">
                                 <i className="fa-solid fa-circle-check me-1"></i>
-                                Pagado por Mercado Pago. <strong>No se cobra nada.</strong>
+                                Pagado por MP.
                             </div>
                         ) : (
                             <div className="border border-dark rounded p-2">
                                 <div className="fs-5">
                                     Cobrar en efectivo: <strong>{fmtPesos(aCobrar)}</strong>
                                 </div>
-                                {esDividido && (
-                                    <small className="d-block">Pago dividido: solo la parte en efectivo.</small>
-                                )}
                                 {pagaCon > 0 && (
                                     <div className="mt-1">
                                         Paga con: <strong>{fmtPesos(pagaCon)}</strong>

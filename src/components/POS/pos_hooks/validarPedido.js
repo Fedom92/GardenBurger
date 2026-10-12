@@ -1,5 +1,5 @@
 import Swal from "sweetalert2";
-import { METODOS_PAGO } from "../../../Utils/Constantes";
+import { METODOS_PAGO, ENVIOS_LOCALES } from "../../../Utils/Constantes";
 
 // Devuelve el mensaje de error o null. Lo usa el modal PagoDividido al confirmar
 // y validarPedido al guardar: el cajero puede seguir editando el carrito despues
@@ -13,7 +13,11 @@ export const errorPagoDividido = (montoEfectivo, totalBase) => {
 
 // `pideVuelto` lo calcula la Caja: delivery en efectivo que paga con más del total.
 const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo, pideVuelto = false }) => {
-    if (data.telefono.length < 10) {
+    // En Retira y Espera Afuera el telefono no es obligatorio: el cliente esta en
+    // el local. Si el cajero lo carga igual, tiene que ser valido.
+    const esLocal = ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio);
+    const telefono = data.telefono || "";
+    if (!(esLocal && telefono === "") && telefono.length < 10) {
         Swal.fire({
             title: 'Advertencia',
             text: 'El teléfono debe poseer 10 dígitos',

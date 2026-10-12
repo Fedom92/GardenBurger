@@ -1,7 +1,7 @@
 import React from "react";
 import moment from "moment";
 import { Modal } from "react-bootstrap";
-import { getItemsCocina } from "./cocina_hooks/useItemsCocina";
+import { getItemsCocina } from "../../Utils/ruteoPedido";
 
 const VerPedidoModal = ({ pedido, onClose }) => {
     if (!pedido) return null;

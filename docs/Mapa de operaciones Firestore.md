@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, costos]
 aliases: [Costos, Lecturas y escrituras]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Mapa de operaciones Firestore
@@ -41,7 +41,7 @@ actualizado: 2026-10-03
 | `Clientes.jsx` | teléfono exacto, prefijo de nombre o sucursal | **por búsqueda**, no al entrar | con tope | ✅ era la colección entera |
 | `AuthContext.fetchUserData` | `usuarios/{uid}` | **1 por login** | 1 | ✅ `login()` y `onAuthStateChanged` comparten la promesa en vuelo |
 | `MiPerfil` | — | — | **0** | ✅ consume `useAuth()` |
-| `useCliente.registrarCliente` | `clientes` con `where telefono` + `limit(1)`, y después **1 escritura siempre** (crea o actualiza la ficha + campos CRM) | por pedido guardado | 1 read + 1 write | antes la escritura era solo para clientes nuevos |
+| `useCliente.registrarCliente` | `clientes` con `where telefono` + `limit(1)`, y después **1 escritura siempre** (crea o actualiza la ficha + campos CRM) | por pedido guardado con teléfono (un Retira / Espera Afuera sin teléfono no la llama) | 1 read + 1 write | antes la escritura era solo para clientes nuevos |
 | `usePendientes` | 2 listeners con `limit(1)` | permanentes en Caja | 1 c/u | ✅ correcta y barata |
 | `PendientesSolicitudes` | listener de `estado==PENDIENTE` | mientras el modal está abierto | pendientes | se solapa con `usePendientes`, pero son queries distintas |
 | `PendientesMP` | listener de `estado==PENDIENTEMP` | ídem | pendientes | ídem |
@@ -53,10 +53,12 @@ actualizado: 2026-10-03
 | `EstadisticasGenerales` | las **fotos** del período, por sucursal; la evolución anual, de la primera noche con pedidos a ayer | al tocar Ver / Cargar evolución | 1 por noche y sucursal | ✅ no lee pedidos; las noches sin foto se calculan una vez |
 | `HistorialPedidos` | pedidos por rango de fechas, **sin filtro de estado** | por búsqueda | según rango | **solo el admin**: sin `limit` a propósito, sabe lo que pide |
 | `Productos` | productos (ocultos incluidos) y categorías, por **listener** | mientras la pantalla está abierta | acotado | ✅ volver a entrar trae solo lo que cambió (antes, `getDocs` en cada visita). Ver [[Decisiones tecnicas#El catálogo de Caja va por listener]] |
-| `PanelAdmin` / `Envios` | su colección entera | al montar | acotado | pantallas de admin, poco frecuentes |
+| `Personal` / `Envios` | su colección entera | la primera vez que se abre su pestaña del Panel Admin | acotado | ✅ desde el 12-10-2026 en pestañas con `mountOnEnter`: entrar por `/admin?tab=sucursales` no lee los empleados, y volver a una pestaña no relee |
+| `Sucursales` → excepciones | el historial de una sucursal, de a 20 | **solo al tocar "Ver historial"** en el modal | ≤ 20 por página | ✅ abrir el modal no lee: las próximas salen de `excepcionesWeb`, en memoria. Con 50 excepciones cargadas, verlas cuesta 20 lecturas y solo si se piden. Cargar una excepción **no lee** |
+| `publicarSucursales` | `sucursales` + el `menu.json` publicado (Storage, no Firestore) | después de cada cambio de una sucursal | 2-3 | ✅ reemplaza a "Publicar Menú" para las sucursales, que leía el catálogo entero |
 | `Parametros/Categorias` (modal) | — | — | **0** | ✅ recibe las categorías del listener de `Productos` por props; antes releía la colección al montar |
 | `EditProducto` / `EditCliente` | — | — | **0** | ✅ completan con la fila que ya está en pantalla; antes releían el documento en cada edición (28-09-2026) |
-| `sucursales.js` | `sucursales` | selectores del admin, el ABM de Sucursales, y el selector público solo si `menu.json` falla | pocas | ✅ promesa cacheada: 1 vez por sesión. El ABM la usa desde el 28-09-2026 (antes releía en cada apertura) y la invalida al guardar |
+| `sucursales.js` | `sucursales` | selectores del admin, la pestaña Sucursales, y el selector público solo si `menu.json` falla | pocas | ✅ promesa cacheada: 1 vez por sesión. El ABM la usa desde el 28-09-2026 (antes releía en cada apertura) y la invalida al guardar |
 | `PaginaDetalle` | 1 pedido | por visita pública, durante 48 h | 1 | ✅ pasado el plazo la regla lo niega |
 | `Asistencias` | el doc de la jornada | al entrar | **1** | ✅ el mapa `registros` trae a todos |
 | `ModalCargarJornada` | empleados de la sucursal | **solo al abrir el formulario** | N | ✅ editar un renglón cuesta 0 |
@@ -85,7 +87,7 @@ lista. Verificado sobre los 42 puntos de acceso.
   cajero no pise la asignación de otro, así que se intenta el `updateDoc` y se trata
   `permission-denied` como "no era mía". Antes hacía un `getDoc` por cada Cancelar.
 - **`fetchSucursales` cachea la promesa** — PanelAdmin la disparaba dos veces al montar y cada
-  pantalla con selector pagaba la suya. El ABM de Sucursales la invalida al guardar.
+  pantalla con selector pagaba la suya. La pestaña Sucursales la invalida al guardar.
 - **`menu.json` incluye las sucursales** — el pie del menú público muestra las direcciones sin
   pagar una lectura por visita. El costo es de 2-3 documentos, y solo cuando el admin publica.
 

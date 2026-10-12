@@ -147,6 +147,7 @@ export const liquidarDeliverys = (pedidos = []) => {
             sinEntregar,
             anulado,
             pagaronCon: Number(p.pagaronCon) || 0,
+            salidaTimestamp: p.deliverySalidaTimestamp || null,
             finTimestamp: p.deliveryFinTimestamp || null,
         });
     }

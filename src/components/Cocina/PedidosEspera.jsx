@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import '../../style/Main.css';
 import { CANTIDAD_CARNES, ESTADOS, TIEMPO_MIN_PEDIDOESP } from "../../Utils/Constantes";
 import { ahoraServidor } from "../../Utils/fechaComercial";
-import { getItemsCocina } from "./cocina_hooks/useItemsCocina";
+import { getItemsCocina } from "../../Utils/ruteoPedido";
 import ModalHorariosEspeciales from "./ModalHorariosEspeciales";
 import moment from "moment";
 import { avisarSinConexion } from "../../Utils/avisos";

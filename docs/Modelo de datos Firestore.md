@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, datos]
 aliases: [Colecciones, Esquema Firestore, Campos]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Modelo de datos Firestore
@@ -16,7 +16,7 @@ actualizado: 2026-10-03
 | `categorias` | `resumenDiario` |
 | `usuarios` (**todos** los empleados) | `asistencias` |
 | `clientes` | `contadores` |
-| `sucursales` | |
+| `sucursales` | `excepcionesHorario` |
 | `envios` | |
 
 Regla práctica: si un componente usa `pedidos`, `resumenDiario`, `asistencias` o `contadores`, va
@@ -24,7 +24,7 @@ con `colSucursal`/`docSucursal`. Las globales van directo con `collection(db, ..
 
 ## `sucursales/{slug}`
 
-Doc ID = slug usado en las URLs públicas, generado solo desde el nombre (el ABM no lo muestra). ABM en PanelAdmin → Sucursales.
+Doc ID = slug usado en las URLs públicas, generado solo desde el nombre (el ABM no lo muestra). ABM en la pestaña Sucursales del Panel Admin.
 
 ```js
 { nombre: "Luro", direccion: "Av. Luro 3300", activa: true,
@@ -33,13 +33,42 @@ Doc ID = slug usado en las URLs públicas, generado solo desde el nombre (el ABM
     dias: [0, 3, 4, 5, 6],   // de atención, 0 = domingo, por JORNADA
     abre: 20, cierra: 1,     // horas enteras, dentro de la jornada comercial (19 a 02)
     horasCorte: 1,           // la web deja de tomar pedidos 1 h antes del cierre
-  } }                        // todo viaja en menu.json: la web lo lee de ahí
+  },
+  excepcionesWeb: {          // 12-10-2026: lo que la web tiene que saber de las excepciones
+    "12-10-2026": {          // por JORNADA. Solo hoy y lo que viene: las vencidas se limpian
+      abierta: true,         // false = esa noche cerrada
+      abre: 20, cierra: 0, horasCorte: 1,   // solo si abierta
+      motivo: "Inventario",  // solo las de CIERRE, y solo si el admin lo marcó para la web: el documento es público
+      registroId: "aB3…",    // su registro en excepcionesHorario, para levantarlo
+    } } }                    // todo viaja en menu.json: la web lo lee de ahí
 ```
 
 Se desactiva en vez de borrarse, para conservar las subcolecciones.
 
-El ABM guarda con `setDoc` **sin merge**, así que reemplaza el documento entero: todo campo nuevo
-de la sucursal tiene que viajar en el objeto que arma `guardar`, o editarla lo borra.
+El alta va con `setDoc`; la edición, con `updateDoc` y solo los campos del formulario (desde el
+12-10-2026). Antes la edición era un `setDoc` sin merge que reemplazaba el documento entero, y
+editar el teléfono habría borrado las excepciones vigentes.
+
+## `sucursales/{id}/excepcionesHorario/{autoId}`
+
+El **registro** de las excepciones al horario de la web (12-10-2026): todo lo que pasó, con el
+motivo interno. Nada se borra. Ver [[Reglas de negocio#Excepciones: feriados y noches puntuales]].
+
+```js
+{ jornada: "12-10-2026",
+  fecha: Timestamp,          // la jornada a las 00:00, para ordenar: el DD-MM-YYYY no ordena
+  abierta: true,
+  abre: 20, cierra: 0, horasCorte: 1,   // solo si abierta
+  motivo: "Inventario",      // solo si cerrada: abrir no lleva motivo
+  motivoPublico: true,       // si el motivo se muestra en la web (solo si cerrada)
+  creadoPor, creadoPorID, creadoEl,
+  levantadaPor, levantadaPorID, levantadaEl,   // si se quitó o la reemplazó otra
+}
+```
+
+Lo escriben `guardarExcepcion` y `levantarExcepcion` (`Utils/excepcionesHorario.js`), siempre en
+un batch junto con `excepcionesWeb` de la sucursal. Las reglas la cubren con el comodín de
+colecciones operativas (staff); la sucursal, que es la que cuenta para la web, es solo del admin.
 
 ## `sucursales/{id}/pedidos`
 

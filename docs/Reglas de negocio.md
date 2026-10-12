@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, negocio]
 aliases: [Negocio]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Reglas de negocio
@@ -56,6 +56,27 @@ desde el ABM (28-09-2026). Ver [[Reglas de negocio#La web pública solo toma ped
 > El rango laboral termina como mucho a la 01:00; las 02:00 se pusieron por las dudas. Por eso el
 > "borde" de un repartidor que vuelve pasada la medianoche **no es alcanzable**.
 
+### Probar de día
+
+Fuera de la jornada no hay nada que probar: la web está cerrada, el F4 deshabilitado y lo que se
+cargue a las 15 no aparece en F3 ni en el arqueo, porque cae antes de las 19. Para no tener que
+esperar la noche —ni tocar `horaCierre` en `Constantes.jsx`, que era el atajo de antes— existe
+`REACT_APP_ignorarHorario=true` en el `.env` (12-10-2026). Lo lee `IGNORAR_HORARIO`, en
+`Utils/fechaComercial.js`:
+
+| Qué | Normal, de día | Con la variable |
+|---|---|---|
+| `webRecibePedidos` | cerrada | abierta, en todas las sucursales activas |
+| `esHoraDeArqueo` (F4) | deshabilitado hasta las 00 | habilitado |
+| `getRangoDeJornada` de la jornada **en curso** | de 19 a 02 | de 02 a 02: F3, Historial, F4 y Jefe de Deliverys ven lo cargado de día |
+
+- **Solo actúa con `npm start`**: la condición incluye `NODE_ENV === "development"`, que en el
+  build vale `"production"`. Aunque la variable quede en `true`, el sitio publicado no la toma.
+- **Las jornadas pasadas no cambian de rango.** Mientras desarrollo apunte a la base real, una
+  foto de arqueo que se grabe desde ahí tiene que salir igual que la de producción.
+- La barra del staff muestra **"Horario ignorado"** mientras está prendida.
+- Cambiarla pide reiniciar `npm start`.
+
 ## Envíos locales vs delivery
 
 ```js
@@ -65,7 +86,7 @@ ENVIOS_LOCALES = ["Retira", "Espera Afuera"]
 Esta constante decide tres cosas distintas:
 
 1. **Ruteo de cocina** — al salir de `COCINA`, si la zona está en la lista va a `ATP`; si no, a
-   `DELIVERY`.
+   `DELIVERY`. Un pedido sin ítems de cocina se rutea igual, pero al confirmar el cobro.
 2. **Desglose del arqueo** — `efectivoLocal` (se cobra en el mostrador) vs `efectivoEnvio` (la
    plata vuelve con el repartidor). Son dos cajas distintas.
 3. **UI de Caja** — con zona local se ocultan y limpian dirección y entre calles.
@@ -126,8 +147,8 @@ El recargo se calcula en `useCarrito.getResumen`, siempre sobre `subtotal + cost
 
 ## La web pública solo toma pedidos en horario
 
-**Cada sucursal tiene su horario** en su documento (`sucursales/{id}.horario`), editable desde el
-ABM de Sucursales sin deploy (28-09-2026). Hasta entonces era uno solo para todas, y Davinci —que
+**Cada sucursal tiene su horario** en su documento (`sucursales/{id}.horario`), editable desde la
+pestaña Sucursales del Panel Admin sin deploy (28-09-2026). Hasta entonces era uno solo para todas, y Davinci —que
 cierra a las 00— recibía pedidos web hasta la 01.
 
 | Campo | Qué es | Davinci | Luro |
@@ -136,7 +157,8 @@ cierra a las 00— recibía pedidos web hasta la 01.
 | `abre` / `cierra` | horas enteras | 20 / 00 | 20 / 01 |
 | `horasCorte` | cuántas horas antes del cierre la web deja de tomar pedidos | 1 → hasta las 23 | 1 → hasta las 00 |
 
-Lo decide `webRecibePedidos(sucursal)`:
+Lo decide `webRecibePedidos(sucursal)`. Primero mira si esa noche tiene una
+[[#Excepciones: feriados y noches puntuales|excepción]]; si no, el horario de siempre:
 
 - **Los días van por jornada**, no por calendario: el lunes a las 00:30 todavía es la noche del
   domingo.
@@ -148,11 +170,14 @@ Lo decide `webRecibePedidos(sucursal)`:
 - **Una sucursal desactivada no toma pedidos, ni por el link directo** (`/crear-solicitud/luro`):
   no está en `menu.json`, y el respaldo que lee su documento la trata como inexistente. Al
   confirmar se vuelve a controlar.
-- **Viaja en `menu.json`**, así que la web lo mira sin leer Firestore. Por eso un cambio de horario
-  llega a la web **al publicar el menú**: guardar una sucursal hace parpadear "Publicar Menú".
+- **Viaja en `menu.json`**, así que la web lo mira sin leer Firestore. Desde el 12-10-2026
+  **cualquier cambio de una sucursal se publica solo** —datos, horario, activarla, una excepción—
+  con `publicarSucursales()`, que republica solo las sucursales (2-3 lecturas). "Publicar Menú"
+  quedó para el catálogo. Si la publicación falla, se avisa y queda prendida la bandera de
+  "Publicar Menú".
 - **Se mira al entrar y otra vez al confirmar la compra**; la segunda, con el documento de la
-  sucursal que la web ya lee para validarla (0 lecturas extra): si el admin cambió el horario y
-  todavía no publicó, manda el documento.
+  sucursal que la web ya lee para validarla (0 lecturas extra): si la publicación falló, manda el
+  documento.
 - **El selector lista todas las sucursales**: la cerrada aparece deshabilitada, con su horario. La
   pantalla de cerrado de una sucursal ofrece volver al selector, porque capaz otra sigue abierta.
   Las sucursales salen de `menu.json`; solo si falla, de Firestore.
@@ -172,6 +197,39 @@ Lo decide `webRecibePedidos(sucursal)`:
 **El link de `/ver-pedido` vence a las 48 horas** de hecho el pedido. No se borra nada: la regla
 deja de mostrárselo al público y el staff lo sigue viendo. El cliente ve "Este pedido ya no está
 disponible". Es una línea en `firestore.rules`, sin lecturas.
+
+### Excepciones: feriados y noches puntuales
+
+Desde el 12-10-2026. Un lunes feriado que se abre, un sábado que se cierra por un corte de luz.
+**Valen para una sola jornada**: al día siguiente la web vuelve sola a su
+horario, así que nadie tiene que acordarse de deshacerlas. Antes había que tildar el lunes en el
+ABM y acordarse de destildarlo.
+
+- **Se cargan desde el modal de excepciones** (el botón naranja de cada sucursal, en la pestaña
+  Sucursales del Panel Admin), y solo el admin: una para cualquier día de hoy en adelante, las
+  vigentes con la cruz roja para quitarlas y, con "Ver historial completo", lo que pasó. La fila
+  de la tabla solo informa qué hace la web hoy. Hubo botones "Cerrar hoy" / "Abrir hoy" en cada
+  fila y se sacaron por decisión del dueño (12-10-2026): todo pasa por el modal.
+- **Abrir usa siempre el horario de la sucursal**: no se elige otro. Una sucursal sin horario
+  cargado no puede abrir por excepción.
+- **Manda sobre el horario de siempre**: la de cierre cierra aunque sea día de atención; la de
+  apertura usa su propio horario aunque ese día no se atienda. Va por jornada: el martes a las
+  00:30 todavía vale la del lunes.
+- **Solo las de cierre tienen motivo**, obligatorio, y el admin elige si se ve. Abrir un día que
+  no se atiende no necesita explicación (12-10-2026: al principio se pedía para las dos). El
+  cambio de horario se muestra siempre ("Hoy cerrado", "Hoy de 20 a 23 hs"); el motivo, solo si
+  está marcado ("Hoy cerrado · Inventario"). Aparece en la pantalla de cerrado, en el botón del
+  selector, en el pie y en el aviso al confirmar.
+- **Una por noche**: cargar otra para la misma fecha reemplaza a la anterior, que queda levantada.
+- **Nada se borra**: quitar una excepción la marca como levantada, con quién y cuándo. El
+  historial dice qué pasó cada noche.
+- **0 lecturas para el público**: la copia que mira la web viaja en `menu.json` y en el documento
+  que ya se lee al confirmar. Por qué vive en dos lugares:
+  [[Decisiones tecnicas#Las excepciones de horario viven en dos lugares]].
+- **El encargado no puede cargarlas**: escribir en `sucursales` es solo del admin en las reglas.
+  Ver [[Deuda tecnica#A futuro]].
+
+La lógica tiene tests: `Utils/fechaComercial.test.js`.
 
 ## Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor
 
@@ -205,7 +263,7 @@ En Retira y Espera Afuera no se pregunta: el cambio se da en mano. La jefa ve "V
 **no** entran en lo que cobra el repartidor. El encargado ve la lista de **vueltos a transferir**
 en el F4 —ticket, cliente, monto y alias, con un botón **Copiar** para pasársela al admin—. El
 monto es el real si el repartidor ya volvió (`pagaronCon` menos lo que había que cobrar), y si no
-el que anunció el cliente, marcado como estimado.
+el que anunció el cliente, marcado como **a confirmar** (antes decía "estimado", que no se entendía).
 
 ### `pagaCon` y `pagaronCon`
 
@@ -327,9 +385,15 @@ En `PedidosEspera`:
 
 ## Cocina: qué ve el cocinero
 
-`getItemsCocina(carrito)` filtra `categoria !== "BEBIDAS"`: la cocina hace comida, las bebidas
-las despacha la caja. Se aplica en las cards de `PedidosEspera`, `PedidosCocinando` y en
-`VerPedidoModal`.
+`getItemsCocina(carrito)` (en `Utils/ruteoPedido.js`) filtra `categoria !== "BEBIDAS"`: la cocina
+hace comida, las bebidas las despacha la caja. Se aplica en las cards de `PedidosEspera`,
+`PedidosCocinando` y en `VerPedidoModal`.
+
+**Un pedido sin ítems de cocina no le llega a la cocina** (08-10-2026). Al quedar cobrado va
+directo a `ATP` o `DELIVERY`: no tiene sentido que el cocinero lo vea, y menos que lo "cocine".
+Lo decide la misma `getItemsCocina()`, así que lo que la cocina muestra y lo que la cocina recibe
+no se pueden desalinear. Las cards todavía muestran "Sin items de cocina" para los pedidos que ya
+estaban en la cocina antes del cambio. Ver [[Flujo del pedido#Pipeline]].
 
 **No se aplica en `TicketImpresion`**: ese ticket lleva total, envío y método de pago — es el
 que se le entrega al cliente y tiene que listar todo, si no los ítems no cierran con el importe.
@@ -364,6 +428,12 @@ hace la Caja. Lo pasa solo el admin, que opera sobre una sucursal ajena.
 si no existe lo crea; si existe, **pisa nombre, dirección y entre calles** con lo que el cajero
 acaba de cargar — la última dirección usada es la más probable como actual (decisión del
 14-09-2026; antes solo se creaba y un cliente que se mudó quedaba con la dirección vieja).
+
+**El teléfono es obligatorio solo en delivery.** En Retira y Espera Afuera el cajero puede dejarlo
+vacío —el cliente está en el local—; si lo carga, `validarPedido` exige los 10 dígitos igual. La
+pantalla no lo marca como opcional, a propósito: si se puede, mejor que lo complete. Sin teléfono
+`registrarCliente` no hace nada (es la clave de la ficha), así que ese pedido no cuesta la lectura
+ni la escritura de `clientes`.
 
 En la misma escritura van los campos CRM: `ultimoPedido` (fecha del cobro, no la del pedido: un
 horario especial tiene fecha futura), `cantidadPedidos` (contador; los clientes anteriores a

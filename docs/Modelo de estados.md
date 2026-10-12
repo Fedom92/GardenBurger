@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, workflow]
 aliases: [Estados, Transiciones, Maquina de estados]
-actualizado: 2026-10-03
+actualizado: 2026-10-08
 ---
 
 # Modelo de estados del pedido
@@ -29,7 +29,7 @@ Los valores están en `ESTADOS` de `src/Utils/Constantes.jsx`. **Nunca hardcodea
 |---|---|---|
 | `PENDIENTE` | Solicitud web creada por el cliente, nadie la tomó | No |
 | `PENDIENTEMP` | Cobrado por MP o pago dividido; falta cotejar la transferencia | No |
-| `CONFIRMADO` | Cobrado y validado; espera que cocina lo tome | No |
+| `CONFIRMADO` | Cobrado y validado; espera que cocina lo tome. Un pedido sin ítems de cocina nunca pasa por acá | No |
 | `COCINA` | En producción | No |
 | `ATP` | Listo, esperando al cliente en el mostrador | No |
 | `DELIVERY` | Listo, en manos del jefe de deliverys | No |
@@ -48,7 +48,9 @@ Los dos últimos son terminales **en la intención**, no en el código: nada imp
 | — | `PENDIENTEMP` | Cajero (MP o dividido) | `Caja.guardarBD` | **Suma** |
 | `PENDIENTE` | `CONFIRMADO` / `PENDIENTEMP` | Cajero, al Revisar y Guardar | `useRevisarSolicitud` → `Caja.guardarBD` | **Suma** |
 | `PENDIENTE` | `CANCELADO` | Cajero, al Rechazar | `PendientesSolicitudes` | — (nunca sumó) |
+| — | `ATP` / `DELIVERY` | Cajero (efectivo), pedido **sin ítems de cocina** | `Caja.guardarBD` → `estadoAlConfirmar` | **Suma** |
 | `PENDIENTEMP` | `CONFIRMADO` | Cajero, al cotejar MP | `PendientesMP.aprobarPedido` | — (ya sumó al guardar) |
+| `PENDIENTEMP` | `ATP` / `DELIVERY` | Cajero, al cotejar MP un pedido **sin ítems de cocina** | `PendientesMP.aprobarPedido` → `estadoAlConfirmar` | — (ya sumó al guardar) |
 | `PENDIENTEMP` | `CANCELADO` | Cajero, al rechazar MP | `PendientesMP.rechazarPedido` | **Sale** del cálculo |
 | `CONFIRMADO` | `COCINA` | Cocina, "Empezar a Cocinar" | `PedidosEspera.cocinar` | — |
 | `COCINA` | `ATP` | Cocina, "Cocinados TODOS", zona ∈ `ENVIOS_LOCALES` | `PedidosCocinando` | — |
@@ -77,10 +79,14 @@ suma o se resta. Ver [[Decisiones tecnicas#El arqueo se calcula desde los pedido
 > jornada ya tenía foto, `invalidarFotoDePedido(pedido)` la borra para que se reconstruya.
 
 > [!important] El ruteo de cocina define todo lo que sigue
-> `PedidosCocinando` decide entre `ATP` y `DELIVERY` mirando `pedido.envio.zona_envio` contra
+> `destinoPedidoListo(envio)` decide entre `ATP` y `DELIVERY` mirando `pedido.envio.zona_envio` contra
 > `ENVIOS_LOCALES` con `.includes()` — **no** lo que el cliente eligió en la web. Es la transición
 > más consecuente del pipeline. Hasta el 14-09-2026 comparaba contra `[0]` y `[1]` de la constante,
 > y una tercera zona local habría roto el ruteo en silencio.
+>
+> Vive en `Utils/ruteoPedido.js` junto con `getItemsCocina()` y `estadoAlConfirmar()`, porque
+> desde el 08-10-2026 no la usa solo la cocina: un pedido **sin ítems de cocina** se rutea al
+> confirmar el cobro y no pasa por `CONFIRMADO` ni `COCINA`. Ver [[Flujo del pedido#Pipeline]].
 
 ## Transiciones que el sistema permite y no debería
 

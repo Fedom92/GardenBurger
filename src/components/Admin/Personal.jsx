@@ -1,0 +1,450 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { collection, orderBy, query, getDocs, updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { db, app, auth } from "../../firebaseConfig/firebase";
+import { ROLES, ROLES_EDITABLES, ordenDeRol, EMAIL_SUPERADMIN } from "../../Utils/Constantes";
+import { fmtPesos } from "../../Utils/formato";
+import CrearEmpleado from "./CrearEmpleado";
+import TablaGenerica from "../../Utils/TablaGenerica";
+import { Modal } from "react-bootstrap";
+import Swal from "sweetalert2";
+import { avisarErrorDeCarga } from "../../Utils/avisos";
+
+const EDICION_VACIA = {
+  rol: "", sucursal: "", dni: "", domicilio: "", telefono: "", valorHora: 0,
+  marcaMoto: "", modeloMoto: "", colorMoto: "", patente: "",
+};
+
+// El cambio de rol no cruza la frontera del acceso, y esa frontera la marca el
+// `sinAcceso` GUARDADO en el empleado —si tiene o no cuenta de Auth—, no el rol
+// elegido. Un repartidor pasado a cajero no podría loguearse; un cajero pasado a
+// repartidor conservaría usuario y clave sin ver ningún módulo. El rol actual
+// entra siempre, para que un dato viejo que no encaje no se cambie en silencio.
+const rolesPermitidos = (empleado) =>
+  ROLES_EDITABLES.filter((r) => r === empleado.rol || !!ROLES[r]?.sinAcceso === !!empleado.sinAcceso);
+
+// Pestaña Personal del Panel Admin: los empleados, su alta, edición y baja.
+// `sucursales` viene de PanelAdmin, que la comparte con la pestaña Sucursales: un
+// alta allá aparece acá en los selects sin volver a leer.
+const Personal = ({ sucursales }) => {
+  const [empleados, setEmpleados] = useState([]);
+  const [modalShow, setModalShow] = useState(false);
+
+  const [modalShowEditRol, setModalShowEditRol] = useState([false, ""]);
+  const [edicion, setEdicion] = useState(EDICION_VACIA);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [sincronizando, setSincronizando] = useState(false);
+  // Solo visual: la Cloud Function exige ser admin igual.
+  const esSuperAdmin = (auth.currentUser?.email || "").toLowerCase() === EMAIL_SUPERADMIN;
+
+  const empleadosCollection = useRef(query(collection(db, "usuarios"), orderBy("rol")));
+
+  const getEmpleados = useCallback((snapshot) => {
+    // Los dados de baja quedan como registro histórico (activo: false).
+    // Los docs viejos sin el campo se consideran activos.
+    const empleadosMapped = snapshot.docs
+      .filter((doc) => doc.data().activo !== false)
+      .map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+    setEmpleados(empleadosMapped);
+    setIsLoading(false);
+  }, []);
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const empleadosSnapshot = await getDocs(empleadosCollection.current);
+        await getEmpleados(empleadosSnapshot);
+
+      } catch (error) {
+        console.error('Error fetching data Panel Admin:', error);
+        avisarErrorDeCarga("los empleados");
+      }
+    };
+
+    fetchData();
+
+  }, [getEmpleados]);
+
+  // El rol y la sucursal se guardan como valores crudos —el del .env y el slug—
+  // que no se pueden mostrar ni filtrar así. Se agregan sus versiones legibles
+  // como campos propios de la fila, y TablaGenerica los trata como cualquier otra
+  // columna: sin esto, el desplegable de filtro mostraría el valor crudo del rol.
+  //
+  // Ordenados por rol (nroOrden de ROLES) y dentro de cada rol por nombre: la tabla
+  // arranca ordenada por la columna Rol, y su orden es estable, así que el nombre
+  // desempata.
+  const empleadosParaTabla = useMemo(() => empleados
+    .map((e) => ({
+      ...e,
+      rolNombre: ROLES[e.rol]?.nombre || "—",
+      sucursalNombre: sucursales.find((s) => s.id === e.sucursal)?.nombre || e.sucursal || "—",
+    }))
+    .sort((a, b) => ordenDeRol(a.rol) - ordenDeRol(b.rol)
+      || (a.nombreCompleto || "").localeCompare(b.nombreCompleto || "")),
+  [empleados, sucursales]);
+
+  const handleEditEmpleado = async (id) => {
+    if (!edicion.sucursal) {
+      Swal.fire({ title: "Falta la sucursal", text: "Selecciona una sucursal para el empleado.", icon: "warning", confirmButtonColor: "#198754" });
+      return;
+    }
+
+    // El selector ya no ofrece cruzar la frontera del acceso, pero esta es la
+    // función que escribe: se valida igual.
+    const empleado = empleados.find((e) => e.id === id);
+    if (empleado && !rolesPermitidos(empleado).includes(edicion.rol)) {
+      Swal.fire({
+        title: "Cambio de rol no permitido",
+        text: "Un repartidor no tiene usuario para entrar al sistema, y un empleado con acceso no puede pasar a repartidor. Si hace falta, dalo de baja y crealo de nuevo.",
+        icon: "warning",
+        confirmButtonColor: "#198754",
+      });
+      return;
+    }
+
+    // Los datos de la moto solo se guardan si el rol los usa (hoy, solo el
+    // repartidor).
+    const cambios = {
+      rol: edicion.rol,
+      sucursal: edicion.sucursal,
+      dni: edicion.dni,
+      domicilio: edicion.domicilio,
+      telefono: edicion.telefono,
+      valorHora: Number(edicion.valorHora) || 0,
+      ...(ROLES[edicion.rol]?.llevaMoto ? {
+        marcaMoto: edicion.marcaMoto,
+        modeloMoto: edicion.modeloMoto,
+        colorMoto: edicion.colorMoto,
+        patente: edicion.patente,
+      } : {}),
+    };
+
+    // Sin try/catch un fallo era una unhandled rejection: el modal se quedaba
+    // abierto sin explicación y el usuario no sabía si había guardado.
+    try {
+      await updateDoc(doc(db, "usuarios", id), cambios);
+      setEmpleados((prevEmpleados) =>
+        prevEmpleados.map((empleado) =>
+          empleado.id === id ? { ...empleado, ...cambios } : empleado
+        )
+      );
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error al editar el empleado: ", error);
+      Swal.fire({
+        title: "Error",
+        text: "No se pudieron guardar los cambios. Revisá la conexión.",
+        icon: "error",
+        confirmButtonColor: "#d33",
+      });
+    }
+  };
+
+  const handleOpenEditModal = (empleado) => {
+    setModalShowEditRol([true, empleado]);
+    setEdicion({
+      rol: empleado.rol || "",
+      sucursal: empleado.sucursal || "",
+      dni: empleado.dni || "",
+      domicilio: empleado.domicilio || "",
+      telefono: empleado.telefono || "",
+      valorHora: empleado.valorHora ?? 0,
+      marcaMoto: empleado.marcaMoto || "",
+      modeloMoto: empleado.modeloMoto || "",
+      colorMoto: empleado.colorMoto || "",
+      patente: empleado.patente || "",
+    });
+  };
+
+  const handleCloseModal = () => {
+    setModalShowEditRol([false, ""]);
+    setEdicion(EDICION_VACIA);
+  };
+
+  const setCampo = (campo) => (e) =>
+    setEdicion((prev) => ({ ...prev, [campo]: e.target.value }));
+
+  const agregarEmpleado = (nuevoEmpleado) => {
+    // Sin sort: los roles son strings, asi que la resta daba NaN y no ordenaba
+    // nada. La tabla ya ordena por nombreCompleto.
+    setEmpleados([...empleados, nuevoEmpleado]);
+  };
+
+  const confirmeDelete = (e, empleado) => {
+    e.preventDefault();
+    Swal.fire({
+      title: '¿Está seguro de eliminar?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#198754',
+      confirmButtonText: 'Aceptar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        darDeBajaEmpleado(empleado);
+      }
+    })
+  }
+
+  const darDeBajaEmpleado = async (empleado) => {
+    try {
+      if (empleado.sinAcceso) {
+        // No tiene cuenta de Auth: llamar a la Function fallaría con un uid que
+        // no existe. Alcanza con marcar el documento.
+        await updateDoc(doc(db, "usuarios", empleado.id), {
+          activo: false,
+          bajaTimestamp: serverTimestamp(),
+        });
+      } else {
+        // Server-side: borra la cuenta de Auth y marca el doc como inactivo
+        const darDeBajaFn = httpsCallable(getFunctions(app), "darDeBajaUsuario");
+        await darDeBajaFn({ uid: empleado.id });
+      }
+
+      setEmpleados((prevEmpleados) => prevEmpleados.filter((item) => item.id !== empleado.id));
+      Swal.fire({
+        title: '¡Listo!',
+        text: 'El empleado fue dado de baja.',
+        icon: 'success',
+        confirmButtonColor: '#198754'
+      });
+    } catch (error) {
+      console.error("Error al dar de baja al empleado: ", error);
+      Swal.fire({
+        title: '¡Error!',
+        text: error.message || 'No se pudo dar de baja al empleado.',
+        icon: 'error',
+        confirmButtonColor: '#d33',
+      });
+    }
+  };
+
+  // Reparte el custom claim `admin` según el rol de cada documento de `usuarios`.
+  // Se usa una vez como backfill y después cada vez que se crea un admin nuevo
+  // desde la Consola de Firebase, que es el único lugar donde se crean. El claim
+  // viaja en el token, así que no toma efecto hasta el próximo inicio de sesión.
+  const sincronizarPermisos = async () => {
+    if (sincronizando) return;
+    setSincronizando(true);
+    try {
+      const fn = httpsCallable(getFunctions(app), "sincronizarClaims");
+      const { data } = await fn({});
+      Swal.fire({
+        title: "Permisos sincronizados",
+        html: `Se actualizaron <b>${data.sincronizados}</b> empleados (${data.admins} con rol admin).`
+          + "<br/><br/>Los cambios toman efecto al <b>volver a iniciar sesión</b>.",
+        icon: "success",
+        confirmButtonColor: "#198754",
+      });
+    } catch (error) {
+      console.error("Error sincronizando permisos:", error);
+      Swal.fire({
+        title: "Error",
+        text: error.message || "No se pudieron sincronizar los permisos.",
+        icon: "error",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
+  const columnasEmpleados = [
+    { accessorKey: "nombreCompleto", header: "Nombre Completo" },
+    {
+      accessorKey: "correo",
+      header: "Email",
+      cell: ({ row }) => row.original.sinAcceso
+        ? <span className="badge bg-secondary">Sin acceso</span>
+        : (row.original.correo || "—"),
+    },
+    { accessorKey: "telefono", header: "Telefono" },
+    // Ordena por nroOrden (Admin, Encargado, Cajero…) y no alfabético; muestra el nombre.
+    { id: "rol", header: "Rol", accessorFn: (e) => ordenDeRol(e.rol), cell: ({ row }) => row.original.rolNombre },
+    { accessorKey: "sucursalNombre", header: "Sucursal" },
+    {
+      accessorKey: "valorHora",
+      header: "Valor Hora",
+      cell: ({ getValue }) => (getValue() ? fmtPesos(getValue()) : "—"),
+    },
+    {
+      id: "acciones",
+      header: "Accion",
+      // Al admin no se lo edita ni se lo da de baja desde acá.
+      cell: ({ row }) => row.original.rol === process.env.REACT_APP_admin ? null : (
+        <>
+          <button className="btn btn-success mx-1" title="EDITAR" onClick={() => handleOpenEditModal(row.original)}>
+            <i className="fa-solid fa-edit"></i>
+          </button>
+          <button className="btn btn-danger" title="DAR DE BAJA" onClick={(e) => confirmeDelete(e, row.original)}>
+            <i className="fa-solid fa-trash"></i>
+          </button>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      {isLoading ? (
+        <div className="w-100">
+          <span className="loader position-absolute start-50 top-50 mt-3"></span>
+        </div>
+      ) : (
+        <div className="w-100">
+          <div className="container mw-100">
+            <div className="row">
+              <div className="col mt-2">
+                <div className="d-flex justify-content-end align-items-center gap-2 mb-2">
+                  {esSuperAdmin && (
+                    <button
+                      className="btn-contorno m-1"
+                      onClick={sincronizarPermisos}
+                      disabled={sincronizando}
+                      title="Reparte el permiso de administrador en los tokens. Usalo después de crear un admin desde la Consola de Firebase."
+                    >
+                      {sincronizando ? "Sincronizando..." : "Sincronizar permisos"}
+                    </button>
+                  )}
+                  <button className="btn-contorno m-1" onClick={() => setModalShow(true)}>
+                    + Agregar Empleado
+                  </button>
+                </div>
+                <TablaGenerica
+                  data={empleadosParaTabla}
+                  columnas={columnasEmpleados}
+                  sortBy="rol"
+                  ordenDescendente={false}
+                  camposBusqueda={["nombreCompleto", "telefono", "dni"]}
+                  camposFiltros={["rolNombre", "sucursalNombre"]}
+                  rowClassName={(fila) => fila.rol === process.env.REACT_APP_admin ? "admin-row" : ""}
+                />
+              </div>
+            </div>
+          </div>
+        </div >
+      )
+      }
+      <CrearEmpleado
+        show={modalShow}
+        sucursales={sucursales}
+        agregarempleado={agregarEmpleado}
+        onHide={() => setModalShow(false)} />
+
+      {
+        modalShowEditRol[0] && (
+          <Modal
+            show={modalShowEditRol[0]}
+            size="lg"
+            aria-labelledby="contained-modal-title-vcenter"
+            centered
+          >
+            <Modal.Header closeButton onClick={handleCloseModal}>
+              <Modal.Title>Editar Empleado — {modalShowEditRol[1].nombreCompleto}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <form name="editarEmpleado">
+                <div className="row">
+                  <div className="col-md-6 mb-2">
+                    <label className="form-label">Rol*</label>
+                    <select
+                      value={edicion.rol}
+                      onChange={setCampo("rol")}
+                      className="form-control"
+                      multiple={false}
+                    >
+                      {rolesPermitidos(modalShowEditRol[1]).map((r) => (
+                        <option key={r} value={r}>{ROLES[r]?.nombre || r}</option>
+                      ))}
+                    </select>
+                    {modalShowEditRol[1].sinAcceso && (
+                      <small className="text-body-secondary">
+                        Un repartidor no cambia de rol: no tiene usuario para entrar al sistema.
+                      </small>
+                    )}
+                  </div>
+                  <div className="col-md-6 mb-2">
+                    <label className="form-label">Sucursal*</label>
+                    <select
+                      value={edicion.sucursal}
+                      onChange={setCampo("sucursal")}
+                      className="form-control"
+                      multiple={false}
+                    >
+                      <option value="">Selecciona una sucursal ....</option>
+                      {sucursales.map((s) => (
+                        <option key={s.id} value={s.id}>{s.nombre || s.id}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-4 mb-2">
+                    <label className="form-label">DNI</label>
+                    <input type="text" className="form-control" value={edicion.dni} onChange={setCampo("dni")} />
+                  </div>
+                  <div className="col-md-4 mb-2">
+                    <label className="form-label">Telefono</label>
+                    <input type="text" className="form-control" value={edicion.telefono} onChange={setCampo("telefono")} />
+                  </div>
+                  <div className="col-md-4 mb-2">
+                    <label className="form-label">Valor por hora ($)</label>
+                    <input type="number" min={0} className="form-control" value={edicion.valorHora} onChange={setCampo("valorHora")} />
+                  </div>
+                </div>
+
+                <div className="mb-2">
+                  <label className="form-label">Domicilio</label>
+                  <input type="text" className="form-control" value={edicion.domicilio} onChange={setCampo("domicilio")} />
+                </div>
+
+                {ROLES[edicion.rol]?.llevaMoto && (
+                  <div className="row border-top pt-2 mt-1">
+                    <div className="col-12 mb-1">
+                      <span className="text-body-secondary small fw-bold text-uppercase">Datos de la moto</span>
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Patente</label>
+                      <input type="text" className="form-control" value={edicion.patente} onChange={setCampo("patente")} />
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Marca</label>
+                      <input type="text" className="form-control" value={edicion.marcaMoto} onChange={setCampo("marcaMoto")} />
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Modelo</label>
+                      <input type="text" className="form-control" value={edicion.modeloMoto} onChange={setCampo("modeloMoto")} />
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Color</label>
+                      <input type="text" className="form-control" value={edicion.colorMoto} onChange={setCampo("colorMoto")} />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  className="btn btn-success mt-2"
+                  type="submit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleEditEmpleado(modalShowEditRol[1].id)
+                  }}
+                >
+                  Actualizar
+                </button>
+              </form>
+            </Modal.Body>
+          </Modal>
+        )
+      }
+    </>
+  );
+}
+
+export default Personal;

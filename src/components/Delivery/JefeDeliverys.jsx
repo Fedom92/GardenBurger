@@ -260,7 +260,7 @@ const JefeDeliverys = () => {
             accessorKey: "aCobrar",
             header: "A cobrar",
             cell: ({ row }) => row.original.metodoPago === METODOS_PAGO.MP.key
-                ? <span className="text-muted fst-italic">No se cobra</span>
+                ? <span className="text-muted fst-italic">—</span>
                 : <strong>{fmtPesos(row.original.aCobrar)}</strong>,
         },
         {

@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, convenciones]
 aliases: [Convenciones, Estilo de codigo]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Convenciones y preferencias
@@ -60,6 +60,9 @@ más simple.**
   `key` (lo que se guarda: `"EFECTIVO"`, `"MP"`, `"%"`) y `label`; para mostrar un valor guardado,
   `etiquetaPago(valor)`. La excepción es `Estadisticas`, que lee los TSV del sistema viejo y tiene
   su propia etiqueta ("Mixto").
+- **Lo demás no tiene que ser constante por defecto.** Un valor simple —por ejemplo la categoría
+  `"BEBIDAS"` en `getItemsCocina()`— puede quedar escrito tal cual: antes de crear una constante
+  nueva se le pregunta al usuario si se puede hardcodear (11-10-2026).
 - Al crear un componente que use `pedidos`/`resumenDiario`/`asistencias`/`contadores`: helpers
   `colSucursal`/`docSucursal` (staff) o path explícito con la sucursal de la URL (público).
 - **Una pantalla nueva va por `React.lazy`** en `App.js`, no con `import` estático: cada pantalla
@@ -132,6 +135,16 @@ const fecha = ahoraServidor().set({ hour: h, minute: m, second: 0, millisecond: 
   los submenús con una flecha que gira; "Salir" abajo de todo y en rojo. Todo en la media query
   móvil de `Main.css`: en la PC el menú no cambia.
 - Bootstrap grid + flexbox custom. Estilos y animaciones en `style/Main.css`.
+- **La regla global `.nav` de `Main.css` es la de los ítems del menú lateral**, y también le cae a
+  cualquier `.nav` de Bootstrap (pestañas, `Nav`): padding, bordes redondeados y `overflow:
+  hidden`. Un componente de Bootstrap con `.nav` la tiene que deshacer, como `.tabs-admin` (las
+  pestañas del Panel Admin).
+- **Un formulario en un modal va en su propio componente, con su propio `useForm`**, y quien lo
+  abre le pasa los valores iniciales y una `key` que cambia en cada apertura. Así arranca de cero
+  siempre. Con un `useForm` en la pantalla y `reset()` al abrir y cerrar, en Sucursales los datos
+  de una edición aparecían en el alta siguiente (12-10-2026). Ver `FormularioSucursal.jsx`.
+- **`.App` centra el texto** (`App.css`), así que todo lo de staff sale centrado salvo que diga
+  otra cosa. Los modales no: se dibujan fuera de `.App`.
 
 ## Variables de entorno
 
@@ -142,6 +155,7 @@ Todas con prefijo `REACT_APP_`. **Nunca hardcodear sus valores.**
 | `REACT_APP_apiKey` … `appId` | config de Firebase |
 | `REACT_APP_gardenAppCheck` | site key de reCAPTCHA Enterprise |
 | `REACT_APP_appCheckDebug` | debug token para localhost |
+| `REACT_APP_ignorarHorario` | **solo con `npm start`**: en `true`, la web toma pedidos a cualquier hora, el F4 se habilita y la jornada en curso incluye lo cargado de día. El build la ignora aunque quede en el `.env`. Ver [[Reglas de negocio#Probar de día]] |
 | `REACT_APP_admin`, `_encargado`, `_cajero`, `_cocina`, `_jefeDeliverys`, `_delivery`, `_atp` | valores de rol |
 | ~~`REACT_APP_fijoDeliverys`~~ | **ya no existe** desde el 28-09-2026: el repartidor cobra su asistencia más los envíos |
 | `REACT_APP_recargoMP` | % de recargo de Mercado Pago |
@@ -153,13 +167,14 @@ Todas con prefijo `REACT_APP_`. **Nunca hardcodear sus valores.**
 
 ```bash
 npm start                                          # dev en localhost:3000
+npm test                                           # los tests (hoy, solo fechaComercial.test.js)
 npm run build                                      # build de producción, sin source maps (corre el lint de CRA)
 npx firebase deploy --only firestore:rules,storage # reglas
 ```
 
 No hay `.eslintrc`: la config `react-app` está dentro de `package.json` y el lint corre como
 parte del build — un `import` después de un `const` (`import/first`) lo rompe. No hay tests
-automatizados por decisión: [[Deuda tecnica#Sin tests]]. Los source maps van apagados
+automatizados salvo la batería del horario web: [[Deuda tecnica#Sin tests]]. Los source maps van apagados
 (`GENERATE_SOURCEMAP=false`) a propósito: en producción expondrían el código fuente en las devtools.
 
 ## Pendientes del proyecto

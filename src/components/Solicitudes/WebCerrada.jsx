@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import logo from '../../img/logo_negro.webp';
 import logoMobile from '../../img/logo_pub_mobile.webp';
 import Footer from "./Footer";
-import { textoHorarioWeb } from "../../Utils/fechaComercial";
+import { textoHorarioWeb, textoExcepcionWeb } from "../../Utils/fechaComercial";
 import '../../style/Main.css';
 
 // Una sucursal fuera de horario no toma pedidos por la web: no se arma el carrito.
@@ -13,8 +13,12 @@ import '../../style/Main.css';
 // el horario, la dirección y el teléfono para el pie: es justo cuando el cliente no
 // puede pedir por la web. Cada sucursal tiene su horario, así que se ofrece volver
 // al selector: capaz otra sigue abierta.
+//
+// Si hoy hay una excepción ("Hoy cerrado · Inventario", "Hoy de 20 a 23 hs") va
+// primero: es lo que explica por qué hoy no es como siempre.
 const WebCerrada = ({ sucursal = null }) => {
     const horario = textoHorarioWeb(sucursal);
+    const excepcion = textoExcepcionWeb(sucursal);
 
     return (
         <div>
@@ -28,6 +32,7 @@ const WebCerrada = ({ sucursal = null }) => {
                         {sucursal?.nombre ? `${sucursal.nombre}: ahora estamos cerrados` : "Ahora no estamos tomando pedidos"}
                     </h2>
                     <div className="text-white text-center py-4 px-3">
+                        {excepcion && <p className="fw-bold fs-5">{excepcion}</p>}
                         {horario && <p className="fw-bold fs-5">Tomamos pedidos {horario}.</p>}
                         <Link to="/crear-solicitud" className="btn btn-success">Ver otras sucursales</Link>
                     </div>

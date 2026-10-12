@@ -45,7 +45,7 @@ export const Card = ({ producto }) => {
           <div className="cardColumnCS m-3">
             <p className="precio">{fmtPesos(producto.precio)}</p>
             <button type='button' className='btn btn-success' onClick={handleAgregar}>
-              Agregar al pedido
+              + Agregar al pedido
             </button>
           </div>
         </div>

@@ -213,7 +213,7 @@ const Clientes = () => {
                                 <div className="d-flex justify-content-start align-items-center" style={{ maxHeight: "40px", marginLeft: "10px" }}>
                                     <h1>Clientes</h1>
                                     <button className="btn-contorno m-1" onClick={() => setModalShowCrear(true)}>
-                                        Agregar Cliente
+                                        + Agregar Cliente
                                     </button>
                                 </div>
                             </div>

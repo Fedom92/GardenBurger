@@ -38,8 +38,10 @@ ves una alternativa mejor, proponela. El detalle y el porqué están en el vault
    idempotente, así que lo que quede usándolo va con guard (`Utils/useAccionUnica.js`).
 4. **Multi-sucursal**: las colecciones operativas son subcolecciones de `sucursales/{id}/…`. El
    scope lo dan `colSucursal`/`docSucursal` (staff) o la sucursal de la URL (público).
-5. **Nunca hardcodear** roles ni estados: van por `process.env.REACT_APP_*`, `ROLES` y `ESTADOS`
-   de `Utils/Constantes.jsx`.
+5. **Roles, estados y métodos de pago no se hardcodean**: van por `process.env.REACT_APP_*`,
+   `ROLES`, `ESTADOS` y `METODOS_PAGO` de `Utils/Constantes.jsx`. Para lo demás —una categoría
+   como `"BEBIDAS"`, un valor simple— no todo tiene que ser constante: **preguntar al usuario** si
+   se puede hardcodear antes de crear una.
 
 ## Cómo trabajar en este repo
 

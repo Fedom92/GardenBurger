@@ -30,7 +30,7 @@ Lo que ve el cliente: elegir sucursal, armar el pedido, seguirlo y mirar la cart
 |---|---|---|---|
 | `/crear-solicitud` | `SeleccionSucursal` (81) | Lista las sucursales; la cerrada, deshabilitada y con su horario | 0: sale de `menu.json` |
 | `/crear-solicitud/:sucursal` | `Crearsolicitud` (504) | Catálogo en acordeones + carrito + formulario + crea la solicitud | 0 al navegar; 1 lectura + 1 escritura al comprar |
-| ↳ fuera de horario | `WebCerrada` (41) | Cartel con el horario y un link al selector | — |
+| ↳ fuera de horario | `WebCerrada` (46) | Cartel con el horario (y la excepción de hoy, si hay) y un link al selector | — |
 | `/ver-pedido/:sucursal/:id` | `PaginaDetalle` (183) | Seguimiento del pedido en 5 pasos; el link vence a las 48 h | 1 por visita |
 | `/menu` | `Menu` (172) | La carta, exportable a PDF | 0: sale de `menu.json` |
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { textoHorarioWeb } from "../../Utils/fechaComercial";
+import { textoHorarioWeb, textoExcepcionWeb } from "../../Utils/fechaComercial";
 
 // El pie de la web pública. Muestra la dirección, el teléfono y el horario de la
 // sucursal cuando la página sabe cuál es (`sucursal`: de menu.json o del pedido). En
@@ -7,6 +7,7 @@ import { textoHorarioWeb } from "../../Utils/fechaComercial";
 // botón. El horario es el mismo que decide si la web abre.
 const Footer = ({ sucursal = null }) => {
     const horario = textoHorarioWeb(sucursal);
+    const excepcion = textoExcepcionWeb(sucursal);
 
     return (
         <footer className="m-auto bg-dark text-white py-4 position-relative z-3 w-100">
@@ -28,9 +29,16 @@ const Footer = ({ sucursal = null }) => {
                             </p>
                         )}
                         {horario && (
-                            <p className="small text-white-50 mb-0">
+                            <p className={`small text-white-50 ${excepcion ? "" : "mb-0"}`}>
                                 <span className="me-2">🕒</span>
                                 Pedidos {horario}
+                            </p>
+                        )}
+                        {/* Una excepción de hoy: un feriado que se abre, una noche cerrada. */}
+                        {excepcion && (
+                            <p className="small text-warning mb-0">
+                                <span className="me-2">📅</span>
+                                {excepcion}
                             </p>
                         )}
                     </div>

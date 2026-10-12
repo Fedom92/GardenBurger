@@ -28,6 +28,7 @@ import { ahoraServidor, getFechaComercial, esHoraDeArqueo } from '../../Utils/fe
 import { fmtPesos } from '../../Utils/formato';
 import { useAccionUnica } from '../../Utils/useAccionUnica';
 import { useHoraDeArqueo } from '../../Utils/useHoraDeArqueo';
+import { estadoAlConfirmar } from '../../Utils/ruteoPedido';
 
 // Los EXTRA son filas hermanas en el carrito, pero el diseño los cuelga de su
 // producto. Se agrupa solo para mostrar: el array que se guarda no cambia.
@@ -53,7 +54,7 @@ const agruparCarrito = (carrito) => {
 };
 
 const Caja = () => {
-    const { register, handleSubmit, reset, watch, setValue, resetField } = useForm({
+    const { register, handleSubmit, reset, watch, setValue, resetField, getValues } = useForm({
         defaultValues: { direccion: "", id: "" }
     });
     const envioRaw = watch("envio");
@@ -124,9 +125,14 @@ const Caja = () => {
         [envios]
     );
 
-    const productosFiltrados = useMemo(() => productos
+    // Filtrar oculta, no desmonta: la grilla siempre tiene todos los productos y a
+    // los de otra categoria les pone `hidden`. Desmontarlos tiraba sus <img>, y al
+    // volver a la categoria cada foto se volvia a pedir y a decodificar —se veian
+    // cargar de nuevo en cada cambio de tab—.
+    const idsVisibles = useMemo(() => new Set(productos
         .filter((p) => search ? p.descripcion?.toLowerCase().includes(search.toLowerCase()) : true)
-        .filter((p) => categoriaSeleccionada === "" || p.categoria === categoriaSeleccionada),
+        .filter((p) => categoriaSeleccionada === "" || p.categoria === categoriaSeleccionada)
+        .map((p) => p.id)),
         [productos, search, categoriaSeleccionada]);
 
     // El guard va con useAccionUnica y no con un useState: entre dos clicks
@@ -192,7 +198,11 @@ const Caja = () => {
                     // cobra en mostrador, el arqueo de hoy no cambia. Ver useResumenDiario.
                     combos: contarCombos(carrito),
                     esLocal: ENVIOS_LOCALES.includes(envioSeleccionado?.zona_envio),
-                    estado: data.metodoPago === METODOS_PAGO.MP.key || data.metodoPago === METODOS_PAGO.DIVIDIDO.key ? ESTADOS.PENDIENTEMP : ESTADOS.CONFIRMADO,
+                    // Con MP espera el cotejo de la transferencia. Si no, queda cobrado:
+                    // a la cocina, o directo a ATP / Delivery si no hay nada que cocinar.
+                    estado: data.metodoPago === METODOS_PAGO.MP.key || data.metodoPago === METODOS_PAGO.DIVIDIDO.key
+                        ? ESTADOS.PENDIENTEMP
+                        : estadoAlConfirmar({ carrito, envio: envioSeleccionado }),
                     esHorarioEspecial: !!data.horarioEspecial,
                     sucursal: userData.sucursal,
                     origen: isWebOrder ? "WEB" : "CAJA",
@@ -248,13 +258,22 @@ const Caja = () => {
         setShowModalDividido(nuevoMetodo === METODOS_PAGO.DIVIDIDO.key);
     };
 
+    // Deja el ticket en blanco. Es la misma al crear el pedido y al tocar Limpiar:
+    // en los dos casos el estado final es un ticket nuevo. Cancelar una solicitud
+    // web suma liberarla (ver cancelarTicket), y despues tambien termina aca.
+    //
+    // Todos los campos van a "" explicito: un reset() pelado deja en undefined los
+    // que no estan en defaultValues, y al re-registrarse react-hook-form los relee
+    // del DOM, que todavia tiene el pedido anterior. Asi quedaban escritos el
+    // telefono y el nombre, y el envio y el metodo de pago se veian apagados pero
+    // seguian cargados por debajo.
     const limpiar = useCallback(() => {
-        reset();
+        reset(Object.fromEntries(Object.keys(getValues()).map((campo) => [campo, ""])));
         resetCarrito();
         setMontoEfectivo(0);
         resetHorario();
         setModoDelivery(false);
-    }, [reset, resetCarrito, resetHorario]);
+    }, [reset, getValues, resetCarrito, resetHorario]);
 
     // Se calcula desde los pedidos de la jornada, no de un contador acumulado: el
     // numero que ve el encargado al fiscalizar el cierre es el de los pedidos que
@@ -485,9 +504,10 @@ const Caja = () => {
                             </div>
 
                             <div className="pos-grid">
-                                {productosFiltrados.map((producto) => (
+                                {productos.map((producto) => (
                                     <button
                                         key={producto.id}
+                                        hidden={!idsVisibles.has(producto.id)}
                                         className="pos-prod"
                                         onClick={() => handleAgregarAlCarrito(producto)}
                                     >

@@ -161,9 +161,18 @@ const HistorialPedidos = () => {
     {
       accessorKey: "estado",
       header: "Estado",
-      cell: ({ getValue }) => (
-        <span className="badge bg-secondary">{getValue()}</span>
-      ),
+      // Entregado en verde, eliminado en rojo y cancelado en naranja; lo que sigue
+      // en curso, en gris. Bootstrap no tiene bg naranja: va su $orange inline.
+      cell: ({ getValue }) => {
+        const estado = getValue();
+        if (estado === ESTADOS.CANCELADO) {
+          return <span className="badge" style={{ backgroundColor: "#fd7e14" }}>{estado}</span>;
+        }
+        const color = estado === ESTADOS.FINAL ? "bg-success"
+          : estado === ESTADOS.ELIMINADO ? "bg-danger"
+          : "bg-secondary";
+        return <span className={`badge ${color}`}>{estado}</span>;
+      },
     },
     {
       id: "acciones",
@@ -257,7 +266,7 @@ const HistorialPedidos = () => {
                   sortBy="timestamp"
                   ordenDescendente={true}
                   camposBusqueda={["codigo", "nombre", "direccion", "telefono"]}
-                  camposFiltros={["metodoPago", "estado"]}
+                  camposFiltros={["metodoPago", "estado", "esLocal"]}
                 />
               </div>
             </div>

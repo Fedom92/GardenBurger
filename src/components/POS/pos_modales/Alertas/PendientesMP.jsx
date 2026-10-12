@@ -9,6 +9,7 @@ import { ESTADOS, METODOS_PAGO } from "../../../../Utils/Constantes";
 import { invalidarFotoDePedido } from "../../pos_hooks/useResumenDiario";
 import { useAccionUnica } from "../../../../Utils/useAccionUnica";
 import { fmtPesos } from "../../../../Utils/formato";
+import { estadoAlConfirmar } from "../../../../Utils/ruteoPedido";
 
 const PendientesMP = ({ isOpen, onClose }) => {
     const { userData } = useAuth();
@@ -53,11 +54,13 @@ const PendientesMP = ({ isOpen, onClose }) => {
         return () => unsubscribe();
     }, [isOpen, onClose]);
 
-    const aprobarPedido = (pedidoId) => ejecutar(async () => {
+    // Recibe el pedido del snapshot y no solo el id: el carrito y el envio deciden
+    // si va a la cocina o directo a ATP / Delivery, sin releer el documento.
+    const aprobarPedido = (pedido) => ejecutar(async () => {
         try {
-            const pedidoRef = docSucursal("pedidos", pedidoId);
+            const pedidoRef = docSucursal("pedidos", pedido.id);
             await updateDoc(pedidoRef, {
-                estado: ESTADOS.CONFIRMADO,
+                estado: estadoAlConfirmar(pedido),
                 cajeroApruebaMPID: userData.id,
                 cajeroApruebaMP: userData.nombreCompleto,
                 cajeroApruebaMPTimestamp: serverTimestamp(),
@@ -195,7 +198,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                         <div className="d-flex gap-2">
                                             <button
                                                 className="btn btn-success btn-sm flex-fill"
-                                                onClick={() => aprobarPedido(pedido.id)}
+                                                onClick={() => aprobarPedido(pedido)}
                                                 disabled={procesando}
                                             >
                                                 <i className="fa fa-check"></i> Aprobar

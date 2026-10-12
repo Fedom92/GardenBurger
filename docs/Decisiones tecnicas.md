@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, decisiones, adr]
 aliases: [ADR, Por que esta asi]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Decisiones técnicas
@@ -161,6 +161,10 @@ probó filtrarlos y el dueño prefirió lo simple (28-09-2026). Publicar de más
 primera sigue parpadeando hasta que publique desde ahí. Inofensivo: publicar dos veces no rompe
 nada.
 
+**Las sucursales ya no la prenden** (12-10-2026): se publican solas al guardarlas, y solo la
+prenden si esa publicación falla. Ver
+[[Decisiones tecnicas#Las excepciones de horario viven en dos lugares]].
+
 ## Las fotos de producto se achican en el navegador
 
 **Qué**: al elegir "Subir archivo" en Crear/Editar producto, `subirImagenProducto()`
@@ -203,11 +207,19 @@ formato. Cero lecturas de Firestore, y menos descarga de Storage que antes.
 
 ## `html2pdf` se carga al tocar "Exportar a PDF"
 
-**Qué**: `Menu.jsx` hace `await import('html2pdf.js')` dentro de `exportarPDF`, no arriba.
+**Qué**: `Menu.jsx` hace `await import('html2pdf.js/dist/html2pdf.min.js')` dentro de
+`exportarPDF`, no arriba.
 
 **Por qué**: `html2pdf` arrastra `jspdf` y pesa varios cientos de KB, y solo sirve para ese botón
 (jspdf tenía además un advisory crítico, que se cerró al pasar a html2pdf 0.14 el 04-10-2026). Con el import dinámico queda en su propio chunk y el menú público no lo
 descarga hasta que alguien exporta. Se mantiene la dependencia porque la exportación **se usa**.
+
+**Por qué el `.min`**: el import apunta a `html2pdf.js/dist/html2pdf.min.js`, no al `main` del
+paquete. El `dist/html2pdf.js` de la 0.14 trae sus dependencias embebidas con comentarios
+`sourceMappingURL` a `.map` que el paquete no publica, y el `source-map-loader` de CRA tira un
+warning por cada uno en cada compilación. El `.min` es el mismo UMD (exporta la misma función,
+`html2canvas` externo) y sí trae su `.map`. Si una versión futura arregla el empaquetado, se puede
+volver a `import('html2pdf.js')`.
 
 ## App Check está "Aplicada"
 
@@ -440,6 +452,37 @@ corte de la web, en su documento, editables desde el ABM. Las sucursales tienen 
 **Y el F4 no mira el horario de la sucursal**: se habilita a `HORA_HABILITA_STATS` en todas.
 Atarlo al cierre de cada una obligaba a la Caja a leer su sucursal (2-3 lecturas por sesión), y el
 dueño prefirió la constante.
+
+## Las excepciones de horario viven en dos lugares
+
+**Qué** (12-10-2026): una excepción —un feriado que se abre, una noche que se cierra— se escribe
+en un batch en dos lugares:
+
+| | `sucursales/{id}.excepcionesWeb` | `sucursales/{id}/excepcionesHorario` |
+|---|---|---|
+| Para qué | lo que mira la web | el historial |
+| Qué tiene | solo hoy y lo que viene; el motivo **solo si es público** | todo, con el motivo interno y quién la cargó |
+| Quién lo lee | la web, desde `menu.json` y del `getDoc` que ya hace al confirmar | el admin, al tocar "Ver historial" (de a 20) |
+
+**Por qué no uno solo**:
+
+- **Solo en el documento de la sucursal**: es de lectura pública (`allow read: if true`) y viaja en
+  `menu.json`. El motivo interno y los nombres de quién cargó cada una quedarían a la vista de
+  cualquiera; "no mostrar en la web" sería cosmético. Y crecería para siempre dentro de un JSON que
+  baja cada visitante.
+- **Solo en la subcolección**: la web pagaría una lectura más por cada pedido confirmado, para
+  mirar la excepción de esa noche.
+
+Las dos escrituras van juntas en un `writeBatch`, así que no pueden quedar distintas. El mapa se
+limpia de jornadas vencidas en cada escritura; el registro nunca se borra.
+
+**Valen por jornada, no por un rango con "desde" y "hasta"**: una noche es la unidad en que el
+negocio decide abrir o no, y así no queda nada que deshacer.
+
+**Se republica solo `sucursales` en `menu.json`** (`publicarSucursales()`), partiendo del JSON ya
+publicado. Llamar a `publicarMenu()` leería el catálogo entero y publicaría de rebote cambios de
+productos a medio hacer. Sin publicar, abrir un día por excepción no servía: la web cree lo que dice el JSON y
+muestra la pantalla de cerrado sin llegar a confirmar.
 
 ## Las Métricas de la jefa van por listener
 

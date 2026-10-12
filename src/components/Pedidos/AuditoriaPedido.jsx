@@ -2,7 +2,7 @@ import React from "react";
 import { Modal } from "react-bootstrap";
 import moment from "moment";
 import { fmtPesos } from "../../Utils/formato";
-import { METODOS_PAGO } from "../../Utils/Constantes";
+import { METODOS_PAGO, ESTADOS } from "../../Utils/Constantes";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -89,7 +89,13 @@ const AuditoriaPedido = ({ pedido: p, isOpen, onClose }) => {
                         Auditoría Pedido N° {p.codigo}
                     </span>
                     <span className="ms-auto me-3">
-                        <span className="badge bg-secondary text-uppercase fs-6 py-2 px-3">
+                        {/* Los mismos colores que la columna Estado del Historial. */}
+                        <span
+                            className={`badge text-uppercase fs-6 py-2 px-3 ${p.estado === ESTADOS.FINAL ? "bg-success"
+                                : p.estado === ESTADOS.ELIMINADO ? "bg-danger"
+                                : p.estado === ESTADOS.CANCELADO ? "" : "bg-secondary"}`}
+                            style={p.estado === ESTADOS.CANCELADO ? { backgroundColor: "#fd7e14" } : undefined}
+                        >
                             {p.estado}
                         </span>
                     </span>

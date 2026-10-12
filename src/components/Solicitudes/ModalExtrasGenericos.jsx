@@ -177,7 +177,7 @@ export const ModalExtrasGenericos = () => {
                   className="btn btn-success" 
                   onClick={finalizarProductoConExtras}
                 >
-                  Agregar
+                  + Agregar
                 </button>
               </div>
             </div>

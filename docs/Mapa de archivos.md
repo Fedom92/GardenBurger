@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, referencia]
 aliases: [Que hace cada archivo]
-actualizado: 2026-10-03
+actualizado: 2026-10-12
 ---
 
 # Mapa de archivos
@@ -38,15 +38,18 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 
 | Archivo | Qué hace |
 |---|---|
-| `Constantes.jsx` | `ESTADOS`, `ENVIOS_LOCALES`, `CATEGORIAS_COMBOS`, `CATEGORIAS_HAMBURGUESA`, `CANTIDAD_CARNES`, `FLUJO_PUB_ESTADOS`, `TIEMPO_MIN_PEDIDOESP`, `getCurrentStepIndex()`, **`HORARIO`** (la jornada comercial), **`HORA_HABILITA_STATS`** (desde cuándo se ve el F4), `METODOS_PAGO`, `DESTINO_VUELTO` y **`ROLES`** (nombre + ruta inicial + `llevaMoto` de cada rol, en un solo objeto) |
-| `fechaComercial.js` | Jornada comercial, hora del servidor, ventana del F4 y horario web de cada sucursal (`webRecibePedidos(sucursal)`, `textoHorarioWeb(sucursal)`). Ver [[Reglas de negocio#Jornada comercial]] |
-| `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`), `fetchMenuPublico()` (lo consume, con promesa cacheada) y la bandera `menuSinPublicar` en localStorage (`marcar`/`limpiar`/`hayMenuPendiente`) |
+| `Constantes.jsx` | `ESTADOS`, `ENVIOS_LOCALES`, `CATEGORIAS_COMBOS`, `CATEGORIAS_HAMBURGUESA`, `CANTIDAD_CARNES`, `FLUJO_PUB_ESTADOS`, `TIEMPO_MIN_PEDIDOESP`, `getCurrentStepIndex()`, **`HORARIO`** (la jornada comercial), **`HORA_HABILITA_STATS`** (desde cuándo se ve el F4), `METODOS_PAGO`, `DESTINO_VUELTO` y **`ROLES`** (nombre, `nroOrden`, ruta inicial, `editable` y `llevaMoto` de cada rol, en un solo objeto), con `ROLES_EDITABLES` y `ordenDeRol()` derivados |
+| `fechaComercial.js` | Jornada comercial, hora del servidor, ventana del F4 y horario web de cada sucursal con sus excepciones (`webRecibePedidos`, `textoHorarioWeb`, `textoExcepcionWeb`, `errorDeHorario`). `IGNORAR_HORARIO` para probar de día. Ver [[Reglas de negocio#Jornada comercial]] |
+| `fechaComercial.test.js` | La única batería de tests: los bordes del horario web y las excepciones. `npm test` |
+| `excepcionesHorario.js` | Guardar, levantar y leer las excepciones al horario de la web: un batch que escribe el registro y la copia de la sucursal. Ver [[Decisiones tecnicas#Las excepciones de horario viven en dos lugares]] |
+| `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`), `publicarSucursales()` (republica solo las sucursales; la llama el Panel Admin), `fetchMenuPublico()` (lo consume, con promesa cacheada) y la bandera `menuSinPublicar` en localStorage (`marcar`/`limpiar`/`hayMenuPendiente`) |
 | `sucursales.js` | `fetchSucursales()` — lista ordenada de la colección global, con la promesa cacheada. `invalidarSucursales()` la suelta cuando el ABM guarda |
 | `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table` v9 (registra solo orden y paginación): búsqueda, filtros por columna, orden y paginación. Exporta `quitarAcentos` |
 | `formato.js` | `fmtPesos` y `fmtPesosRedondeado`. **Único lugar** donde se formatean montos |
 | `useAccionUnica.js` | Guard contra doble ejecución. Ver [[Convenciones y preferencias#Acciones que no se pueden repetir]] |
 | `useHoraDeArqueo.js` | Si ya es hora de mirar el arqueo (`HORA_HABILITA_STATS` a `horaCierre`), para el `disabled` del F4. Ver [[Reglas de negocio#Quién mira el arqueo, y cuándo]] |
 | `imagenes.js` | `subirImagenProducto()`: achica la foto a 1200 px, la pasa a WebP y la sube a `productos/`. `IMAGEN_ILEGIBLE` es el mensaje cuando el navegador no la puede abrir (HEIC). Ver [[Decisiones tecnicas#Las fotos de producto se achican en el navegador]] |
+| `ruteoPedido.js` | `getItemsCocina()` (saca las bebidas: lo que la cocina prepara), `destinoPedidoListo(envio)` (`ATP` o `DELIVERY` según la zona) y `estadoAlConfirmar(pedido)` (al quedar cobrado: `CONFIRMADO`, o directo a `ATP`/`DELIVERY` si no hay nada que cocinar). Ver [[Flujo del pedido#Pipeline]] |
 | `avisos.js` | `avisarSinConexion` (se cayó un listener: aviso que no se cierra) y `avisarErrorDeCarga` (una carga dejó la pantalla vacía) |
 
 ## `components/POS/` — la Caja
@@ -76,11 +79,10 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 |---|---|
 | `Cocina.jsx` | Contenedor con dos solapas y sus contadores |
 | `PedidosEspera.jsx` | Estado `CONFIRMADO`. Selección múltiple, contador de carnes, aviso de horarios especiales |
-| `PedidosCocinando.jsx` | Estado `COCINA`. Rutea a `ATP` o `DELIVERY` al terminar |
+| `PedidosCocinando.jsx` | Estado `COCINA`. Rutea a `ATP` o `DELIVERY` al terminar, con `destinoPedidoListo()` |
 | `ModalHorariosEspeciales.jsx` | Aviso con checkboxes para los pedidos adelantados |
 | `VerPedidoModal.jsx` | Card expandida: agrupa cada principal con sus extras en dos columnas |
 | `TicketImpresion.jsx` + `.css` | Ticket del cliente. Abre ventana nueva e imprime |
-| `cocina_hooks/useItemsCocina.js` | `getItemsCocina()` — saca las bebidas de la vista del cocinero |
 
 ## `components/Delivery/`
 
@@ -110,16 +112,20 @@ Código heredado de otro desarrollador, anotado para rehacer: el análisis compl
 
 | Archivo | Qué hace |
 |---|---|
-| `ATP/ATP.jsx` | Estado `ATP` — entrega en mostrador |
+| `ATP/ATP.jsx` | Estado `ATP` — entrega en mostrador. Botón de WhatsApp "tu pedido está listo" en Retira y Espera Afuera, solo si el pedido tiene teléfono (en los locales no es obligatorio) |
 | `Pedidos/HistorialPedidos.jsx` | Pedidos por rango de fechas, **sin filtro de estado**: también audita cancelados y eliminados. El admin elige sucursal y puede **eliminar** cualquier pedido (borrado lógico, no con el repartidor en la calle) |
 | `Metricas/Metricas.jsx` | **Métricas**: botones de sucursal (Todas o una) y de período (Hoy, Ayer, Semana actual y pasada, Mes actual y pasado); con los dos elegidos busca sola. Lee fotos con `obtenerResumenes`, y la noche en curso con `obtenerArqueo` cuando el período llega a hoy. Con el aspecto del Histórico y pensada para entrar entera en el celular sin scroll: Pedidos y Combos, Ventas, Delivery (con delivery vs mostrador) y el top 3 de combos; con "Todas", cada sucursal en los subtítulos. El título se corre a la derecha del botón del menú |
 | `Pedidos/AuditoriaPedido.jsx` | Traza completa de un pedido, agrupada por etapa |
 | `Productos/Productos.jsx` | ABM de productos + botón **"Publicar Menú"**, que parpadea mientras haya cambios sin publicar (bandera en localStorage). Productos y categorías por **listener**: la tabla no se toca a mano después de guardar |
 | `Productos/Parametros/Categorias.jsx` | ABM de categorías: lista, y el formulario al tocar "+ Nueva" o Editar. Recibe la lista del listener de `Productos` por props: no lee nada ni la actualiza a mano |
 | `Clientes/Clientes.jsx` (+ Crear/Edit) | **Buscador**, no listado: no lee nada al entrar. Teléfono exacto, prefijo de nombre o sucursal, siempre con tope |
-| `Admin/PanelAdmin.jsx` | Gestión de **todos los empleados**, repartidores incluidos: rol, sucursal, DNI, domicilio, valor hora, moto. Alta y baja ramificadas por `sinAcceso`. Botón **"Sincronizar permisos"** (reparte el claim de admin). Usa `TablaGenerica` con las filas enriquecidas (`rolNombre`, `sucursalNombre`) para que los filtros muestren nombres y no el valor crudo del rol |
+| `Admin/PanelAdmin.jsx` | La cáscara del panel: pestañas Personal, Sucursales y Envíos, con la activa en la URL (`?tab=`). `mountOnEnter`: cada una lee lo suyo recién al abrirla. Lee las sucursales y las comparte con Personal y Sucursales |
+| `Admin/Personal.jsx` | Gestión de **todos los empleados**, ordenados por rol (`nroOrden`) y nombre, repartidores incluidos: rol, sucursal, DNI, domicilio, valor hora, moto. Alta y baja ramificadas por `sinAcceso`. Botón **"Sincronizar permisos"** (reparte el claim de admin). Usa `TablaGenerica` con las filas enriquecidas (`rolNombre`, `sucursalNombre`) para que los filtros muestren nombres y no el valor crudo del rol |
 | `Admin/CrearEmpleado.jsx` / `EditClave.jsx` / `MiPerfil.jsx` | Alta de empleados (con o sin acceso: lo decide el rol; el repartidor carga la moto en vez de correo y clave), cambio de clave, perfil propio |
-| `Admin/Parametros/Sucursales.jsx` / `Envios.jsx` | ABM de sucursales —lista, y el formulario con su horario web (días, abre, cierra y corte) al tocar "+ Nueva" o Editar— y de zonas de envío, que **no muestra** Retira ni Espera Afuera: sus nombres deciden el ruteo de cocina y el arqueo |
+| `Admin/Parametros/Sucursales.jsx` | Pestaña Sucursales: la lista con qué hace la web hoy (solo informa) y, en Acciones, encender o apagar, las excepciones (naranja) y editar; el alta y la edición en un modal. Todo cambio se publica solo (`publicarSucursales`) |
+| `Admin/Parametros/FormularioSucursal.jsx` | El formulario de alta y edición: datos, días de atención como botones que se prenden y apagan, horas, y un resumen en vivo de lo que va a hacer la web ("de miércoles a domingo, de 20 a 23 hs"). Con su propio `useForm`, montado de cero en cada apertura: con `reset()` quedaban los datos de una edición en el alta siguiente |
+| `Admin/Parametros/ExcepcionesHorario.jsx` | El modal de excepciones de una sucursal (el botón naranja de su fila): cargar una para cualquier día, las próximas (de memoria) y el historial (a pedido, con "Ver historial"). Las escrituras las hace `Sucursales` |
+| `Admin/Parametros/Envios.jsx` | Pestaña Envíos: las zonas en `TablaGenerica`, y el alta y la edición en un modal ("Agregar Envío"). **No muestra** Retira ni Espera Afuera: sus nombres deciden el ruteo de cocina y el arqueo |
 | `Asistencias/Asistencias.jsx` | Pantalla del encargado: solo la jornada actual. Ver [[Asistencias y liquidacion]] |
 | `Asistencias/LiquidacionAsistencias.jsx` | Panel del admin: liquida un período —a los repartidores les suma los envíos, de las fotos— y corrige jornadas sueltas |
 | `Asistencias/ModalCargarJornada.jsx` | La grilla de carga, compartida por las dos pantallas. `modoAdmin` habilita editar el valor hora y ver la auditoría |
@@ -131,5 +137,5 @@ Código heredado de otro desarrollador, anotado para rehacer: el análisis compl
 | `Estadisticas/Historico/useGoogleSheets.js` | Baja y parsea los dos TSV de `privado/estadisticas` en Storage con `getBytes()`. **No** se leen de `public/` |
 
 > [!warning] Estadísticas lee TSV, no Firestore
-> `public/CSV/ventas.tsv` y `pagos.tsv` se exportan **a mano**. Un export incompleto de Ventas
-> falsea los combos y el stock sin dar ningún error.
+> `ventas.tsv` y `pagos.tsv` (en `privado/estadisticas/` de Storage) se exportan **a mano**. Un
+> export incompleto de Ventas falsea los combos y el stock sin dar ningún error.

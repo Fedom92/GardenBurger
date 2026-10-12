@@ -48,11 +48,9 @@ const ModalMetricasDelivery = ({ isOpen, onClose, liquidacion, jornada, enCurso 
                 {/* Lo que sigue en la calle o esperando repartidor entra cuando vuelva.
                     Sale del listener de la tabla, sin lecturas. */}
                 {enCurso > 0 && (
-                    <div className="border border-dark rounded p-2 mb-3">
+                    <div className="border border-dark rounded p-2 mb-3 bg-warning">
                         <i className="fa-solid fa-motorcycle me-1"></i>
-                        Hay <strong>{enCurso}</strong> {enCurso === 1 ? "pedido" : "pedidos"} de delivery en curso:
-                        {enCurso === 1 ? " entra" : " entran"} acá cuando vuelva el repartidor.
-                    </div>
+                        Hay <strong>{enCurso}</strong> pedidos de delivery EN CURSO.                    </div>
                 )}
 
                 {repartidores.length === 0 ? (
@@ -83,17 +81,18 @@ const ModalMetricasDelivery = ({ isOpen, onClose, liquidacion, jornada, enCurso 
                                     </Accordion.Header>
                                     <Accordion.Body>
                                         <div className="table-responsive">
-                                            <table className="table table-sm mb-0 align-middle">
+                                            <table className="table table-sm mb-0 align-middle text-center">
                                                 <thead>
                                                     <tr>
                                                         <th>Ticket</th>
+                                                        <th>Salió</th>
                                                         <th>Volvió</th>
                                                         <th>Dirección</th>
                                                         <th>Zona</th>
-                                                        <th className="text-end">Envío</th>
+                                                        <th>Envío</th>
                                                         <th>Pago</th>
-                                                        <th className="text-end">Efectivo</th>
-                                                        <th className="text-end">Pagaron con</th>
+                                                        <th>Efectivo</th>
+                                                        <th>Pagaron con</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -105,13 +104,14 @@ const ModalMetricasDelivery = ({ isOpen, onClose, liquidacion, jornada, enCurso 
                                                                 {e.sinEntregar && <small className="d-block text-danger">Sin entregar</small>}
                                                                 {!e.sinEntregar && e.anulado && <small className="d-block text-danger">Anulado</small>}
                                                             </td>
+                                                            <td>{e.salidaTimestamp?.toDate ? moment(e.salidaTimestamp.toDate()).format("HH:mm") : "—"}</td>
                                                             <td>{e.finTimestamp?.toDate ? moment(e.finTimestamp.toDate()).format("HH:mm") : "—"}</td>
                                                             <td>{e.direccion || "—"}</td>
                                                             <td>{e.zona}</td>
-                                                            <td className="text-end">{fmtPesos(e.envio)}</td>
+                                                            <td>{fmtPesos(e.envio)}</td>
                                                             <td>{etiquetaPago(e.metodoPago)}</td>
-                                                            <td className="text-end">{e.metodoPago === METODOS_PAGO.MP.key ? "—" : fmtPesos(e.efectivo)}</td>
-                                                            <td className="text-end">{e.pagaronCon > 0 ? fmtPesos(e.pagaronCon) : "—"}</td>
+                                                            <td>{e.metodoPago === METODOS_PAGO.MP.key ? "—" : fmtPesos(e.efectivo)}</td>
+                                                            <td>{e.pagaronCon > 0 ? fmtPesos(e.pagaronCon) : "—"}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>

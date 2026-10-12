@@ -7,6 +7,8 @@ import Swal from "sweetalert2";
 import { ENVIOS_LOCALES } from "../../../Utils/Constantes";
 import { fmtPesos } from "../../../Utils/formato";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
+import { avisarErrorDeCarga } from "../../../Utils/avisos";
+import TablaGenerica from "../../../Utils/TablaGenerica";
 
 // "Retira" y "Espera Afuera" no son zonas cualquiera: el codigo las compara POR
 // TEXTO contra ENVIOS_LOCALES para decidir el ruteo de cocina (mostrador vs
@@ -16,95 +18,127 @@ import { useAccionUnica } from "../../../Utils/useAccionUnica";
 // puede crear otra "Retira".
 const esZonaLocal = (envio) => ENVIOS_LOCALES.includes(envio.zona_envio);
 
-// ABM de zonas de envío. Colección global: las zonas las centraliza el admin
-// y son iguales para todas las sucursales.
-const Envios = ({ show, onHide }) => {
-  const { register, handleSubmit, setValue, reset } = useForm();
+const FORMULARIO_VACIO = { zona_envio: "", costo_envio: "" };
 
-  const [idAEditar, setIdAEditar] = useState(null);
+// El formulario del modal, con su propio useForm: Envios lo monta de cero en cada
+// apertura (key), así que arranca siempre con `valoresIniciales`, sin depender de
+// reset(). Con un solo useForm y reset(), en Sucursales lo de una edición quedaba
+// en el alta siguiente; ver FormularioSucursal.
+const FormularioEnvio = ({ valoresIniciales, esEdicion, error, procesando, onGuardar, onCancelar }) => {
+  const { register, handleSubmit } = useForm({ defaultValues: valoresIniciales });
+
+  return (
+    <form name="envios" onSubmit={handleSubmit(onGuardar)}>
+      <div className="mb-3">
+        <label className="form-label">Zona Envío*</label>
+        <input type="text" className="form-control" required {...register("zona_envio")} />
+      </div>
+
+      <div className="mb-3">
+        <label className="form-label">Costo Envío*</label>
+        <input type="number" className="form-control" required min={0} {...register("costo_envio")} />
+      </div>
+
+      {error && <small className="text-danger d-block mb-2">{error}</small>}
+
+      <div className="d-flex justify-content-between">
+        {/* type="button": sin eso, dentro del form, "Cancelar" enviaba el formulario. */}
+        <button type="button" className="btn btn-secondary" onClick={onCancelar}>
+          Cancelar
+        </button>
+        <button type="submit" className="btn btn-success" disabled={procesando}>
+          {esEdicion ? "Guardar cambios" : "Agregar"}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+// ABM de zonas de envío, pestaña del Panel Admin. Colección global: las zonas las
+// centraliza el admin y son iguales para todas las sucursales. La tabla y, al
+// tocar "Agregar Envío" o Editar, el formulario en un modal.
+const Envios = () => {
   const [envios, setEnvios] = useState([]);
+  // getDocs va siempre al servidor: hasta que vuelve, la tabla vacía parecía lenta.
+  const [cargando, setCargando] = useState(true);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [idAEditar, setIdAEditar] = useState(null);
   const [error, setError] = useState("");
+  // Con qué valores arranca el formulario, y un número por apertura que es su key.
+  const [valoresForm, setValoresForm] = useState(FORMULARIO_VACIO);
+  const [aperturaForm, setAperturaForm] = useState(0);
 
   const enviosCollection = collection(db, "envios");
 
+  // Se lee al abrir la pestaña por primera vez: PanelAdmin la monta recién ahí.
   useEffect(() => {
-    if (!show) return;
     const fetchData = async () => {
       try {
         const snapshot = await getDocs(query(collection(db, "envios"), orderBy("zona_envio")));
         setEnvios(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
         console.error("Error fetching data Envíos:", error);
-        setError("No se pudieron cargar las zonas de envío. Revisá la conexión.");
+        avisarErrorDeCarga("las zonas de envío");
+      } finally {
+        setCargando(false);
       }
     };
     fetchData();
-  }, [show]);
+  }, []);
 
-  const envioExiste = (zona_envio) => {
-    return envios.some(
-      (envio) => envio.zona_envio.toLowerCase() === zona_envio.toLowerCase()
-    );
+  // Contra todas, las locales incluidas: no se puede crear ni renombrar otra
+  // "Retira". Al editar, la propia no cuenta.
+  const zonaRepetida = (zona_envio, id) => envios.some(
+    (envio) => envio.id !== id && envio.zona_envio.toLowerCase() === zona_envio.trim().toLowerCase()
+  );
+
+  const abrirModal = (id, valores) => {
+    setIdAEditar(id);
+    setValoresForm(valores);
+    setAperturaForm((n) => n + 1);
+    setError("");
+    setModalAbierto(true);
+  };
+
+  const abrirNuevo = () => abrirModal(null, FORMULARIO_VACIO);
+  const abrirEdicion = (envio) => abrirModal(envio.id, { zona_envio: envio.zona_envio, costo_envio: envio.costo_envio });
+
+  const cerrarModal = () => {
+    setModalAbierto(false);
+    setError("");
   };
 
   // addDoc genera un id por llamada: un doble click daba dos zonas, porque el
   // chequeo de repetida mira un estado que todavía no se actualizó.
-  const { ejecutar } = useAccionUnica();
-
-  const handleCreate = (data) => ejecutar(async () => {
-    if (envioExiste(data.zona_envio)) {
-      setError("El envío ya existe");
-      return;
-    }
-    const newState = {
-      zona_envio: data.zona_envio,
-      costo_envio: Number(data.costo_envio)
-    };
-
-    try {
-      const docRef = await addDoc(enviosCollection, newState)
-      const newId = docRef.id;
-
-      setError("");
-      reset();
-      setEnvios([...envios, { id: newId, ...newState }]);
-
-    } catch (error) {
-      console.error("Error al agregar el Envío: ", error);
-      setError("No se pudo agregar la zona. Revisá la conexión e intentá de nuevo.");
-    }
-  });
-
-  const handleEdit = (item) => {
-    setIdAEditar(item.id);
-    setValue("zona_envio", item.zona_envio)
-    setValue("costo_envio", item.costo_envio);
-    setError("");
-  };
+  const { procesando, ejecutar } = useAccionUnica();
 
   // El estado local se toca DESPUES de que la escritura salio bien: antes se
   // actualizaba primero y sin catch, asi que un fallo dejaba la pantalla
   // mostrando un dato que Firestore nunca guardo.
-  const handleUpdate = async (data) => {
-    const envioToUpdate = envios.find((item) => item.id === idAEditar);
-    if (!envioToUpdate) return;
-
-    const newState = {
-      zona_envio: data.zona_envio,
-      costo_envio: Number(data.costo_envio)
+  const guardar = (data) => ejecutar(async () => {
+    if (zonaRepetida(data.zona_envio, idAEditar)) {
+      setError("Ya existe una zona con ese nombre");
+      return;
+    }
+    const datos = {
+      zona_envio: data.zona_envio.trim(),
+      costo_envio: Number(data.costo_envio),
     };
 
     try {
-      await setDoc(doc(enviosCollection, envioToUpdate.id), newState);
-      setEnvios(envios.map((item) => (item.id === idAEditar ? { ...item, ...newState } : item)));
-      setIdAEditar(null);
-      reset();
-      setError("");
+      if (idAEditar !== null) {
+        await setDoc(doc(enviosCollection, idAEditar), datos);
+        setEnvios((prev) => prev.map((item) => (item.id === idAEditar ? { ...item, ...datos } : item)));
+      } else {
+        const docRef = await addDoc(enviosCollection, datos);
+        setEnvios((prev) => [...prev, { id: docRef.id, ...datos }]);
+      }
+      cerrarModal();
     } catch (error) {
-      console.error("Error al actualizar el Envío: ", error);
-      setError("No se pudo guardar el envío. Revisá la conexión.");
+      console.error("Error al guardar el Envío: ", error);
+      setError("No se pudo guardar la zona. Revisá la conexión e intentá de nuevo.");
     }
-  };
+  });
 
   const handleDelete = async (envio) => {
     const result = await Swal.fire({
@@ -121,8 +155,7 @@ const Envios = ({ show, onHide }) => {
 
     try {
       await deleteDoc(doc(enviosCollection, envio.id));
-      setEnvios(envios.filter((item) => item.id !== envio.id));
-      setError("");
+      setEnvios((prev) => prev.filter((item) => item.id !== envio.id));
     } catch (error) {
       console.error("Error al borrar el Envío: ", error);
       Swal.fire({
@@ -134,78 +167,68 @@ const Envios = ({ show, onHide }) => {
     }
   };
 
-  return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      aria-labelledby="contained-modal-title-vcenter"
-      centered
-    >
-      <Modal.Header closeButton onClick={() => {
-        reset();
-      }}>
-        <Modal.Title>Crear/Editar/Eliminar Envíos</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <form name="envios" onSubmit={handleSubmit(idAEditar !== null ? handleUpdate : handleCreate)}>
-          <div className="mb-3">
-            <label className="form-label">Zona Envío*</label>
-            <input type="text" className="form-control" required {...register("zona_envio")} />
-            {error && <small className="text-danger">{error}</small>}
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Costo Envío*</label>
-            <input type="number" className="form-control" required {...register("costo_envio")} min={0} />
-            {error && <small className="text-danger">{error}</small>}
-          </div>
-
-          <button type="submit" className=" btn btn-success">
-            {idAEditar !== null ? "Actualizar" : "Crear"}
+  const columnas = [
+    { accessorKey: "zona_envio", header: "Zona" },
+    {
+      accessorKey: "costo_envio",
+      header: "Costo",
+      cell: ({ getValue }) => fmtPesos(getValue()),
+    },
+    {
+      id: "acciones",
+      header: "Acción",
+      cell: ({ row }) => (
+        <>
+          <button type="button" className="btn btn-success mx-1" title="EDITAR" onClick={() => abrirEdicion(row.original)}>
+            <i className="fa-solid fa-edit"></i>
           </button>
+          <button type="button" className="btn btn-danger" title="BORRAR" onClick={() => handleDelete(row.original)}>
+            <i className="fa-solid fa-trash-can"></i>
+          </button>
+        </>
+      ),
+    },
+  ];
 
-          {idAEditar !== null && (
-            <button
-              className="btn btn-secondary mx-2"
-              onClick={() => { setIdAEditar(null); reset(); setError(""); }}
-            >
-              Cancelar
-            </button>
-          )}
-        </form>
+  return (
+    <div className="container mw-100 py-3">
+      <div className="d-flex justify-content-end mb-2">
+        <button type="button" className="btn-contorno m-1" onClick={abrirNuevo}>
+          + Agregar Envío
+        </button>
+      </div>
 
-        <div className="row g-2 mt-1">
-          {envios.filter((envio) => !esZonaLocal(envio)).map((envio) => (
-            <div key={envio.id} className="col-4">
-              <div className="border p-1 d-flex justify-content-between align-items-center">
-                <div>
-                  <div className="fw-bold">{envio.zona_envio}</div>
-                  <div className="text-body-secondary">{fmtPesos(envio.costo_envio)}</div>
-                </div>
-                <div className="d-flex gap-1">
-                  <button
-                    type="button"
-                    className="btn btn-success btn-sm"
-                    onClick={() => handleEdit(envio)}
-                    title="Editar"
-                  >
-                    <i className="fa-solid fa-edit"></i>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleDelete(envio)}
-                    title="Borrar"
-                  >
-                    <i className="fa-solid fa-trash-can"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+      {cargando ? (
+        <div className="w-100">
+          <span className="loader position-absolute start-50 top-50 mt-3"></span>
         </div>
-      </Modal.Body>
-    </Modal>
+      ) : (
+        <TablaGenerica
+          data={envios.filter((envio) => !esZonaLocal(envio))}
+          columnas={columnas}
+          sortBy="zona_envio"
+          ordenDescendente={false}
+          camposBusqueda={["zona_envio"]}
+        />
+      )}
+
+      <Modal show={modalAbierto} onHide={cerrarModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{idAEditar !== null ? "Editar envío" : "Agregar envío"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <FormularioEnvio
+            key={aperturaForm}
+            valoresIniciales={valoresForm}
+            esEdicion={idAEditar !== null}
+            error={error}
+            procesando={procesando}
+            onGuardar={guardar}
+            onCancelar={cerrarModal}
+          />
+        </Modal.Body>
+      </Modal>
+    </div>
   );
 };
 

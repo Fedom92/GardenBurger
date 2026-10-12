@@ -138,19 +138,32 @@ export const ENVIOS_LOCALES = ["Retira", "Espera Afuera"];
 // no es legible.
 //
 // - `nombre`: cómo se muestra en pantalla.
+// - `nroOrden`: el orden de los roles en las listas, los selects y las tablas.
 // - `rutaInicial`: dónde aterriza al iniciar sesión
+// - `editable` (opcional): si el admin lo puede asignar al dar de alta o editar un
+//   empleado. Sin declarar, sí; solo Admin lo declara en false, porque se crea a
+//   mano en la Consola de Firebase.
 // - `llevaMoto` (opcional): si el alta y la edición le piden datos de la moto
 
 export const ROLES = {
-  [process.env.REACT_APP_admin]:      { nombre: "Admin",      rutaInicial: "/productos" },
-  [process.env.REACT_APP_encargado]:  { nombre: "Encargado",  rutaInicial: "/pedidos-caja" },
-  [process.env.REACT_APP_cajero]:     { nombre: "Cajero",     rutaInicial: "/pedidos-caja" },
-  [process.env.REACT_APP_cocina]:     { nombre: "Cocina",     rutaInicial: "/gestion-cocina" },
-  [process.env.REACT_APP_atp]:        { nombre: "ATP",        rutaInicial: "/gestion-atp" },
+  [process.env.REACT_APP_admin]:      { nombre: "Admin",      nroOrden: 1, rutaInicial: "/productos", editable: false },
+  [process.env.REACT_APP_encargado]:  { nombre: "Encargado",  nroOrden: 2, rutaInicial: "/pedidos-caja" },
+  [process.env.REACT_APP_cajero]:     { nombre: "Cajero",     nroOrden: 3, rutaInicial: "/pedidos-caja" },
+  [process.env.REACT_APP_cocina]:     { nombre: "Cocina",     nroOrden: 4, rutaInicial: "/gestion-cocina" },
+  [process.env.REACT_APP_atp]:        { nombre: "ATP",        nroOrden: 5, rutaInicial: "/gestion-atp" },
 
-  [process.env.REACT_APP_jefeDeliverys]: { nombre: "Jefe de Deliverys", rutaInicial: "/jefe-deliverys" },
+  [process.env.REACT_APP_jefeDeliverys]: { nombre: "Jefe de Deliverys", nroOrden: 6, rutaInicial: "/jefe-deliverys" },
   // Los repartidores no usan el sistema: existen como empleados para la asistencia
   // y para asignarles pedidos. Sin rutaInicial, porque no tienen modulo, y
   // `sinAcceso`: el alta no les crea cuenta de Auth (lo decide el rol, no un check).
-  [process.env.REACT_APP_delivery]: { nombre: "Delivery", llevaMoto: true, sinAcceso: true },
+  [process.env.REACT_APP_delivery]: { nombre: "Delivery", nroOrden: 7, llevaMoto: true, sinAcceso: true },
 };
+
+// El nroOrden de un rol, para ordenar. Un rol que no está en ROLES va al final.
+export const ordenDeRol = (rol) => ROLES[rol]?.nroOrden ?? Infinity;
+
+// Los roles que el admin puede asignar, en su orden: todos menos los que declaran
+// `editable: false`.
+export const ROLES_EDITABLES = Object.keys(ROLES)
+  .filter((rol) => ROLES[rol].editable !== false)
+  .sort((a, b) => ordenDeRol(a) - ordenDeRol(b));

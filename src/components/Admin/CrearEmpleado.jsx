@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { collection, query, getDocs, where, addDoc, serverTimestamp } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { db, app } from "../../firebaseConfig/firebase";
-import { fetchSucursales } from "../../Utils/sucursales";
-import { ROLES } from "../../Utils/Constantes";
+import { ROLES, ROLES_EDITABLES } from "../../Utils/Constantes";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { useForm } from "react-hook-form";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
-import { avisarErrorDeCarga } from "../../Utils/avisos";
 
 // Alta de empleados. Dos variantes en el mismo formulario, y las decide el ROL
 // (`ROLES[rol].sinAcceso`), no un check: antes había uno, y solo servía para los
@@ -23,25 +21,19 @@ const CrearEmpleado = (props) => {
   const { register, handleSubmit, reset, watch } = useForm({
     defaultValues: { valorHora: 0 }
   });
-  const { agregarempleado, ...propsModal } = props;
+  // `sucursales` es la lista de PanelAdmin, compartida con la pestaña Sucursales:
+  // una recién creada aparece acá sin recargar.
+  const { agregarempleado, sucursales, ...propsModal } = props;
   const [error, setError] = useState('');
   // Un useState no alcanza: entre dos clicks rápidos el botón sigue habilitado y
   // un repartidor (addDoc, id por llamada) quedaba dado de alta dos veces.
   const { procesando, ejecutar } = useAccionUnica();
-  const [sucursales, setSucursales] = useState([]);
 
   const rol = watch("rol");
   const sinAcceso = !!ROLES[rol]?.sinAcceso;
   const llevaMoto = !!ROLES[rol]?.llevaMoto;
 
   const userCollection = collection(db, "usuarios");
-
-  useEffect(() => {
-    fetchSucursales().then(setSucursales).catch((error) => {
-      console.error(error);
-      avisarErrorDeCarga("las sucursales");
-    });
-  }, []);
 
   const validarInputs = async (data) => {
     // Un empleado sin acceso no tiene correo ni contraseña que validar.
@@ -184,17 +176,15 @@ const CrearEmpleado = (props) => {
               <div className="row">
                 <div className="col-md-6 mb-2">
                   <label className="form-label">Rol*</label>
-                  {/* Sin opción Admin: los administradores se dan de alta a mano desde la
-                      Consola de Firebase. La Cloud Function además rechaza ese rol, porque
-                      reponer un <option> con las devtools es trivial. */}
+                  {/* Los roles `editable` de ROLES, en su orden. Sin Admin: los
+                      administradores se dan de alta a mano desde la Consola de Firebase.
+                      La Cloud Function además rechaza ese rol, porque reponer un <option>
+                      con las devtools es trivial. */}
                   <select className="form-control" multiple={false} style={{ height: "48px" }} required {...register("rol")}>
                     <option value="">Selecciona un rol ....</option>
-                    <option value={process.env.REACT_APP_encargado}>Encargado</option>
-                    <option value={process.env.REACT_APP_cajero}>Cajero</option>
-                    <option value={process.env.REACT_APP_cocina}>Cocina</option>
-                    <option value={process.env.REACT_APP_jefeDeliverys}>Jefe de Deliverys</option>
-                    <option value={process.env.REACT_APP_delivery}>Delivery</option>
-                    <option value={process.env.REACT_APP_atp}>ATP</option>
+                    {ROLES_EDITABLES.map((r) => (
+                      <option key={r} value={r}>{ROLES[r].nombre}</option>
+                    ))}
                   </select>
                 </div>
 

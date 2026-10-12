@@ -286,6 +286,11 @@
   background: #eef3ef;
 }
 
+/* Los productos de otras categorias se ocultan, no se desmontan: ver Caja.jsx. */
+.pos-prod[hidden] {
+  display: none;
+}
+
 .pos-prod-img {
   width: 86px;
   height: 86px;
@@ -658,6 +663,12 @@
   color: var(--pos-txt);
   background: var(--pos-surface);
   cursor: pointer;
+}
+
+/* Mismo look que el select, pero el alias del vuelto es un campo de texto:
+   el cursor es el de escribir, no la mano. */
+input.pos-select {
+  cursor: text;
 }
 
 .pos-select:focus {

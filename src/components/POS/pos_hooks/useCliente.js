@@ -31,6 +31,9 @@ const useCliente = () => {
     // Se dispara sin await desde guardarBD: la ficha es secundaria al pedido. Sin
     // catch, un fallo aca era una unhandled rejection y se perdia sin dejar rastro.
     const registrarCliente = useCallback((clienteData) => {
+        // Sin telefono no hay ficha: es la clave del cliente. Un Retira sin
+        // telefono creaba una ficha vacia nueva en cada pedido.
+        if (!clienteData.telefono) return;
         const datos = {
             nombre: clienteData.nombre || "",
             direccion: clienteData.direccion || "",

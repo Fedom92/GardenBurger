@@ -6,7 +6,7 @@ import logo from '../../img/logo_negro.webp';
 import logoMobile from '../../img/logo_pub_mobile.webp';
 import Footer from "./Footer";
 import '../../style/Main.css';
-import { webRecibePedidos, textoHorarioWeb } from "../../Utils/fechaComercial";
+import { webRecibePedidos, textoHorarioWeb, textoExcepcionWeb } from "../../Utils/fechaComercial";
 
 // Pantalla pública: el cliente elige la sucursal antes de armar su pedido.
 // Los links con sucursal precargada (/crear-solicitud/luro) salteán esta pantalla.
@@ -60,12 +60,16 @@ const SeleccionSucursal = () => {
                                     className="btn btn-success btn-lg w-75"
                                 >
                                     {s.nombre || s.id}
+                                    {/* Abierta por excepción (un feriado): que se sepa que hoy es distinto. */}
+                                    {textoExcepcionWeb(s) && <small className="d-block fs-6">{textoExcepcionWeb(s)}</small>}
                                 </Link>
                             ) : (
                                 <div key={s.id} className="btn btn-secondary btn-lg w-75 disabled" aria-disabled="true">
                                     {s.nombre || s.id}
                                     <small className="d-block fs-6">
-                                        Cerrada{textoHorarioWeb(s) ? ` · Pedidos ${textoHorarioWeb(s)}` : ""}
+                                        {textoExcepcionWeb(s)
+                                            ? textoExcepcionWeb(s)
+                                            : `Cerrada${textoHorarioWeb(s) ? ` · Pedidos ${textoHorarioWeb(s)}` : ""}`}
                                     </small>
                                 </div>
                             ))}
