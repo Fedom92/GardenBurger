@@ -17,9 +17,7 @@ const getCarritoInicial = () => {
   }
 };
 
-// El último número de grupo usado (ver `grupo` en el provider). Las dos claves de
-// localStorage cambiaron de nombre junto con el campo (04-10-2026; eran "carrito" y
-// "combo"): un carrito guardado con la forma vieja no se carga.
+// El último número de grupo usado (ver `grupo` en el provider).
 const getGrupoInicial = () => {
   try {
     return JSON.parse(localStorage.getItem("carritoWebGrupo")) || 0;
@@ -42,8 +40,8 @@ export const CartProvider = ({ children }) => {
   const [carrito, setCarrito] = useState(getCarritoInicial);
   // Cada "Agregar al pedido" abre un grupo nuevo: el producto y sus extras salen con
   // el mismo número, y el par (id, grupo) identifica cada línea para aumentar,
-  // disminuir y eliminar. No son los combos del arqueo (CATEGORIAS_COMBOS): hasta el
-  // 04-10-2026 este campo se llamaba `combo` y se confundía. La Caja no lo usa.
+  // disminuir y eliminar. No tiene nada que ver con los combos del arqueo
+  // (CATEGORIAS_COMBOS). La Caja no lo usa.
   const [grupo, setGrupo] = useState(getGrupoInicial);
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -315,15 +313,10 @@ export const CartProvider = ({ children }) => {
       if (existe) {
         return prev.filter(e => e.id !== extra.id);
       } else {
-        // Asociar el extra al producto
-        const extraConAsociacion = {
-          ...extra,
-          productoAsociado: productoEnProceso?.id
-        };
-        return [...prev, extraConAsociacion];
+        return [...prev, extra];
       }
     });
-  }, [productoEnProceso]);
+  }, []);
 
   // Función para volver al modal de variante
   const volverAVariante = useCallback(() => {
@@ -362,7 +355,6 @@ export const CartProvider = ({ children }) => {
       agregarAlCarrito({
         ...extra,
         tipoExtra: "GENERAL",
-        productoAsociado: productoEnProceso.id
       });
     });
 

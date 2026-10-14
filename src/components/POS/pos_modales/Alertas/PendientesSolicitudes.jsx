@@ -9,6 +9,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { ESTADOS, MINUTOS_SOLICITUD_TOMADA } from "../../../../Utils/Constantes";
 import { fmtPesos } from "../../../../Utils/formato";
 import { ahoraServidor } from "../../../../Utils/fechaComercial";
+import { sinConexion } from "../../../../Utils/avisos";
 
 // Busqueda de Google Maps por texto libre. Es una URL comun, no la API con key que se
 // saco del proyecto: no necesita SDK ni se factura. Google resuelve el texto como puede,
@@ -88,7 +89,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
     const revisarSolicitud = async (solicitudId) => {
         const solicitud = solicitudesPendientes.find(s => s.id === solicitudId);
         if (!onRevisarSolicitud || !solicitud) return;
-        if (esDeOtroCajero(solicitud)) return;
+        if (esDeOtroCajero(solicitud) || sinConexion()) return;
 
         setProcesando(true);
         try {
@@ -115,7 +116,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
             cancelButtonText: 'Cancelar'
         });
 
-        if (result.isConfirmed) {
+        if (result.isConfirmed && !sinConexion()) {
             setProcesando(true);
             try {
                 const solicitudRef = docSucursal("pedidos", solicitudId);

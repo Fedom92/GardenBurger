@@ -47,6 +47,25 @@ const validarPedido = ({ data, carrito, envioSeleccionado, totalFinal, totalBase
         return false;
     }
 
+    // Campos obligatorios. La Caja no tiene <form> —guarda desde el boton—, asi que
+    // los `required` de los inputs no validaban nada. El trim es solo para no
+    // aceptar un campo lleno de espacios: lo que se guarda no cambia.
+    const falta = (campo) => !String(data[campo] || "").trim();
+    const faltantes = [
+        falta("nombre") && "el nombre",
+        !esLocal && falta("direccion") && "la dirección",
+        !esLocal && falta("entreCalles") && "las entre calles",
+    ].filter(Boolean);
+    if (faltantes.length > 0) {
+        Swal.fire({
+            title: 'Advertencia',
+            text: `Falta completar ${faltantes.join(", ")}.`,
+            icon: 'warning',
+            confirmButtonColor: '#ffc107',
+        });
+        return false;
+    }
+
     if (!data.metodoPago) {
         Swal.fire({
             title: 'Advertencia',

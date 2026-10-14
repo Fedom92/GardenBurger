@@ -7,7 +7,7 @@ import logo from "../../src/img/logo_negro_corto.webp";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
 import { ROLES } from "../Utils/Constantes";
-import { IGNORAR_HORARIO } from "../Utils/fechaComercial";
+import { MODO_TEST } from "../Utils/fechaComercial";
 import "../style/Main.css";
 
 // NavLink marca con `nav-actual` el link de la pantalla en la que se está. Solo el
@@ -130,11 +130,12 @@ const Navigation = () => {
                     <div className="profile">
                         <img src={logo} alt="profile" className={isActive ? "img-barraNav-inactive d-none d-md-block" : "img-barraNav"} />
                     </div>
-                    {/* Solo con npm start y REACT_APP_ignorarHorario: que no quede
-                        prendido sin que nadie se acuerde. */}
-                    {IGNORAR_HORARIO && (
-                        <div className="badge bg-warning text-dark text-wrap d-block mx-2 mb-2" title="REACT_APP_ignorarHorario: la web toma pedidos a cualquier hora, el F4 está habilitado y la jornada en curso incluye lo cargado de día.">
-                            Horario ignorado
+                    {/* Solo con npm start y REACT_APP_modoTest: que no quede
+                        prendido sin que nadie se acuerde. Con la barra colapsada no
+                        entra: se oculta, igual que los títulos. */}
+                    {MODO_TEST && !navContext.isActive && (
+                        <div className="badge bg-warning text-dark text-wrap d-block mx-2 mb-2" title="Modo Desa: la web toma pedidos a cualquier hora, F4 habilitado, el horario especial ofrece todos los horarios y la jornada en curso incluye lo cargado de día.">
+                            Modo test
                         </div>
                     )}
                 </header>

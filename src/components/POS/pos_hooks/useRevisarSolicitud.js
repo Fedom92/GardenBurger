@@ -89,16 +89,22 @@ const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
             // tiene en memoria. Cada variante y cada extra es un documento propio de
             // productos, asi que el match por id cubre todo el carrito. Si el producto
             // ya no esta (visible: false), se mantiene el precio del cliente.
+            //
+            // carritoItemId: la Caja quita cada linea por ese id, y la web no lo
+            // pone. Sin el, todas las lineas quedaban en undefined y la ✕ de una
+            // descontaba todas a la vez.
             if (solicitud.carrito?.length > 0) {
                 setCarrito(solicitud.carrito.map(producto => {
                     const cantidad = producto.cantidad || 1;
                     const precio = productos.find(p => p.id === producto.id)?.precio ?? producto.precio;
-                    return { ...producto, cantidad, precio, subtotal: cantidad * precio };
+                    return { ...producto, cantidad, precio, subtotal: cantidad * precio, carritoItemId: crypto.randomUUID() };
                 }));
             }
 
             // Cerrar el modal. Solo se llega aca si la asignacion se grabo bien.
             setShowPendientesSolicitudes(false);
+            // La Caja arranca con esto los 15 minutos de la toma.
+            return true;
 
         } catch (error) {
             // Las reglas rechazan la asignacion si otro cajero la tomo primero. El
@@ -110,7 +116,7 @@ const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
                     icon: 'info',
                     confirmButtonColor: '#0d6efd',
                 });
-                return;
+                return false;
             }
             console.error('Error cargando datos de solicitud:', error);
             Swal.fire({
@@ -119,6 +125,7 @@ const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });
+            return false;
         }
     }, [setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios, productos, userData]);
 

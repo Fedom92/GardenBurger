@@ -81,7 +81,7 @@ y `Footer` (92). Los datos: `Utils/menuPublico.js` (publica y descarga `menu.jso
 | Hamburguesa agrupada (tiene `variantes`) | +1 | `ModalHamburguesa` (variante y observaciones) → `ModalExtras` (extras de hamburguesa) | la variante elegida con sus `observaciones`, y una línea por extra con `tipoExtra: "HAMBURGUESA"` |
 | `BEBIDAS` | — | nada | una línea; si ya estaba, le suma 1 a `cantidad` |
 | `POLLO CRISPY`, si hay extras de hamburguesa | +1 | `ModalExtras` directo, sin variantes | el producto y sus extras, igual que una hamburguesa |
-| Cualquier otro, si existe algún extra `GENERAL` | +1 | `ModalExtrasGenericos` | el producto, y una línea por extra con `tipoExtra: "GENERAL"` y `productoAsociado` |
+| Cualquier otro, si existe algún extra `GENERAL` | +1 | `ModalExtrasGenericos` | el producto, y una línea por extra con `tipoExtra: "GENERAL"` |
 | Cualquier otro, sin extras `GENERAL` | +1 | nada | el producto |
 
 Cancelar cualquier modal le resta 1 a `grupo`. El modal de extras genéricos se abre para **todo**
@@ -152,7 +152,7 @@ le cambia el comportamiento sin aviso.
     ...producto,                    // id, descripcion, precio, categoria, imagen, ingredientes…
     grupo, cantidad, subtotal,      // grupo: hasta el 04-10-2026, combo
     observaciones?,                 // hamburguesa o pollo
-    tipoExtra?, productoAsociado?,  // extras. productoAsociado no lo lee nadie desde el 04-10-2026
+    tipoExtra?,                     // extras. `productoAsociado` se sacó el 14-10-2026: no lo leía nadie
   }],
   total,                            // con el recargo de MP si corresponde (REACT_APP_recargoMP)
   estado: "PENDIENTE",              // ESTADOS.WEB_PENDIENTE
@@ -167,7 +167,7 @@ le cambia el comportamiento sin aviso.
 calles y método al formulario; junta las `observaciones` de cada línea en el campo general; con
 `opcion` decide el modo (con delivery, la zona queda sin elegir); y copia el carrito **línea por
 línea, en el mismo orden**, cambiando cada precio por el del catálogo en vivo. Lo demás
-(`grupo`, `productoAsociado`, `subtotal`, `imagen`, `total`) no lo usa. Ver
+(`grupo`, `subtotal`, `imagen`, `total`) no lo usa. Ver
 [[Reglas de negocio#Validación del pedido web: forma, no contenido]].
 
 > [!danger] Lo que un rehecho no puede romper

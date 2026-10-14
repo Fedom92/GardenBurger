@@ -7,11 +7,14 @@ import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
 import moment from "moment";
 import "../../style/Main.css";
-import { avisarSinConexion } from "../../Utils/avisos";
+import { avisarSinConexion, sinConexion } from "../../Utils/avisos";
 
 const ATP = () => {
     const { userData } = useAuth();
     const [pedidos, setPedidos] = useState([]);
+    // Los ids del último snapshot, para mirarlos DESPUÉS del Swal: si mientras el
+    // cartel pregunta el encargado anula el pedido, ya no hay que entregarlo.
+    const idsVigentes = useRef(new Set());
     const [isLoading, setIsLoading] = useState(true);
 
     const queryRef = useRef(
@@ -22,6 +25,7 @@ const ATP = () => {
         const arr = snapshot.docs
             .map(d => ({ id: d.id, ...d.data() }))
             .sort((a, b) => (a.timestamp?.toMillis?.() ?? 0) - (b.timestamp?.toMillis?.() ?? 0));
+        idsVigentes.current = new Set(arr.map(p => p.id));
         setPedidos(arr);
         setIsLoading(false);
     }, []);
@@ -48,7 +52,11 @@ const ATP = () => {
             confirmButtonText: "Sí, entregar",
             cancelButtonText: "Cancelar",
         });
-        if (!result.isConfirmed) return;
+        if (!result.isConfirmed || sinConexion()) return;
+        if (!idsVigentes.current.has(pedido.id)) {
+            Swal.fire({ title: "El pedido ya no está en la lista", text: "Lo anularon o lo entregó otra persona.", icon: "info", confirmButtonColor: "#0d6efd" });
+            return;
+        }
 
         try {
             await updateDoc(docSucursal("pedidos", pedido.id), {
@@ -60,7 +68,9 @@ const ATP = () => {
             Swal.fire({ title: "¡Entregado!", icon: "success", confirmButtonColor: "#198754" });
         } catch (err) {
             console.error("Error marcando ATP completado:", err);
-            Swal.fire("Error", "No se pudo completar el pedido", "error");
+            Swal.fire("Error", err.code === "permission-denied"
+                ? "El pedido fue anulado."
+                : "No se pudo completar el pedido", "error");
         }
     };
 

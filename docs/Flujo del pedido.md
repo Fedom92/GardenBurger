@@ -176,3 +176,15 @@ eso:
 > original: si vuelve e intenta guardar, ve "La tomó otro cajero". Una toma sin hora (anterior al
 > cambio, o armada a mano) cuenta como vencida. Ver
 > [[Reglas de seguridad#`update`: valida la asignación, no el estado]].
+>
+> **Y el cajero original la pierde (14-10-2026):** al tocar "Revisar", la Caja arranca un
+> temporizador de 15 minutos y al cumplirse limpia el ticket sola, sin cartel. Mide duración, no
+> hora, así que el reloj de la PC no importa. Al guardar o cancelar, el temporizador se apaga y
+> vuelve a arrancar recién con el próximo "Revisar". Si igual llega un guardado que las reglas
+> rechazan (otro la tomó, o se rechazó mientras se cargaba), la Caja dice "La solicitud ya no está
+> disponible" y limpia el ticket. No se agregó una regla de vencimiento para el dueño de la toma:
+> el dueño del sistema decidió que alcanza con el temporizador.
+>
+> Una solicitud **rechazada** copia la hora del cliente en `timestamp` (`PendientesSolicitudes`):
+> es lo que la hace aparecer en F3 y en el Historial, que buscan por `timestamp`. En una rechazada,
+> `timestamp` es la hora en que pidió el cliente, no un cobro. Se prefirió así a una consulta extra.

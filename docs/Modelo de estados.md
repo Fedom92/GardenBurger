@@ -34,10 +34,21 @@ Los valores están en `ESTADOS` de `src/Utils/Constantes.jsx`. **Nunca hardcodea
 | `ATP` | Listo, esperando al cliente en el mostrador | No |
 | `DELIVERY` | Listo, en manos del jefe de deliverys | No |
 | `ENTREGADO` (`ESTADOS.FINAL`) | Cerrado | **Sí** |
-| `CANCELADO` | Rechazo de solicitud web o de transferencia MP | **Sí**, de hecho no |
-| `ELIMINADO` | Lo anuló el encargado desde F3 o el admin desde el Historial | **Sí**, de hecho no |
+| `CANCELADO` | Rechazo de solicitud web o de transferencia MP | **Sí**, salvo el admin |
+| `ELIMINADO` | Lo anuló el encargado desde F3 o el admin desde el Historial | **Sí**, salvo el admin ("Restaurar pedido") |
 
-Los dos últimos son terminales **en la intención**, no en el código: nada impide salir de ellos.
+Los dos últimos son terminales **por regla** desde el 14-10-2026: `saleDeAnuladoSoloAdmin()` en
+`firestore.rules` no deja cambiar el `estado` de un pedido CANCELADO o ELIMINADO salvo al admin.
+Antes nada lo impedía, y tres pantallas que escribían con una lista leída antes de su Swal de
+confirmación —"Cocinados TODOS", "Rechazar" en F2 y el modal de horarios especiales— podían
+devolver al circuito, y al arqueo, un pedido que se anuló mientras el cartel preguntaba. Las tres
+leen ahora la lista vigente después de confirmar (`useRef` con el último snapshot).
+
+> [!info] Restaurar pedido (14-10-2026)
+> En el **Historial** (admin), eliminar guarda también `estadoAnterior`. Esos pedidos muestran un
+> botón deshacer que los devuelve a ese estado, deja `restauradoPor/ID/Timestamp` y borra el resumen
+> guardado de su noche para que se recalcule. Los anulados desde **F3** no guardan `estadoAnterior`
+> y no se restauran: el cajero rehace el pedido.
 
 ## Transiciones válidas
 
@@ -96,7 +107,8 @@ Ninguna capa valida el estado de origen. Las dos que rompían el arqueo se cerra
 | Desde | Hacia | Cómo se llega | Qué rompe | Estado |
 |---|---|---|---|---|
 | `CANCELADO` | `ELIMINADO` | F3 ofrecía Eliminar para todo lo que no fuera `ELIMINADO` | Descontaba el arqueo por segunda vez | ✅ `BuscarPedido` ya no ofrece Eliminar en `CANCELADO`, y desde el 26-09 el doble descuento es imposible |
-| `ELIMINADO` | `COCINA` | Cocina lo tenía seleccionado cuando el cajero lo eliminó | Se cocinaba un pedido ya fuera del arqueo | ✅ `PedidosEspera` poda la selección en cada snapshot |
+| `ELIMINADO` | `COCINA` | Cocina lo tenía seleccionado cuando el cajero lo eliminó | Se cocinaba un pedido ya fuera del arqueo | ✅ `PedidosEspera` poda la selección en cada snapshot, y desde el 14-10-2026 la regla `saleDeAnuladoSoloAdmin()` lo impide en el servidor |
+| `ELIMINADO`/`CANCELADO` | cualquiera | Un botón que escribía con la lista de antes de su Swal (Cocinados TODOS, Rechazar MP, horarios especiales, Entregar en ATP) | Un anulado volvía al circuito y al arqueo | ✅ 14-10-2026: listas vigentes + regla |
 | `ENTREGADO` | `ELIMINADO` | F3 | Saca del arqueo un pedido ya cobrado y entregado | ✅ **Correcto por diseño** (14-09-2026): es la anulación de una venta y tiene que salir |
 | Cualquiera | Cualquiera | Dos pantallas abiertas escribiendo a destiempo | Último en escribir gana, sin aviso | Abierto |
 

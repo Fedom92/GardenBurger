@@ -11,6 +11,7 @@ import { quitarAcentos } from "../../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../../Utils/fechaComercial";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
 import { fmtPesos } from "../../../Utils/formato";
+import { sinConexion } from "../../../Utils/avisos";
 
 const CAMPOS_BUSQUEDA = ["telefono", "codigo", "direccion"];
 
@@ -118,7 +119,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                 cancelButtonText: 'Cancelar'
             });
 
-            if (result.isConfirmed) {
+            if (result.isConfirmed && !sinConexion()) {
                 // F3 trabaja con la jornada leída al abrir el modal: el repartidor
                 // pudo salir después. Se relee el pedido (1 lectura, solo al anular).
                 const actual = await getDoc(docSucursal("pedidos", pedido.id));

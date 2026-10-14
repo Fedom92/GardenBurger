@@ -184,7 +184,25 @@ código viejo, o una escritura desde la consola del navegador. El porqué de neg
 - Ninguna escritura legítima choca: la jefa cierra el viaje cambiando `estadoDelivery`, sin tocar
   `estado` hacia una anulación, y rechazar solicitudes o cobros MP parte de otros estados.
 
-**Fuera de esto, el `estado` sigue sin validarse**: cualquier staff puede llevar un pedido de
+### Un anulado solo lo saca el admin (14-10-2026)
+
+```js
+allow update: if estaAutenticado() && asignacionValida() && !anulaViajeEnLaCalle() && saleDeAnuladoSoloAdmin();
+
+function saleDeAnuladoSoloAdmin() {
+  let antes = resource.data.get('estado', null);
+  return !(antes in ['ELIMINADO', 'CANCELADO'])
+    || request.resource.data.get('estado', null) == antes
+    || esAdmin();
+}
+```
+
+Un pedido CANCELADO o ELIMINADO no cambia de `estado` salvo que lo haga el admin ("Restaurar pedido"
+en el Historial). Cierra que una pantalla con una lista vieja lo devuelva al circuito y que una
+solicitud rechazada mientras otro cajero la cargaba se guarde como venta. Las escrituras que no
+cambian el estado siguen pasando. No cuesta lecturas, y repite los valores de `ESTADOS`.
+
+**Fuera de esto, el `estado` sigue sin validarse**: cualquier staff puede llevar un pedido activo de
 cualquier estado a cualquier otro. Ver [[Modelo de estados#Transiciones que el sistema permite y no debería]].
 
 ## `public/` del repo no tiene nada que ver con las reglas

@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, datos]
 aliases: [Colecciones, Esquema Firestore, Campos]
-actualizado: 2026-10-12
+actualizado: 2026-10-14
 ---
 
 # Modelo de datos Firestore
@@ -115,7 +115,9 @@ Cada paso deja `<actor>ID`, `<actor>` (nombre) y `<actor>Timestamp`:
 | `cajeroApruebaMP*` | `PendientesMP` | al confirmar la transferencia |
 | `cajeroCancelaMP*` | `PendientesMP` | al rechazar la transferencia |
 | `cajeroCancelaSol*` | `PendientesSolicitudes` | al rechazar una solicitud web |
-| `cajeroElimina*` | `BuscarPedido` | al eliminar un ticket |
+| `cajeroElimina*` | `BuscarPedido`, `HistorialPedidos` | al eliminar un ticket |
+| `estadoAnterior` | `HistorialPedidos` | al eliminar desde el Historial (admin): el estado al que vuelve con "Restaurar pedido". Se borra al restaurar. F3 no lo escribe (14-10-2026) |
+| `restauradoPor*` | `HistorialPedidos` | al restaurar un pedido eliminado |
 | `cocinero*` | `PedidosEspera` | al mandar a cocinar |
 | `cocinaFinTimestamp` | `PedidosCocinando` | al marcar cocinado |
 | `atpCompletadoPor*`, `atpTimestamp` | `ATP` | al entregar en mostrador |
@@ -143,20 +145,25 @@ cliente: {
 > La solicitud web nace **solo con `clienteTimestamp`**. El campo `timestamp` recién lo escribe
 > `Caja.guardarBD` cuando el cajero confirma. Consecuencia: cualquier query con
 > `where("timestamp", ...)` **descarta las solicitudes web sin confirmar**, porque Firestore
-> ignora los documentos que no tienen el campo del filtro de rango. Eso explica por qué no
-> aparecen en `BuscarPedido` ni en `HistorialPedidos`.
+> ignora los documentos que no tienen el campo del filtro de rango. Eso explica por qué las
+> pendientes no aparecen en `BuscarPedido` ni en `HistorialPedidos`. Las **rechazadas** sí: al
+> rechazarlas, `PendientesSolicitudes` copia `clienteTimestamp` en `timestamp`.
 
 ### Ítem del carrito
 ```js
 {
-  id, descripcion, categoria, precio, cantidad, subtotal,
-  carritoItemId,        // uuid — solo en carritos armados desde Caja
-  combo: 0,             // agrupa ítems del mismo combo — solo desde la web
+  id, descripcion, categoria, precio, cantidad, subtotal,   // y el resto de la ficha del producto
+  carritoItemId,        // uuid por línea: lo pone la Caja (también a las líneas de una solicitud al cargarla)
+  grupo: 0,             // solo líneas armadas en la web: identifica la línea mientras se arma el carrito
   tipoExtra: "HAMBURGUESA" | "GENERAL",   // solo categoria EXTRA
-  productoAsociado: "id",                  // solo extras genéricos
   observaciones: "Sin pepino"
 }
 ```
+
+Los extras se asocian a su producto **por posición**: cada extra va inmediatamente después del
+producto al que pertenece. `grupo` no es un combo del arqueo (eso es `combos`, el número congelado
+en el pedido). Las solicitudes anteriores al 04-10-2026 pueden traer `combo` en vez de `grupo`, y
+`productoAsociado` (sacado el 14-10-2026): no los lee nadie.
 
 ## `sucursales/{id}/resumenDiario/{DD-MM-YYYY}`
 
@@ -200,9 +207,10 @@ guarda ese resultado para no tener que releerlos. Desde el 26-09-2026: antes se 
 // invariante: efectivoLocal + efectivoEnvio === totalEfectivo
 ```
 
-**Cuándo existe el documento.** Solo para jornadas **cerradas**, y solo desde que alguien miró su
-arqueo por primera vez. La jornada en curso no tiene foto: se calcula cada vez, porque congelarla
-daría un número que enseguida es falso. Por eso una jornada sin actividad nunca genera documento.
+**Cuándo existe el documento.** Solo para jornadas **cerradas**, y solo desde que alguien la miró
+por primera vez: Métricas, Estadísticas Generales o la Liquidación de asistencias. La jornada en
+curso no tiene foto: se calcula cada vez, porque congelarla daría un número que enseguida es falso.
+Una noche sin pedidos también guarda su foto (en cero), para no volver a leerla.
 
 **Cuándo se regenera.** Nunca sola. La borra `invalidarFotoDePedido(pedido)` cuando alguien cancela
 un pedido, elimina un ticket o cierra un delivery **de una jornada ya cerrada** —cambiaron los
@@ -223,7 +231,7 @@ agrega una categoría a `CATEGORIAS_COMBOS`, agosto sigue diciendo lo que era ci
 
 Lo avanza `avanzarContador(transaction, coleccion)` **dentro de la transacción del pedido** en
 `Caja.guardarBD`, para que un guardado fallido no queme el número. `getNextSequence(coleccion)`
-abre su propia transacción para quien no tiene una (hoy solo `InsertarRegistros`). **La numeración
+abre su propia transacción para quien no tiene una (hoy no la usa nadie). **La numeración
 es por sucursal.** No reemplazar por `getDocs` + incremento manual. Ver
 [[Decisiones tecnicas#Numeración de tickets dentro de la transacción del pedido]].
 
@@ -284,8 +292,6 @@ que en `updateDoc` **sí** navega el mapa. En `setDoc` los puntos serían parte 
 
 ## `usuarios` (global)
 
-Doc ID = uid de Firebase Auth.
-
 **Todos los empleados viven acá**, tengan o no acceso al sistema. Doc ID = uid de Auth para los
 que tienen acceso; id automático para los que no.
 
@@ -321,7 +327,7 @@ y entre calles con lo recién cargado. También se puede crear a mano desde `/cl
 }
 ```
 
-Los tres campos de abajo son para CRM y los llena solo la Caja. Un cliente anterior a sep-2026 no
+Los tres últimos campos son para CRM y los llena solo la Caja. Un cliente anterior a sep-2026 no
 los tiene hasta su próximo pedido.
 
 > [!note] Colección de crecimiento indefinido, pero ya no se lee entera
@@ -330,7 +336,7 @@ los tiene hasta su próximo pedido.
 
 ## `envios` (global)
 
-Zonas iguales para todas las sucursales. ABM en Admin → Parámetros → Envíos.
+Zonas iguales para todas las sucursales. ABM en la pestaña Envíos del Panel Admin.
 
 ```js
 { zona_envio: "0-1", costo_envio: 500 }   // distancias en km
@@ -345,13 +351,13 @@ desglose de efectivo. Ver [[Reglas de negocio#Envíos locales vs delivery]].
 
 Viven en **`firestore.rules`** y **`storage.rules`** en la raíz del repo, versionadas y desplegadas
 con `firebase deploy`. El porqué de cada una está en [[Reglas de seguridad]]. Resumen de quién
-puede qué, al 14-09-2026:
+puede qué, al 14-10-2026:
 
 | Colección | Lectura | Escritura |
 |---|---|---|
 | `sucursales/{s}` | pública (el selector web la necesita) | admin |
-| `sucursales/{s}/pedidos/{p}` | `get` público solo si `origen == "WEB"`, y por 48 h; `list` solo staff | crear: staff o `esCreacionPublicaValida()`; update: staff **y** `asignacionValida()`; **delete: nunca** — por eso "eliminar" es cambiar el estado a `ELIMINADO` |
-| `sucursales/{s}/{otra}/{doc}` (`resumenDiario`, `contadores`, `asistencias`) | staff | staff — el wildcard excluye `pedidos` porque las reglas se combinan con OR |
+| `sucursales/{s}/pedidos/{p}` | `get` público solo si `origen == "WEB"`, y por 48 h; `list` solo staff | crear: staff o `esCreacionPublicaValida()`; update: staff **y** `asignacionValida()`, sin anular un viaje en la calle, y un CANCELADO/ELIMINADO solo lo cambia el admin; **delete: nunca** — por eso "eliminar" es cambiar el estado a `ELIMINADO` |
+| `sucursales/{s}/{otra}/{doc}` (`resumenDiario`, `contadores`, `asistencias`, `excepcionesHorario`) | staff | staff — el wildcard excluye `pedidos` porque las reglas se combinan con OR |
 | `productos`, `categorias`, `envios` | pública | admin |
 | `usuarios` | staff (la Caja necesita nombres) | admin — con `write` abierto un cajero se ascendía editando su propio doc |
 | `clientes` | staff | staff |

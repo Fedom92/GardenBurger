@@ -13,7 +13,7 @@ import { ESTADOS, SUBESTADOS_MOTODELIVERY, METODOS_PAGO, DESTINO_VUELTO, etiquet
 import { useAuth } from "../../context/AuthContext";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
 import { fmtPesos } from "../../Utils/formato";
-import { avisarSinConexion } from "../../Utils/avisos";
+import { avisarSinConexion, sinConexion } from "../../Utils/avisos";
 
 // La columna "Vuelto": qué pasa con la diferencia cuando el cliente paga con un
 // billete más grande. La moto no lleva cambio: o el repartidor trae esa plata (los
@@ -108,6 +108,7 @@ const JefeDeliverys = () => {
     ), [cerrados, jornada]);
 
     const asignarDelivery = (pedidoId, deliveryId) => ejecutar(async () => {
+        if (sinConexion()) return;
         try {
             const pedidoDoc = docSucursal("pedidos", pedidoId);
             const deliverySel = deliverys.find(d => d.id === deliveryId);
@@ -139,6 +140,7 @@ const JefeDeliverys = () => {
     // final el cliente. Hace par con `pagaCon`, que es lo que dijo que iba a pagar
     // cuando pidió.
     const marcarEstado = (pedidoId, nuevoEstado, pagaronCon = "") => ejecutar(async () => {
+        if (sinConexion()) return;
         try {
             // Hace falta el pedido y no solo su id: el listener no filtra por jornada,
             // asi que aca puede aparecer un delivery que quedo abierto de anoche y su
@@ -203,7 +205,7 @@ const JefeDeliverys = () => {
             confirmButtonText: 'Sí, volvió sin entregar',
             cancelButtonText: 'Cancelar',
         });
-        if (!isConfirmed) return;
+        if (!isConfirmed || sinConexion()) return;
 
         await ejecutar(async () => {
             try {

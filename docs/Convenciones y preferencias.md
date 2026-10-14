@@ -155,7 +155,7 @@ Todas con prefijo `REACT_APP_`. **Nunca hardcodear sus valores.**
 | `REACT_APP_apiKey` … `appId` | config de Firebase |
 | `REACT_APP_gardenAppCheck` | site key de reCAPTCHA Enterprise |
 | `REACT_APP_appCheckDebug` | debug token para localhost |
-| `REACT_APP_ignorarHorario` | **solo con `npm start`**: en `true`, la web toma pedidos a cualquier hora, el F4 se habilita y la jornada en curso incluye lo cargado de día. El build la ignora aunque quede en el `.env`. Ver [[Reglas de negocio#Probar de día]] |
+| `REACT_APP_modoTest` | **solo con `npm start`**: en `true`, la web toma pedidos a cualquier hora, el F4 se habilita, el horario especial ofrece todos los horarios y la jornada en curso incluye lo cargado de día. El build la ignora aunque quede en el `.env`. Ver [[Reglas de negocio#Probar de día]] |
 | `REACT_APP_admin`, `_encargado`, `_cajero`, `_cocina`, `_jefeDeliverys`, `_delivery`, `_atp` | valores de rol |
 | ~~`REACT_APP_fijoDeliverys`~~ | **ya no existe** desde el 28-09-2026: el repartidor cobra su asistencia más los envíos |
 | `REACT_APP_recargoMP` | % de recargo de Mercado Pago |

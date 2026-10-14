@@ -3,6 +3,7 @@
 import moment from "moment-timezone/builds/moment-timezone-with-data-10-year-range";
 import {
     webRecibePedidos, textoExcepcionWeb, errorDeHorario, getFechaComercialDe,
+    opcionesHorarioEspecial, HORARIOS_ESPECIALES,
 } from "./fechaComercial";
 
 // fechaComercial importa la app de Firebase para sincronizar la hora: acá no hace falta.
@@ -109,5 +110,27 @@ describe("getFechaComercialDe", () => {
     test("antes del cierre es la noche anterior", () => {
         expect(getFechaComercialDe(a("13-10-2026 01:59"))).toBe("12-10-2026");
         expect(getFechaComercialDe(a("13-10-2026 02:00"))).toBe("13-10-2026");
+    });
+});
+
+describe("opcionesHorarioEspecial", () => {
+    test("van de 20:00 a 23:45, cada 15 minutos", () => {
+        expect(HORARIOS_ESPECIALES[0]).toBe("20:00");
+        expect(HORARIOS_ESPECIALES[HORARIOS_ESPECIALES.length - 1]).toBe("23:45");
+        expect(HORARIOS_ESPECIALES).toHaveLength(16);
+    });
+    test("fuera de la noche se ofrecen todos: el pedido es para esta noche", () => {
+        expect(opcionesHorarioEspecial(a("14-10-2026 15:00"))).toEqual(HORARIOS_ESPECIALES);
+        expect(opcionesHorarioEspecial(a("14-10-2026 02:00"))).toEqual(HORARIOS_ESPECIALES);
+    });
+    test("durante la noche, solo los que todavía no pasaron", () => {
+        expect(opcionesHorarioEspecial(a("14-10-2026 19:30"))).toEqual(HORARIOS_ESPECIALES);
+        expect(opcionesHorarioEspecial(a("14-10-2026 21:10"))[0]).toBe("21:15");
+        expect(opcionesHorarioEspecial(a("14-10-2026 23:30"))).toEqual(["23:45"]);
+    });
+    test("pasadas las 23:45 y después de medianoche no queda ninguno", () => {
+        expect(opcionesHorarioEspecial(a("14-10-2026 23:45"))).toEqual([]);
+        expect(opcionesHorarioEspecial(a("15-10-2026 00:30"))).toEqual([]);
+        expect(opcionesHorarioEspecial(a("15-10-2026 01:59"))).toEqual([]);
     });
 });

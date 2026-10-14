@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, orderBy, getDocs, getDoc, updateDoc, where, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, getDoc, updateDoc, where, serverTimestamp, Timestamp, deleteField } from "firebase/firestore";
 import { db, docDeSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { fetchSucursales } from "../../Utils/sucursales";
@@ -10,7 +10,7 @@ import AuditoriaPedido from "./AuditoriaPedido";
 import moment from "moment";
 import Swal from "sweetalert2";
 import { fmtPesos } from "../../Utils/formato";
-import { avisarErrorDeCarga } from "../../Utils/avisos";
+import { avisarErrorDeCarga, sinConexion } from "../../Utils/avisos";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
 import { invalidarFotoDePedido, enLaCalle } from "../POS/pos_hooks/useResumenDiario";
 import { HORARIO, ESTADOS } from "../../Utils/Constantes";
@@ -98,7 +98,7 @@ const HistorialPedidos = () => {
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
     });
-    if (!isConfirmed) return;
+    if (!isConfirmed || sinConexion()) return;
 
     await ejecutar(async () => {
       try {
@@ -116,8 +116,11 @@ const HistorialPedidos = () => {
           return;
         }
 
+        // `estadoAnterior` es lo que permite "Restaurar pedido". Solo lo guarda el
+        // Historial: un pedido anulado desde F3 se rehace en la Caja.
         await updateDoc(ref, {
           estado: ESTADOS.ELIMINADO,
+          estadoAnterior: actual.estado,
           cajeroEliminaID: userData.id,
           cajeroElimina: userData.nombreCompleto,
           cajeroEliminaTimestamp: serverTimestamp(),
@@ -129,6 +132,7 @@ const HistorialPedidos = () => {
         setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? {
           ...p,
           estado: ESTADOS.ELIMINADO,
+          estadoAnterior: actual.estado,
           cajeroEliminaID: userData.id,
           cajeroElimina: userData.nombreCompleto,
           cajeroEliminaTimestamp: Timestamp.fromDate(ahoraServidor().toDate()),
@@ -136,6 +140,52 @@ const HistorialPedidos = () => {
       } catch (error) {
         console.error("Error eliminando el pedido desde el Historial:", error);
         Swal.fire({ title: 'Error', text: 'No se pudo eliminar el pedido. Revisá la conexión e intentá de nuevo.', icon: 'error', confirmButtonColor: '#dc3545' });
+      }
+    });
+  };
+
+  // Restaurar: vuelve un pedido que eliminó el admin al estado que tenía. Solo el
+  // admin puede sacar un pedido de ELIMINADO (regla saleDeAnuladoSoloAdmin) y solo
+  // los eliminados desde acá guardan `estadoAnterior`. Vuelve a contar en su noche,
+  // así que se borra el resumen de esa noche para que se recalcule.
+  const restaurarPedido = async (pedido) => {
+    const { isConfirmed } = await Swal.fire({
+      title: '¿Restaurar el pedido?',
+      text: `El pedido ${pedido.codigo} vuelve a ${pedido.estadoAnterior} y vuelve a contar en las estadísticas.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#198754',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, restaurar',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!isConfirmed || sinConexion()) return;
+
+    await ejecutar(async () => {
+      try {
+        await updateDoc(docDeSucursal(sucursalActiva, "pedidos", pedido.id), {
+          estado: pedido.estadoAnterior,
+          estadoAnterior: deleteField(),
+          restauradoPorID: userData.id,
+          restauradoPor: userData.nombreCompleto,
+          restauradoTimestamp: serverTimestamp(),
+        });
+        await invalidarFotoDePedido(pedido, sucursalActiva);
+
+        setPedidos((prev) => prev.map((p) => {
+          if (p.id !== pedido.id) return p;
+          const { estadoAnterior, ...resto } = p;
+          return {
+            ...resto,
+            estado: estadoAnterior,
+            restauradoPorID: userData.id,
+            restauradoPor: userData.nombreCompleto,
+            restauradoTimestamp: Timestamp.fromDate(ahoraServidor().toDate()),
+          };
+        }));
+      } catch (error) {
+        console.error("Error restaurando el pedido desde el Historial:", error);
+        Swal.fire({ title: 'Error', text: 'No se pudo restaurar el pedido. Revisá la conexión e intentá de nuevo.', icon: 'error', confirmButtonColor: '#dc3545' });
       }
     });
   };
@@ -200,6 +250,18 @@ const HistorialPedidos = () => {
                 disabled={eliminando || enLaCalle(pedido)}
               >
                 <i className="fa-solid fa-trash" />
+              </button>
+            )}
+            {/* Solo los que eliminó el admin desde acá: los de F3 no guardan a qué
+                estado volver. */}
+            {pedido.estado === ESTADOS.ELIMINADO && pedido.estadoAnterior && (
+              <button
+                className="btn btn-outline-success btn-sm"
+                title={`Restaurar pedido (vuelve a ${pedido.estadoAnterior})`}
+                onClick={() => restaurarPedido(pedido)}
+                disabled={eliminando}
+              >
+                <i className="fa-solid fa-rotate-left" />
               </button>
             )}
           </div>

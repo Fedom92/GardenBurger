@@ -9,7 +9,7 @@ import VerPedidoModal from './VerPedidoModal';
 import moment from "moment";
 import { ESTADOS } from "../../Utils/Constantes";
 import { getItemsCocina, destinoPedidoListo } from "../../Utils/ruteoPedido";
-import { avisarSinConexion } from "../../Utils/avisos";
+import { avisarSinConexion, sinConexion } from "../../Utils/avisos";
 
 const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const { userData } = useAuth();
@@ -19,6 +19,12 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [procesando, setProcesando] = useState(false);
     const [pedidosCocinando, setPedidosCocinando] = useState([]);
+    // La lista del último snapshot, para leerla DESPUÉS del Swal de confirmación. Si
+    // mientras el cartel pregunta el encargado anula un pedido, el listener lo saca
+    // de la pantalla, pero la función ya tenía la lista del momento del click: lo
+    // mandaba a ATP/Delivery igual (y con la regla de anulados, rechazaría el lote
+    // entero).
+    const pedidosVigentes = useRef([]);
 
     const pedidosCollection = useRef(query(colSucursal("pedidos"),
         where("estado", "==", ESTADOS.COCINA),
@@ -47,6 +53,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                 const numB = parseInt(b.codigo?.split('-')[0], 10) || 0;
                 return numA - numB;
             });
+        pedidosVigentes.current = pedidosArray;
         setPedidosCocinando(pedidosArray);
         setIsLoading(false);
     }, []);
@@ -86,13 +93,16 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
             cancelButtonText: 'Cancelar'
         });
 
-        if (!result.isConfirmed) return;
+        if (!result.isConfirmed || sinConexion()) return;
+
+        const vigentes = pedidosVigentes.current;
+        if (vigentes.length === 0) return;
 
         try {
             setProcesando(true);
             const batch = writeBatch(db);
 
-            pedidosCocinando.forEach(pedido => {
+            vigentes.forEach(pedido => {
                 const pedidoRef = docSucursal("pedidos", pedido.id);
                 // Es la decision mas consecuente del pipeline: mostrador o reparto.
                 batch.update(pedidoRef, { estado: destinoPedidoListo(pedido.envio), cocinaFinTimestamp: serverTimestamp() });
@@ -119,7 +129,10 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
             console.error("Error al marcar como cocinado:", error);
             Swal.fire({
                 title: 'Error',
-                text: 'Error al marcar pedidos como cocinado',
+                // permission-denied: uno de los pedidos se anuló justo antes de confirmar.
+                text: error.code === "permission-denied"
+                    ? 'Un pedido se anuló recién. Revisá la lista y volvé a intentar.'
+                    : 'Error al marcar pedidos como cocinado',
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });

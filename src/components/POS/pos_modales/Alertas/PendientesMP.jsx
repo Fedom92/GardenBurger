@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { query, where, onSnapshot, updateDoc, orderBy, serverTimestamp } from "firebase/firestore";
 import { colSucursal, docSucursal } from "../../../../firebaseConfig/firebase";
 import { useAuth } from "../../../../context/AuthContext";
@@ -10,10 +10,22 @@ import { invalidarFotoDePedido } from "../../pos_hooks/useResumenDiario";
 import { useAccionUnica } from "../../../../Utils/useAccionUnica";
 import { fmtPesos } from "../../../../Utils/formato";
 import { estadoAlConfirmar } from "../../../../Utils/ruteoPedido";
+import { sinConexion } from "../../../../Utils/avisos";
+
+// La regla de Firestore no deja sacar un pedido de CANCELADO/ELIMINADO salvo al admin:
+// si otro cajero lo rechazó o el encargado lo anuló recién, la escritura vuelve con
+// permission-denied.
+const textoDeError = (error, accion) => error.code === "permission-denied"
+    ? "El pedido ya fue rechazado o anulado."
+    : `Error al ${accion} el pedido`;
 
 const PendientesMP = ({ isOpen, onClose }) => {
     const { userData } = useAuth();
     const [pedidosPendientes, setPedidosPendientes] = useState([]);
+    // La lista del último snapshot, para leerla DESPUÉS de un Swal: el estado que ve
+    // la función es el del render del click, y mientras el cartel pregunta otro
+    // cajero pudo resolver el pedido.
+    const pendientesVigentes = useRef([]);
     const [isLoading, setIsLoading] = useState(false);
     // Aprobar y rechazar mueven el arqueo, y comparten el guard: mientras una
     // corre, la otra no arranca.
@@ -33,6 +45,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                 ...doc.data()
             }));
 
+            pendientesVigentes.current = pedidos;
             setPedidosPendientes(pedidos);
             setIsLoading(false);
 
@@ -57,6 +70,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
     // Recibe el pedido del snapshot y no solo el id: el carrito y el envio deciden
     // si va a la cocina o directo a ATP / Delivery, sin releer el documento.
     const aprobarPedido = (pedido) => ejecutar(async () => {
+        if (sinConexion()) return;
         try {
             const pedidoRef = docSucursal("pedidos", pedido.id);
             await updateDoc(pedidoRef, {
@@ -69,7 +83,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
             console.error('Error aprobando pedido:', error);
             Swal.fire({
                 title: 'Error',
-                text: 'Error al aprobar el pedido',
+                text: textoDeError(error, "aprobar"),
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });
@@ -89,11 +103,12 @@ const PendientesMP = ({ isOpen, onClose }) => {
                 cancelButtonText: 'Cancelar'
             });
 
-            if (!result.isConfirmed) return;
+            if (!result.isConfirmed || sinConexion()) return;
 
             // El listener pudo haberlo sacado de la lista mientras el Swal estaba
             // abierto: si ya no esta, otro lo resolvio y no hay nada que rechazar.
-            const pedido = pedidosPendientes.find(p => p.id === pedidoId);
+            // Va contra la lista vigente, no contra la del render del click.
+            const pedido = pendientesVigentes.current.find(p => p.id === pedidoId);
             if (!pedido) return;
 
             await updateDoc(docSucursal("pedidos", pedidoId), {
@@ -111,7 +126,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
             console.error('Error rechazando el pedido:', error);
             Swal.fire({
                 title: 'Error',
-                text: 'Error al rechazar el pedido',
+                text: textoDeError(error, "rechazar"),
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });

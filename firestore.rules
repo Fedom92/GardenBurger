@@ -21,7 +21,7 @@ service cloud.firestore {
         allow get: if estaAutenticado() || (esOrigenWeb() && sigueVisibleParaElPublico());
         allow list: if estaAutenticado();
         allow create: if estaAutenticado() || esCreacionPublicaValida();
-        allow update: if estaAutenticado() && asignacionValida() && !anulaViajeEnLaCalle();
+        allow update: if estaAutenticado() && asignacionValida() && !anulaViajeEnLaCalle() && saleDeAnuladoSoloAdmin();
         allow delete: if false;
       }
 
@@ -142,6 +142,19 @@ service cloud.firestore {
       return resource.data.get('estado', null) == 'DELIVERY'
         && resource.data.get('estadoDelivery', null) == 'SALIO'
         && request.resource.data.get('estado', null) in ['ELIMINADO', 'CANCELADO'];
+    }
+
+    // Un pedido ELIMINADO o CANCELADO solo cambia de estado si lo hace el admin
+    // ("Restaurar pedido" en el Historial). Sin esto, una pantalla que escribía con
+    // una lista vieja —Cocina, ATP, F2— lo volvía al circuito y al arqueo, y una
+    // solicitud rechazada mientras otro cajero la cargaba se guardaba como venta.
+    // Las demás escrituras sobre el pedido (sin cambiar el estado) siguen pasando.
+    // Mismos valores que ESTADOS en Constantes.jsx. No cuesta lecturas.
+    function saleDeAnuladoSoloAdmin() {
+      let antes = resource.data.get('estado', null);
+      return !(antes in ['ELIMINADO', 'CANCELADO'])
+        || request.resource.data.get('estado', null) == antes
+        || esAdmin();
     }
 
     function estaAutenticado() {

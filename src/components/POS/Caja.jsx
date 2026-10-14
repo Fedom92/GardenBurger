@@ -4,6 +4,7 @@ import { db, avanzarContador, colSucursal, docSucursal } from "../../firebaseCon
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
+import moment from "moment";
 import '../../style/Main.css';
 import './Caja.css';
 import logoMP from '../../img/mercado-pago.webp';
@@ -24,7 +25,7 @@ import validarPedido from './pos_hooks/validarPedido';
 import useRevisarSolicitud, { liberarSolicitud } from './pos_hooks/useRevisarSolicitud';
 import { obtenerArqueo, contarCombos, vueltosATransferir, sinEntregarPendientes } from './pos_hooks/useResumenDiario';
 import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO, DESTINO_VUELTO, MINUTOS_SOLICITUD_TOMADA } from '../../Utils/Constantes';
-import { ahoraServidor, getFechaComercial, esHoraDeArqueo } from '../../Utils/fechaComercial';
+import { ahoraServidor, getFechaComercial, esHoraDeArqueo, opcionesHorarioEspecial } from '../../Utils/fechaComercial';
 import { fmtPesos } from '../../Utils/formato';
 import { useAccionUnica } from '../../Utils/useAccionUnica';
 import { useHoraDeArqueo } from '../../Utils/useHoraDeArqueo';
@@ -87,6 +88,15 @@ const Caja = () => {
 
     const buscadorRef = useRef(null);
     const resumenEnCurso = useRef(false);
+    // El id del pedido de Caja se genera en el primer intento de guardar y se reusa
+    // hasta limpiar el ticket. Si se corta internet justo despues de que Firebase
+    // lo guardo, la Caja ve un error; con un id nuevo por intento, el reintento
+    // creaba un SEGUNDO pedido. `huboError` hace que solo el reintento lea el
+    // pedido para saber si ya estaba: el guardado normal no cuesta lecturas extra.
+    const pedidoEnCurso = useRef({ id: null, huboError: false });
+    // Cada "Revisar" exitoso suma uno: reinicia los 15 minutos de la toma aunque se
+    // vuelva a tomar la misma solicitud.
+    const [tomaDeSolicitud, setTomaDeSolicitud] = useState(0);
 
     // El arqueo es del encargado y del cierre: cuesta un barrido de la jornada y a
     // las 21 no significa nada todavia. Se habilita de 00:00 a horaCierre.
@@ -95,14 +105,15 @@ const Caja = () => {
     const horaDeArqueo = useHoraDeArqueo(esEncargado);
 
     const horarioEspecial = watch("horarioEspecial");
-    const horaEspecial = horarioEspecial ? horarioEspecial.split(':')[0] : "20";
-    const minutosEspecial = horarioEspecial ? horarioEspecial.split(':')[1] : "00";
+    // Solo los horarios que todavia no pasaron esta noche. Pasadas las 23:45 no queda
+    // ninguno y el boton desaparece hasta la noche siguiente.
+    const opcionesHorario = opcionesHorarioEspecial(ahoraServidor());
 
     const { productos, categorias, envios, isLoading } = useTraerDatos();
     const { tieneSolicitudesPendientes, tienePendientesMP } = usePendientes();
     const { registrarCliente } = useCliente();
     const { carrito, setCarrito, handleAgregarAlCarrito, handleEliminarDelCarrito, resetCarrito, getResumen } = useCarrito({ envioSeleccionado, metodoPago, montoEfectivo, recargo });
-    const { showHorarioEspecial, toggleHorarioEspecial, handleHoraEspecialChange, handleMinutosEspecialChange, resetHorario } = useHorarioEspecial({ setValue });
+    const { showHorarioEspecial, toggleHorarioEspecial, elegirHorarioEspecial, resetHorario } = useHorarioEspecial({ setValue });
     const { handleRevisarSolicitud } = useRevisarSolicitud({ setValue, setCarrito, setShowPendientesSolicitudes, setModoDelivery, envios, productos });
     const layout = useTicketLayout();
 
@@ -138,24 +149,29 @@ const Caja = () => {
     // El guard va con useAccionUnica y no con un useState: entre dos clicks
     // rapidos el estado todavia no se aplico y el boton sigue habilitado, asi que
     // salian dos transacciones y con ellas DOS pedidos, cada uno con su numero de
-    // ticket. Es la unica escritura del sistema donde repetirla no es inofensiva:
-    // el id del documento se genera por llamada.
+    // ticket. Es la unica escritura del sistema que crea un pedido: el doble click
+    // lo frena este guard, y el reintento despues de un error, pedidoEnCurso.
     const guardarBD = (data) => ejecutar(async () => {
         if (!validarPedido({ data, carrito, envioSeleccionado, totalFinal, totalBase, montoEfectivo, pideVuelto })) return;
 
+        const isWebOrder = !!data.id;
         try {
-            const isWebOrder = !!data.id;
             const pedidosRef = colSucursal("pedidos");
             // FUERA de la transaccion: si el id se generara adentro, cada reintento
-            // crearia un documento distinto.
-            const pedidoRef = isWebOrder ? doc(pedidosRef, data.id) : doc(pedidosRef);
+            // de la transaccion crearia un documento distinto. Y en la Caja se reusa
+            // entre clicks hasta limpiar el ticket (ver pedidoEnCurso).
+            if (!isWebOrder && !pedidoEnCurso.current.id) pedidoEnCurso.current.id = doc(pedidosRef).id;
+            const pedidoRef = doc(pedidosRef, isWebOrder ? data.id : pedidoEnCurso.current.id);
+            const verificarSiYaSeGuardo = !isWebOrder && pedidoEnCurso.current.huboError;
 
             let timestampPedido = serverTimestamp();
             if (data.horarioEspecial) {
                 const [h, m] = data.horarioEspecial.split(":").map(Number);
-                // Base la hora del servidor, no la de la PC: si el reloj esta corrido
-                // el pedido se graba con otra fecha y desaparece de la jornada.
-                const fecha = ahoraServidor().set({ hour: h, minute: m, second: 0, millisecond: 0 });
+                // Sobre el DIA DE LA JORNADA, no el de la PC ni el calendario de hoy:
+                // asi la hora pedida queda siempre en la noche en curso. Con el dia
+                // calendario, un pedido cargado pasada la medianoche caia en la noche
+                // siguiente y su plata en el arqueo de mañana.
+                const fecha = moment(getFechaComercial(), "DD-MM-YYYY").set({ hour: h, minute: m, second: 0, millisecond: 0 });
                 timestampPedido = Timestamp.fromDate(fecha.toDate());
             }
 
@@ -166,9 +182,13 @@ const Caja = () => {
             // El arqueo ya no se escribe aca: se calcula desde los pedidos cuando
             // alguien lo mira. Ver useResumenDiario.
             //
-            // Cuesta 1 lectura (el contador) + 2 escrituras, y la unica lectura va
-            // primero, que es lo que exige runTransaction.
-            await runTransaction(db, async (transaction) => {
+            // Cuesta 1 lectura (el contador) + 2 escrituras, y las lecturas van
+            // primero, que es lo que exige runTransaction. En un reintento despues de
+            // un error se lee ademas el pedido: si ya existe, el intento anterior
+            // llego a guardarse y no se escribe nada.
+            const yaEstabaGuardado = await runTransaction(db, async (transaction) => {
+                if (verificarSiYaSeGuardo && (await transaction.get(pedidoRef)).exists()) return true;
+
                 const nuevoCodigo = await avanzarContador(transaction, "pedidos");
 
                 transaction.set(pedidoRef, {
@@ -212,27 +232,32 @@ const Caja = () => {
                     cajeroRevisa: deleteField(),
                     cajeroRevisaTimestamp: deleteField(),
                 }, { merge: true });
+                return false;
             });
+            // Tambien si ya estaba guardado: el intento anterior no llego a registrar
+            // al cliente, porque el error salto antes.
             registrarCliente(data);
             await Swal.fire({
                 title: '¡Éxito!',
-                text: 'Pedido agregado!.',
+                text: yaEstabaGuardado ? 'El pedido ya se había guardado.' : 'Pedido agregado!.',
                 icon: 'success',
                 confirmButtonColor: '#198754',
             });
             limpiar();
         } catch (error) {
             console.error("Error al agregar pedido: ", error);
-            // Una solicitud web que estuvo más de MINUTOS_SOLICITUD_TOMADA sin
-            // terminarse puede tomarla otro cajero; si lo hizo, la regla rechaza este
-            // guardado. No es un problema de conexión: hay que decirlo así.
-            if (error.code === "permission-denied" && data.id) {
-                Swal.fire({
-                    title: 'La tomó otro cajero',
-                    text: `Esta solicitud estuvo más de ${MINUTOS_SOLICITUD_TOMADA} minutos sin cargarse y la tomó otro cajero. Limpiá el ticket: la está cargando él.`,
+            if (!isWebOrder) pedidoEnCurso.current.huboError = true;
+            // Las reglas rechazan el guardado de una solicitud que otro cajero tomo o
+            // que se rechazo mientras se cargaba. No es un problema de conexion: se
+            // dice asi y se limpia el ticket, que ya no sirve.
+            if (error.code === "permission-denied" && isWebOrder) {
+                await Swal.fire({
+                    title: 'La solicitud ya no está disponible',
+                    text: 'La tomó otro cajero o fue rechazada. Se limpia el ticket.',
                     icon: 'info',
                     confirmButtonColor: '#0d6efd',
                 });
+                limpiar();
                 return;
             }
             Swal.fire({
@@ -273,7 +298,23 @@ const Caja = () => {
         setMontoEfectivo(0);
         resetHorario();
         setModoDelivery(false);
+        pedidoEnCurso.current = { id: null, huboError: false };
     }, [reset, getValues, resetCarrito, resetHorario]);
+
+    // La toma de una solicitud dura MINUTOS_SOLICITUD_TOMADA: pasado ese tiempo otro
+    // cajero puede tomarla, asi que el ticket se limpia solo y este cajero ya no
+    // puede guardarla. Mide duracion, no hora: el reloj de la PC no importa. Al
+    // guardar o cancelar, limpiar() vacia `id` y el cleanup apaga el temporizador.
+    //
+    // `limpiar` va por ref: cambia en cada render (resetCarrito no esta memoizado),
+    // y como dependencia reiniciaba el temporizador a cada rato.
+    const limpiarRef = useRef(limpiar);
+    limpiarRef.current = limpiar;
+    useEffect(() => {
+        if (!idSolicitud) return;
+        const id = setTimeout(() => limpiarRef.current(), MINUTOS_SOLICITUD_TOMADA * 60 * 1000);
+        return () => clearTimeout(id);
+    }, [idSolicitud, tomaDeSolicitud]);
 
     // Se calcula desde los pedidos de la jornada, no de un contador acumulado: el
     // numero que ve el encargado al fiscalizar el cierre es el de los pedidos que
@@ -328,9 +369,12 @@ const Caja = () => {
 
     // Cancelar devuelve la solicitud al listado para que otro cajero pueda tomarla.
     // Un ticket comun no tiene nada que liberar y se comporta como el Limpiar de siempre.
-    const cancelarTicket = useCallback(async () => {
+    const cancelarTicket = useCallback(() => {
+        // Sin await: sin conexión la liberación queda en cola y la promesa no termina
+        // nunca, y el ticket tiene que limpiarse igual. liberarSolicitud ya atrapa
+        // sus errores.
         if (idSolicitud) {
-            await liberarSolicitud(idSolicitud, userData.id);
+            liberarSolicitud(idSolicitud, userData.id);
         }
         limpiar();
     }, [idSolicitud, userData.id, limpiar]);
@@ -760,14 +804,16 @@ const Caja = () => {
                                 </div>
 
                                 <div className="pos-actions">
-                                    <button
-                                        type="button"
-                                        title="Horario Especial"
-                                        className={`btn btn-warning pos-btn-horario`}
-                                        onClick={toggleHorarioEspecial}
-                                    >
-                                        <span>⏱</span>
-                                    </button>
+                                    {opcionesHorario.length > 0 && (
+                                        <button
+                                            type="button"
+                                            title="Horario Especial"
+                                            className={`btn btn-warning pos-btn-horario`}
+                                            onClick={() => toggleHorarioEspecial(opcionesHorario)}
+                                        >
+                                            <span>⏱</span>
+                                        </button>
+                                    )}
                                     <button
                                         type="button"
                                         title="Limpiar (Esc)"
@@ -790,28 +836,22 @@ const Caja = () => {
                                     </button>
                                 </div>
 
-                                {showHorarioEspecial && (
+                                {showHorarioEspecial && opcionesHorario.length > 0 && (
                                     <div className="pos-fila">
+                                        {/* Si el horario elegido ya pasó mientras el ticket seguía
+                                            abierto, se sigue mostrando: guardarlo igual cae en la
+                                            noche en curso. */}
                                         <select
                                             className="pos-select text-center"
-                                            value={horaEspecial}
-                                            onChange={(e) => handleHoraEspecialChange(e, minutosEspecial)}
+                                            value={horarioEspecial || ""}
+                                            onChange={(e) => elegirHorarioEspecial(e.target.value)}
                                         >
-                                            <option value="20">20</option>
-                                            <option value="21">21</option>
-                                            <option value="22">22</option>
-                                            <option value="23">23</option>
-                                        </select>
-                                        <span className="fw-bold">:</span>
-                                        <select
-                                            className="pos-select text-center"
-                                            value={minutosEspecial}
-                                            onChange={(e) => handleMinutosEspecialChange(e, horaEspecial)}
-                                        >
-                                            <option value="00">00</option>
-                                            <option value="15">15</option>
-                                            <option value="30">30</option>
-                                            <option value="45">45</option>
+                                            {(horarioEspecial && !opcionesHorario.includes(horarioEspecial)
+                                                ? [horarioEspecial, ...opcionesHorario]
+                                                : opcionesHorario
+                                            ).map((hora) => (
+                                                <option key={hora} value={hora}>{hora}</option>
+                                            ))}
                                         </select>
                                     </div>
                                 )}
@@ -852,7 +892,10 @@ const Caja = () => {
             <PendientesSolicitudes
                 isOpen={showPendientesSolicitudes}
                 onClose={() => setShowPendientesSolicitudes(false)}
-                onRevisarSolicitud={handleRevisarSolicitud}
+                onRevisarSolicitud={async (solicitud) => {
+                    // Cada toma exitosa reinicia los 15 minutos (ver el efecto de la toma).
+                    if (await handleRevisarSolicitud(solicitud)) setTomaDeSolicitud((n) => n + 1);
+                }}
             />
 
             {/* Modal de Buscar Pedido */}

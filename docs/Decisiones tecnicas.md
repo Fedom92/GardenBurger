@@ -581,6 +581,28 @@ que titile "Publicar Menú". Detalles:
   que abre las dos pantallas, se comparte.
 - Se fue el `orderBy("descripcion", "desc")`: la lista se ordena igual con `localeCompare`.
 
+## El pedido de Caja tiene id fijo, y solo el reintento lee
+
+**Qué**: `Caja.guardarBD` genera el id del pedido en el primer intento (`pedidoEnCurso`, un
+`useRef`) y lo reusa hasta `limpiar()`. Si un intento falla, el siguiente lee ese pedido dentro de
+la transacción: si ya existe, el anterior llegó a guardarse, y se muestra "el pedido ya se había
+guardado" sin escribir nada (14-10-2026).
+
+**Por qué**: si internet se corta justo después de que Firebase guardó el pedido, la Caja ve un
+error. Con un id nuevo por click, el reintento creaba un **segundo** pedido con otro número. El
+guardado normal no cuesta nada extra: la lectura es solo del reintento después de un error.
+
+## Sin conexión, las acciones avisan antes de escribir
+
+**Qué**: `sinConexion()` en `Utils/avisos.js` mira `navigator.onLine` al tocar un botón que escribe
+con `updateDoc`/`writeBatch` (Cocina, ATP, F1, F2, F3, Deliverys, Historial). Sin conexión, cartel y
+no se escribe (14-10-2026).
+
+**Por qué**: con la caché persistente, esas escrituras sin conexión **no fallan**: quedan en cola,
+el botón se queda en "Cargando…" y el `catch` nunca corre. "Crear Pedido" no lo necesita: es una
+transacción, y sin conexión falla y avisa. `navigator.onLine` es instantáneo y sin red; no detecta un
+proveedor caído con el wifi andando, y el dueño decidió no cubrir ese caso con una espera.
+
 ## Numeración de tickets dentro de la transacción del pedido
 
 **Qué**: `guardarBD` usa `runTransaction` con contador + pedido + arqueo adentro. `avanzarContador`

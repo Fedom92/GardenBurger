@@ -61,7 +61,7 @@ desde el ABM (28-09-2026). Ver [[Reglas de negocio#La web pública solo toma ped
 Fuera de la jornada no hay nada que probar: la web está cerrada, el F4 deshabilitado y lo que se
 cargue a las 15 no aparece en F3 ni en el arqueo, porque cae antes de las 19. Para no tener que
 esperar la noche —ni tocar `horaCierre` en `Constantes.jsx`, que era el atajo de antes— existe
-`REACT_APP_ignorarHorario=true` en el `.env` (12-10-2026). Lo lee `IGNORAR_HORARIO`, en
+`REACT_APP_modoTest=true` en el `.env` (12-10-2026). Lo lee `MODO_TEST`, en
 `Utils/fechaComercial.js`:
 
 | Qué | Normal, de día | Con la variable |
@@ -69,12 +69,14 @@ esperar la noche —ni tocar `horaCierre` en `Constantes.jsx`, que era el atajo 
 | `webRecibePedidos` | cerrada | abierta, en todas las sucursales activas |
 | `esHoraDeArqueo` (F4) | deshabilitado hasta las 00 | habilitado |
 | `getRangoDeJornada` de la jornada **en curso** | de 19 a 02 | de 02 a 02: F3, Historial, F4 y Jefe de Deliverys ven lo cargado de día |
+| `opcionesHorarioEspecial` (⏱ de la Caja) | solo los horarios que no pasaron; oculto pasadas las 23:45 | todos, a cualquier hora |
 
 - **Solo actúa con `npm start`**: la condición incluye `NODE_ENV === "development"`, que en el
   build vale `"production"`. Aunque la variable quede en `true`, el sitio publicado no la toma.
 - **Las jornadas pasadas no cambian de rango.** Mientras desarrollo apunte a la base real, una
   foto de arqueo que se grabe desde ahí tiene que salir igual que la de producción.
-- La barra del staff muestra **"Horario ignorado"** mientras está prendida.
+- La barra del staff muestra **"Modo test"** mientras está prendida (se oculta con la barra
+  colapsada, como los títulos).
 - Cambiarla pide reiniciar `npm start`.
 
 ## Envíos locales vs delivery
@@ -364,17 +366,24 @@ que abrirlas no cuesta nada y no tienen ventana horaria. Ver
 
 ## Horario especial
 
-Pedidos encargados para más tarde. `Caja` graba **la hora pedida directamente en `timestamp`**
-(base `ahoraServidor()`) y marca `esHorarioEspecial: true`. O sea: **en un pedido con horario
-especial, `timestamp` no es cuándo se cargó sino cuándo tiene que estar listo.**
+Pedidos encargados para más tarde. `Caja` graba **la hora pedida directamente en `timestamp`**,
+sobre el **día de la jornada en curso** (`getFechaComercial()`), y marca `esHorarioEspecial: true`.
+O sea: **en un pedido con horario especial, `timestamp` no es cuándo se cargó sino cuándo tiene que
+estar listo.**
 
-Selector limitado a horas 20–23 y minutos 00/15/30/45. El horario especial no permite pedidos
-después de las 00.
+Un solo selector de 20:00 a 23:45, cada 15 minutos (`HORARIOS_ESPECIALES` en
+`Utils/fechaComercial.js`). `opcionesHorarioEspecial(ahora)` deja solo los que todavía no pasaron
+esta noche: pasadas las 23:45 la lista queda vacía y **el botón ⏱ desaparece** hasta la noche
+siguiente; del cierre a la apertura se ofrecen todos (el pedido es para esa noche). Tiene tests.
+
+> [!note] Por qué la fecha va sobre la jornada (14-10-2026)
+> Se armaba con el día calendario de "ahora": un pedido cargado a las 00:20 con horario 23:00 quedaba
+> para **mañana** a las 23:00, y su plata en el arqueo de la noche siguiente. Con la fecha de la
+> jornada y el botón escondido después de las 23:45, no puede pasar.
 
 > [!note] Arranca a las 20 aunque el local abra a las 19, por decisión
 > Nadie encarga para las 19:xx. Se evaluó generar las horas desde `HORARIO.horaAbre` y el dueño
-> prefirió dejarlo (14-09-2026). Las opciones están hardcodeadas en `Caja.jsx`; si algún día
-> cambia, ese es el lugar.
+> prefirió dejarlo (14-09-2026). Si algún día cambia, el lugar es `HORARIOS_ESPECIALES`.
 
 En `PedidosEspera`:
 - La hora va en **rojo y negrita** cuando `esHorarioEspecial`.
@@ -428,6 +437,11 @@ hace la Caja. Lo pasa solo el admin, que opera sobre una sucursal ajena.
 si no existe lo crea; si existe, **pisa nombre, dirección y entre calles** con lo que el cajero
 acaba de cargar — la última dirección usada es la más probable como actual (decisión del
 14-09-2026; antes solo se creaba y un cliente que se mudó quedaba con la dirección vieja).
+
+**Nombre siempre; dirección y entre calles en delivery** (14-10-2026, `validarPedido`). Los
+`required` de los inputs de la Caja no validaban nada —la Caja no tiene `<form>`, guarda desde el
+botón— y se podía guardar un delivery sin dirección. Un campo con solo espacios cuenta como vacío;
+lo que se guarda no cambia.
 
 **El teléfono es obligatorio solo en delivery.** En Retira y Espera Afuera el cajero puede dejarlo
 vacío —el cliente está en el local—; si lo carga, `validarPedido` exige los 10 dígitos igual. La

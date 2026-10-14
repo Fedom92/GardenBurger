@@ -9,7 +9,7 @@ import { ahoraServidor } from "../../Utils/fechaComercial";
 import { getItemsCocina } from "../../Utils/ruteoPedido";
 import ModalHorariosEspeciales from "./ModalHorariosEspeciales";
 import moment from "moment";
-import { avisarSinConexion } from "../../Utils/avisos";
+import { avisarSinConexion, sinConexion } from "../../Utils/avisos";
 
 const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     const { userData } = useAuth();
@@ -18,6 +18,10 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     const [procesando, setProcesando] = useState(false);
     const [pedidosEspera, setPedidosEspera] = useState([]);
     const [pedidosAdelantados, setPedidosAdelantados] = useState([]);
+    // Los ids que siguen en espera según el último snapshot. El modal de horarios
+    // especiales trae los pedidos de cuando se abrió: uno anulado mientras estaba
+    // abierto se iba a COCINA igual.
+    const idsVigentes = useRef(new Set());
 
     const pedidosCollection = useRef(query(colSucursal("pedidos"),
         where("estado", "==", ESTADOS.CONFIRMADO),
@@ -42,6 +46,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                 id: doc.id,
                 ...doc.data(),
             }));
+        idsVigentes.current = new Set(pedidosEsperaArray.map(p => p.id));
         setPedidosEspera(pedidosEsperaArray);
         // La seleccion se poda contra lo que sigue en espera: si el cajero elimino un
         // pedido que el cocinero tenia tildado, el listener lo saca de la lista pero
@@ -100,6 +105,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     };
 
     const cocinar = async (pedidosIds) => {
+        if (pedidosIds.length === 0 || sinConexion()) return;
         try {
             setProcesando(true);
             const batch = writeBatch(db);
@@ -129,7 +135,10 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
             console.error('Error al mandar pedidos a cocina:', error);
             Swal.fire({
                 title: 'Error',
-                text: 'Error al enviar pedidos a cocina',
+                // permission-denied: uno de los pedidos se anuló justo antes de confirmar.
+                text: error.code === "permission-denied"
+                    ? 'Un pedido se anuló recién. Revisá la lista y volvé a intentar.'
+                    : 'Error al enviar pedidos a cocina',
                 icon: 'error',
                 confirmButtonColor: '#dc3545',
             });
@@ -160,13 +169,15 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
     };
 
     // Los adelantados que el cocinero no marco se quedan afuera del batch: no se les
-    // toca el estado, asi que siguen apareciendo en esta misma solapa.
+    // toca el estado, asi que siguen apareciendo en esta misma solapa. Todo se filtra
+    // contra lo que sigue en espera AHORA: los marcados vienen de cuando se abrio el
+    // modal.
     const confirmarAdelantados = (idsMarcados) => {
         const idsAdelantados = pedidosAdelantados.map(p => p.id);
         const aCocinar = [
             ...selectedPedidos.filter(id => !idsAdelantados.includes(id)),
             ...idsMarcados,
-        ];
+        ].filter(id => idsVigentes.current.has(id));
 
         setPedidosAdelantados([]);
         cocinar(aCocinar);

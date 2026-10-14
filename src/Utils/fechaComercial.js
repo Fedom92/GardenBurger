@@ -5,9 +5,10 @@ import { app } from "../firebaseConfig/firebase";
 import { HORARIO, HORA_HABILITA_STATS } from "./Constantes";
 
 // Solo en desarrollo, para probar de día sin esperar la noche. Con
-// REACT_APP_ignorarHorario=true en el .env:
+// REACT_APP_modoTest=true en el .env:
 //   - la web pública toma pedidos a cualquier hora, en todas las sucursales;
 //   - el F4 se habilita aunque no sean las HORA_HABILITA_STATS;
+//   - el horario especial ofrece todos los horarios, a cualquier hora;
 //   - la jornada EN CURSO arranca a horaCierre y no a horaAbre, así que F3, el
 //     Historial, el arqueo y el Jefe de Deliverys ven lo cargado de día.
 // Las jornadas pasadas no cambian de rango: una foto de arqueo grabada desde
@@ -15,8 +16,8 @@ import { HORARIO, HORA_HABILITA_STATS } from "./Constantes";
 //
 // En el build NODE_ENV vale "production", así que aunque la variable quede en el
 // .env el sitio publicado no la toma. Cambiarla pide reiniciar `npm start`.
-export const IGNORAR_HORARIO = process.env.NODE_ENV === "development"
-    && process.env.REACT_APP_ignorarHorario === "true";
+export const MODO_TEST = process.env.NODE_ENV === "development"
+    && process.env.REACT_APP_modoTest === "true";
 
 // Diferencia entre la hora del servidor (Cloud Function "horaServidor") y la de esta PC.
 // Evita que un reloj desconfigurado impute ventas a la jornada equivocada.
@@ -79,8 +80,8 @@ export const getJornadaDeFecha = (date) => {
 // Hace falta para leer los pedidos de una jornada que ya cerró: el arqueo se
 // calcula desde esos pedidos, no desde un contador acumulado.
 export const getRangoDeJornada = (jornada) => {
-    // Con IGNORAR_HORARIO, solo la jornada en curso: ver arriba.
-    const startHour = IGNORAR_HORARIO && jornada === getFechaComercial() ? HORA_CIERRE : HORARIO.horaAbre;
+    // Con MODO_TEST, solo la jornada en curso: ver arriba.
+    const startHour = MODO_TEST && jornada === getFechaComercial() ? HORA_CIERRE : HORARIO.horaAbre;
     const dia = moment(jornada, "DD-MM-YYYY");
 
     const inicio = dia.clone().set({ hour: startHour, minute: 0, second: 0, millisecond: 0 });
@@ -98,9 +99,37 @@ export const getRangoJornada = () => getRangoDeJornada(getFechaComercial());
 // regla de negocio: evita que se pague esa lectura cada vez que alguien tiene
 // curiosidad a las 21.
 export const esHoraDeArqueo = () => {
-    if (IGNORAR_HORARIO) return true;
+    if (MODO_TEST) return true;
     const hora = horaEnJornada(ahoraServidor().hour());
     return hora >= horaEnJornada(HORA_HABILITA_STATS) && hora < horaEnJornada(HORA_CIERRE);
+};
+
+// ── Horario especial de la Caja ────────────────────────────────────────────
+// Los pedidos encargados para más tarde: de 20:00 a 23:45, cada 15 minutos. Nadie
+// encarga para las 19:xx, y pasadas las 23:45 ya no hay horario que ofrecer.
+const minutosAHora = (minutos) =>
+    `${String(Math.floor(minutos / 60)).padStart(2, "0")}:${String(minutos % 60).padStart(2, "0")}`;
+export const HORARIOS_ESPECIALES = Array.from(
+    { length: (23 * 60 + 45 - 20 * 60) / 15 + 1 },
+    (_, i) => minutosAHora(20 * 60 + i * 15)
+);
+
+// Los horarios especiales que todavía se pueden elegir. Durante la noche, solo los
+// que no pasaron (comparados en horas de jornada, así 00:30 queda después de las
+// 23:45): pasadas las 23:45 la lista queda vacía y la Caja esconde el botón. Fuera
+// de la noche —del cierre a la apertura— son todos: el pedido es para esta noche.
+//
+// `ahora` es un parámetro para que los tests prueben cualquier hora sin esperarla.
+export const opcionesHorarioEspecial = (ahora = ahoraServidor()) => {
+    // Probando de día con MODO_TEST: el botón siempre a mano.
+    if (MODO_TEST) return HORARIOS_ESPECIALES;
+    const hora = ahora.hour();
+    if (horaEnJornada(hora) >= horaEnJornada(HORA_CIERRE)) return HORARIOS_ESPECIALES;
+    const minutosAhora = horaEnJornada(hora) * 60 + ahora.minute();
+    return HORARIOS_ESPECIALES.filter((h) => {
+        const [hh, mm] = h.split(":").map(Number);
+        return horaEnJornada(hh) * 60 + mm > minutosAhora;
+    });
 };
 
 
@@ -158,7 +187,7 @@ export const excepcionDeJornada = (sucursal, jornada) => sucursal?.excepcionesWe
 export const webRecibePedidos = (sucursal, ahora = ahoraServidor()) => {
     // Una sucursal que no existe sigue cerrada aunque se ignore el horario.
     if (!sucursal) return false;
-    if (IGNORAR_HORARIO) return true;
+    if (MODO_TEST) return true;
     const jornada = getFechaComercialDe(ahora);
     const excepcion = excepcionDeJornada(sucursal, jornada);
     if (excepcion && !excepcion.abierta) return false;
