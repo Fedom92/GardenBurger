@@ -3,6 +3,7 @@ import moment from "moment";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "../firebaseConfig/firebase";
 import { HORARIO, HORA_HABILITA_STATS } from "./Constantes";
+import { NOMBRES_DIAS } from "./formato";
 
 // Solo en desarrollo, para probar de día sin esperar la noche. Con
 // REACT_APP_modoTest=true en el .env:
@@ -11,8 +12,8 @@ import { HORARIO, HORA_HABILITA_STATS } from "./Constantes";
 //   - el horario especial ofrece todos los horarios, a cualquier hora;
 //   - la jornada EN CURSO arranca a horaCierre y no a horaAbre, así que F3, el
 //     Historial, el arqueo y el Jefe de Deliverys ven lo cargado de día.
-// Las jornadas pasadas no cambian de rango: una foto de arqueo grabada desde
-// desarrollo sale igual que en producción.
+// Las jornadas pasadas no cambian de rango: un resumen guardado (resumenDiario)
+// grabado desde desarrollo sale igual que en producción.
 //
 // En el build NODE_ENV vale "production", así que aunque la variable quede en el
 // .env el sitio publicado no la toma. Cambiarla pide reiniciar `npm start`.
@@ -51,8 +52,16 @@ export const HORA_CIERRE = HORARIO.horaCierre;
 // la medianoche sin casos especiales. Las horas fuera de la jornada dan 7 o más.
 export const horaEnJornada = (hora) => (hora - HORARIO.horaAbre + 24) % 24;
 
-// Jornada comercial a la que pertenece una fecha cualquiera, en DD-MM-YYYY: el
-// mismo formato que usa el id de los documentos de resumenDiario y asistencias.
+// El id de una jornada es el día en que empieza, en DD-MM-YYYY: el de los
+// documentos de resumenDiario y asistencias. Se lee y se escribe siempre con estas
+// dos, no con el formato escrito a mano en cada pantalla.
+const FORMATO_JORNADA = "DD-MM-YYYY";
+export const momentDeJornada = (jornada) => moment(jornada, FORMATO_JORNADA);
+// La jornada que empieza un día de calendario (el de un <input type="date">, por
+// ejemplo). No decide a qué noche pertenece una HORA: eso es getFechaComercialDe.
+export const jornadaQueEmpieza = (dia) => moment(dia).format(FORMATO_JORNADA);
+
+// Jornada comercial a la que pertenece una fecha cualquiera, en DD-MM-YYYY.
 // Un pedido de las 00:30 es de la noche anterior.
 //
 // Existe aparte de getFechaComercial() porque el arqueo de un pedido tiene que
@@ -61,10 +70,14 @@ export const horaEnJornada = (hora) => (hora - HORARIO.horaAbre + 24) % 24;
 export const getFechaComercialDe = (fecha) => {
     const m = moment(fecha);
     if (m.hour() < HORA_CIERRE) m.subtract(1, 'day');
-    return m.format("DD-MM-YYYY");
+    return jornadaQueEmpieza(m);
 };
 
 export const getFechaComercial = () => getFechaComercialDe(ahoraServidor());
+
+// El día en que empezó la jornada en curso, como moment: el "hoy" de los filtros
+// por fecha (Métricas, Estadísticas, Liquidación) y del horario especial.
+export const momentDeHoy = () => momentDeJornada(getFechaComercial());
 
 // Lo mismo pero devolviendo un Date al inicio de la jornada, para agrupar datos
 // historicos (Estadisticas). Va por moment y no por Date nativo: Date lee la
@@ -82,7 +95,7 @@ export const getJornadaDeFecha = (date) => {
 export const getRangoDeJornada = (jornada) => {
     // Con MODO_TEST, solo la jornada en curso: ver arriba.
     const startHour = MODO_TEST && jornada === getFechaComercial() ? HORA_CIERRE : HORARIO.horaAbre;
-    const dia = moment(jornada, "DD-MM-YYYY");
+    const dia = momentDeJornada(jornada);
 
     const inicio = dia.clone().set({ hour: startHour, minute: 0, second: 0, millisecond: 0 });
     const fin = dia.clone().add(1, 'day').set({ hour: HORA_CIERRE, minute: 0, second: 0, millisecond: 0 });
@@ -196,16 +209,27 @@ export const webRecibePedidos = (sucursal, ahora = ahoraServidor()) => {
     const hora = horaEnJornada(ahora.hour());
     if (hora < horaEnJornada(horario.abre) || hora >= horaEnJornada(horaCorteWeb(horario))) return false;
     if (excepcion) return true;
-    const diaJornada = moment(jornada, "DD-MM-YYYY").day();
+    const diaJornada = momentDeJornada(jornada).day();
     return (horario.dias || []).includes(diaJornada);
 };
-
-export const NOMBRES_DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
 const dosDigitos = (hora) => String(hora).padStart(2, "0");
 
 // "de 20 a 23 hs": de la apertura al corte, que es lo que le importa al cliente.
 export const textoRangoWeb = (horario) => `de ${dosDigitos(horario.abre)} a ${dosDigitos(horaCorteWeb(horario))} hs`;
+
+// "hasta la 01:00", "hasta las 23:00": hasta cuándo toma pedidos la web en la
+// jornada en curso, para la tarjeta de una sucursal abierta. La excepción de hoy
+// manda sobre el horario de siempre, igual que en webRecibePedidos. Vacío si no
+// hay horario (o si hoy cierra por excepción).
+export const textoCorteWeb = (sucursal, ahora = ahoraServidor()) => {
+    const excepcion = excepcionDeJornada(sucursal, getFechaComercialDe(ahora));
+    if (excepcion && !excepcion.abierta) return "";
+    const horario = excepcion || sucursal?.horario;
+    if (!horario) return "";
+    const corte = horaCorteWeb(horario);
+    return `hasta ${corte === 1 ? "la" : "las"} ${dosDigitos(corte)}:00`;
+};
 
 // "de miércoles a domingo, de 20 a 23 hs", armado con el mismo horario que decide
 // si la web abre: si el admin lo cambia, el cartel cambia solo. Vacío si la

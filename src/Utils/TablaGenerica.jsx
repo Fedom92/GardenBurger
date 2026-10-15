@@ -74,7 +74,12 @@ function calcularPaginas(total, actual) {
 
 const SIN_CLASE = () => '';
 
-const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, camposBusqueda = [], camposFiltros = [], rowClassName = SIN_CLASE }) => {
+const SIN_ETIQUETAS = {};
+
+// `etiquetasFiltros` (opcional): cómo mostrar en el select los valores de un campo
+// que se guarda crudo, ej. { metodoPago: etiquetaPago } para que "%" se lea
+// "Dividido". El filtro sigue comparando contra el valor guardado.
+const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, camposBusqueda = [], camposFiltros = [], etiquetasFiltros = SIN_ETIQUETAS, rowClassName = SIN_CLASE }) => {
     const columnasProcesadas = useMemo(() => generarColumnas(columnas), [columnas]);
     const [search, setSearch] = useState("");
     const [filtrosActivos, setFiltrosActivos] = useState({});
@@ -121,6 +126,17 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data, search, busquedaKey, filtrosActivos]);
 
+    // Si la lista se achica —el listener de ATP saca una fila, se elimina la última
+    // de la última página— la página actual puede quedar fuera de rango y la tabla
+    // se ve vacía con filas en las anteriores. Se corre a la última que existe; si
+    // la página sigue existiendo, no se toca (ver el efecto de arriba).
+    const ultimaPagina = Math.max(Math.ceil(datosFiltrados.length / pagination.pageSize) - 1, 0);
+    useEffect(() => {
+        if (pagination.pageIndex > ultimaPagina) {
+            setPagination((p) => ({ ...p, pageIndex: ultimaPagina }));
+        }
+    }, [pagination.pageIndex, ultimaPagina]);
+
     const table = useTable({
         features: FEATURES,
         data: datosFiltrados,
@@ -141,10 +157,11 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
                 data.map(item => leerCampo(item, campo))
                     .filter(val => val != null && String(val).trim() !== "")
             )].sort((a, b) => String(a).localeCompare(String(b)))
-                .map(v => ({ valor: String(v), etiqueta: formatearEtiqueta(v) }));
+                .map(v => ({ valor: String(v), etiqueta: (etiquetasFiltros[campo] || formatearEtiqueta)(v) }));
             return acc;
         }, {}),
-        // Ídem: filtrosKey representa a camposFiltros.
+        // Ídem: filtrosKey representa a camposFiltros. Las etiquetas se pasan inline
+        // y cambian de identidad en cada render, pero no cambian lo que devuelven.
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [data, filtrosKey]);
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal } from "react-bootstrap";
-import moment from "moment";
+import { fmtHora } from "../../Utils/formato";
 
 // Avisa que entre los pedidos seleccionados hay algunos con horario especial que
 // todavia estan lejos de su hora. Arrancan destildados: mandarlos igual tiene que ser
@@ -77,7 +77,7 @@ const ModalHorariosEspeciales = ({ pedidos, otrosSeleccionados, minutosParaLaHor
                                 </span>
                                 <span className="text-end">
                                     <span className="fs-5 fw-bold text-danger">
-                                        {moment(pedido.timestamp?.toDate()).format("HH:mm")}
+                                        {fmtHora(pedido.timestamp)}
                                     </span>
                                     <small className="d-block text-body-secondary">
                                         faltan {minutosParaLaHora(pedido)} min

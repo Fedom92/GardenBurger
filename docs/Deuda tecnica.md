@@ -1,17 +1,18 @@
 ---
 tags: [gardenburger, deuda, auditoria]
 aliases: [Pendientes, Que falta]
-actualizado: 2026-10-12
+actualizado: 2026-10-15
 ---
 
 # Deuda técnica
 
 ← [[GardenBurger]]
 
-Estado al **26-09-2026**. Las dos auditorías integrales están procesadas: la
-[[Auditoria 2026-09|del 09-09]] (11 hallazgos) y la [[Auditoria 2026-09-15|del 15-09]] (23). Lo que
-sigue es lo que queda abierto **por decisión**, con el motivo, para que nadie lo "arregle" sin
-saberlo.
+Estado al **15-10-2026**. Las cuatro auditorías integrales están procesadas: la
+[[Auditoria 2026-09|del 09-09]] (11 hallazgos), la [[Auditoria 2026-09-15|del 15-09]] (23), la
+[[Auditoria 2026-09-26|del 26-09]] y la [[Auditoria 2026-10-11|del 11-10]], aplicada entera el 14 y
+15-10-2026. Lo que sigue es lo que queda abierto **por decisión**, con el motivo, para que nadie lo
+"arregle" sin saberlo.
 
 > [!info] Cómo leer esta nota
 > Si un hallazgo no figura acá, está corregido. El detalle de cada uno —evidencia, impacto, cómo se
@@ -30,9 +31,10 @@ Cosas que las auditorías marcaron y el dueño decidió dejar como están. **No 
 - **Cocina marca todos los pedidos juntos** (hallazgo 8). "Cocinados TODOS" es el único botón, a
   propósito: en la práctica los pedidos de un cocinero salen juntos. Cada cocinero ve solo los suyos
   (`where cocineroID`), así que "todos" nunca pisa el trabajo de otro.
-- **El horario especial ofrece 20–23**, aunque el local abre a las 19. Nadie encarga para las
-  19:xx. Las opciones están hardcodeadas en `Caja.jsx`; si algún día cambia, generarlas desde
-  `HORARIO.horaAbre`.
+- **El horario especial ofrece de 20:00 a 23:45**, cada 15 minutos, aunque el local abre a las
+  19: nadie encarga para las 19:xx. Desde el 14-10-2026 solo muestra las horas que todavía no
+  pasaron, y pasadas las 23:45 el botón desaparece hasta la noche siguiente
+  (`opcionesHorarioEspecial` en `fechaComercial.js`).
 - **Re-precificar en silencio** al Revisar una solicitud web, sin avisar al cajero. El cliente ve
   el total definitivo en `/ver-pedido` y en el ticket.
 - **El recargo de MP es una constante del `.env`** (`REACT_APP_recargoMP`). Cambiarlo es un build
@@ -59,6 +61,28 @@ Cosas que las auditorías marcaron y el dueño decidió dejar como están. **No 
 
 - **Sin vuelto en la Caja.** Los vueltos son cosa del Jefe de Deliverys, que ve "Paga con" y "Vuelto
   a llevar" en cada pedido (26-09-2026).
+
+**De la auditoría del 11-10-2026** (respuestas del dueño, 12 y 13-10-2026; no re-proponer):
+
+- **Sin claims de staff ni de sucursal en las reglas.** El alta pública de usuarios en Auth está
+  deshabilitada, así que toda sesión es de un empleado; el aislamiento por sucursal queda en el
+  front.
+- **El Histórico de Estadísticas (los TSV) no se toca.**
+- **Las categorías siguen relacionadas por nombre**: renombrar una no se protege.
+- **La jefa de deliverys puede reasignar un repartidor con el viaje en curso**: es tema suyo. Lo
+  que sí se cerró es cerrar el viaje **sin** repartidor (15-10-2026).
+- **Pedidos trabados en COCINA por un cocinero ausente**: no se tratan.
+- **Sin servicio único de transiciones del pedido**, sin inventario de índices en el vault y sin
+  visibilidad de productos por sucursal.
+- **Clientes: el teléfono no pasa a ser el id.**
+- **El carrito sigue guardando la ficha entera del producto**, y editar un producto no permite
+  precio 0: correcto así.
+- **Asistencias**: las horas las carga el encargado y el admin solo `valorHora`; no se protege la
+  carga simultánea.
+- **`darDeBaja` no necesita cambios**: reintentar ya corrige un fallo a mitad de camino.
+- **La Liquidación de asistencias no se limita a las noches cerradas** (punto 11 de la auditoría,
+  descartado): si el rango llega a hoy, la noche en curso aparece con sus horas pero sin los envíos,
+  que salen de los resúmenes guardados. Los de hoy se ven en el F4.
 
 ## Abierto por decisión
 
@@ -141,9 +165,10 @@ hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó e
 
 ## Riesgos latentes (no son bugs hoy)
 
-- **Un viaje "sin entregar" suma al arqueo hasta que el encargado lo anula.** La jefa cierra el
-  viaje, pero anular es del encargado (F3). El F4 lo avisa y la jefa lo sigue viendo en rojo en su
-  lista, así que no pasa desapercibido; si nadie lo anula, la caja muestra de más.
+- **"Entregado sin repartidor" cuenta en "Envíos" del F4.** El pedido conserva el `esLocal` con
+  que se cobró (un delivery), así que su efectivo cae en la fila "Envíos" aunque la plata haya
+  entrado por el mostrador. No descuadra el total, solo la separación. Si molesta, la salida es
+  escribir `esLocal: true` al marcarlo (15-10-2026).
 - **Divergencia de combos.** `contarCombos` compara la descripción del producto **textual** contra
   `CATEGORIAS_COMBOS.excludes`, mientras `esComboConta` en Estadísticas normaliza la categoría
   porque los TSV vienen sucios. Si la descripción difiere entre Firestore y el export, la
@@ -173,7 +198,8 @@ hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó e
 
 ### A futuro
 
-- **Rehacer la web pública al 100%.** `Solicitudes/` y `CartContext.jsx` los escribió otro
+- **Rehacer la web pública al 100%** — **es el próximo trabajo** (15-10-2026), con el diseño
+  "Opción B · Carbón" de Claude Design. `Solicitudes/` y `CartContext.jsx` los escribió otro
   desarrollador (`PaginaDetalle` lo mejoramos un poco; `SeleccionSucursal` y `WebCerrada` los
   hicimos nosotros sobre sus ejemplos). Funciona, pero la lógica no convence, está poco
   modularizada, el front es pobre y de ahí salen los 6 avisos del lint del proyecto. Decisión del
@@ -186,38 +212,43 @@ hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó e
   `excepcionesWeb` de su sucursal. Ver [[Reglas de negocio#Excepciones: feriados y noches puntuales]].
 - **CRM de clientes.** El módulo Clientes (ya solo del admin) tendrá su propio CRM. Sin diseñar.
 - **Menú público** (`/menu`). Su fondo ya quedó optimizado (03-10-2026).
-- **Ticket impreso.** Hoy el ticket del cliente solo se imprime desde la cocina
-  (`PedidosCocinando` → `TicketImpresion`). Desde el 08-10-2026 un pedido **sin ítems de cocina**
-  (solo bebidas) saltea la cocina, así que **sale sin ticket**. Se aceptó así por ahora: en la
-  práctica esos pedidos son Retira o Espera Afuera. Si aparece un delivery de solo bebidas y el
-  repartidor necesita el papel, las opciones evaluadas son imprimir desde la Caja al crear el
-  pedido, o un botón Imprimir en ATP y en Deliverys (las dos, 0 lecturas). Ver
-  [[Flujo del pedido#Pipeline]].
+- **Qué hace el sistema fuera del horario laboral** (auditoría 11-10-2026): un pedido cobrado
+  antes de las 19 o después del cierre no entra en ningún arqueo. ¿Bloquear la Caja, avisar? A
+  definir.
+- **Cloud Function al cierre (02:05)** que guarde el resumen de cada sucursal, y un **bot de
+  Telegram** con los números del F4 (auditoría 11-10-2026). Primero hay que decidir cómo comparten
+  la app y la función el cálculo del arqueo (propuesta: un solo archivo que el deploy de Functions
+  copie).
 
 Lo que estaba acá y ya se hizo: Estadísticas Generales, eliminar pedidos desde el Historial y la
-liberación de solicitudes web trabadas (03-10-2026). Ver [[Mapa de archivos]] y
+liberación de solicitudes web trabadas (03-10-2026); el **ticket de los pedidos que no pasan por
+la cocina**, que se imprime desde ATP (15-10-2026). Ver [[Mapa de archivos]] y
 [[Flujo del pedido#Asignación de solicitudes web — un solo dueño]].
 
-## Sin tests
+## Tests
 
-**Hay una sola batería**, desde el 12-10-2026: `Utils/fechaComercial.test.js`, con los bordes
-del horario web y las excepciones (`npm test`). Nació porque esos casos —el corte de las 23, el
-lunes a las 00:30, un feriado— solo se veían esperando la noche real. Fuera de eso, la
-verificación es manual por decisión del dueño. La lógica pura se verifica a mano con casos cada
-vez que se toca:
+**Hay seis baterías** (`npm test`), todas sobre funciones puras:
+
+| Batería | Qué cubre | Desde |
+|---|---|---|
+| `Utils/fechaComercial.test.js` | los bordes del horario web y las excepciones: el corte de las 23, el lunes a las 00:30, un feriado | 12-10-2026 |
+| `pos_hooks/validarPedido.test.js` | lo que la Caja exige antes de guardar | 14-10-2026 |
+| `pos_hooks/useResumenDiario.test.js` | **`calcularArqueo`**: suman solo los entregados, anulados aparte, el viaje sin entregar, el entregado sin repartidor, y lo que el F4 muestra aparte | 15-10-2026 |
+| `Estadisticas/Generales/calculos.test.js` | las noches con "Todas" y la categoría de bebidas | 15-10-2026 |
+| `Utils/agruparExtras.test.js` | cada extra con su producto | 15-10-2026 |
+| `Utils/formato.test.js` | montos, números y fechas en pantalla; que los días y meses salgan en castellano (del locale de moment) | 15-10-2026 |
+
+Nacieron porque esos casos solo se veían esperando la noche real, o eran de la clase que **un test
+detecta y una prueba manual no**. Las pantallas se siguen verificando a mano, por decisión del
+dueño. Lo que todavía se verifica a mano con casos cada vez que se toca:
 
 - `calcularHoras` — el cruce de medianoche (19:00 → 02:00 = 7 h, no −17).
 - `agregarLiquidacion` — el bruto acumulado día por día, no `horasTotales × unValorHora`.
-- **`calcularArqueo`** — es la función más cara de equivocar del sistema. Al reemplazar el contador
-  (26-09-2026) se comparó contra una simulación de la secuencia de `increment()` vieja en 8 casos:
-  los 6 campos coinciden en los 8. Si se le agrega un campo, se repite el ejercicio.
 - `contarCombos`, `getCurrentStepIndex`, `getItemsCocina`, `getJornadaDeFecha` /
-  `getRangoDeJornada` / `getFechaComercial`, `validarPedido`.
+  `getRangoDeJornada` / `getFechaComercial`.
 
-Vale una anotación de la auditoría: los hallazgos 3, 4 y 5 son de la clase que **un test detecta y
-una prueba manual no**, porque dependen de secuencias improbables o de dos usuarios simultáneos. Si
-alguna vez se agrega una sola batería, el mejor retorno está en `useCarrito`, `validarPedido` y
-`calcularHoras`: son puras, no necesitan Firebase, y son donde un error cuesta plata.
+Si se agrega otra batería, el mejor retorno sigue en `useCarrito` y `calcularHoras`: son puras, no
+necesitan Firebase, y son donde un error cuesta plata.
 
 ## Lo que se revisó y está bien
 

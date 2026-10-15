@@ -67,12 +67,15 @@ function App() {
                 <Route path="/metricas" element={<RequireAuth><RequireAdmin><Metricas /></RequireAdmin></RequireAuth>} />
                 <Route path="/liquidacion" element={<RequireAuth><RequireAdmin><LiquidacionAsistencias /></RequireAdmin></RequireAuth>} />
   
-                <Route path="/pedidos-caja" element={<RequireAuth><RequireSucursal><Caja /></RequireSucursal></RequireAuth>} />
+                {/* Cada módulo, solo para su rol; el encargado entra a todos (auditoría
+                    11-10-2026). Son los mismos roles que muestra el menú (Navigation):
+                    sin esto, un cajero que escribía /gestion-cocina en la barra entraba. */}
+                <Route path="/pedidos-caja" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_cajero, process.env.REACT_APP_encargado]}><RequireSucursal><Caja /></RequireSucursal></RequireRole></RequireAuth>} />
                 <Route path="/jefe-deliverys" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_jefeDeliverys, process.env.REACT_APP_encargado]}><RequireSucursal><JefeDeliverys /></RequireSucursal></RequireRole></RequireAuth>} />
-                <Route path="/gestion-cocina" element={<RequireAuth><RequireSucursal><Cocina /></RequireSucursal></RequireAuth>} />
+                <Route path="/gestion-cocina" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_cocina, process.env.REACT_APP_encargado]}><RequireSucursal><Cocina /></RequireSucursal></RequireRole></RequireAuth>} />
                 <Route path="/historial-pedidos" element={<RequireAuth><RequireAdmin><HistorialPedidos /></RequireAdmin></RequireAuth>} />
                 <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />
-                <Route path="/gestion-atp" element={<RequireAuth><RequireSucursal><ATP /></RequireSucursal></RequireAuth>} />
+                <Route path="/gestion-atp" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_atp, process.env.REACT_APP_encargado]}><RequireSucursal><ATP /></RequireSucursal></RequireRole></RequireAuth>} />
                 {/* Solo el encargado carga asistencias; el admin las ve y corrige desde /liquidacion */}
                 <Route path="/asistencias" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_encargado]}><RequireSucursal><Asistencias /></RequireSucursal></RequireRole></RequireAuth>} />
   

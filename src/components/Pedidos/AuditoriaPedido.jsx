@@ -1,31 +1,15 @@
 import React from "react";
 import { Modal } from "react-bootstrap";
-import moment from "moment";
-import { fmtPesos } from "../../Utils/formato";
+import { fmtPesos, fmtFechaHora, fmtHora } from "../../Utils/formato";
 import { METODOS_PAGO, ESTADOS } from "../../Utils/Constantes";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-const fmt = (ts) => {
-    if (!ts) return null;
-    try {
-        const date = ts.toDate ? ts.toDate() : new Date(ts);
-        return moment(date).format("DD/MM/YYYY HH:mm");
-    } catch {
-        return null;
-    }
-};
+// null y no "—": una fila sin fecha no se muestra.
+const fmt = (ts) => (ts ? fmtFechaHora(ts) : null);
 
 // Para la hora pactada alcanza con la hora: la fecha ya está en el bloque Creación.
-const fmtHora = (ts) => {
-    if (!ts) return null;
-    try {
-        const date = ts.toDate ? ts.toDate() : new Date(ts);
-        return moment(date).format("HH:mm");
-    } catch {
-        return null;
-    }
-};
+const horaPactada = (ts) => (ts ? fmtHora(ts) : null);
 
 // ─── sub-componentes ─────────────────────────────────────────────────────────
 
@@ -116,7 +100,7 @@ const AuditoriaPedido = ({ pedido: p, isOpen, onClose }) => {
                         // El campo es `esHorarioEspecial` (booleano) y la hora pactada
                         // quedó en `timestamp`: `p.hora` nunca existió, así que esta
                         // fila no se mostraba jamás.
-                        { label: "Hora especial",valor: p.esHorarioEspecial ? fmtHora(p.timestamp) : null },
+                        { label: "Hora especial",valor: p.esHorarioEspecial ? horaPactada(p.timestamp) : null },
                     ].map((f, i) => f.valor && (
                         <div key={i} className="col-6">
                             <span className="text-muted">{f.label}: </span>

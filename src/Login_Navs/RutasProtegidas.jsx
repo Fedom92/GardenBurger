@@ -34,11 +34,11 @@ export const RequireAuth = ({ children }) => {
 
 // Las pantallas operativas leen sucursales/{userData.sucursal}/...; sin sucursal
 // asignada las queries fallan. Aplica a todos los roles (el admin gestiona desde
-// /admin y no necesita estas pantallas). `permitirAdmin` deja pasar al admin sin
-// sucursal en pantallas que tienen su propio selector (ej: Historial de Pedidos).
-export const RequireSucursal = ({ children, permitirAdmin = false }) => {
+// /admin y no necesita estas pantallas; las suyas, como el Historial, tienen su
+// propio selector de sucursal).
+export const RequireSucursal = ({ children }) => {
     const { userData } = useAuth();
-    if (userData?.sucursal || (permitirAdmin && userData?.rol === process.env.REACT_APP_admin)) {
+    if (userData?.sucursal) {
         return children;
     }
     return (
@@ -49,8 +49,9 @@ export const RequireSucursal = ({ children, permitirAdmin = false }) => {
     );
 };
 
-// Para pantallas de un rol puntual, no del admin ni de "cualquiera con sucursal".
-// Ej: /asistencias, que carga solo el encargado.
+// Cada módulo operativo, solo para sus roles (en App.js): Caja, Cocina, ATP,
+// Deliverys y Asistencias. Son los mismos que muestra el menú (Navigation). Sin el
+// rol, a Mi Perfil: escribir la URL a mano ya no alcanza para entrar.
 export const RequireRole = ({ children, roles = [] }) => {
     const { userData } = useAuth();
     if (roles.includes(userData?.rol)) {

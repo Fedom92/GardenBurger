@@ -32,10 +32,12 @@ ves una alternativa mejor, proponela. El detalle y el porqué están en el vault
 2. **Minimizar lecturas de Firestore es un requisito de primer orden**, no una optimización. Antes
    de agregar una consulta, preguntarse si el dato ya está en memoria. `getDocs` **siempre** va al
    servidor y se factura, aunque haya caché.
-3. **El arqueo se calcula desde los pedidos**, no se acumula: `resumenDiario` guarda el resultado
-   como foto de una jornada cerrada. Nadie lo escribe al cobrar ni al anular — se escribe el pedido
-   y el número sale de ahí (`pos_hooks/useResumenDiario.js`). `increment()` sigue sin ser
-   idempotente, así que lo que quede usándolo va con guard (`Utils/useAccionUnica.js`).
+3. **El arqueo se calcula desde los pedidos**, no se acumula, y suman solo los **ENTREGADOS**:
+   `resumenDiario` guarda el resultado de una jornada cerrada (el *resumen guardado*). Nadie lo
+   escribe al cobrar ni al anular — se escribe el pedido y el número sale de ahí
+   (`pos_hooks/useResumenDiario.js`); si el pedido es de una noche cerrada, va con
+   `actualizarPedidoYResumen()`. `increment()` sigue sin ser idempotente, así que lo que quede
+   usándolo va con guard (`Utils/useAccionUnica.js`).
 4. **Multi-sucursal**: las colecciones operativas son subcolecciones de `sucursales/{id}/…`. El
    scope lo dan `colSucursal`/`docSucursal` (staff) o la sucursal de la URL (público).
 5. **Roles, estados y métodos de pago no se hardcodean**: van por `process.env.REACT_APP_*`,
@@ -53,8 +55,9 @@ ves una alternativa mejor, proponela. El detalle y el porqué están en el vault
   a propósito: se manejan desde la Consola.
 - **El rol admin no se asigna desde la app.** Los administradores se crean a mano en la Consola de
   Firebase, y ser admin se resuelve con un custom claim en el token, no con una lectura.
-- Tablas con `TablaGenerica`, montos con `fmtPesos`, las confirmaciones con `Swal.fire`.
-  Un `console.error` sin aviso visible al usuario cuenta como bug.
+- Tablas con `TablaGenerica`, montos con `fmtPesos`, fechas con `fmtFecha`/`fmtHora`/`fmtFechaHora`
+  (`Utils/formato.js`: los nombres de días y meses salen de moment, no de listas a mano), las
+  confirmaciones con `Swal.fire`. Un `console.error` sin aviso visible al usuario cuenta como bug.
 - **Los finales de línea están mezclados** en el working tree, y da igual: `core.autocrlf=true`
   normaliza todo a LF al commitear, así que el diff sale limpio igual. Pero un patrón multilínea
   tiene que tolerar los dos (`\r?\n`) o detectar el del archivo antes de reemplazar: asumir CRLF

@@ -1,31 +1,31 @@
 import moment from "moment";
 import { METODOS_PAGO } from "../../../Utils/Constantes";
-import { horaEnJornada } from "../../../Utils/fechaComercial";
+import { horaEnJornada, momentDeJornada } from "../../../Utils/fechaComercial";
+import { DIAS_CORTOS, MESES_CORTOS, FORMATO_INPUT_MES, aInputFecha } from "../../../Utils/formato";
 import { sumarResumenes } from "../../POS/pos_hooks/useResumenDiario";
 
-// Las cuentas de Estadísticas Generales, a partir de las fotos de cada noche
+// Las cuentas de Estadísticas Generales, a partir del resumen guardado de cada noche
 // (`resumenDiario`, ver useResumenDiario.js): lo mismo que el Histórico saca de los
 // TSV, pero sin leer un solo pedido. Funciones puras, sin Firestore: se verifican
-// con casos armados a mano.
+// con casos (calculos.test.js).
 //
-// `noches` es [{ jornada: "DD-MM-YYYY", ...foto }]: lo que devuelve
+// `noches` es [{ jornada: "DD-MM-YYYY", ...resumen }]: lo que devuelve
 // obtenerResumenes(). Con "Todas" las sucursales vienen todas juntas en la lista:
-// sumar fotos de distintas sucursales es lo mismo que sumar noches.
-
-const F = "YYYY-MM-DD";
-const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-export const MESES_CORTO = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+// sumar resúmenes de distintas sucursales es lo mismo que sumar noches, pero la
+// misma noche aparece una vez por sucursal (ver `noches` abajo).
 
 const pct = (n, total) => (total > 0 ? Math.round(((n || 0) / total) * 100) : 0);
 const desc = (a, b) => b.valor - a.valor;
-const esBebida = (categoria = "") => ["BEBIDA", "BEBIDAS"].includes(categoria);
+// La categoría de bebidas es BEBIDAS (decidido 13-10-2026): la misma que usa
+// getItemsCocina. Aceptar también "BEBIDA" mezclaba una categoría que no existe.
+const esBebida = (categoria = "") => categoria === "BEBIDAS";
 
 // El rango de días de un filtro, como "YYYY-MM-DD". obtenerResumenes se encarga de
 // dejar afuera la noche en curso y las futuras.
 export const rangoDeFiltro = ({ modo, mes, anio, desde, hasta }) => {
     if (modo === "mes") {
-        const m = moment(mes, "YYYY-MM");
-        return [m.clone().startOf("month").format(F), m.clone().endOf("month").format(F)];
+        const m = moment(mes, FORMATO_INPUT_MES);
+        return [aInputFecha(m.clone().startOf("month")), aInputFecha(m.clone().endOf("month"))];
     }
     if (modo === "anio") return [`${anio}-01-01`, `${anio}-12-31`];
     return [desde, hasta];
@@ -58,7 +58,7 @@ export const armarEstadisticas = (noches = []) => {
     const mostrador = t.porCanal?.mostrador?.pedidos || 0;
     const unidades = t.unidades || 0;
 
-    // Métodos de pago. La foto no separa el efectivo del pago dividido, pero se
+    // Métodos de pago. El resumen no separa el efectivo del pago dividido, pero se
     // deduce: el efectivo total es el de los pedidos en efectivo más la parte en
     // efectivo de los divididos.
     const efectivoDividido = Math.max(0, efectivo - (porMetodo.EFECTIVO?.monto || 0));
@@ -88,8 +88,8 @@ export const armarEstadisticas = (noches = []) => {
     const articulos = productos.filter((p) => !esBebida(p.categoria));
     const bebidas = productos.filter((p) => esBebida(p.categoria));
 
-    // Clientes: solo nombre y cantidad de pedidos, nunca el teléfono (es la clave de
-    // la foto y no sale de acá).
+    // Clientes: solo nombre y cantidad de pedidos, nunca el teléfono (es la clave del
+    // resumen guardado y no sale de acá).
     const topClientes = Object.values(t.porCliente || {})
         .map((c) => ({ label: c.nombre || "Sin nombre", valor: c.pedidos || 0 }))
         .sort(desc)
@@ -98,7 +98,7 @@ export const armarEstadisticas = (noches = []) => {
     // Día de la semana de cada noche (por jornada: el sábado a la 01:00 sigue siendo
     // la noche del viernes) por los pedidos de esa noche.
     const dias = Array(7).fill(0);
-    noches.forEach((n) => { dias[moment(n.jornada, "DD-MM-YYYY").day()] += n.totalPedidos || 0; });
+    noches.forEach((n) => { dias[momentDeJornada(n.jornada).day()] += n.totalPedidos || 0; });
 
     // Franja horaria, ordenada como corre la noche: de horaAbre a horaCierre.
     const porHora = Object.entries(t.porHora || {})
@@ -106,7 +106,9 @@ export const armarEstadisticas = (noches = []) => {
         .sort((a, b) => horaEnJornada(a.hora) - horaEnJornada(b.hora));
 
     return {
-        noches: noches.length,
+        // Noches distintas: con "Todas", la misma noche viene una vez por sucursal, y
+        // contarlas todas decía "20 noches" en un período de 10.
+        noches: new Set(noches.map((n) => n.jornada)).size,
         kpis: {
             tickets: { total: pedidos + eliminados + cancelados, validos: pedidos, eliminados, cancelados },
             efectivo: { total: efectivo, mostrador: t.efectivoLocal || 0, delivery: t.efectivoEnvio || 0 },
@@ -124,7 +126,7 @@ export const armarEstadisticas = (noches = []) => {
         topProductos: articulos.map((p) => ({ label: p.descripcion, valor: p.unidades })).sort(desc).slice(0, 10),
         topBebidas: bebidas.map((p) => ({ label: p.descripcion, valor: p.unidades })).sort(desc).slice(0, 10),
         topClientes,
-        porDia: DIAS.map((label, i) => ({ label, valor: dias[i] })),
+        porDia: DIAS_CORTOS.map((label, i) => ({ label, valor: dias[i] })),
         porHora,
         stockArticulos: articulos.map((p) => ({ label: `${p.descripcion} [${p.categoria}]`, valor: p.unidades })).sort(desc),
         stockBebidas: bebidas.map((p) => ({ label: p.descripcion, valor: p.unidades })).sort(desc),
@@ -135,10 +137,10 @@ export const armarEstadisticas = (noches = []) => {
 // (`2026_tickets`, `2026_monto`, `2026_combos`), el formato que espera el gráfico.
 // Un mes sin noches queda sin valor: el gráfico corta la línea en vez de bajar a 0.
 export const armarEvolucion = (noches = []) => {
-    const data = MESES_CORTO.map((name) => ({ name }));
+    const data = MESES_CORTOS.map((name) => ({ name }));
     const anios = new Set();
     noches.forEach((n) => {
-        const d = moment(n.jornada, "DD-MM-YYYY");
+        const d = momentDeJornada(n.jornada);
         const y = d.year();
         const fila = data[d.month()];
         anios.add(y);

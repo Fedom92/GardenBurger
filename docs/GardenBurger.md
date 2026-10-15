@@ -1,7 +1,7 @@
 ---
 tags: [moc, gardenburger]
 aliases: [GardenBurger MOC, Indice GardenBurger, Inicio]
-actualizado: 2026-10-04
+actualizado: 2026-10-15
 ---
 
 # GardenBurger — Mapa del proyecto
@@ -43,7 +43,7 @@ Según qué vengas a hacer, con esto alcanza:
 | Tocar la web pública (selector, carrito, seguimiento, carta) | [[Web publica]] ← código heredado: el contrato con la Caja y los bugs conocidos |
 | Entender por qué algo está "raro" | [[Decisiones tecnicas]] ← **leer antes de "arreglar" nada** |
 | Saber qué falta | [[Deuda tecnica]] |
-| Ver el diagnóstico completo | [[Auditoria 2026-09-26]] ← la última, con la evidencia y las preguntas abiertas |
+| Ver el diagnóstico completo | [[Auditoria 2026-10-11]] ← la última, aplicada entera el 14 y 15-10-2026 |
 
 ## Las cinco cosas que hay que saber sí o sí
 
@@ -53,8 +53,9 @@ Según qué vengas a hacer, con esto alcanza:
 2. **Minimizar lecturas de Firestore es un requisito de primer orden**, no una optimización. El
    proyecto vive con un límite ajustado. Antes de agregar una consulta, preguntarse si el dato ya
    está en memoria.
-3. **El arqueo se calcula desde los pedidos**, no se acumula con `increment()`. Ningún camino
-   escribe `resumenDiario`: se escribe el pedido y el número sale de ahí. Ver
+3. **El arqueo se calcula desde los pedidos**, no se acumula con `increment()`, y **suman solo los
+   pedidos ENTREGADOS** (15-10-2026). Ningún camino escribe `resumenDiario`: se escribe el pedido
+   y el número sale de ahí. Ver
    [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]] para el porqué y el costo, y
    [[Modelo de estados]] para saber qué pedido entra al cálculo.
 4. **El sistema es multi-sucursal**: las colecciones operativas son subcolecciones de
@@ -104,4 +105,5 @@ Según qué vengas a hacer, con esto alcanza:
 
 - [[Deuda tecnica]] — lo que queda abierto, y por qué decisión ← **el documento vivo**
 - `auditorias/` — fotos fechadas, no se actualizan:
-  [[Auditoria 2026-09-26]] (la última) · [[Auditoria 2026-09-15]] · [[Auditoria 2026-09]] (la primera)
+  [[Auditoria 2026-10-11]] (la última) · [[Auditoria 2026-09-26]] · [[Auditoria 2026-09-15]] ·
+  [[Auditoria 2026-09]] (la primera)

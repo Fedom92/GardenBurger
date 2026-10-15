@@ -1,33 +1,15 @@
 import React from "react";
-import moment from "moment";
+import { fmtFechaHora } from "../../Utils/formato";
 import { Modal } from "react-bootstrap";
 import { getItemsCocina } from "../../Utils/ruteoPedido";
+import { agruparExtras } from "../../Utils/agruparExtras";
 
 const VerPedidoModal = ({ pedido, onClose }) => {
     if (!pedido) return null;
 
-    // Agrupar elementos principales con sus adicionales (EXTRA) para que no se separen entre columnas
-    const grupos = [];
-    let grupoActual = null;
-
-    // Es la card expandida del mismo cocinero: tiene que mostrar lo mismo que la card.
-    getItemsCocina(pedido.carrito).forEach(item => {
-        if (item.categoria !== 'EXTRA') {
-            if (grupoActual) {
-                grupos.push(grupoActual);
-            }
-            grupoActual = { principal: item, extras: [] };
-        } else {
-            if (grupoActual) {
-                grupoActual.extras.push(item);
-            } else {
-                grupos.push({ principal: item, extras: [] });
-            }
-        }
-    });
-    if (grupoActual) {
-        grupos.push(grupoActual);
-    }
+    // Cada producto con sus EXTRA, para que no se separen entre columnas. Es la card
+    // expandida del mismo cocinero: tiene que mostrar lo mismo que la card.
+    const grupos = agruparExtras(getItemsCocina(pedido.carrito));
 
     const mitadGrupos = Math.ceil(grupos.length / 2);
     const gruposIzquierda = grupos.slice(0, mitadGrupos);
@@ -49,7 +31,7 @@ const VerPedidoModal = ({ pedido, onClose }) => {
                     </div>
                     <div className="d-flex align-items-center gap-3 fs-5 me-2">
                         <small className="text-secondary fw-semibold">
-                            {moment(pedido.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
+                            {fmtFechaHora(pedido.timestamp)}
                         </small>
                     </div>
                 </div>

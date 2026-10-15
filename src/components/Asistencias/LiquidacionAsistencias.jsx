@@ -2,17 +2,16 @@ import React, { useState, useEffect } from "react";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import { fetchSucursales } from "../../Utils/sucursales";
-import { getFechaComercial } from "../../Utils/fechaComercial";
+import { momentDeHoy, jornadaQueEmpieza } from "../../Utils/fechaComercial";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import ModalCargarJornada from "./ModalCargarJornada";
 import { agregarLiquidacion, enviosPorRepartidor, fechaJornadaATimestamp } from "./asistencias_hooks/useAsistencias";
 import { obtenerResumenes } from "../POS/pos_hooks/useResumenDiario";
 // El bruto sale de horas × valorHora, así que puede traer decimales: se redondea.
-import { fmtPesosRedondeado as pesos } from "../../Utils/formato";
+import { fmtPesosRedondeado as pesos, aInputFecha } from "../../Utils/formato";
+import { avisarErrorDeCarga } from "../../Utils/avisos";
 import "../../style/Main.css";
-import moment from "moment";
 
-const toInputDate = (d) => moment(d).format("YYYY-MM-DD");
 
 // Panel del administrador: liquida un período de una sucursal y, además, permite
 // cargar o corregir una jornada suelta (el encargado solo ve la actual, así que
@@ -21,10 +20,10 @@ const LiquidacionAsistencias = () => {
     const [sucursales, setSucursales] = useState([]);
     const [sucursalSel, setSucursalSel] = useState("");
 
-    const hoyJornada = moment(getFechaComercial(), "DD-MM-YYYY");
-    const [desdeStr, setDesdeStr] = useState(toInputDate(hoyJornada.clone().startOf("month")));
-    const [hastaStr, setHastaStr] = useState(toInputDate(hoyJornada));
-    const [jornadaEditar, setJornadaEditar] = useState(toInputDate(hoyJornada));
+    const hoyJornada = momentDeHoy();
+    const [desdeStr, setDesdeStr] = useState(aInputFecha(hoyJornada.clone().startOf("month")));
+    const [hastaStr, setHastaStr] = useState(aInputFecha(hoyJornada));
+    const [jornadaEditar, setJornadaEditar] = useState(aInputFecha(hoyJornada));
 
     const [rango, setRango] = useState(null);
     const [jornadas, setJornadas] = useState([]);
@@ -40,11 +39,18 @@ const LiquidacionAsistencias = () => {
                 setSucursales(lista);
                 setSucursalSel((prev) => prev || lista[0]?.id || "");
             })
-            .catch(console.error);
+            .catch((e) => {
+                console.error("Error cargando las sucursales:", e);
+                avisarErrorDeCarga("las sucursales");
+            });
     }, []);
 
     useEffect(() => {
         if (!sucursalSel || !rango) return;
+        // Al cambiar de sucursal o de período, la consulta anterior puede seguir en
+        // vuelo: si llega después, pisaba la tabla y se veían los sueldos de Luro con
+        // Davinci elegida. Solo cuenta la respuesta de la consulta vigente.
+        let vigente = true;
 
         setIsLoading(true);
         setError("");
@@ -59,37 +65,42 @@ const LiquidacionAsistencias = () => {
             orderBy("fecha", "asc")
         );
 
-        // Los envíos de los repartidores salen de las fotos de cada noche: 1 lectura
-        // por noche del período (las que falten se calculan una vez y se guardan). La
-        // noche en curso no tiene foto: esa la ve el encargado en su F4. Si falla, la
-        // liquidación de horas se muestra igual y lo avisa.
+        // Los envíos de los repartidores salen del resumen guardado de cada noche: 1
+        // lectura por noche del período (las que falten se calculan una vez y se
+        // guardan). La noche en curso no tiene resumen guardado: esa la ve el
+        // encargado en su F4. Si falla, la liquidación de horas se muestra igual y lo
+        // avisa.
         setErrorEnvios(false);
         const traerEnvios = obtenerResumenes(rango.desde, rango.hasta, sucursalSel)
             .then(enviosPorRepartidor)
             .catch((e) => {
                 console.error("Error trayendo los envíos del período:", e);
-                setErrorEnvios(true);
+                if (vigente) setErrorEnvios(true);
                 return {};
             });
 
         Promise.all([getDocs(q), traerEnvios])
             .then(([snap, enviosPeriodo]) => {
+                if (!vigente) return;
                 setJornadas(snap.docs.map((d) => d.data()));
                 setEnvios(enviosPeriodo);
             })
             .catch((e) => {
+                if (!vigente) return;
                 console.error("Error liquidando asistencias:", e);
                 setError("No se pudo traer el período. Revisá la conexión.");
                 setJornadas([]);
                 setEnvios({});
             })
-            .finally(() => setIsLoading(false));
+            .finally(() => { if (vigente) setIsLoading(false); });
+
+        return () => { vigente = false; };
     }, [sucursalSel, rango]);
 
     const buscar = () => {
         setRango({
-            inicio: fechaJornadaATimestamp(moment(desdeStr).format("DD-MM-YYYY")),
-            fin: fechaJornadaATimestamp(moment(hastaStr).format("DD-MM-YYYY")),
+            inicio: fechaJornadaATimestamp(jornadaQueEmpieza(desdeStr)),
+            fin: fechaJornadaATimestamp(jornadaQueEmpieza(hastaStr)),
             desde: desdeStr,
             hasta: hastaStr,
         });
@@ -272,7 +283,7 @@ const LiquidacionAsistencias = () => {
                 <ModalCargarJornada
                     show={modalAbierto}
                     sucursal={sucursalSel}
-                    fecha={moment(jornadaEditar).format("DD-MM-YYYY")}
+                    fecha={jornadaQueEmpieza(jornadaEditar)}
                     registrosIniciales={null}
                     modoAdmin
                     onHide={() => setModalAbierto(false)}

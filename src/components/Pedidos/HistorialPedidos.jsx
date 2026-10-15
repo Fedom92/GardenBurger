@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, orderBy, getDocs, getDoc, updateDoc, where, serverTimestamp, Timestamp, deleteField } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, getDoc, where, serverTimestamp, Timestamp, deleteField } from "firebase/firestore";
 import { db, docDeSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { fetchSucursales } from "../../Utils/sucursales";
@@ -9,13 +9,12 @@ import { getRangoJornada, ahoraServidor } from "../../Utils/fechaComercial";
 import AuditoriaPedido from "./AuditoriaPedido";
 import moment from "moment";
 import Swal from "sweetalert2";
-import { fmtPesos } from "../../Utils/formato";
+import { fmtPesos, fmtFechaHora, aInputFecha } from "../../Utils/formato";
 import { avisarErrorDeCarga, sinConexion } from "../../Utils/avisos";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
-import { invalidarFotoDePedido, enLaCalle } from "../POS/pos_hooks/useResumenDiario";
-import { HORARIO, ESTADOS } from "../../Utils/Constantes";
+import { actualizarPedidoYResumen, enLaCalle } from "../POS/pos_hooks/useResumenDiario";
+import { HORARIO, ESTADOS, etiquetaPago } from "../../Utils/Constantes";
 
-const toInputDate = (d) => moment(d).format("YYYY-MM-DD");
 
 const computeRango = (startStr, endStr) => {
   const { horaAbre, horaCierre } = HORARIO;
@@ -39,8 +38,8 @@ const HistorialPedidos = () => {
   const [sucursalSel, setSucursalSel] = useState("");
   const sucursalActiva = esAdmin ? sucursalSel : userData?.sucursal;
 
-  const [fechaInicioStr, setFechaInicioStr] = useState(toInputDate(inicioJornada));
-  const [fechaFinStr, setFechaFinStr] = useState(toInputDate(moment(finJornada).subtract(4, "hours")));
+  const [fechaInicioStr, setFechaInicioStr] = useState(aInputFecha(inicioJornada));
+  const [fechaFinStr, setFechaFinStr] = useState(aInputFecha(moment(finJornada).subtract(4, "hours")));
   const [queryRange, setQueryRange] = useState({ inicio: inicioJornada, fin: finJornada });
 
   const handleBuscar = () => setQueryRange(computeRango(fechaInicioStr, fechaFinStr));
@@ -60,6 +59,10 @@ const HistorialPedidos = () => {
 
   useEffect(() => {
     if (!sucursalActiva) return;
+    // Al cambiar de sucursal o de fechas, la búsqueda anterior puede seguir en
+    // vuelo: si llega después, pisaba la lista y se veían los pedidos de Luro con
+    // Davinci elegida. Solo cuenta la respuesta de la búsqueda vigente.
+    let vigente = true;
     setIsLoading(true);
     // Sin filtro de estado: el historial también es la herramienta para auditar
     // cancelados y eliminados —quién los tocó y cuándo, con el botón de auditoría
@@ -74,18 +77,21 @@ const HistorialPedidos = () => {
       orderBy("timestamp", "desc")
     );
     getDocs(q)
-      .then(snap => setPedidos(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+      .then(snap => { if (vigente) setPedidos(snap.docs.map(d => ({ id: d.id, ...d.data() }))); })
       .catch(err => {
+        if (!vigente) return;
         console.error("Error HistorialPedidos:", err);
         avisarErrorDeCarga("los pedidos");
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => { if (vigente) setIsLoading(false); });
+    return () => { vigente = false; };
   }, [queryRange, sucursalActiva]);
 
   // Eliminar desde el Historial: solo el admin (la pantalla entera es suya), de
   // cualquier fecha. Es un borrado lógico —el pedido queda en ELIMINADO, con quién y
   // cuándo—, igual que F3, y con la misma regla: no con el repartidor en la calle.
-  // Si la noche ya cerró, se borra su foto, así Métricas y Estadísticas la recalculan.
+  // Si la noche ya cerró, se borra su resumen guardado en la misma escritura, así
+  // Métricas y Estadísticas la recalculan.
   const { procesando: eliminando, ejecutar } = useAccionUnica();
   const eliminarPedido = async (pedido) => {
     const { isConfirmed } = await Swal.fire({
@@ -118,14 +124,13 @@ const HistorialPedidos = () => {
 
         // `estadoAnterior` es lo que permite "Restaurar pedido". Solo lo guarda el
         // Historial: un pedido anulado desde F3 se rehace en la Caja.
-        await updateDoc(ref, {
+        await actualizarPedidoYResumen(ref, pedido, {
           estado: ESTADOS.ELIMINADO,
           estadoAnterior: actual.estado,
           cajeroEliminaID: userData.id,
           cajeroElimina: userData.nombreCompleto,
           cajeroEliminaTimestamp: serverTimestamp(),
-        });
-        await invalidarFotoDePedido(pedido, sucursalActiva);
+        }, sucursalActiva);
 
         // La fila se actualiza en el lugar, sin volver a buscar. La hora es la del
         // servidor estimada: la exacta la tiene Firestore, y se ve al buscar de nuevo.
@@ -163,14 +168,13 @@ const HistorialPedidos = () => {
 
     await ejecutar(async () => {
       try {
-        await updateDoc(docDeSucursal(sucursalActiva, "pedidos", pedido.id), {
+        await actualizarPedidoYResumen(docDeSucursal(sucursalActiva, "pedidos", pedido.id), pedido, {
           estado: pedido.estadoAnterior,
           estadoAnterior: deleteField(),
           restauradoPorID: userData.id,
           restauradoPor: userData.nombreCompleto,
           restauradoTimestamp: serverTimestamp(),
-        });
-        await invalidarFotoDePedido(pedido, sucursalActiva);
+        }, sucursalActiva);
 
         setPedidos((prev) => prev.map((p) => {
           if (p.id !== pedido.id) return p;
@@ -196,10 +200,15 @@ const HistorialPedidos = () => {
       header: "Hora",
       cell: ({ getValue }) => {
         const ts = getValue();
-        return ts?.toDate ? moment(ts.toDate()).format("DD/MM/YY HH:mm") : "—";
+        return fmtFechaHora(ts);
       },
     },
-    { columnasBasicas: ["codigo", "total", "metodoPago", "nombre", "direccion", "telefono"] },
+    { columnasBasicas: ["codigo"] },
+    // El total con fmtPesos y el método legible: "%" se guarda, pero en pantalla es
+    // "Dividido".
+    { accessorKey: "total", header: "Total", cell: ({ getValue }) => fmtPesos(getValue()) },
+    { accessorKey: "metodoPago", header: "Pago", cell: ({ getValue }) => etiquetaPago(getValue()) },
+    { columnasBasicas: ["nombre", "direccion", "telefono"] },
     {
       accessorKey: "envio",
       header: "Envío",
@@ -329,6 +338,7 @@ const HistorialPedidos = () => {
                   ordenDescendente={true}
                   camposBusqueda={["codigo", "nombre", "direccion", "telefono"]}
                   camposFiltros={["metodoPago", "estado", "esLocal"]}
+                  etiquetasFiltros={{ metodoPago: etiquetaPago }}
                 />
               </div>
             </div>

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useSheetData } from "./useGoogleSheets";
 import { CATEGORIAS_COMBOS } from "../../../Utils/Constantes";
 import { getJornadaDeFecha } from "../../../Utils/fechaComercial";
+import { DIAS_CORTOS, MESES_CORTOS } from "../../../Utils/formato";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { KpiCard, BarChart, Section } from "../componentes";
 import "./Estadisticas.css";
@@ -32,8 +33,6 @@ const enVentanaHoraria = (d, hIni, hFin) => {
     return hIni <= hFin ? (h >= hIni && h < hFin) : (h >= hIni || h < hFin);
 };
 
-const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-const MESES_CORTO = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
 const fmt$ = (n) => `$${Math.round(n).toLocaleString("es-AR")}`;
 const fmtN = (n) => Number(n).toLocaleString("es-AR");
@@ -342,7 +341,7 @@ export default function Estadisticas() {
     const porDia = useMemo(() => {
         const map = Array(7).fill(0);
         ticketsValidos.forEach(p => { const j = jornadaDe(p.timestamp); if (j) map[j.getDay()]++; });
-        return DIAS.map((label, i) => ({ label, valor: map[i] }));
+        return DIAS_CORTOS.map((label, i) => ({ label, valor: map[i] }));
     }, [ticketsValidos]);
 
     // ── Franja horaria ──
@@ -387,7 +386,7 @@ export default function Estadisticas() {
     // ── Data para Recharts (Evolución) ──
     const chartData = useMemo(() => {
         // [ { name: 'Ene', '2023_tickets': 150, '2023_monto': 500000, '2023_combos': 75, ... }, ... ]
-        const data = MESES_CORTO.map(m => ({ name: m }));
+        const data = MESES_CORTOS.map(m => ({ name: m }));
 
         const combosMap = {};
         ventas.forEach(v => {

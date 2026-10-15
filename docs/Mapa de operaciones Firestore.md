@@ -46,11 +46,11 @@ actualizado: 2026-10-12
 | `PendientesSolicitudes` | listener de `estado==PENDIENTE` | mientras el modal está abierto | pendientes | se solapa con `usePendientes`, pero son queries distintas |
 | `PendientesMP` | listener de `estado==PENDIENTEMP` | ídem | pendientes | ídem |
 | `BuscarPedido` | por **código**: consulta directa. Por teléfono o dirección: la jornada, **una vez por apertura del modal** | al abrir F3, no en cada búsqueda | 1 doc, o la jornada | ✅ era el mayor costo recurrente: releía la jornada entera en cada búsqueda |
-| `Caja.verResumen` (F4) | los **pedidos** de la jornada, y los suma; y el documento de **asistencia** de la noche, para la base de los repartidores | al abrir el modal, y solo el encargado entre `HORA_HABILITA_STATS` (00) y `horaCierre` | la jornada (~60-100) + 1 | el arqueo se calcula, no se lee de un contador. Jornada cerrada: **1 lectura** de la foto. La ventana horaria está para no pagar el barrido por curiosidad: [[Reglas de negocio#Quién mira el arqueo, y cuándo]] |
+| `Caja.verResumen` (F4) | los **pedidos** de la jornada, y los suma; y el documento de **asistencia** de la noche, para la base de los repartidores | al abrir el modal, y solo el encargado entre `HORA_HABILITA_STATS` (00) y `horaCierre` | la jornada (~60-100) + 1 | el arqueo se calcula, no se lee de un contador. Jornada cerrada: **1 lectura** del resumen guardado. La ventana horaria está para no pagar el barrido por curiosidad: [[Reglas de negocio#Quién mira el arqueo, y cuándo]] |
 | `PedidosEspera` / `PedidosCocinando` / `ATP` / `JefeDeliverys` | listeners por `estado` | mientras la pantalla está abierta | los del estado | ✅ real-time justificado |
 | `JefeDeliverys` | repartidores activos de la sucursal, desde `usuarios` | al montar | pocos | ✅ one-time |
 | `JefeDeliverys` (Métricas) | listener sobre los viajes cerrados de la noche (`deliveryFinTimestamp >= inicio`) | mientras la pantalla está abierta | ~1 por viaje cerrado | ✅ en vivo y sin ventana; reemplazó al barrido de la noche al abrir la liquidación (~60-100). Rango sobre un campo: índice automático |
-| `EstadisticasGenerales` | las **fotos** del período, por sucursal; la evolución anual, de la primera noche con pedidos a ayer | al tocar Ver / Cargar evolución | 1 por noche y sucursal | ✅ no lee pedidos; las noches sin foto se calculan una vez |
+| `EstadisticasGenerales` | los **resúmenes guardados** del período, por sucursal; la evolución anual, de la primera noche con pedidos a ayer | al tocar Ver / Cargar evolución | 1 por noche y sucursal | ✅ no lee pedidos; las noches sin resumen se calculan una vez (y otra vez, una sola, cuando sube `VERSION_RESUMEN_DIARIO`: pasó el 15-10-2026) |
 | `HistorialPedidos` | pedidos por rango de fechas, **sin filtro de estado** | por búsqueda | según rango | **solo el admin**: sin `limit` a propósito, sabe lo que pide |
 | `Productos` | productos (ocultos incluidos) y categorías, por **listener** | mientras la pantalla está abierta | acotado | ✅ volver a entrar trae solo lo que cambió (antes, `getDocs` en cada visita). Ver [[Decisiones tecnicas#El catálogo de Caja va por listener]] |
 | `Personal` / `Envios` | su colección entera | la primera vez que se abre su pestaña del Panel Admin | acotado | ✅ desde el 12-10-2026 en pestañas con `mountOnEnter`: entrar por `/admin?tab=sucursales` no lee los empleados, y volver a una pestaña no relee |
@@ -62,7 +62,7 @@ actualizado: 2026-10-12
 | `PaginaDetalle` | 1 pedido | por visita pública, durante 48 h | 1 | ✅ pasado el plazo la regla lo niega |
 | `Asistencias` | el doc de la jornada | al entrar | **1** | ✅ el mapa `registros` trae a todos |
 | `ModalCargarJornada` | empleados de la sucursal | **solo al abrir el formulario** | N | ✅ editar un renglón cuesta 0 |
-| `LiquidacionAsistencias` | rango de jornadas, y las fotos del rango para los envíos de los repartidores | por búsqueda | 2 × D días | ✅ un mes ≈ 60, y **no lee `usuarios`**. Las fotos que falten se calculan una vez |
+| `LiquidacionAsistencias` | rango de jornadas, y los resúmenes guardados del rango para los envíos de los repartidores | por búsqueda | 2 × D días | ✅ un mes ≈ 60, y **no lee `usuarios`**. Los resúmenes que falten se calculan una vez |
 | `Crearsolicitud` | 1 sucursal, para validarla y controlar su horario | al confirmar el pedido | 1 | ✅ evita subcolecciones huérfanas, y de ahí sale el teléfono para el WhatsApp. Al entrar, el horario sale de `menu.json` (Storage): fuera de horario no lee Firestore. Solo si la sucursal no está en el JSON, 1 lectura |
 | `SeleccionSucursal` | — | — | **0** | ✅ las sucursales y su horario salen de `menu.json`; de Firestore solo si el JSON falla |
 | `Estadisticas` | — | — | **0** | ✅ lee dos TSV de Storage (`getBytes`), no Firestore. 10,5 MB la primera vez; después el navegador revalida con `If-None-Match` y Storage responde **304 con cuerpo vacío** |
@@ -97,34 +97,34 @@ lista. Verificado sobre los 42 puntos de acceso.
 solo el pedido, y el arqueo se calcula desde ahí cuando alguien lo mira. Ver
 [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]].
 
+Suman solo los pedidos **ENTREGADOS** (15-10-2026): cobrar no mueve el arqueo, entregar sí.
+
 | Operación | Qué escribe | Qué pasa con el arqueo |
 |---|---|---|
-| `Caja.guardarBD` | contador + pedido, en una `runTransaction` | el pedido entra al cálculo porque tiene `cajeroID` |
-| `PendientesMP.rechazarPedido` | `updateDoc` → `CANCELADO` | el cálculo lo saltea |
-| `BuscarPedido.eliminarPedido` | relee el pedido (1 lectura) y `updateDoc` → `ELIMINADO` (**solo el encargado**; no con el repartidor en la calle) | ídem |
-| `HistorialPedidos.eliminarPedido` | lo mismo, del **admin** y de cualquier fecha; después `invalidarFotoDePedido(pedido, sucursal)` | ídem, y la foto de esa noche se recalcula |
-| `JefeDeliverys.marcarEstado` (VOLVIO) | `updateDoc` → `estadoDelivery: FIN` | el viaje entra en las Métricas (listener) |
-| `JefeDeliverys.volvioSinEntregar` | `updateDoc` → `estadoDelivery: FIN`, `sinEntregar: true`; el `estado` sigue en `DELIVERY` | el envío se paga; el encargado lo anula después desde F3 |
+| `Caja.guardarBD` | contador + pedido, en una `runTransaction` | todavía nada: el F4 lo muestra como cobrado sin entregar |
+| `ATP.marcarCompletado` | `actualizarPedidoYResumen` → `ENTREGADO` | entra al cálculo |
+| `JefeDeliverys.marcarEstado` (VOLVIO) | `actualizarPedidoYResumen` → `ENTREGADO`, `estadoDelivery: FIN` (exige repartidor) | entra al cálculo; el viaje, a las Métricas (listener) |
+| `JefeDeliverys.entregadoSinRepartidor` | `actualizarPedidoYResumen` → `ENTREGADO` sin viaje (**solo la jefa**) | entra al cálculo; no a la liquidación de repartidores |
+| `JefeDeliverys.volvioSinEntregar` | `actualizarPedidoYResumen` → `estadoDelivery: FIN`, `sinEntregar: true`; el `estado` sigue en `DELIVERY` | no suma; el envío se paga; el encargado lo anula después desde F3 |
+| `PendientesMP.rechazarPedido` | `actualizarPedidoYResumen` → `CANCELADO` | deja de figurar como cobrado sin entregar |
+| `BuscarPedido.eliminarPedido` | relee el pedido (1 lectura) y `actualizarPedidoYResumen` → `ELIMINADO` (**solo el encargado**; no con el repartidor en la calle) | sale del cálculo, si estaba entregado |
+| `HistorialPedidos.eliminarPedido` / `restaurarPedido` | lo mismo, del **admin** y de cualquier fecha | sale (o vuelve) en su noche |
 
-Los **tres que corrigen un pedido ya existente** —rechazar MP, eliminar el ticket y cerrar el
-delivery— llaman además a `invalidarFotoDePedido(pedido)`: si ese pedido es de una jornada ya
-cerrada, borra su foto para que el próximo que la mire la reconstruya con los hechos nuevos. Con la
-jornada en curso no hace nada, que es el caso normal. `guardarBD` no lo necesita: un pedido nuevo
-nace siempre en la jornada en curso.
+**Todo lo que corrige un pedido ya existente escribe con `actualizarPedidoYResumen()`**
+(`useResumenDiario.js`, 15-10-2026): un `writeBatch` con el cambio del pedido y, si la noche de
+**ese pedido** ya cerró, el borrado de su resumen guardado. Es **una sola escritura**: antes eran
+dos —`updateDoc` y después `invalidarFotoDePedido`— y un corte entre las dos dejaba el resumen
+viejo sin aviso. Con la noche en curso, que es el caso normal, el batch lleva solo el pedido: cuesta
+lo mismo que el `updateDoc` de antes. `guardarBD` no lo necesita: un pedido nuevo nace siempre en
+la jornada en curso.
 
-> [!note] Hoy ninguna invalidación hace nada, porque no hay fotos
-> La foto se escribe solo cuando alguien mira una jornada **cerrada**, y el único que llama a
-> `obtenerArqueo` es el F4, siempre con la jornada en curso. Hasta que exista el dashboard (o la
-> pantalla de gestión por fecha), `setDoc` nunca corre y las tres invalidaciones no tienen nada
-> que borrar. Ver [[Auditoria 2026-09-26#A · P2 · La foto promete una historia exacta, pero hoy nadie la saca|Auditoría 2026-09-26]].
->
-> Cuando haya fotos, el primer caso que va a importar es el del delivery: el listener de
-> `JefeDeliverys` **no filtra por jornada**, así que un delivery que quedó sin rendir pasa a la
-> noche siguiente y se cierra ahí, con su jornada ya cerrada. Por eso `marcarEstado` necesita el
-> `pedido` entero y no solo su id.
+El caso que más importa es el del delivery: el listener de `JefeDeliverys` **no filtra por
+jornada**, así que un delivery que quedó sin rendir pasa a la noche siguiente y se cierra ahí, con
+su jornada ya cerrada (y su resumen, si Métricas ya la había mirado). Por eso `marcarEstado`
+necesita el `pedido` entero y no solo su id.
 
 **Regla que sigue en pie**: nunca `updateDoc` sobre `resumenDiario` — falla con `not-found` si el
-documento de la jornada todavía no existe. La foto se escribe con `setDoc`.
+documento de la jornada todavía no existe. El resumen se escribe con `setDoc`.
 
 Fuera del arqueo, la escritura más eficiente del sistema es la de **asistencias**: una jornada
 entera, con todos los empleados, es **una sola escritura**, porque van en un mapa dentro de un

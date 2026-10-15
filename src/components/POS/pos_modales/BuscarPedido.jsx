@@ -1,16 +1,15 @@
 import React, { useState, useRef } from "react";
-import { query, getDocs, getDoc, where, orderBy, serverTimestamp, updateDoc } from "firebase/firestore";
+import { query, getDocs, getDoc, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { colSucursal, docSucursal } from "../../../firebaseConfig/firebase";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
-import moment from 'moment';
 import { useAuth } from "../../../context/AuthContext";
-import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO } from "../../../Utils/Constantes";
-import { invalidarFotoDePedido, enLaCalle } from "../pos_hooks/useResumenDiario";
+import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO, etiquetaPago } from "../../../Utils/Constantes";
+import { actualizarPedidoYResumen, enLaCalle } from "../pos_hooks/useResumenDiario";
 import { quitarAcentos } from "../../../Utils/TablaGenerica";
 import { getRangoJornada } from "../../../Utils/fechaComercial";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
-import { fmtPesos } from "../../../Utils/formato";
+import { fmtPesos, fmtFechaHora } from "../../../Utils/formato";
 import { sinConexion } from "../../../Utils/avisos";
 
 const CAMPOS_BUSQUEDA = ["telefono", "codigo", "direccion"];
@@ -133,19 +132,16 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                     return;
                 }
 
-                await updateDoc(docSucursal("pedidos", pedido.id), {
+                // El arqueo se calcula desde los pedidos, asi que cambiar el estado ya
+                // lo corrige: no hay contador que descontar. Lo unico que puede quedar
+                // viejo es el resumen guardado de una jornada cerrada, y F3 esta
+                // acotado a la jornada en curso; va igual, en la misma escritura.
+                await actualizarPedidoYResumen(docSucursal("pedidos", pedido.id), pedido, {
                     estado: ESTADOS.ELIMINADO,
                     cajeroEliminaID: userData.id,
                     cajeroElimina: userData.nombreCompleto,
                     cajeroEliminaTimestamp: serverTimestamp(),
                 });
-
-                // El arqueo se calcula desde los pedidos, asi que cambiar el estado ya
-                // lo corrige: no hay contador que descontar. Lo unico que puede quedar
-                // viejo es la foto de una jornada cerrada, y hoy no hay ninguna: F3
-                // esta acotado a la jornada en curso. Va igual para que el componente
-                // de eliminacion por fecha, pendiente, no tenga que acordarse.
-                await invalidarFotoDePedido(pedido);
 
                 // Actualizar el pedido local, y también la jornada cacheada: si no,
                 // la siguiente búsqueda dentro del mismo modal lo mostraría otra
@@ -252,7 +248,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                     </h6>
                                     <div className="d-flex align-items-center gap-2">
                                         <small className="text-body-secondary">
-                                            {moment(pedido.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
+                                            {fmtFechaHora(pedido.timestamp)}
                                         </small>
                                     </div>
                                 </div>
@@ -271,7 +267,7 @@ const BuscarPedido = ({ isOpen, onClose }) => {
                                                 </p>
                                             )}
                                             <p className="mb-2">
-                                                <strong>Método de pago:</strong> {pedido.metodoPago}
+                                                <strong>Método de pago:</strong> {etiquetaPago(pedido.metodoPago)}
                                             </p>
                                             {pedido.metodoPago === METODOS_PAGO.DIVIDIDO.key && (
                                                 <p className="mb-2">

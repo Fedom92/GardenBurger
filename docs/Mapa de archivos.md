@@ -39,13 +39,14 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | Archivo | Qué hace |
 |---|---|
 | `Constantes.jsx` | `ESTADOS`, `ENVIOS_LOCALES`, `CATEGORIAS_COMBOS`, `CATEGORIAS_HAMBURGUESA`, `CANTIDAD_CARNES`, `FLUJO_PUB_ESTADOS`, `TIEMPO_MIN_PEDIDOESP`, `getCurrentStepIndex()`, **`HORARIO`** (la jornada comercial), **`HORA_HABILITA_STATS`** (desde cuándo se ve el F4), `METODOS_PAGO`, `DESTINO_VUELTO` y **`ROLES`** (nombre, `nroOrden`, ruta inicial, `editable` y `llevaMoto` de cada rol, en un solo objeto), con `ROLES_EDITABLES` y `ordenDeRol()` derivados |
-| `fechaComercial.js` | Jornada comercial, hora del servidor, ventana del F4 y horario web de cada sucursal con sus excepciones (`webRecibePedidos`, `textoHorarioWeb`, `textoExcepcionWeb`, `errorDeHorario`). `MODO_TEST` para probar de día. Ver [[Reglas de negocio#Jornada comercial]] |
-| `fechaComercial.test.js` | La única batería de tests: los bordes del horario web y las excepciones. `npm test` |
+| `fechaComercial.js` | Jornada comercial, hora del servidor, ventana del F4 y horario web de cada sucursal con sus excepciones (`webRecibePedidos`, `textoHorarioWeb`, `textoExcepcionWeb`, `errorDeHorario`). El id de jornada: `momentDeJornada`, `jornadaQueEmpieza`, `momentDeHoy`. `MODO_TEST` para probar de día. Ver [[Reglas de negocio#Jornada comercial]] |
+| `fechaComercial.test.js` | Tests de los bordes del horario web, las excepciones y el id de jornada. `npm test` corre las seis baterías: esta, `formato`, `agruparExtras`, `validarPedido`, `useResumenDiario` (el arqueo) y `calculos` (Estadísticas Generales) |
+| `agruparExtras.js` (+ `.test.js`) | `agruparExtras(carrito)`: cada EXTRA con el producto que tiene arriba, para mostrar. La única copia de la regla (15-10-2026): la usan la Caja y `VerPedidoModal` |
 | `excepcionesHorario.js` | Guardar, levantar y leer las excepciones al horario de la web: un batch que escribe el registro y la copia de la sucursal. Ver [[Decisiones tecnicas#Las excepciones de horario viven en dos lugares]] |
 | `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`), `publicarSucursales()` (republica solo las sucursales; la llama el Panel Admin), `fetchMenuPublico()` (lo consume, con promesa cacheada) y la bandera `menuSinPublicar` en localStorage (`marcar`/`limpiar`/`hayMenuPendiente`) |
 | `sucursales.js` | `fetchSucursales()` — lista ordenada de la colección global, con la promesa cacheada. `invalidarSucursales()` la suelta cuando el ABM guarda |
-| `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table` v9 (registra solo orden y paginación): búsqueda, filtros por columna, orden y paginación. Exporta `quitarAcentos` |
-| `formato.js` | `fmtPesos` y `fmtPesosRedondeado`. **Único lugar** donde se formatean montos |
+| `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table` v9 (registra solo orden y paginación): búsqueda, filtros por columna, orden y paginación. `etiquetasFiltros` (opcional) muestra legible en el select un valor guardado crudo (`{ metodoPago: etiquetaPago }`). Si la lista se achica, la página se corre a la última que existe. Exporta `quitarAcentos` |
+| `formato.js` (+ `.test.js`) | **Único lugar** donde se formatean montos (`fmtPesos`, `fmtPesosRedondeado`), números (`fmtNumero`) y fechas (`fmtFecha`, `fmtHora`, `fmtFechaHora`, `aInputFecha`). Los nombres de días y meses (`NOMBRES_DIAS`, `DIAS_CORTOS`, `MESES_CORTOS`) salen del locale `es` de moment |
 | `useAccionUnica.js` | Guard contra doble ejecución. Ver [[Convenciones y preferencias#Acciones que no se pueden repetir]] |
 | `useHoraDeArqueo.js` | Si ya es hora de mirar el arqueo (`HORA_HABILITA_STATS` a `horaCierre`), para el `disabled` del F4. Ver [[Reglas de negocio#Quién mira el arqueo, y cuándo]] |
 | `imagenes.js` | `subirImagenProducto()`: achica la foto a 1200 px, la pasa a WebP y la sube a `productos/`. `IMAGEN_ILEGIBLE` es el mensaje cuando el navegador no la puede abrir (HEIC). Ver [[Decisiones tecnicas#Las fotos de producto se achican en el navegador]] |
@@ -65,7 +66,7 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `pos_hooks/useHorarioEspecial.js` | Estado del selector de hora especial |
 | `pos_hooks/useRevisarSolicitud.js` | Toma una solicitud web (la regla `asignacionValida()` rechaza si otro la tomó antes), llena el formulario y **re-precifica el carrito contra el catálogo en memoria**. Exporta `liberarSolicitud` |
 | `pos_hooks/useTicketLayout.js` | Lado y ancho del ticket: arrastre de la manija para cambiarlo de lado y divisor redimensionable |
-| `pos_hooks/useResumenDiario.js` | **El arqueo**: `calcularArqueo()` (pura), `obtenerArqueo()` (calcula o usa la foto), `invalidarFotoDePedido()`. Incluye `contarCombos` |
+| `pos_hooks/useResumenDiario.js` (+ `.test.js`) | **El arqueo**: `calcularArqueo()` (pura; suman solo los ENTREGADOS), `obtenerArqueo()` (calcula o usa el resumen guardado), `actualizarPedidoYResumen()` (el cambio del pedido y el borrado del resumen de su noche, en un batch), `cobradosSinEntregar()` para el F4. Incluye `contarCombos` |
 | `pos_hooks/validarPedido.js` | Validaciones previas al guardado, con Swal: entre ellas, que un delivery que paga con más elija Vuelto o Propina. Exporta `errorPagoDividido`, que también usa el modal `PagoDividido` |
 | `pos_modales/BuscarPedido.jsx` | **F3** — busca en la jornada por teléfono/código/dirección y permite **eliminar** el ticket (no en `ELIMINADO` ni `CANCELADO`, ni un delivery con el repartidor en la calle) |
 | `pos_modales/ResumenDiario.jsx` | **F4** — el arqueo del día, lo que se le paga a cada repartidor (base + envíos), los viajes sin entregar sin anular y los vueltos a transferir, con botón Copiar. Presentacional: los datos los trae Caja |
@@ -81,15 +82,15 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | `PedidosEspera.jsx` | Estado `CONFIRMADO`. Selección múltiple, contador de carnes, aviso de horarios especiales |
 | `PedidosCocinando.jsx` | Estado `COCINA`. Rutea a `ATP` o `DELIVERY` al terminar, con `destinoPedidoListo()` |
 | `ModalHorariosEspeciales.jsx` | Aviso con checkboxes para los pedidos adelantados |
-| `VerPedidoModal.jsx` | Card expandida: agrupa cada principal con sus extras en dos columnas |
-| `TicketImpresion.jsx` + `.css` | Ticket del cliente. Abre ventana nueva e imprime |
+| `VerPedidoModal.jsx` | Card expandida: cada principal con sus extras (`agruparExtras`) en dos columnas |
+| `TicketImpresion.jsx` + `.css` | Ticket del cliente. Abre ventana nueva e imprime. Lo usan Cocina y, para los pedidos que no pasan por la cocina, ATP |
 
 ## `components/Delivery/`
 
 | Archivo | Qué hace |
 |---|---|
-| `JefeDeliverys.jsx` | Estado `DELIVERY`. Asigna repartidor, marca salida, regreso o "Volvió sin entregar". La tabla muestra lo que hay que **cobrar**, no el total, y si hay vuelto o propina. Las Métricas salen de un segundo listener sobre los viajes cerrados de la noche. Los repartidores salen de `usuarios` (rol delivery), no de una colección propia |
-| `delivery_modales/ModalPedidoDelivery.jsx` | Gestión de un pedido: asignar, "Marcar Salida", "Confirmar Entrega" con `pagaronCon` o "Volvió sin entregar". Muestra a cobrar, `pagaCon` y si la diferencia es vuelto o propina |
+| `JefeDeliverys.jsx` | Estado `DELIVERY`. Asigna repartidor, marca salida, regreso o "Volvió sin entregar" (los dos cierres exigen repartidor), y —**solo la jefa**— "Entregado sin repartidor". La tabla muestra lo que hay que **cobrar**, no el total, y si hay vuelto o propina. Las Métricas salen de un segundo listener sobre los viajes cerrados de la noche. Los repartidores salen de `usuarios` (rol delivery), no de una colección propia |
+| `delivery_modales/ModalPedidoDelivery.jsx` | Gestión de un pedido: asignar, "Marcar Salida", "Confirmar Entrega" con `pagaronCon` o "Volvió sin entregar" (deshabilitados sin repartidor), y "Entregado sin repartidor" si la pantalla lo habilita. Muestra a cobrar, `pagaCon` y si la diferencia es vuelto o propina |
 | `delivery_modales/ModalMetricasDelivery.jsx` | **Métricas** de la noche, en vivo: viajes, envíos y efectivo a rendir, con un acordeón por repartidor y el detalle de cada viaje. No paga nada |
 
 ## `components/Solicitudes/` — la web pública
@@ -112,9 +113,9 @@ Código heredado de otro desarrollador, anotado para rehacer: el análisis compl
 
 | Archivo | Qué hace |
 |---|---|
-| `ATP/ATP.jsx` | Estado `ATP` — entrega en mostrador. Botón de WhatsApp "tu pedido está listo" en Retira y Espera Afuera, solo si el pedido tiene teléfono (en los locales no es obligatorio) |
-| `Pedidos/HistorialPedidos.jsx` | Pedidos por rango de fechas, **sin filtro de estado**: también audita cancelados y eliminados. El admin elige sucursal y puede **eliminar** cualquier pedido (borrado lógico, no con el repartidor en la calle) |
-| `Metricas/Metricas.jsx` | **Métricas**: botones de sucursal (Todas o una) y de período (Hoy, Ayer, Semana actual y pasada, Mes actual y pasado); con los dos elegidos busca sola. Lee fotos con `obtenerResumenes`, y la noche en curso con `obtenerArqueo` cuando el período llega a hoy. Con el aspecto del Histórico y pensada para entrar entera en el celular sin scroll: Pedidos y Combos, Ventas, Delivery (con delivery vs mostrador) y el top 3 de combos; con "Todas", cada sucursal en los subtítulos. El título se corre a la derecha del botón del menú |
+| `ATP/ATP.jsx` | Estado `ATP` — entrega en mostrador (es lo que hace sumar al pedido en el arqueo). Botón de WhatsApp "tu pedido está listo" en Retira y Espera Afuera, solo si el pedido tiene teléfono (en los locales no es obligatorio). Botón **Imprimir** para los pedidos que no pasaron por la cocina |
+| `Pedidos/HistorialPedidos.jsx` | Pedidos por rango de fechas, **sin filtro de estado**: también audita cancelados y eliminados. El admin elige sucursal y puede **eliminar** cualquier pedido (borrado lógico, no con el repartidor en la calle) y **restaurar** los que eliminó desde acá. Descarta la respuesta de una búsqueda anterior al cambiar de sucursal |
+| `Metricas/Metricas.jsx` | **Métricas**: botones de sucursal (Todas o una) y de período (Hoy, Ayer, Semana actual y pasada, Mes actual y pasado); con los dos elegidos busca sola. Lee resúmenes guardados con `obtenerResumenes`, y la noche en curso con `obtenerArqueo` cuando el período llega a hoy. Con el aspecto del Histórico y pensada para entrar entera en el celular sin scroll: Pedidos y Combos, Ventas, Delivery (con delivery vs mostrador) y el top 3 de combos; con "Todas", cada sucursal en los subtítulos. El título se corre a la derecha del botón del menú |
 | `Pedidos/AuditoriaPedido.jsx` | Traza completa de un pedido, agrupada por etapa |
 | `Productos/Productos.jsx` | ABM de productos + botón **"Publicar Menú"**, que parpadea mientras haya cambios sin publicar (bandera en localStorage). Productos y categorías por **listener**: la tabla no se toca a mano después de guardar |
 | `Productos/Parametros/Categorias.jsx` | ABM de categorías: lista, y el formulario al tocar "+ Nueva" o Editar. Recibe la lista del listener de `Productos` por props: no lee nada ni la actualiza a mano |
@@ -127,12 +128,12 @@ Código heredado de otro desarrollador, anotado para rehacer: el análisis compl
 | `Admin/Parametros/ExcepcionesHorario.jsx` | El modal de excepciones de una sucursal (el botón naranja de su fila): cargar una para cualquier día, las próximas (de memoria) y el historial (a pedido, con "Ver historial"). Las escrituras las hace `Sucursales` |
 | `Admin/Parametros/Envios.jsx` | Pestaña Envíos: las zonas en `TablaGenerica`, y el alta y la edición en un modal ("Agregar Envío"). **No muestra** Retira ni Espera Afuera: sus nombres deciden el ruteo de cocina y el arqueo |
 | `Asistencias/Asistencias.jsx` | Pantalla del encargado: solo la jornada actual. Ver [[Asistencias y liquidacion]] |
-| `Asistencias/LiquidacionAsistencias.jsx` | Panel del admin: liquida un período —a los repartidores les suma los envíos, de las fotos— y corrige jornadas sueltas |
+| `Asistencias/LiquidacionAsistencias.jsx` | Panel del admin: liquida un período —a los repartidores les suma los envíos, de los resúmenes guardados— y corrige jornadas sueltas. Descarta la respuesta de una consulta anterior al cambiar de sucursal |
 | `Asistencias/ModalCargarJornada.jsx` | La grilla de carga, compartida por las dos pantallas. `modoAdmin` habilita editar el valor hora y ver la auditoría |
 | `Asistencias/asistencias_hooks/useAsistencias.js` | `calcularHoras`, `armarRegistro`, `enviosPorRepartidor`, `agregarLiquidacion` — lógica pura |
 | `Estadisticas/Historico/Estadisticas.jsx` | Dashboard del **sistema viejo**: lee TSV exportados a mano, no Firestore |
 | `Estadisticas/Generales/EstadisticasGenerales.jsx` | **Estadísticas Generales** (`/estadisticas`): lo mismo que el Histórico, con los datos del sistema nuevo. Filtros Mes / Año / Rango y sucursal, botón Ver; la evolución anual con su propio botón |
-| `Estadisticas/Generales/calculos.js` | Las cuentas de Generales a partir de las fotos (`armarEstadisticas`, `armarEvolucion`, `rangoDeFiltro`). Puro, sin Firestore |
+| `Estadisticas/Generales/calculos.js` (+ `.test.js`) | Las cuentas de Generales a partir de los resúmenes guardados (`armarEstadisticas`, `armarEvolucion`, `rangoDeFiltro`). Puro, sin Firestore. Las noches se cuentan distintas (con "Todas" vienen una por sucursal) y bebidas es solo `BEBIDAS` |
 | `Estadisticas/componentes.jsx` | `KpiCard` (con variante `compacto`), `BarChart` y `Section`: lo visual compartido por el Histórico, Métricas y las Estadísticas Generales. Los estilos, en `Historico/Estadisticas.css` |
 | `Estadisticas/Historico/useGoogleSheets.js` | Baja y parsea los dos TSV de `privado/estadisticas` en Storage con `getBytes()`. **No** se leen de `public/` |
 

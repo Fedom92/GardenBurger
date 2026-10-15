@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import { getDoc } from "firebase/firestore";
 import { docSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
-import { getFechaComercial } from "../../Utils/fechaComercial";
+import { getFechaComercial, momentDeJornada } from "../../Utils/fechaComercial";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import ModalCargarJornada from "./ModalCargarJornada";
 import "../../style/Main.css";
-import moment from "moment";
-import { fmtPesos } from "../../Utils/formato";
+import { fmtPesos, fmtFecha } from "../../Utils/formato";
 
 // Pantalla del encargado. Solo la jornada actual: una lectura al entrar y nada
 // más. Si una noche quedó sin cargar, la corrige el administrador desde su panel.
@@ -118,7 +117,7 @@ const Asistencias = () => {
                                     <div style={{ marginLeft: "10px" }}>
                                         <h1 className="mb-0">Asistencias</h1>
                                         <small className="text-body-secondary">
-                                            Jornada del {moment(jornada, "DD-MM-YYYY").format("DD/MM/YYYY")}
+                                            Jornada del {fmtFecha(momentDeJornada(jornada))}
                                             {" — "}{userData?.sucursal}
                                         </small>
                                     </div>

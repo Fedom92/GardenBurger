@@ -1,6 +1,7 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import { HORAS_JORNADA, NOMBRES_DIAS, errorDeHorario, textoHorarioWeb } from "../../../Utils/fechaComercial";
+import { HORAS_JORNADA, errorDeHorario, textoHorarioWeb } from "../../../Utils/fechaComercial";
+import { DIAS_CORTOS } from "../../../Utils/formato";
 
 // El formulario de alta y edición de una sucursal, dentro del modal de Sucursales.
 //
@@ -17,9 +18,6 @@ import { HORAS_JORNADA, NOMBRES_DIAS, errorDeHorario, textoHorarioWeb } from "..
 // Los días en el orden en que se leen, desde el lunes. Los valores son los de
 // moment: 0 = domingo.
 const DIAS_SEMANA = [1, 2, 3, 4, 5, 6, 0];
-
-// "Lun", "Mar", "Mié"…: la etiqueta de cada botón de día.
-const diaCorto = (d) => NOMBRES_DIAS[d].charAt(0).toUpperCase() + NOMBRES_DIAS[d].slice(1, 3);
 
 const FormularioSucursal = ({ valoresIniciales, esEdicion, error, onGuardar, onCancelar }) => {
   const { register, handleSubmit, watch } = useForm({ defaultValues: valoresIniciales });
@@ -61,7 +59,7 @@ const FormularioSucursal = ({ valoresIniciales, esEdicion, error, onGuardar, onC
           {DIAS_SEMANA.map((d) => (
             <React.Fragment key={d}>
               <input type="checkbox" className="btn-check" id={`dia-atencion-${d}`} value={String(d)} autoComplete="off" {...register("dias")} />
-              <label className="btn btn-outline-primario" htmlFor={`dia-atencion-${d}`}>{diaCorto(d)}</label>
+              <label className="btn btn-outline-primario" htmlFor={`dia-atencion-${d}`}>{DIAS_CORTOS[d]}</label>
             </React.Fragment>
           ))}
         </div>

@@ -4,7 +4,6 @@ import { db, avanzarContador, colSucursal, docSucursal } from "../../firebaseCon
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
-import moment from "moment";
 import '../../style/Main.css';
 import './Caja.css';
 import logoMP from '../../img/mercado-pago.webp';
@@ -23,36 +22,14 @@ import useHorarioEspecial from './pos_hooks/useHorarioEspecial';
 import useTicketLayout from './pos_hooks/useTicketLayout';
 import validarPedido from './pos_hooks/validarPedido';
 import useRevisarSolicitud, { liberarSolicitud } from './pos_hooks/useRevisarSolicitud';
-import { obtenerArqueo, contarCombos, vueltosATransferir, sinEntregarPendientes } from './pos_hooks/useResumenDiario';
+import { obtenerArqueo, contarCombos, vueltosATransferir, sinEntregarPendientes, cobradosSinEntregar } from './pos_hooks/useResumenDiario';
 import { ESTADOS, ENVIOS_LOCALES, METODOS_PAGO, DESTINO_VUELTO, MINUTOS_SOLICITUD_TOMADA } from '../../Utils/Constantes';
-import { ahoraServidor, getFechaComercial, esHoraDeArqueo, opcionesHorarioEspecial } from '../../Utils/fechaComercial';
+import { ahoraServidor, getFechaComercial, esHoraDeArqueo, opcionesHorarioEspecial, momentDeHoy } from '../../Utils/fechaComercial';
 import { fmtPesos } from '../../Utils/formato';
 import { useAccionUnica } from '../../Utils/useAccionUnica';
 import { useHoraDeArqueo } from '../../Utils/useHoraDeArqueo';
 import { estadoAlConfirmar } from '../../Utils/ruteoPedido';
-
-// Los EXTRA son filas hermanas en el carrito, pero el diseño los cuelga de su
-// producto. Se agrupa solo para mostrar: el array que se guarda no cambia.
-const agruparCarrito = (carrito) => {
-    const grupos = [];
-    let actual = null;
-
-    carrito.forEach((item) => {
-        if (item.categoria !== "EXTRA") {
-            if (actual) grupos.push(actual);
-            actual = { principal: item, extras: [] };
-        } else if (actual) {
-            actual.extras.push(item);
-        } else {
-            // Un extra suelto al principio del carrito no debería pasar, pero si
-            // pasa se muestra como línea propia en vez de desaparecer.
-            grupos.push({ principal: item, extras: [] });
-        }
-    });
-
-    if (actual) grupos.push(actual);
-    return grupos;
-};
+import { agruparExtras } from '../../Utils/agruparExtras';
 
 const Caja = () => {
     const { register, handleSubmit, reset, watch, setValue, resetField, getValues } = useForm({
@@ -80,6 +57,11 @@ const Caja = () => {
 
     const [showPendientesMP, setShowPendientesMP] = useState(false);
     const [showPendientesSolicitudes, setShowPendientesSolicitudes] = useState(false);
+    // F1 y F2 tienen `onClose` en las dependencias de su listener: una función nueva
+    // en cada render de la Caja (cada tecla en el ticket) lo daba de baja y lo volvía
+    // a abrir mientras el modal estaba abierto.
+    const cerrarPendientesMP = useCallback(() => setShowPendientesMP(false), []);
+    const cerrarPendientesSolicitudes = useCallback(() => setShowPendientesSolicitudes(false), []);
     const [showModalDividido, setShowModalDividido] = useState(false);
     const [showBuscarPedido, setShowBuscarPedido] = useState(false);
     const [showResumen, setShowResumen] = useState(false);
@@ -126,7 +108,8 @@ const Caja = () => {
     const esReparto = !!envioSeleccionado?.zona_envio && !ENVIOS_LOCALES.includes(envioSeleccionado.zona_envio);
     const pideVuelto = metodoPago === METODOS_PAGO.EFECTIVO.key && esReparto && Number(pagaCon) > totalFinal;
 
-    const gruposCarrito = useMemo(() => agruparCarrito(carrito), [carrito]);
+    // Los EXTRA cuelgan de su producto solo para mostrar: el array que se guarda no cambia.
+    const gruposCarrito = useMemo(() => agruparExtras(carrito), [carrito]);
     const unidades = useMemo(() => carrito.reduce((acum, p) => acum + (p.cantidad || 1), 0), [carrito]);
 
     // Retira y Espera Afuera ya viven en los tres tabs de arriba: en el selector
@@ -171,7 +154,7 @@ const Caja = () => {
                 // asi la hora pedida queda siempre en la noche en curso. Con el dia
                 // calendario, un pedido cargado pasada la medianoche caia en la noche
                 // siguiente y su plata en el arqueo de mañana.
-                const fecha = moment(getFechaComercial(), "DD-MM-YYYY").set({ hour: h, minute: m, second: 0, millisecond: 0 });
+                const fecha = momentDeHoy().set({ hour: h, minute: m, second: 0, millisecond: 0 });
                 timestampPedido = Timestamp.fromDate(fecha.toDate());
             }
 
@@ -353,6 +336,7 @@ const Caja = () => {
                 // Salen de los pedidos que el arqueo ya leyó: no cuestan lecturas.
                 vueltos: vueltosATransferir(pedidos || []),
                 sinEntregar: sinEntregarPendientes(pedidos || []),
+                cobradosSinEntregar: cobradosSinEntregar(pedidos || []),
             });
         } catch (error) {
             console.error("Error cargando el resumen del dia:", error);
@@ -885,13 +869,13 @@ const Caja = () => {
             {/* Modal de Pendientes MP */}
             <PendientesMP
                 isOpen={showPendientesMP}
-                onClose={() => setShowPendientesMP(false)}
+                onClose={cerrarPendientesMP}
             />
 
             {/* Modal de Pendientes Solicitudes */}
             <PendientesSolicitudes
                 isOpen={showPendientesSolicitudes}
-                onClose={() => setShowPendientesSolicitudes(false)}
+                onClose={cerrarPendientesSolicitudes}
                 onRevisarSolicitud={async (solicitud) => {
                     // Cada toma exitosa reinicia los 15 minutos (ver el efecto de la toma).
                     if (await handleRevisarSolicitud(solicitud)) setTomaDeSolicitud((n) => n + 1);
@@ -912,6 +896,7 @@ const Caja = () => {
                 registros={resumenDiario?.registros}
                 vueltos={resumenDiario?.vueltos}
                 sinEntregar={resumenDiario?.sinEntregar}
+                cobradosSinEntregar={resumenDiario?.cobradosSinEntregar}
                 fecha={getFechaComercial()}
                 isLoading={cargandoResumen}
             />

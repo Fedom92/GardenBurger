@@ -11,7 +11,7 @@ actualizado: 2026-10-12
 ## Jornada comercial
 
 **La jornada va de `HORARIO.horaAbre` (19) a `HORARIO.horaCierre` (2), SIEMPRE.** Es lo que
-significa "hoy" en todo el sistema —arqueo, fotos, Métricas, buscadores, historial,
+significa "hoy" en todo el sistema —arqueo, resúmenes guardados, Métricas, buscadores, historial,
 asistencias—, y vive en `HORARIO`, en `Utils/Constantes.jsx`, no en el `.env`. Un pedido de las
 00:30 pertenece a la noche anterior.
 
@@ -28,7 +28,7 @@ desde el ABM (28-09-2026). Ver [[Reglas de negocio#La web pública solo toma ped
 | `getFechaComercialDe(fecha)` | la jornada de **cualquier** fecha: un pedido de las 00:30 da la noche anterior |
 | `getRangoDeJornada(jornada)` | `{inicio, fin}` de cualquier jornada, de 19 a 2. Lo usan F3 **y el arqueo** (ver la nota de abajo) |
 | `getRangoJornada()` | lo mismo para la jornada en curso |
-| `jornadaEstaAbierta(jornada)` | si es la jornada en curso: la abierta no tiene foto de arqueo |
+| `jornadaEstaAbierta(jornada)` | si es la jornada en curso: la abierta no tiene resumen guardado |
 | `esHoraDeArqueo()` | si ya es de `HORA_HABILITA_STATS` (00:00) a `horaCierre`: la ventana del F4 |
 | `getJornadaDeFecha(date)` | versión pura para datos históricos (Estadísticas) |
 | `ahoraServidor()` | `moment()` corregido por el offset del servidor |
@@ -73,8 +73,8 @@ esperar la noche —ni tocar `horaCierre` en `Constantes.jsx`, que era el atajo 
 
 - **Solo actúa con `npm start`**: la condición incluye `NODE_ENV === "development"`, que en el
   build vale `"production"`. Aunque la variable quede en `true`, el sitio publicado no la toma.
-- **Las jornadas pasadas no cambian de rango.** Mientras desarrollo apunte a la base real, una
-  foto de arqueo que se grabe desde ahí tiene que salir igual que la de producción.
+- **Las jornadas pasadas no cambian de rango.** Mientras desarrollo apunte a la base real, un
+  resumen guardado que se grabe desde ahí tiene que salir igual que el de producción.
 - La barra del staff muestra **"Modo test"** mientras está prendida (se oculta con la barra
   colapsada, como los títulos).
 - Cambiarla pide reiniciar `npm start`.
@@ -99,6 +99,11 @@ El **F4 de la Caja es del encargado y de la madrugada**: el botón solo se le mu
 tenga rol `encargado`, y solo queda habilitado desde **`HORA_HABILITA_STATS` (00:00) hasta
 `horaCierre`**, a la misma hora en todas las sucursales. Antes el turno sigue vendiendo y el
 número no significa nada; pasada `horaCierre` la jornada ya es otra y F4 mostraría una noche vacía.
+
+**Suman solo los pedidos ENTREGADOS** (15-10-2026), en el F4, Métricas y Estadísticas: es la misma
+cuenta. Lo cobrado que todavía no se entregó —en la cocina, en el mostrador, en la calle o esperando
+la transferencia— el F4 lo muestra aparte: *"Cobrados todavía sin entregar: N pedidos, $X"*. Ver
+[[Decisiones tecnicas#Suman solo los pedidos entregados (15-10-2026)]].
 
 La hora es una constante y no el cierre de cada sucursal por decisión del dueño (28-09-2026):
 atarla al horario de la sucursal obligaba a la Caja a leerlo. Las **Métricas** de la jefa de
@@ -299,8 +304,19 @@ encargado le avisa a la jefa, ella cierra el viaje y recién ahí se anula.
 Cuando vuelve sin entregar, la jefa usa **"Volvió sin entregar"**: cierra el viaje
 (`estadoDelivery: VOLVIO`, `sinEntregar: true`) sin pedir `pagaronCon`. El pedido **sigue en
 `DELIVERY`** —en su lista, marcado en rojo, y el cliente no ve "Entregado"— hasta que el encargado
-lo anula desde F3, donde aparece como "Volvió sin entregar: falta anularlo". Mientras tanto suma al
-arqueo como cobrado, y el F4 lo avisa.
+lo anula desde F3, donde aparece como "Volvió sin entregar: falta anularlo". No suma al arqueo —no
+se entregó— (hasta el 15-10-2026 sumaba como cobrado mientras nadie lo anulara), y el F4 lo avisa
+para que no quede abierto.
+
+**Cerrar un viaje exige repartidor** (15-10-2026): "Confirmar entrega" y "Volvió sin entregar"
+quedan deshabilitados si el pedido se quedó sin repartidor —pasa si lo desasignan con el viaje en
+curso—, porque el envío se le paga a quien lo hizo. Reasignarlo a otro sigue permitido.
+
+**Entregado sin repartidor** (15-10-2026): un delivery que **no salió** y se entregó igual —el
+cliente lo vino a buscar, o lo llevó alguien del local—. Lo marca **solo la jefa de deliverys**
+desde el modal del pedido (el encargado entra al módulo pero no ve el botón), con confirmación, y
+queda quién y cuándo (`entregaSinRepartidor*`). Pasa a `ENTREGADO` sin viaje: suma al arqueo pero
+no a la liquidación de ningún repartidor, y si tenía uno asignado se le saca.
 
 ### Cuánto se le paga a cada repartidor
 
@@ -321,7 +337,7 @@ números:
 |---|---|---|
 | **F4** de la Caja | encargado, al cierre | por repartidor: viajes, envíos, **base** (de la asistencia de la noche, 1 lectura) y **a pagar**. Es con lo que se le paga cada noche |
 | **Métricas** del módulo de deliverys | jefa, toda la noche | viajes, envíos y efectivo a rendir por repartidor, con el detalle de cada viaje. Es el control del sector: no paga nada |
-| **Liquidación de Asistencias** | admin, por período | a los repartidores les suma sus envíos, de las fotos de cada noche. Registra el trabajo hecho, no a quién se le pagó |
+| **Liquidación de Asistencias** | admin, por período | a los repartidores les suma sus envíos, del resumen guardado de cada noche. Registra el trabajo hecho, no a quién se le pagó |
 
 Las **Métricas** van **en vivo**: salen de un listener sobre los viajes cerrados de la noche, así
 que abrirlas no cuesta nada y no tienen ventana horaria. Ver
@@ -403,6 +419,10 @@ directo a `ATP` o `DELIVERY`: no tiene sentido que el cocinero lo vea, y menos q
 Lo decide la misma `getItemsCocina()`, así que lo que la cocina muestra y lo que la cocina recibe
 no se pueden desalinear. Las cards todavía muestran "Sin items de cocina" para los pedidos que ya
 estaban en la cocina antes del cambio. Ver [[Flujo del pedido#Pipeline]].
+
+Como el ticket se imprime en la cocina, esos pedidos salían **sin ticket**. Desde el 15-10-2026
+**ATP** les muestra un botón **Imprimir** (el mismo `TicketImpresion`). Solo en ATP: no hay
+deliverys de solo bebidas (dueño, 13-10-2026).
 
 **No se aplica en `TicketImpresion`**: ese ticket lleva total, envío y método de pago — es el
 que se le entrega al cliente y tiene que listar todo, si no los ítems no cierran con el importe.
@@ -511,5 +531,5 @@ deducir del código de un vistazo:
    alguien no reescribe sus liquidaciones pasadas.
 3. **El bruto se acumula día por día**, no como `horasTotales × unValorHora`.
 4. **A los repartidores se les suman sus envíos** (28-09-2026): el total de la liquidación es
-   `neto + envíos`. Los envíos salen de las fotos de cada noche. Ver
+   `neto + envíos`. Los envíos salen del resumen guardado de cada noche. Ver
    [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].

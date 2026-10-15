@@ -8,12 +8,13 @@ fecha: 2026-10-11
 
 ← [[GardenBurger]] · anterior: [[Auditoria 2026-09-26]]
 
-> [!info] Estado al 14-10-2026
+> [!success] Estado al 15-10-2026: aplicada entera
 > Auditoría hecha el 11-10, revisada con el dueño del 12 al 14-10. **Etapa 1 aplicada el 14-10**
-> (puntos 1-9b), con estos cambios sobre lo escrito abajo: el vencimiento de la toma es solo un
-> temporizador en la Caja (sin lectura y sin tocar `asignacionValida()`); `rechazarSolicitud` no
-> cambia; el punto 11 se descartó. La regla de anulados está en `firestore.rules` **sin desplegar**.
-> Siguen las Etapas 2 y 3.
+> (puntos 1-9b) y **Etapas 2 y 3 el 15-10** (10, 12-17 y 19-23; el 18 ya estaba). Cambios sobre lo
+> escrito abajo: el vencimiento de la toma es solo un temporizador en la Caja (sin lectura y sin
+> tocar `asignacionValida()`); `rechazarSolicitud` no cambia; el punto 11 se descartó. La regla de
+> anulados está desplegada. Cómo se cerró cada punto: ver
+> [[Auditoria 2026-10-11#Cómo se cerró (15-10-2026)]].
 
 ## Pendiente de confirmar (antes de empezar)
 
@@ -125,8 +126,29 @@ con Jest de lo tocado y vault actualizado.
 
 ### Al final
 
-- Pasar al vault las decisiones (abajo) y la deuda técnica.
-- Completar esta nota con lo hecho, y enlazarla desde [[GardenBurger]] y [[Deuda tecnica]].
+- ✅ Pasar al vault las decisiones (abajo) y la deuda técnica: [[Deuda tecnica#Cerrado por decisión, no por código]].
+- ✅ Completar esta nota con lo hecho (abajo), y enlazarla desde [[GardenBurger]] y [[Deuda tecnica]].
+
+## Cómo se cerró (15-10-2026)
+
+| # | Cómo |
+|---|---|
+| 10 | `entraAlArqueo` pide `ENTREGADO`. El F4 muestra aparte "Cobrados todavía sin entregar" (`cobradosSinEntregar`), y el aviso de viajes sin entregar ya no dice que suman. "Entregar" en ATP escribe con `actualizarPedidoYResumen` (ver 12). `VERSION_RESUMEN_DIARIO` = 2: cada noche guardada se recalcula **una vez** al mirarla (~60-100 lecturas por noche y sucursal) |
+| 12 | Una sola función, **`actualizarPedidoYResumen(ref, pedido, cambios, sucursal)`**: `writeBatch` con el cambio del pedido y, si su noche ya cerró, el borrado del resumen. La usan ATP, Deliverys (confirmar, volvió sin entregar, entregado sin repartidor), F2 (rechazar), F3 (eliminar) y el Historial (eliminar y restaurar). `invalidarFoto` / `invalidarFotoDePedido` se borraron |
+| 13 | Historial y Liquidación: un `vigente` en el efecto descarta la respuesta de la consulta anterior |
+| 14 | Las noches se cuentan distintas (`new Set` de jornadas) y bebidas es solo `BEBIDAS` |
+| 15 | `RequireRole` en Caja (cajero), Cocina (cocina) y ATP (atp), con el encargado en los tres: los mismos roles del menú |
+| 16 | `CrearEmpleado` acepta cualquier correo con forma de correo. La Cloud Function no validaba el dominio |
+| 17 | Renombrado en el código, el vault, el glosario y el `CLAUDE.md`: `VERSION_RESUMEN_DIARIO`, `refResumenDiario`, `resumenDiarioVigente`, `armarResumenDiario`. No se tocaron las fotos de producto ni las auditorías viejas |
+| 19 | `Utils/agruparExtras.js`, usada por la Caja y `VerPedidoModal` |
+| 20 | Avisos visibles al fallar la carga de repartidores (Deliverys) y de sucursales (Liquidación); el de `invalidarFoto` se fue con el batch, que ahora falla junto con la acción. `etiquetaPago` en F2, F3 y el Historial (también el filtro, con la prop nueva `etiquetasFiltros` de `TablaGenerica`) y el total con `fmtPesos`. `TablaGenerica` corre la página a la última que existe si la lista se achica. `onClose` de F1 y F2 con `useCallback` (se re-suscribían en cada render de la Caja). Borrados `src/logo.svg`, `updateProfile`/`updateEmail` y `permitirAdmin`. `login()` cierra la sesión de Auth si el perfil no existe |
+| 21 | Botón **Imprimir** en ATP para los pedidos sin ítems de cocina, con `TicketImpresion` |
+| 22 | "Confirmar entrega" y "Volvió sin entregar" deshabilitados sin repartidor, con un aviso, y la función lo vuelve a chequear |
+| 23 | "Entregado sin repartidor" en el modal de Deliverys, **solo para la jefa**, si el viaje no empezó: `ENTREGADO` + `entregaSinRepartidor*`, y le saca el repartidor si tenía. Relee la lista vigente después del Swal. Su efectivo cae en "Envíos" del F4: ver [[Deuda tecnica#Riesgos latentes (no son bugs hoy)]] |
+
+**Tests**: tres baterías nuevas —`useResumenDiario` (el arqueo), `calculos` (Estadísticas
+Generales) y `agruparExtras`—; con las dos que había, 47 tests en verde. ESLint sin avisos en todo lo
+tocado. **Reglas**: ninguno de los puntos 10-23 las toca.
 
 ## Deuda técnica a futuro
 
@@ -157,7 +179,8 @@ con Jest de lo tocado y vault actualizado.
 
 - **Resumen guardado** (antes "foto"): los números ya calculados de una noche cerrada, en un
   documento por noche y sucursal. Métricas y Estadísticas leen eso en vez de todos los pedidos.
-- **Versión del resumen guardado** (antes `VERSION_FOTO`): número dentro de cada resumen; si cambia
-  lo que se calcula, se sube y los viejos se recalculan solos al mirarlos.
-- **Invalidar el resumen guardado de un pedido** (antes `invalidarFotoDePedido`): si se corrige un
-  pedido de una noche cerrada, se borra el resumen de esa noche para que se recalcule.
+- **Versión del resumen guardado** (`VERSION_RESUMEN_DIARIO`, antes `VERSION_FOTO`): número dentro
+  de cada resumen; si cambia lo que se calcula, se sube y los viejos se recalculan solos al mirarlos.
+- **Actualizar el pedido y su resumen** (`actualizarPedidoYResumen`, antes `invalidarFotoDePedido`
+  por separado): si se corrige un pedido de una noche cerrada, se borra el resumen de esa noche en
+  la misma escritura, para que se recalcule.

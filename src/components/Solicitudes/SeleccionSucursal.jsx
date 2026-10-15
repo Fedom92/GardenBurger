@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { fetchSucursales } from "../../Utils/sucursales";
 import { fetchMenuPublico } from "../../Utils/menuPublico";
-import logo from '../../img/logo_negro.webp';
-import logoMobile from '../../img/logo_pub_mobile.webp';
-import Footer from "./Footer";
-import '../../style/Main.css';
-import { webRecibePedidos, textoHorarioWeb, textoExcepcionWeb } from "../../Utils/fechaComercial";
+import { webRecibePedidos, textoHorarioWeb, textoExcepcionWeb, textoCorteWeb } from "../../Utils/fechaComercial";
+import isotipo from "../../img/marca/logos/isotipo-lino.svg";
+import { FOTO_SELECTOR } from "./contenidoWeb";
+import PieWeb from "./PieWeb";
+import CargandoWeb from "./CargandoWeb";
+import "./webPublica.css";
 
 // Pantalla pública: el cliente elige la sucursal antes de armar su pedido.
 // Los links con sucursal precargada (/crear-solicitud/luro) salteán esta pantalla.
@@ -32,52 +33,82 @@ const SeleccionSucursal = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    if (loading) {
-        return <p>Cargando...</p>;
-    }
-
     return (
-        <div>
-            <header>
-                <img className='desktop-img logoCS' src={logo} alt="logoGarden" />
-                <img className='mobile-img logoCS' src={logoMobile} alt="logoGardenMobile" />
-            </header>
-            <main>
-                <div className='mainpageCS itemListConteiner'>
-                    <h2 className="w-75 tituloCategoria">Elegí tu sucursal</h2>
-                    {sucursales.length === 0 ? (
-                        <div className="text-white fw-bold text-center py-5">
+        <div className="gb-web" data-bs-theme="dark">
+            <div className="gb-col">
+                <div className="gb-hero-sucursal">
+                    {FOTO_SELECTOR
+                        ? <img src={FOTO_SELECTOR} alt="" className="gb-foto" />
+                        : <div className="gb-foto-pendiente">Foto pendiente</div>}
+                    <img src={isotipo} alt="Garden Burger" className="gb-hero-isotipo" width="56" height="54" />
+                </div>
+                <div className="gb-damero" aria-hidden="true" />
+
+                <main className="px-3 pt-4">
+                    <p className="gb-epigrafe mb-1">Garden Burger, sabemos lo que hacemos.</p>
+                    <h1 className="gb-display gb-titulo mb-4">¿Desde dónde pedís?</h1>
+
+                    {loading ? (
+                        <CargandoWeb />
+                    ) : sucursales.length === 0 ? (
+                        <p className="fw-bold">
                             {errorCarga
                                 ? "No pudimos cargar las sucursales. Probá recargar la página."
-                                : "No hay sucursales disponibles por el momento"}
-                        </div>
+                                : "No hay sucursales disponibles por el momento."}
+                        </p>
                     ) : (
-                        <div className="d-flex flex-column align-items-center gap-3 py-4 w-100">
-                            {sucursales.map((s) => webRecibePedidos(s) ? (
-                                <Link
-                                    key={s.id}
-                                    to={`/crear-solicitud/${s.id}`}
-                                    className="btn btn-success btn-lg w-75"
-                                >
-                                    {s.nombre || s.id}
-                                    {/* Abierta por excepción (un feriado): que se sepa que hoy es distinto. */}
-                                    {textoExcepcionWeb(s) && <small className="d-block fs-6">{textoExcepcionWeb(s)}</small>}
-                                </Link>
-                            ) : (
-                                <div key={s.id} className="btn btn-secondary btn-lg w-75 disabled" aria-disabled="true">
-                                    {s.nombre || s.id}
-                                    <small className="d-block fs-6">
-                                        {textoExcepcionWeb(s)
-                                            ? textoExcepcionWeb(s)
-                                            : `Cerrada${textoHorarioWeb(s) ? ` · Pedidos ${textoHorarioWeb(s)}` : ""}`}
-                                    </small>
-                                </div>
+                        <ul className="list-unstyled d-grid gap-3 m-0">
+                            {sucursales.map((s) => (
+                                <li key={s.id}><TarjetaSucursal sucursal={s} /></li>
                             ))}
-                        </div>
+                        </ul>
                     )}
-                </div>
-            </main>
-            <Footer />
+                </main>
+            </div>
+            <PieWeb />
+        </div>
+    );
+};
+
+const Flecha = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+);
+
+// Abierta: toda la tarjeta lleva al catálogo. Cerrada: no es un link, y dice
+// cuándo toma pedidos (o la excepción de hoy, que explica por qué hoy no abre).
+const TarjetaSucursal = ({ sucursal }) => {
+    const nombre = sucursal.nombre || sucursal.id;
+    const excepcion = textoExcepcionWeb(sucursal);
+
+    if (webRecibePedidos(sucursal)) {
+        const corte = textoCorteWeb(sucursal);
+        return (
+            <Link to={`/crear-solicitud/${sucursal.id}`} className="gb-sucursal">
+                <span className="d-grid gap-1">
+                    <span className="gb-display gb-sucursal-nombre">{nombre}</span>
+                    {sucursal.direccion && <span>{sucursal.direccion}</span>}
+                    <span className="gb-sucursal-estado">Abierta{corte && ` · pedidos ${corte}`}</span>
+                    {/* Abierta por excepción (un feriado): que se sepa que hoy es distinto. */}
+                    {excepcion && <span className="gb-sucursal-estado">{excepcion}</span>}
+                </span>
+                <span className="gb-sucursal-flecha"><Flecha /></span>
+            </Link>
+        );
+    }
+
+    const horario = textoHorarioWeb(sucursal);
+    return (
+        <div className="gb-sucursal is-cerrada">
+            <span className="d-grid gap-1">
+                <span className="gb-display gb-sucursal-nombre">{nombre}</span>
+                {sucursal.direccion && <span>{sucursal.direccion}</span>}
+                <span className="gb-sucursal-estado">
+                    {excepcion || `Cerrada${horario ? ` · Pedidos ${horario}` : ""}`}
+                </span>
+            </span>
         </div>
     );
 };

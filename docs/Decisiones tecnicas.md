@@ -339,7 +339,9 @@ Para que el menú público funcione tienen que estar bien **las tres**:
 
 **Qué**: `resumenDiario` dejó de ser un contador mantenido con `increment()` y pasó a ser el
 resultado de `calcularArqueo(pedidos)`, una función pura sobre los pedidos de la jornada. El
-documento sigue existiendo, pero como **foto** de ese cálculo. 26-09-2026.
+documento sigue existiendo, pero como **resumen guardado** de ese cálculo. 26-09-2026. (Hasta el
+15-10-2026 se le decía "foto", en el código y acá: se renombró porque se confundía con las fotos de
+producto.)
 
 **Por qué**: `increment()` es atómico pero **no idempotente**, y eso obligaba a que los cinco
 caminos que tocaban un pedido —guardar, rechazar MP, eliminar ticket, cerrar delivery— se acordaran
@@ -351,25 +353,51 @@ construcción: correrlo dos veces da lo mismo.
 Con esto, eliminar un pedido volvió a ser cambiar un campo. La carrera entre dos cajeros
 descontando el mismo pedido **desapareció** en vez de quedar documentada como riesgo aceptado.
 
-**Las cuatro reglas de la foto** (están también en la cabecera de `useResumenDiario.js`):
+**Las cuatro reglas del resumen guardado** (están también en la cabecera de `useResumenDiario.js`):
 
 | Situación | Qué hace `obtenerArqueo()` |
 |---|---|
 | Jornada **abierta** | calcula siempre, no guarda nada — todavía se está moviendo |
-| Jornada **cerrada** sin foto | calcula una vez y la guarda. Queda definitiva |
-| Jornada **cerrada** con foto | usa la foto. **Nunca** recalcula sola |
-| Alguien corrige **los hechos** | `invalidarFotoDePedido(pedido)` la borra; el siguiente que la mire la reconstruye |
+| Jornada **cerrada** sin resumen guardado | calcula una vez y lo guarda. Queda definitivo |
+| Jornada **cerrada** con resumen guardado | usa ese. **Nunca** recalcula solo, salvo que cambie `VERSION_RESUMEN_DIARIO` |
+| Alguien corrige **los hechos** | `actualizarPedidoYResumen()` escribe el pedido y borra el resumen de **su** noche **en la misma escritura**; el siguiente que la mire lo reconstruye |
 
-**Cambiar código no regenera nada.** Si se agrega una categoría a `CATEGORIAS_COMBOS`, las fotos
-viejas se quedan como están: agosto tiene que seguir diciendo lo que era cierto en agosto, o los
-meses dejan de ser comparables. Regla del dueño, y es la correcta: *"modificar registros históricos
-NO"*.
+La última regla va en una sola escritura (`writeBatch`) desde el 15-10-2026: antes eran dos —el
+pedido y después el borrado—, y un corte entre las dos dejaba el pedido corregido con el resumen
+viejo, sin que nadie se enterara (el error del borrado solo iba a la consola). La usan todos los
+caminos que cambian lo que cuenta el arqueo: entregar (ATP, Deliverys), anular (F3, Historial),
+rechazar un MP, cerrar un viaje y restaurar. Si la noche del pedido sigue abierta, es una escritura
+común: todavía no hay resumen que borrar.
 
-**Y para que valga sin importar cuándo se saca la foto**, lo que depende de reglas que cambian se
-**congela en el pedido** al escribirlo: `combos`, `esLocal` y el costo del envío al cobrar. Es el
-mismo criterio que el `valorHora` en asistencias. Sin eso, la foto de una noche vieja se
+**Cambiar código no regenera nada.** Si se agrega una categoría a `CATEGORIAS_COMBOS`, los
+resúmenes viejos se quedan como están: agosto tiene que seguir diciendo lo que era cierto en
+agosto, o los meses dejan de ser comparables. Regla del dueño, y es la correcta: *"modificar
+registros históricos NO"*.
+
+**Y para que valga sin importar cuándo se arma el resumen**, lo que depende de reglas que cambian
+se **congela en el pedido** al escribirlo: `combos`, `esLocal` y el costo del envío al cobrar. Es
+el mismo criterio que el `valorHora` en asistencias. Sin eso, el resumen de una noche vieja se
 calculaba con el menú del día en que alguien la abría por primera vez (26-09-2026,
 ver [[Auditoria 2026-09-26#A · P2 · La foto promete una historia exacta, pero hoy nadie la saca]]).
+
+### Suman solo los pedidos entregados (15-10-2026)
+
+**Qué**: un pedido entra al arqueo cuando está **ENTREGADO** (`entraAlArqueo`). Hasta entonces
+alcanzaba con que lo hubiera cobrado un cajero y no estuviera anulado, así que sumaban también los
+que seguían en la cocina, esperando la transferencia (PENDIENTEMP) o de vuelta sin entregar. Es la
+misma cuenta en el F4, Métricas y Estadísticas, porque las tres salen de `calcularArqueo`.
+
+**Por qué**: el F4 tiene que decir la plata que ya está; un pedido cobrado que todavía no salió
+puede terminar anulado. Lo cobrado que falta entregar no se pierde de vista: el F4 lo muestra
+**aparte** ("Cobrados todavía sin entregar: N pedidos, $X", `cobradosSinEntregar`). De paso se
+cerró el riesgo de que un viaje "volvió sin entregar" inflara la caja hasta que alguien lo anulara:
+ya no suma.
+
+**El costo**: cambiar qué suma es cambiar el significado de los campos, así que
+`VERSION_RESUMEN_DIARIO` pasó de 1 a 2. Cada noche guardada con la regla vieja se recalcula **una
+vez**, la próxima vez que alguien la mira: ~60-100 lecturas por noche y sucursal (abrir "Mes
+pasado" en Métricas para las dos sucursales la primera vez son ~3.600-6.000). Después vuelve a ser
+1 lectura por noche.
 
 **El costo**, con los volúmenes reales (davinci ~60 pedidos/noche, pico de 101; 2 arqueos por
 noche y ~5 vistas de dashboard por día):
@@ -377,13 +405,13 @@ noche y ~5 vistas de dashboard por día):
 | Modalidad | Lecturas/día | Escrituras/día | 90 días de histórico |
 |---|---|---|---|
 | Contador con `increment()` | ~314 | ~125 extra | 1 lectura por día-sucursal |
-| Calcular siempre, sin foto | ~12.560 (25% de la cuota) | 0 | ~36.560 (73%) — **descartada** |
-| **Foto (elegida)** | ~940 (1,9%) | 2 | 1 lectura por día-sucursal |
+| Calcular siempre, sin guardar | ~12.560 (25% de la cuota) | 0 | ~36.560 (73%) — **descartada** |
+| **Resumen guardado (elegida)** | ~940 (1,9%) | 2 | 1 lectura por día-sucursal |
 
 La cuota gratuita de Firestore son **50.000 lecturas por día** y aplica también en Blaze, así que
 el costo no fue el criterio: las tres entraban. Lo que decidió fue que "calcular siempre" hacía
-inviable el dashboard cross-sucursal sobre histórico, y la foto lo deja igual de barato que el
-contador sin heredar su fragilidad.
+inviable el dashboard cross-sucursal sobre histórico, y el resumen guardado lo deja igual de barato
+que el contador sin heredar su fragilidad.
 
 Esas ~2 vistas por noche no son un supuesto optimista: **F4 se restringió** para que sea así. Solo
 lo ve el encargado y solo entre las 00:00 y `horaCierre`, que es cuando el arqueo significa algo.
@@ -402,23 +430,24 @@ solicitud web rechazada sin `cajeroID`—. **Los 6 campos coinciden en los 8 cas
 > documentos reales (lo único en producción es el sistema viejo de App Script + Google Sheets). No
 > hubo nada que migrar ni nada que romper.
 
-## Métricas y Estadísticas leen fotos, no pedidos
+## Métricas y Estadísticas leen resúmenes guardados, no pedidos
 
-**Qué**: las pantallas de varios días leen la foto de cada noche (`obtenerResumenes`), no los
-pedidos. Las noches sin foto se calculan una vez —en tandas de noches seguidas, una consulta por
-tanda— y se guardan, incluidas las que dan cero. La noche en curso no tiene foto (todavía se
-mueve): Métricas la calcula en el momento desde sus pedidos cuando el período llega a hoy —"Hoy",
-"Semana actual", "Mes actual"—, sin guardarla. Cuesta lo mismo que un F4 (~60-100 por sucursal).
+**Qué**: las pantallas de varios días leen el resumen guardado de cada noche
+(`obtenerResumenes`), no los pedidos. Las noches sin resumen se calculan una vez —en tandas de
+noches seguidas, una consulta por tanda— y se guardan, incluidas las que dan cero. La noche en
+curso no tiene resumen guardado (todavía se mueve): Métricas la calcula en el momento desde sus
+pedidos cuando el período llega a hoy —"Hoy", "Semana actual", "Mes actual"—, sin guardarla.
+Cuesta lo mismo que un F4 (~60-100 por sucursal).
 
-**Por qué**: un mes de 2 sucursales son ~44 lecturas con fotos contra ~2.000-2.400 con pedidos; un
-año, ~520 contra ~25.000 (media cuota diaria). La foto se diseñó desde el inventario del Histórico,
-para servir a las dos pantallas sin agregar campos después.
+**Por qué**: un mes de 2 sucursales son ~44 lecturas con resúmenes contra ~2.000-2.400 con
+pedidos; un año, ~520 contra ~25.000 (media cuota diaria). El resumen se diseñó desde el
+inventario del Histórico, para servir a las dos pantallas sin agregar campos después.
 
 **Nombres**: **Métricas** (`/metricas`) es el vistazo rápido, pensado para el celular: combos,
 ventas (efectivo/MP), pedidos (eliminados), delivery vs mostrador y top 3 combos. Se maneja con
 botones, como una app (28-09-2026): primero la sucursal, después un período fijo, y busca sola;
 sin fechas a mano ni botón "Ver". Al entrar no lee nada. **Estadísticas**
-es lo completo: las Generales (`/estadisticas`, 03-10-2026, desde las fotos) y el
+es lo completo: las Generales (`/estadisticas`, 03-10-2026, desde los resúmenes guardados) y el
 Histórico de los TSV.
 
 ## El teléfono de la sucursal viaja en la solicitud web
@@ -511,8 +540,8 @@ Antes la jefa anotaba los envíos a mano y se los pasaba; ahora salen de los ped
 de la asistencia porque el repartidor es un empleado más: llegar tarde o devolver un préstamo son
 descuentos, como para cualquiera. Un registro sin salida todavía no tiene base, y el F4 lo avisa.
 
-**Consecuencia**: la Liquidación de Asistencias del admin también les suma los envíos, de las
-fotos de cada noche. Es un registro del trabajo hecho —una noche da lo de esa noche; un período,
+**Consecuencia**: la Liquidación de Asistencias del admin también les suma los envíos, del
+resumen guardado de cada noche. Es un registro del trabajo hecho —una noche da lo de esa noche; un período,
 la suma—, no de a quién se le pagó.
 
 ## Una solicitud web, un solo cajero

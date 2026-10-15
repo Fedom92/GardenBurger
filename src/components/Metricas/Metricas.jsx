@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import moment from "moment";
 import Swal from "sweetalert2";
 import { fetchSucursales } from "../../Utils/sucursales";
-import { getFechaComercial } from "../../Utils/fechaComercial";
+import { getFechaComercial, momentDeHoy } from "../../Utils/fechaComercial";
 import { obtenerResumenes, obtenerArqueo, sumarResumenes, esCombo } from "../POS/pos_hooks/useResumenDiario";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
 import { avisarErrorDeCarga } from "../../Utils/avisos";
-import { fmtPesos } from "../../Utils/formato";
+import { fmtPesos, fmtNumero, aInputFecha } from "../../Utils/formato";
 import { KpiCard, BarChart } from "../Estadisticas/componentes";
 import "../Estadisticas/Historico/Estadisticas.css";
 import "./Metricas.css";
@@ -17,37 +16,34 @@ import "./Metricas.css";
 // no lee nada: las tarjetas arrancan en cero. Tiene el aspecto del Histórico
 // (tarjetas y barras compartidas en Estadisticas/componentes.jsx).
 //
-// Lee las fotos de cada noche (1 lectura por noche y sucursal); las que faltan se
-// calculan una vez y se guardan. La noche en curso no tiene foto: los períodos que
-// llegan a hoy la calculan en el momento desde sus pedidos (~60-100 lecturas por
-// sucursal), igual que el F4. El detalle de los pedidos está en Historial; lo
+// Lee el resumen guardado de cada noche (1 lectura por noche y sucursal); los que
+// faltan se calculan una vez y se guardan. La noche en curso no tiene resumen
+// guardado: los períodos que llegan a hoy la calculan en el momento desde sus
+// pedidos (~60-100 lecturas por sucursal), igual que el F4. El detalle de los pedidos está en Historial; lo
 // completo, en Estadísticas.
 
-const F = "YYYY-MM-DD";
-// "Hoy" es la jornada en curso: a las 00:30 todavía es la noche de ayer.
-const hoy = () => moment(getFechaComercial(), "DD-MM-YYYY");
+// "Hoy" (momentDeHoy) es la jornada en curso: a las 00:30 todavía es la noche de ayer.
 const pct = (n, total) => (total > 0 ? Math.round((n / total) * 100) : 0);
-const fmtN = (n) => (Number(n) || 0).toLocaleString("es-AR");
 
 const PERIODOS = [
-    { id: "hoy", label: "Hoy", rango: () => [hoy(), hoy()] },
-    { id: "ayer", label: "Ayer", rango: () => [hoy().subtract(1, "day"), hoy().subtract(1, "day")] },
-    { id: "semana", label: "Semana actual", rango: () => [hoy().startOf("isoWeek"), hoy()] },
-    { id: "semanaPasada", label: "Semana pasada", rango: () => { const l = hoy().startOf("isoWeek").subtract(1, "week"); return [l, l.clone().endOf("isoWeek")]; } },
-    { id: "mes", label: "Mes actual", rango: () => [hoy().startOf("month"), hoy()] },
-    { id: "mesPasado", label: "Mes pasado", rango: () => { const m = hoy().subtract(1, "month"); return [m.clone().startOf("month"), m.clone().endOf("month")]; } },
+    { id: "hoy", label: "Hoy", rango: () => [momentDeHoy(), momentDeHoy()] },
+    { id: "ayer", label: "Ayer", rango: () => [momentDeHoy().subtract(1, "day"), momentDeHoy().subtract(1, "day")] },
+    { id: "semana", label: "Semana actual", rango: () => [momentDeHoy().startOf("isoWeek"), momentDeHoy()] },
+    { id: "semanaPasada", label: "Semana pasada", rango: () => { const l = momentDeHoy().startOf("isoWeek").subtract(1, "week"); return [l, l.clone().endOf("isoWeek")]; } },
+    { id: "mes", label: "Mes actual", rango: () => [momentDeHoy().startOf("month"), momentDeHoy()] },
+    { id: "mesPasado", label: "Mes pasado", rango: () => { const m = momentDeHoy().subtract(1, "month"); return [m.clone().startOf("month"), m.clone().endOf("month")]; } },
 ];
 
-const incluyeHoy = (hasta) => !hasta.isBefore(hoy(), "day");
+const incluyeHoy = (hasta) => !hasta.isBefore(momentDeHoy(), "day");
 
-// Las fotos del rango, más la noche en curso si el rango llega a hoy. La noche en
-// curso se calcula y no se guarda: todavía se mueve.
+// Los resúmenes guardados del rango, más la noche en curso si el rango llega a hoy.
+// La noche en curso se calcula y no se guarda: todavía se mueve.
 const leerPeriodo = async (sucursalId, [desde, hasta]) => {
-    const [fotos, enCurso] = await Promise.all([
-        obtenerResumenes(desde.format(F), hasta.format(F), sucursalId),
+    const [guardados, enCurso] = await Promise.all([
+        obtenerResumenes(aInputFecha(desde), aInputFecha(hasta), sucursalId),
         incluyeHoy(hasta) ? obtenerArqueo(getFechaComercial(), sucursalId).then((r) => r.arqueo) : null,
     ]);
-    return sumarResumenes(enCurso ? [...fotos, enCurso] : fotos);
+    return sumarResumenes(enCurso ? [...guardados, enCurso] : guardados);
 };
 
 const tituloDe = (periodo, [desde, hasta]) => {
@@ -57,7 +53,7 @@ const tituloDe = (periodo, [desde, hasta]) => {
     return `${periodo.label} · ${fechas}${incluyeHoy(hasta) ? " · con la noche en curso" : ""}`;
 };
 
-// Las cifras que muestra Métricas, a partir de una foto (o de varias sumadas).
+// Las cifras que muestra Métricas, a partir de un resumen (o de varios sumados).
 const cifras = (r = {}) => ({
     combos: r.totalCombos || 0,
     efectivo: r.totalEfectivo || 0,
@@ -83,7 +79,7 @@ function DeliveryVsMostrador({ c }) {
     return (
         <>
             <span className="d-block">
-                {fmtN(c.delivery)} delivery ({pctDelivery}%) · {fmtN(c.mostrador)} mostrador ({pctMostrador}%)
+                {fmtNumero(c.delivery)} delivery ({pctDelivery}%) · {fmtNumero(c.mostrador)} mostrador ({pctMostrador}%)
             </span>
             <div className="dual-bar w-100 mt-1" style={{ height: "6px" }}>
                 <div style={{ width: `${pctDelivery}%`, background: "#f97316" }} />
@@ -198,13 +194,13 @@ export default function Metricas() {
             <div className={`met-resultado ${procesando ? "met-resultado--cargando" : ""}`}>
                 <div className="row g-2 mb-2">
                     <div className="col-6 col-lg-3">
-                        <KpiCard compacto icon="🎫" label="Pedidos" value={fmtN(c.pedidos)} color="#6366f1"
-                            sub={c.eliminados ? `${fmtN(c.eliminados)} eliminados` : "Sin eliminados"} />
+                        <KpiCard compacto icon="🎫" label="Pedidos" value={fmtNumero(c.pedidos)} color="#6366f1"
+                            sub={c.eliminados ? `${fmtNumero(c.eliminados)} eliminados` : "Sin eliminados"} />
                     </div>
                     <div className="col-6 col-lg-3">
-                        <KpiCard compacto icon="🍔" label="Combos" value={fmtN(c.combos)} color="#e85d04"
+                        <KpiCard compacto icon="🍔" label="Combos" value={fmtNumero(c.combos)} color="#e85d04"
                             sub={comparar
-                                ? lineaPorSucursal(comparar, (s) => s.combos, fmtN)
+                                ? lineaPorSucursal(comparar, (s) => s.combos, fmtNumero)
                                 : c.pedidos ? `${(c.combos / c.pedidos).toFixed(1)} por pedido` : null} />
                     </div>
                     <div className="col-12 col-sm-6 col-lg-3">
@@ -222,7 +218,7 @@ export default function Metricas() {
 
                 <div className="est-card p-3">
                     <div className="met-etiqueta mb-2">🏆 Top 3 combos</div>
-                    <BarChart items={c.topCombos} fmt={fmtN} color="#e85d04" />
+                    <BarChart items={c.topCombos} fmt={fmtNumero} color="#e85d04" />
                 </div>
             </div>
         </div>

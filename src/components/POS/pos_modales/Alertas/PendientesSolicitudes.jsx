@@ -7,7 +7,7 @@ import moment from 'moment';
 import 'moment/locale/es';
 import { useAuth } from "../../../../context/AuthContext";
 import { ESTADOS, MINUTOS_SOLICITUD_TOMADA } from "../../../../Utils/Constantes";
-import { fmtPesos } from "../../../../Utils/formato";
+import { fmtPesos, fmtFechaHora } from "../../../../Utils/formato";
 import { ahoraServidor } from "../../../../Utils/fechaComercial";
 import { sinConexion } from "../../../../Utils/avisos";
 
@@ -204,7 +204,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
                                             )}
                                         </p>
                                         <small className="text-body-secondary">
-                                            {moment(solicitud.clienteTimestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
+                                            {fmtFechaHora(solicitud.clienteTimestamp)}
                                         </small>
                                     </div>
                                     <div className="card-body h-auto">

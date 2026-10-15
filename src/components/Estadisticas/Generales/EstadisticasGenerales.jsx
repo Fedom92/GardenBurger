@@ -3,29 +3,24 @@ import moment from "moment";
 import Swal from "sweetalert2";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { fetchSucursales } from "../../../Utils/sucursales";
-import { getFechaComercial } from "../../../Utils/fechaComercial";
+import { momentDeHoy, momentDeJornada } from "../../../Utils/fechaComercial";
 import { CATEGORIAS_COMBOS } from "../../../Utils/Constantes";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
 import { avisarErrorDeCarga } from "../../../Utils/avisos";
-import { fmtPesos } from "../../../Utils/formato";
+import { fmtPesos, fmtNumero, fmtFecha, aInputFecha, FORMATO_INPUT_FECHA, FORMATO_INPUT_MES } from "../../../Utils/formato";
 import { obtenerResumenes, primeraJornadaConPedidos } from "../../POS/pos_hooks/useResumenDiario";
 import { KpiCard, BarChart, Section } from "../componentes";
 import { rangoDeFiltro, armarEstadisticas, armarEvolucion } from "./calculos";
 import "../Historico/Estadisticas.css";
 
 // Estadísticas Generales: lo mismo que el Histórico (/estadisticas-viejas), pero
-// con los datos del sistema nuevo. No lee pedidos: lee la FOTO de cada noche
-// (resumenDiario), 1 lectura por noche y sucursal; las noches sin foto se calculan
-// una vez y se guardan. Al entrar no lee nada: todo arranca con "Ver". La noche en
+// con los datos del sistema nuevo. No lee pedidos: lee el RESUMEN GUARDADO de cada
+// noche (resumenDiario), 1 lectura por noche y sucursal; las noches sin resumen se
+// calculan una vez y se guardan. Al entrar no lee nada: todo arranca con "Ver". La noche en
 // curso no entra —todavía se mueve—: esa se ve en Métricas.
 //
 // La evolución anual tiene su propio botón: abarca desde la primera noche con
 // pedidos de la sucursal, y no tiene sentido releerla cada vez que cambia un filtro.
-
-const F = "YYYY-MM-DD";
-const hoy = () => moment(getFechaComercial(), "DD-MM-YYYY");
-const fmtN = (n) => (Number(n) || 0).toLocaleString("es-AR");
-const fmtDia = (s) => moment(s, F).format("DD/MM/YYYY");
 
 // Chrome abre el almanaque solo al tocar el iconito. Con esto lo abre todo el campo.
 const abrirPicker = (e) => {
@@ -52,10 +47,10 @@ export default function EstadisticasGenerales() {
     const [sucursales, setSucursales] = useState([]);
     const [sucursal, setSucursal] = useState("TODAS");
     const [modo, setModo] = useState("mes");
-    const [mes, setMes] = useState(() => hoy().format("YYYY-MM"));
-    const [anio, setAnio] = useState(() => String(hoy().year()));
-    const [desde, setDesde] = useState(() => hoy().startOf("month").format(F));
-    const [hasta, setHasta] = useState(() => hoy().subtract(1, "day").format(F));
+    const [mes, setMes] = useState(() => momentDeHoy().format(FORMATO_INPUT_MES));
+    const [anio, setAnio] = useState(() => String(momentDeHoy().year()));
+    const [desde, setDesde] = useState(() => aInputFecha(momentDeHoy().startOf("month")));
+    const [hasta, setHasta] = useState(() => aInputFecha(momentDeHoy().subtract(1, "day")));
 
     const [consulta, setConsulta] = useState(null);   // { noches, desde, hasta, sucursal }
     const [evolucion, setEvolucion] = useState(null); // { data, anios, sucursal }
@@ -72,7 +67,7 @@ export default function EstadisticasGenerales() {
 
     // Los últimos años, para el filtro "Año". No se calculan de los datos: eso
     // costaría una lectura al entrar.
-    const anios = useMemo(() => Array.from({ length: 4 }, (_, i) => String(hoy().year() - i)), []);
+    const anios = useMemo(() => Array.from({ length: 4 }, (_, i) => String(momentDeHoy().year() - i)), []);
 
     const elegidas = () => (sucursal === "TODAS" ? sucursales : sucursales.filter((s) => s.id === sucursal));
     const nombreSucursal = () => (sucursal === "TODAS" ? "Todas" : sucursales.find((s) => s.id === sucursal)?.nombre || sucursal);
@@ -94,12 +89,12 @@ export default function EstadisticasGenerales() {
 
     // Desde la primera noche con pedidos de cada sucursal (1 lectura) hasta ayer.
     const verEvolucion = () => ejecutarEvolucion(async () => {
-        const ayer = hoy().subtract(1, "day").format(F);
+        const ayer = aInputFecha(momentDeHoy().subtract(1, "day"));
         try {
             const listas = await Promise.all(elegidas().map(async (s) => {
                 const primera = await primeraJornadaConPedidos(s.id);
                 if (!primera) return [];
-                const inicio = moment(primera, "DD-MM-YYYY").format(F);
+                const inicio = aInputFecha(momentDeJornada(primera));
                 return inicio > ayer ? [] : obtenerResumenes(inicio, ayer, s.id);
             }));
             setEvolucion({ ...armarEvolucion(listas.flat()), sucursal: nombreSucursal() });
@@ -110,7 +105,7 @@ export default function EstadisticasGenerales() {
     });
 
     const e = useMemo(() => (consulta ? armarEstadisticas(consulta.noches) : null), [consulta]);
-    const llegaAHoy = consulta && !moment(consulta.hasta, F).isBefore(hoy(), "day");
+    const llegaAHoy = consulta && !moment(consulta.hasta, FORMATO_INPUT_FECHA).isBefore(momentDeHoy(), "day");
 
     return (
         <div className="est-wrap container-fluid">
@@ -185,26 +180,26 @@ export default function EstadisticasGenerales() {
             ) : (
                 <div style={{ opacity: procesando ? 0.45 : 1, transition: "opacity .2s" }}>
                     <div className="text-secondary small fw-bold text-uppercase mb-2" style={{ letterSpacing: "0.04em" }}>
-                        Del {fmtDia(consulta.desde)} al {fmtDia(consulta.hasta)} · {consulta.sucursal} · {fmtN(e.noches)} {e.noches === 1 ? "noche" : "noches"}
+                        Del {fmtFecha(consulta.desde)} al {fmtFecha(consulta.hasta)} · {consulta.sucursal} · {fmtNumero(e.noches)} {e.noches === 1 ? "noche" : "noches"}
                         {llegaAHoy && <span className="d-block fw-normal" style={{ textTransform: "none" }}>La noche en curso no entra: se ve en Métricas.</span>}
                     </div>
 
                     {/* ── KPI Grid ── */}
                     <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-3 mb-4">
-                        <div className="col"><KpiCard icon="🎫" label="Total Tickets" value={fmtN(e.kpis.tickets.total)} color="#6366f1"
-                            sub={<><span className="d-block">{fmtN(e.kpis.tickets.validos)} válidos</span><span className="d-block">{fmtN(e.kpis.tickets.eliminados)} eliminados · {fmtN(e.kpis.tickets.cancelados)} cancelados</span></>} /></div>
+                        <div className="col"><KpiCard icon="🎫" label="Total Tickets" value={fmtNumero(e.kpis.tickets.total)} color="#6366f1"
+                            sub={<><span className="d-block">{fmtNumero(e.kpis.tickets.validos)} válidos</span><span className="d-block">{fmtNumero(e.kpis.tickets.eliminados)} eliminados · {fmtNumero(e.kpis.tickets.cancelados)} cancelados</span></>} /></div>
                         <div className="col"><KpiCard icon="💵" label="Efectivo en Caja" value={fmtPesos(e.kpis.efectivo.total)} color="#f59e0b"
                             sub={<><span className="d-block">Delivery {fmtPesos(e.kpis.efectivo.delivery)}</span><span className="d-block">Mostrador {fmtPesos(e.kpis.efectivo.mostrador)}</span></>} /></div>
                         <div className="col"><KpiCard icon="📱" label="MercadoPago" value={fmtPesos(e.kpis.mp.total)} color="#3b82f6"
                             sub={`${e.kpis.mp.pctPedidos}% de los pedidos`} /></div>
                         <div className="col"><KpiCard icon="💰" label="Total Facturado" value={fmtPesos(e.kpis.facturado.total)} color="#22c55e"
                             sub={`Ticket promedio: ${fmtPesos(Math.round(e.kpis.facturado.ticketPromedio))}`} /></div>
-                        <div className="col"><KpiCard icon="📦" label="Stock Vendido" value={fmtN(e.kpis.stock.unidades)} color="#06b6d4"
+                        <div className="col"><KpiCard icon="📦" label="Stock Vendido" value={fmtNumero(e.kpis.stock.unidades)} color="#06b6d4"
                             sub={`${e.kpis.stock.porTicket} ítems por pedido`} /></div>
-                        <div className="col"><KpiCard icon="🍔" label="Combos" value={fmtN(e.kpis.combos)} color="#e85d04" sub={combosSub} /></div>
+                        <div className="col"><KpiCard icon="🍔" label="Combos" value={fmtNumero(e.kpis.combos)} color="#e85d04" sub={combosSub} /></div>
                         <div className="col"><KpiCard icon="🛵" label="Delivery" value={`${e.kpis.delivery.pct}%`} color="#a855f7"
-                            sub={`${fmtN(e.kpis.delivery.delivery)} delivery · ${fmtN(e.kpis.delivery.mostrador)} mostrador`} /></div>
-                        <div className="col"><KpiCard icon="📝" label="Con Observaciones" value={fmtN(e.kpis.observaciones.total)} color="#ec4899"
+                            sub={`${fmtNumero(e.kpis.delivery.delivery)} delivery · ${fmtNumero(e.kpis.delivery.mostrador)} mostrador`} /></div>
+                        <div className="col"><KpiCard icon="📝" label="Con Observaciones" value={fmtNumero(e.kpis.observaciones.total)} color="#ec4899"
                             sub={`${e.kpis.observaciones.pct}% de los pedidos`} /></div>
                     </div>
 
@@ -214,13 +209,13 @@ export default function EstadisticasGenerales() {
                             <Section title="🛵 Delivery vs Mostrador">
                                 <div className="d-flex align-items-center justify-content-around py-3 w-100 flex-grow-1">
                                     <div className="d-flex flex-column align-items-center gap-1">
-                                        <span className="dvsv-val" style={{ "--dvsv-color": "#f97316" }}>{fmtN(e.canal.delivery)}</span>
+                                        <span className="dvsv-val" style={{ "--dvsv-color": "#f97316" }}>{fmtNumero(e.canal.delivery)}</span>
                                         <span className="text-secondary small fw-bold text-uppercase" style={{ letterSpacing: "0.06em" }}>Delivery</span>
                                         <span className="fw-bolder fs-5 text-light">{e.canal.pctDelivery}%</span>
                                     </div>
                                     <div className="dvsv-sep align-self-stretch mx-3" />
                                     <div className="d-flex flex-column align-items-center gap-1">
-                                        <span className="dvsv-val" style={{ "--dvsv-color": "#6366f1" }}>{fmtN(e.canal.mostrador)}</span>
+                                        <span className="dvsv-val" style={{ "--dvsv-color": "#6366f1" }}>{fmtNumero(e.canal.mostrador)}</span>
                                         <span className="text-secondary small fw-bold text-uppercase" style={{ letterSpacing: "0.06em" }}>Mostrador</span>
                                         <span className="fw-bolder fs-5 text-light">{e.kpis.tickets.validos ? 100 - e.canal.pctDelivery : 0}%</span>
                                     </div>
@@ -244,7 +239,7 @@ export default function EstadisticasGenerales() {
                                                     <div className="bar-fill" style={{ width: `${m.pct}%`, background: COLOR_METODO[m.label] || "#a855f7" }} />
                                                 </div>
                                                 <span className="text-secondary small text-nowrap text-end" style={{ minWidth: "140px" }}>
-                                                    {m.pct}% · {fmtN(m.valor)} · {fmtPesos(m.total)}
+                                                    {m.pct}% · {fmtNumero(m.valor)} · {fmtPesos(m.total)}
                                                 </span>
                                             </div>
                                             {m.extra && (
@@ -265,7 +260,7 @@ export default function EstadisticasGenerales() {
                     <div className="row g-3 mb-3">
                         <div className="col-12 col-lg-6">
                             <Section title="🍔 Ventas por Categoría">
-                                <BarChart items={e.categorias} fmt={fmtN} color="#e85d04" />
+                                <BarChart items={e.categorias} fmt={fmtNumero} color="#e85d04" />
                             </Section>
                         </div>
                         <div className="col-12 col-lg-6">
@@ -279,18 +274,18 @@ export default function EstadisticasGenerales() {
                     <div className="row g-3 mb-3">
                         <div className="col-12 col-lg-4">
                             <Section title="🏆 Top 10 Productos">
-                                <BarChart items={e.topProductos} fmt={fmtN} color="#22c55e" />
+                                <BarChart items={e.topProductos} fmt={fmtNumero} color="#22c55e" />
                             </Section>
                         </div>
                         <div className="col-12 col-lg-4">
                             <Section title="👥 Top 10 Clientes">
-                                <BarChart items={e.topClientes} fmt={fmtN} color="#6366f1" />
+                                <BarChart items={e.topClientes} fmt={fmtNumero} color="#6366f1" />
                             </Section>
                         </div>
                         <div className="col-12 col-lg-4">
                             <Section title="🥤 Top 10 Bebidas">
                                 {e.topBebidas.length > 0
-                                    ? <BarChart items={e.topBebidas} fmt={fmtN} color="#06b6d4" />
+                                    ? <BarChart items={e.topBebidas} fmt={fmtNumero} color="#06b6d4" />
                                     : <p className="text-secondary text-center py-4 small">No hay productos con categoría BEBIDAS en el período.</p>}
                             </Section>
                         </div>
@@ -300,12 +295,12 @@ export default function EstadisticasGenerales() {
                     <div className="row g-3 mb-3">
                         <div className="col-12 col-lg-6">
                             <Section title="📅 Pedidos por Día de la Semana">
-                                <BarChart items={e.porDia} fmt={fmtN} color="#8b5cf6" />
+                                <BarChart items={e.porDia} fmt={fmtNumero} color="#8b5cf6" />
                             </Section>
                         </div>
                         <div className="col-12 col-lg-6">
                             <Section title="🕐 Franja Horaria">
-                                <BarChart items={e.porHora} fmt={fmtN} color="#f97316" />
+                                <BarChart items={e.porHora} fmt={fmtNumero} color="#f97316" />
                             </Section>
                         </div>
                     </div>
@@ -314,13 +309,13 @@ export default function EstadisticasGenerales() {
                     <div className="row g-3 mb-3">
                         <div className="col-12 col-md-6">
                             <Section title="📦 Stock Total Vendido (Artículos)">
-                                <BarChart items={e.stockArticulos} limit={25} fmt={fmtN} color="#8b5cf6" labelWidth="200px" />
+                                <BarChart items={e.stockArticulos} limit={25} fmt={fmtNumero} color="#8b5cf6" labelWidth="200px" />
                             </Section>
                         </div>
                         <div className="col-12 col-md-6">
                             <Section title="🥤 Stock Total Vendido (Bebidas)">
                                 {e.stockBebidas.length > 0
-                                    ? <BarChart items={e.stockBebidas} limit={25} fmt={fmtN} color="#3b82f6" labelWidth="200px" />
+                                    ? <BarChart items={e.stockBebidas} limit={25} fmt={fmtNumero} color="#3b82f6" labelWidth="200px" />
                                     : <p className="text-secondary text-center py-4 small">No hay bebidas vendidas.</p>}
                             </Section>
                         </div>
@@ -376,7 +371,7 @@ export default function EstadisticasGenerales() {
                                         />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: "#1e293b", borderColor: "#334155", borderRadius: "8px", color: "#f8fafc", fontSize: "13px" }}
-                                            formatter={(value, name) => [evolucionVista === "monto" ? fmtPesos(value) : fmtN(value), name]}
+                                            formatter={(value, name) => [evolucionVista === "monto" ? fmtPesos(value) : fmtNumero(value), name]}
                                         />
                                         <Legend iconType="circle" wrapperStyle={{ fontSize: "13px", paddingTop: "10px" }} />
                                         {evolucion.anios.map((y, idx) => {

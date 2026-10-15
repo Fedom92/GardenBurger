@@ -1,8 +1,7 @@
 import React from 'react';
 import './TicketImpresion.css';
 import icono from "../../img/logo_blanco_corto.webp";
-import moment from "moment";
-import { fmtPesos } from '../../Utils/formato';
+import { fmtPesos, fmtFechaHora } from '../../Utils/formato';
 import { etiquetaPago } from "../../Utils/Constantes";
 
 const TicketImpresion = ({ pedido, pedidos, onClose }) => {
@@ -76,7 +75,7 @@ const TicketImpresion = ({ pedido, pedidos, onClose }) => {
                             {/* Header del Ticket */}
                             <div className="ticket-header-section">
                                 <div className="ticket-number">
-                                    Ticket# {p.codigo} - {moment(p.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
+                                    Ticket# {p.codigo} - {fmtFechaHora(p.timestamp)}
                                 </div>
                                 <div className="customer-name">{p.nombre}</div>
                                 <div className="delivery-address-bold">{p.direccion}</div>

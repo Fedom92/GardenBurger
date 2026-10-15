@@ -18,6 +18,14 @@ Lo que ve el cliente: elegir sucursal, armar el pedido, seguirlo y mirar la cart
 > 100%.** Hasta entonces, arreglos puntuales sin reescribir. Esta nota es el mapa para ese día: qué
 > hace cada pieza, qué contrato hay que respetar con la Caja, los bugs ya identificados y un plan.
 
+> [!info] Rehecho en curso (desde el 15-10-2026)
+> Se rehace entera —lógica y diseño "Opción B · Carbón" de Claude Design—, por pasos. **Paso 1
+> hecho**: base visual (`webPublica.css` con Bootstrap tematizado, `HeaderWeb`, `PieWeb`,
+> `CargandoWeb`, recursos en `src/img/marca/`, fotos y redes en `contenidoWeb.js`), el selector
+> de sucursal y "Cerrada". Siguen: las reglas en funciones puras, la página del pedido, el
+> seguimiento, `/menu` y la limpieza. Esta nota se reescribe al final; mientras tanto describe lo
+> heredado que todavía no se tocó.
+
 | Quién lo escribió | Archivos |
 |---|---|
 | El otro desarrollador | `CartContext.jsx`, `Crearsolicitud.jsx`, `Card.jsx`, los tres modales, `Menu.jsx` + `menu.css`, `Footer.jsx` y la sección "Wally css" de `Main.css` |

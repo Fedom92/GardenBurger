@@ -49,15 +49,16 @@ Caja.guardarBD ──→  CONFIRMADO          (efectivo)
 Fuera del flujo feliz: **`CANCELADO`** (rechazo de solicitud web o de transferencia MP) y
 **`ELIMINADO`** (el cajero borra el ticket desde `BuscarPedido`).
 
-Ninguno de los dos escribe el arqueo: lo **saca del cálculo**, porque el arqueo se calcula desde
-los pedidos de la jornada. Que un pedido cuente o no depende de si llegó a cobrarse, no de su
-estado:
+Ninguno de los dos escribe el arqueo, porque el arqueo se calcula desde los pedidos de la jornada.
+Desde el 15-10-2026 **suman solo los pedidos ENTREGADOS**: cobrar no alcanza. Lo cobrado que
+todavía no se entregó el F4 lo muestra aparte ("Cobrados todavía sin entregar").
 
 - Rechazar una **solicitud web** (`PENDIENTE` → `CANCELADO`) no cambia el arqueo: sin `cajeroID`,
   nunca contó.
-- Rechazar una **transferencia MP** (`PENDIENTEMP` → `CANCELADO`) **sí lo baja**: ese pedido sí
-  pasó por la Caja.
-- Eliminar un ticket lo saca, y lo hace **solo el encargado**, al fiscalizar el cierre.
+- Rechazar una **transferencia MP** (`PENDIENTEMP` → `CANCELADO`) tampoco: todavía no se había
+  entregado. Deja de figurar entre lo cobrado sin entregar.
+- Eliminar un ticket lo saca si ya estaba entregado, y lo hace **solo el encargado**, al
+  fiscalizar el cierre.
 
 > [!important] El ruteo de cocina define todo lo que sigue
 > `destinoPedidoListo(envio)` (en `Utils/ruteoPedido.js`) decide entre `ATP` y `DELIVERY` mirando
@@ -73,8 +74,9 @@ estado:
 > esperando el cotejo como cualquier otro. Antes caía en la espera de la cocina como "Sin items de
 > cocina" y el cocinero tenía que mandarlo a cocinar y marcarlo cocinado para destrabarlo.
 >
-> Esos pedidos no tienen `cocinero*` ni `cocinaFinTimestamp`. Y **no tienen ticket impreso**: el
-> ticket del cliente solo se imprime desde la cocina. Ver [[Deuda tecnica#Funcionalidad pendiente]].
+> Esos pedidos no tienen `cocinero*` ni `cocinaFinTimestamp`. Y como el ticket del cliente se
+> imprime en la cocina, **ATP les muestra un botón Imprimir** (15-10-2026, el mismo
+> `TicketImpresion`). Solo en ATP: no hay deliverys de solo bebidas.
 
 ## Quién escribe qué
 
@@ -85,13 +87,18 @@ estado:
 | Cajero cancela el ticket | `Caja.cancelarTicket` | borra `cajeroRevisa*` (solo si es suyo) |
 | Cajero guarda | `Caja.guardarBD` | todo el pedido + `codigo` + estado (`PENDIENTEMP`, `CONFIRMADO`, o `ATP`/`DELIVERY` si no hay nada que cocinar); **borra** `cajeroRevisa*`. El arqueo no se escribe: se calcula |
 | Confirma MP | `PendientesMP.aprobarPedido` | `estado: CONFIRMADO` (o `ATP`/`DELIVERY` si no hay nada que cocinar) + `cajeroApruebaMP*` |
-| Rechaza MP | `PendientesMP.rechazarPedido` | `estado: CANCELADO` — con eso sale del arqueo |
+| Rechaza MP | `PendientesMP.rechazarPedido` | `estado: CANCELADO` |
 | Manda a cocinar | `PedidosEspera.cocinar` | `estado: COCINA` + `cocinero*` |
 | Marca cocinado | `PedidosCocinando` | `estado: ATP\|DELIVERY` + `cocinaFinTimestamp` |
-| Entrega en mostrador | `ATP` | `estado: FINAL` + `atp*` |
+| Entrega en mostrador | `ATP` | `estado: FINAL` + `atp*` — con eso **entra** al arqueo |
 | Asigna repartidor | `JefeDeliverys` | `delivery*`, `gestorDelivery*` |
-| Salida / regreso | `JefeDeliverys` | `estadoDelivery`, timestamps, `pagaronCon`, `estado: FINAL`. Las métricas del repartidor se calculan desde acá |
-| Elimina el ticket | `BuscarPedido` (**solo el encargado**) | `estado: ELIMINADO` + `cajeroElimina*` — con eso sale del arqueo |
+| Salida / regreso | `JefeDeliverys` | `estadoDelivery`, timestamps, `pagaronCon`, `estado: FINAL` (con eso entra al arqueo). Cerrar el viaje exige repartidor. Las métricas del repartidor se calculan desde acá |
+| Entregado sin repartidor | `JefeDeliverys` (**solo la jefa**) | `estado: FINAL` sin viaje + `entregaSinRepartidor*`; le saca el repartidor si tenía. Entra al arqueo, no a la liquidación de repartidores |
+| Elimina el ticket | `BuscarPedido` (**solo el encargado**) | `estado: ELIMINADO` + `cajeroElimina*` — con eso sale del arqueo, si estaba entregado |
+
+Los que corrigen un pedido ya existente —entregar, anular, rechazar, cerrar un viaje— escriben con
+`actualizarPedidoYResumen()`: si la noche del pedido ya cerró, borra su resumen guardado en la
+misma escritura. Ver [[Mapa de operaciones Firestore#Escrituras que mueven plata]].
 
 ## Cómo el cliente arma el carrito (menú público)
 

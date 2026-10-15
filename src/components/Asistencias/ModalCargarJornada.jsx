@@ -6,7 +6,8 @@ import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import moment from "moment";
 import { calcularHoras, armarRegistro, fechaJornadaATimestamp } from "./asistencias_hooks/useAsistencias";
-import { fmtPesos } from "../../Utils/formato";
+import { fmtPesos, fmtFecha } from "../../Utils/formato";
+import { momentDeJornada } from "../../Utils/fechaComercial";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
 
 // Formulario en grilla de una jornada entera. Lo comparten la pantalla del
@@ -191,7 +192,7 @@ const ModalCargarJornada = ({
     });
 
     const titulo = soloEmpleadoId ? "Editar registro" : "Cargar horarios";
-    const fechaLegible = fecha ? moment(fecha, "DD-MM-YYYY").format("DD/MM/YYYY") : "";
+    const fechaLegible = fecha ? fmtFecha(momentDeJornada(fecha)) : "";
 
     const fmtSello = (ts) => (ts?.toDate ? moment(ts.toDate()).format("DD/MM HH:mm") : null);
     const selloCarga = fmtSello(auditoria?.cargadoTimestamp);

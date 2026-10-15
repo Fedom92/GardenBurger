@@ -4,7 +4,8 @@ import { useForm } from "react-hook-form";
 import moment from "moment";
 import Swal from "sweetalert2";
 import TablaGenerica from "../../../Utils/TablaGenerica";
-import { excepcionDeJornada, getFechaComercial, textoRangoWeb } from "../../../Utils/fechaComercial";
+import { excepcionDeJornada, getFechaComercial, textoRangoWeb, momentDeJornada, jornadaQueEmpieza } from "../../../Utils/fechaComercial";
+import { fmtFechaHora, aInputFecha, FORMATO_INPUT_FECHA } from "../../../Utils/formato";
 
 // El modal de excepciones de horario de UNA sucursal: cargar una para cualquier
 // día —un feriado que se abre, un día que se cierra—, las próximas y el historial.
@@ -20,23 +21,22 @@ import { excepcionDeJornada, getFechaComercial, textoRangoWeb } from "../../../U
 // desde los botones de "hoy": así la tabla, estas listas y la web quedan iguales.
 // Ver Utils/excepcionesHorario.js.
 
-const aFechaInput = (jornada) => moment(jornada, "DD-MM-YYYY").format("YYYY-MM-DD");
-const fechaHora = (ts) => (ts?.toDate ? moment(ts.toDate()).format("DD/MM/YY HH:mm") : "recién");
-const aMoment = (jornada) => moment(jornada, "DD-MM-YYYY");
+// Un serverTimestamp recién escrito todavía no tiene fecha: es "recién".
+const fechaHora = (ts) => (ts?.toDate ? fmtFechaHora(ts) : "recién");
 
 const ExcepcionesHorario = ({ sucursal, historial, procesando, onGuardar, onQuitar, onCargarHistorial, onCerrar }) => {
   const hoy = getFechaComercial();
   const horario = sucursal.horario;
 
-  const valoresIniciales = { fecha: aFechaInput(hoy), tipo: "cerrada", motivo: "", motivoPublico: false };
+  const valoresIniciales = { fecha: aInputFecha(momentDeJornada(hoy)), tipo: "cerrada", motivo: "", motivoPublico: false };
   const { register, handleSubmit, watch, reset } = useForm({ defaultValues: valoresIniciales });
   const tipo = watch("tipo");
   const [error, setError] = useState("");
 
   const enviar = async (data) => {
     setError("");
-    const fecha = moment(data.fecha, "YYYY-MM-DD", true);
-    if (!fecha.isValid() || fecha.isBefore(aMoment(hoy), "day")) {
+    const fecha = moment(data.fecha, FORMATO_INPUT_FECHA, true);
+    if (!fecha.isValid() || fecha.isBefore(momentDeJornada(hoy), "day")) {
       setError("Elegí un día de hoy en adelante");
       return;
     }
@@ -53,7 +53,7 @@ const ExcepcionesHorario = ({ sucursal, historial, procesando, onGuardar, onQuit
     }
 
     // El día del input es la jornada: el 12/10 es la que arranca ese día.
-    const jornada = fecha.format("DD-MM-YYYY");
+    const jornada = jornadaQueEmpieza(fecha);
     if (excepcionDeJornada(sucursal, jornada)) {
       const { isConfirmed } = await Swal.fire({
         title: "Ese día ya tiene una excepción",
@@ -79,9 +79,9 @@ const ExcepcionesHorario = ({ sucursal, historial, procesando, onGuardar, onQuit
 
   // ── Las próximas: de memoria, 0 lecturas ────────────────────────────────────
   const proximas = Object.entries(sucursal.excepcionesWeb || {})
-    .filter(([jornada]) => !aMoment(jornada).isBefore(aMoment(hoy), "day"))
+    .filter(([jornada]) => !momentDeJornada(jornada).isBefore(momentDeJornada(hoy), "day"))
     .map(([jornada, excepcion]) => ({ jornada, ...excepcion }))
-    .sort((a, b) => aMoment(a.jornada).diff(aMoment(b.jornada)));
+    .sort((a, b) => momentDeJornada(a.jornada).diff(momentDeJornada(b.jornada)));
 
   // Hoy o programada: lo que la web va a hacer. Ya pasó: nadie la quitó y la
   // noche terminó. Quitada: alguien la quitó, o la reemplazó otra.
@@ -95,8 +95,8 @@ const ExcepcionesHorario = ({ sucursal, historial, procesando, onGuardar, onQuit
   const colDia = {
     id: "dia",
     header: "Día Laboral",
-    accessorFn: (r) => aMoment(r.jornada).toDate(),
-    cell: ({ row }) => aMoment(row.original.jornada).format("ddd DD/MM/YYYY"),
+    accessorFn: (r) => momentDeJornada(r.jornada).toDate(),
+    cell: ({ row }) => momentDeJornada(row.original.jornada).format("ddd DD/MM/YYYY"),
   };
   const colHorario = {
     id: "horario",
@@ -179,7 +179,7 @@ const ExcepcionesHorario = ({ sucursal, historial, procesando, onGuardar, onQuit
           <div className="row g-3">
             <div className="col-md-4">
               <label className="form-label">Día Laboral*</label>
-              <input type="date" className="form-control" min={aFechaInput(hoy)} required {...register("fecha")} />
+              <input type="date" className="form-control" min={aInputFecha(momentDeJornada(hoy))} required {...register("fecha")} />
             </div>
             <div className="col-md-8">
               <label className="form-label d-block">La web ese día*</label>

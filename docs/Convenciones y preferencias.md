@@ -50,11 +50,22 @@ más simple.**
 - Formularios con **react-hook-form**.
 - Tablas con **`TablaGenerica`**, sin excepción: ya resuelve búsqueda sin acentos, filtros,
   orden y paginación. Si una columna necesita mostrar un valor crudo (rol, slug de sucursal),
-  **enriquecer la fila** con un campo legible en vez de escribir una tabla a mano.
+  **enriquecer la fila** con un campo legible en vez de escribir una tabla a mano. Para un valor
+  que se guarda crudo y tiene su etiqueta (`"%"` → "Dividido"), alcanza con el `cell` de la
+  columna y `etiquetasFiltros={{ metodoPago: etiquetaPago }}` para el select del filtro, sin
+  inventar un campo (15-10-2026).
 - Montos con **`fmtPesos`** de `Utils/formato.js`, **sin excepciones en pantalla** salvo una,
   deliberada y documentada: `Estadisticas.jsx`, cuyo `fmtN` no lleva guarda `|| 0` para que un
   dato faltante del TSV se vea como `NaN`. (`ModalMetricasDelivery.jsx` fue la otra hasta que se
-  rehizo, el 26-09-2026.)
+  rehizo, el 26-09-2026.) Los números sueltos, con **`fmtNumero`**.
+- **Fechas, también desde un solo lugar** (15-10-2026; estaban repetidas en una veintena de
+  archivos): en pantalla, `fmtFecha`, `fmtHora` y `fmtFechaHora` de `Utils/formato.js` —reciben
+  un Timestamp, un Date o un moment, y sin fecha devuelven "—"—; los nombres de días y meses,
+  `NOMBRES_DIAS`, `DIAS_CORTOS` y `MESES_CORTOS`, que salen del locale `es` de moment, nunca de
+  una lista escrita a mano; los `<input type="date">`, `aInputFecha` y `FORMATO_INPUT_FECHA`. El
+  id de una jornada (`DD-MM-YYYY`) se lee con `momentDeJornada` y se escribe con
+  `jornadaQueEmpieza`, de `fechaComercial.js`; el "hoy" de los filtros es `momentDeHoy()`. Un
+  formato que aparece una sola vez (`"dddd DD/MM"` en un cartel) puede quedar escrito ahí.
 - **Nunca hardcodear** los valores de rol, los estados ni los métodos de pago: van por
   `process.env.REACT_APP_*`, `ESTADOS` y `METODOS_PAGO` de `Constantes.jsx`. `METODOS_PAGO` trae
   `key` (lo que se guarda: `"EFECTIVO"`, `"MP"`, `"%"`) y `label`; para mostrar un valor guardado,
@@ -167,14 +178,15 @@ Todas con prefijo `REACT_APP_`. **Nunca hardcodear sus valores.**
 
 ```bash
 npm start                                          # dev en localhost:3000
-npm test                                           # los tests (hoy, solo fechaComercial.test.js)
+npm test                                           # las 6 baterías de tests (funciones puras)
 npm run build                                      # build de producción, sin source maps (corre el lint de CRA)
 npx firebase deploy --only firestore:rules,storage # reglas
 ```
 
 No hay `.eslintrc`: la config `react-app` está dentro de `package.json` y el lint corre como
-parte del build — un `import` después de un `const` (`import/first`) lo rompe. No hay tests
-automatizados salvo la batería del horario web: [[Deuda tecnica#Sin tests]]. Los source maps van apagados
+parte del build — un `import` después de un `const` (`import/first`) lo rompe. Los tests
+automatizados son seis baterías sobre funciones puras (horario web, validaciones de la Caja,
+arqueo, Estadísticas Generales, `agruparExtras` y `formato`): [[Deuda tecnica#Tests]]. Los source maps van apagados
 (`GENERATE_SOURCEMAP=false`) a propósito: en producción expondrían el código fuente en las devtools.
 
 ## Pendientes del proyecto

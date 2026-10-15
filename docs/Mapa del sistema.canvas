@@ -117,7 +117,7 @@
       "y": 900,
       "width": 500,
       "height": 260,
-      "text": "## Como leer este mapa\n\n🟠 Espera una **accion humana**\n🟢 **Mueve plata** hacia el arqueo\n🔵 Produccion y entrega — no toca plata\n🔴 **Anula** una venta: sale del arqueo\n\nLas flechas dicen **quien dispara** cada paso.\n\n`F1`–`F4` son los atajos de la Caja.\n\nEl arqueo no es un contador: se **calcula** sumando los pedidos de la jornada."
+      "text": "## Como leer este mapa\n\n🟠 Espera una **accion humana**\n🟢 **Mueve plata** hacia el arqueo\n🔵 Produccion y entrega — no toca plata\n🔴 **Anula** una venta: sale del arqueo\n\nLas flechas dicen **quien dispara** cada paso.\n\n`F1`–`F4` son los atajos de la Caja.\n\nEl arqueo no es un contador: se **calcula** sumando los pedidos **entregados** de la jornada."
     },
     {
       "id": "6d7f294c53b5e8a6",

@@ -9,6 +9,7 @@ import { ahoraServidor } from "../../Utils/fechaComercial";
 import { getItemsCocina } from "../../Utils/ruteoPedido";
 import ModalHorariosEspeciales from "./ModalHorariosEspeciales";
 import moment from "moment";
+import { fmtHora } from "../../Utils/formato";
 import { avisarSinConexion, sinConexion } from "../../Utils/avisos";
 
 const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
@@ -228,7 +229,7 @@ const PedidosEspera = ({ onMandarACocinar, onCountChange }) => {
                                                 <div className="d-flex justify-content-between align-items-start mb-1">
                                                     <span className="badge bg-dark fs-5 m-0">{pedido.codigo}</span>
                                                     <small className={pedido.esHorarioEspecial ? "text-danger fw-bold" : "text-body-secondary"}>
-                                                        {moment(pedido.timestamp?.toDate()).format("HH:mm")}
+                                                        {fmtHora(pedido.timestamp)}
                                                         {pedido.esHorarioEspecial && (
                                                             <span className="badge bg-warning text-dark ms-1">⏰</span>
                                                         )}

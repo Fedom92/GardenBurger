@@ -53,7 +53,7 @@ export const SUBESTADOS_MOTODELIVERY = {
 };
 
 // La jornada comercial: de horaAbre de un día a horaCierre del siguiente. Es lo que
-// significa "hoy" en TODO el sistema —arqueo, fotos, Métricas, Estadísticas,
+// significa "hoy" en TODO el sistema —arqueo, resúmenes guardados, Métricas, Estadísticas,
 // buscadores, historial, asistencias—: un pedido de las 00:30 es de la noche
 // anterior, y a horaCierre el sistema pasa al día siguiente.
 //

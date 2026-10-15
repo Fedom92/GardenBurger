@@ -45,12 +45,12 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 | `/admin` | `PanelAdmin` | `RequireAuth` + `RequireAdmin`. En pestañas desde el 12-10-2026: `?tab=personal` (por defecto), `?tab=sucursales`, `?tab=envios` |
 | `/productos` | `Productos` | `RequireAuth` + `RequireAdmin` |
 | `/clientes` | `Clientes` | `RequireAuth` + `RequireAdmin` |
-| `/estadisticas` | `EstadisticasGenerales` | `RequireAuth` + `RequireAdmin`: las estadísticas del sistema nuevo, desde las fotos |
+| `/estadisticas` | `EstadisticasGenerales` | `RequireAuth` + `RequireAdmin`: las estadísticas del sistema nuevo, desde los resúmenes guardados |
 | `/estadisticas-viejas` | `Estadisticas` | `RequireAuth` + `RequireAdmin`: el Histórico, desde los TSV |
 | `/metricas` | `Metricas` | `RequireAuth` + `RequireAdmin`: el vistazo rápido de todas las sucursales |
-| `/pedidos-caja` | `Caja` | `RequireAuth` + `RequireSucursal` |
-| `/gestion-cocina` | `Cocina` | `RequireAuth` + `RequireSucursal` |
-| `/gestion-atp` | `ATP` | `RequireAuth` + `RequireSucursal` |
+| `/pedidos-caja` | `Caja` | `RequireAuth` + `RequireRole` (cajero, encargado) + `RequireSucursal` |
+| `/gestion-cocina` | `Cocina` | `RequireAuth` + `RequireRole` (cocina, encargado) + `RequireSucursal` |
+| `/gestion-atp` | `ATP` | `RequireAuth` + `RequireRole` (atp, encargado) + `RequireSucursal` |
 | `/jefe-deliverys` | `JefeDeliverys` | `RequireAuth` + `RequireRole` (jefe de deliverys, encargado) + `RequireSucursal` |
 | `/asistencias` | `Asistencias` | `RequireAuth` + `RequireRole` (encargado) + `RequireSucursal` |
 | `/liquidacion` | `LiquidacionAsistencias` | `RequireAuth` + `RequireAdmin` |
@@ -63,11 +63,15 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
   renderiza el `<Navigation/>` y envuelve la página en `<Suspense>`, o sea que el sidebar y el
   loader de carga de chunk salen de acá.
 - **`RequireSucursal`** — las pantallas operativas leen `sucursales/{id}/...`; sin sucursal
-  asignada las queries tiran error. Muestra un cartel en vez de crashear. Con `permitirAdmin`
-  deja pasar al admin sin sucursal (para pantallas con selector propio).
+  asignada las queries tiran error. Muestra un cartel en vez de crashear. (Tenía un
+  `permitirAdmin` que ninguna ruta usaba: se sacó el 15-10-2026; las pantallas del admin tienen su
+  propio selector de sucursal.)
 - **`RequireAdmin`** — redirige a `/miPerfil` si el rol no es `REACT_APP_admin`.
-- **`RequireRole roles={[...]}`** — para pantallas de un rol puntual, como `/asistencias`, que
-  solo carga el encargado. Redirige a `/miPerfil` si el rol no está en la lista.
+- **`RequireRole roles={[...]}`** — **cada módulo operativo, solo para sus roles; el encargado
+  entra a todos** (15-10-2026, auditoría del 11-10). Son los mismos roles que muestra el menú
+  (`Navigation`): hasta entonces Caja, Cocina y ATP solo pedían sesión y sucursal, así que un
+  cajero que escribía `/gestion-cocina` en la barra entraba. Redirige a `/miPerfil` si el rol no
+  está en la lista.
 
 ## Roles
 

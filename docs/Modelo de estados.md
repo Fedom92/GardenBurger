@@ -55,20 +55,21 @@ leen ahora la lista vigente después de confirmar (`useRef` con el último snaps
 | Desde | Hacia | Quién la dispara | Dónde | Efecto en el arqueo |
 |---|---|---|---|---|
 | — | `PENDIENTE` | Cliente web | `Crearsolicitud` | — |
-| — | `CONFIRMADO` | Cajero (efectivo) | `Caja.guardarBD` | **Suma** |
-| — | `PENDIENTEMP` | Cajero (MP o dividido) | `Caja.guardarBD` | **Suma** |
-| `PENDIENTE` | `CONFIRMADO` / `PENDIENTEMP` | Cajero, al Revisar y Guardar | `useRevisarSolicitud` → `Caja.guardarBD` | **Suma** |
-| `PENDIENTE` | `CANCELADO` | Cajero, al Rechazar | `PendientesSolicitudes` | — (nunca sumó) |
-| — | `ATP` / `DELIVERY` | Cajero (efectivo), pedido **sin ítems de cocina** | `Caja.guardarBD` → `estadoAlConfirmar` | **Suma** |
-| `PENDIENTEMP` | `CONFIRMADO` | Cajero, al cotejar MP | `PendientesMP.aprobarPedido` | — (ya sumó al guardar) |
-| `PENDIENTEMP` | `ATP` / `DELIVERY` | Cajero, al cotejar MP un pedido **sin ítems de cocina** | `PendientesMP.aprobarPedido` → `estadoAlConfirmar` | — (ya sumó al guardar) |
-| `PENDIENTEMP` | `CANCELADO` | Cajero, al rechazar MP | `PendientesMP.rechazarPedido` | **Sale** del cálculo |
+| — | `CONFIRMADO` | Cajero (efectivo) | `Caja.guardarBD` | — (cobrado: el F4 lo muestra aparte) |
+| — | `PENDIENTEMP` | Cajero (MP o dividido) | `Caja.guardarBD` | — (ídem) |
+| `PENDIENTE` | `CONFIRMADO` / `PENDIENTEMP` | Cajero, al Revisar y Guardar | `useRevisarSolicitud` → `Caja.guardarBD` | — (ídem) |
+| `PENDIENTE` | `CANCELADO` | Cajero, al Rechazar | `PendientesSolicitudes` | — (nunca se cobró) |
+| — | `ATP` / `DELIVERY` | Cajero (efectivo), pedido **sin ítems de cocina** | `Caja.guardarBD` → `estadoAlConfirmar` | — (ídem) |
+| `PENDIENTEMP` | `CONFIRMADO` | Cajero, al cotejar MP | `PendientesMP.aprobarPedido` | — |
+| `PENDIENTEMP` | `ATP` / `DELIVERY` | Cajero, al cotejar MP un pedido **sin ítems de cocina** | `PendientesMP.aprobarPedido` → `estadoAlConfirmar` | — |
+| `PENDIENTEMP` | `CANCELADO` | Cajero, al rechazar MP | `PendientesMP.rechazarPedido` | — (deja de figurar como cobrado sin entregar) |
 | `CONFIRMADO` | `COCINA` | Cocina, "Empezar a Cocinar" | `PedidosEspera.cocinar` | — |
 | `COCINA` | `ATP` | Cocina, "Cocinados TODOS", zona ∈ `ENVIOS_LOCALES` | `PedidosCocinando` | — |
 | `COCINA` | `DELIVERY` | Cocina, "Cocinados TODOS", resto de zonas | `PedidosCocinando` | — |
-| `ATP` | `ENTREGADO` | ATP, al entregar en mostrador | `ATP.jsx` | — |
-| `DELIVERY` | `ENTREGADO` | Jefe de deliverys, al registrar el regreso | `JefeDeliverys` | Métricas en `deliverys` |
-| *(casi cualquiera)* | `ELIMINADO` | **Encargado** desde F3 (la jornada) o **admin** desde el Historial (cualquier fecha) — nunca un delivery con el repartidor en la calle (lo rechazan también las reglas) | `BuscarPedido` / `HistorialPedidos` | **Sale** del cálculo |
+| `ATP` | `ENTREGADO` | ATP, al entregar en mostrador | `ATP.jsx` | **Suma** |
+| `DELIVERY` | `ENTREGADO` | Jefe de deliverys, al registrar el regreso (exige repartidor) | `JefeDeliverys` | **Suma**; el viaje, en `deliverys` |
+| `DELIVERY` | `ENTREGADO` | **Solo la jefa de deliverys**, "Entregado sin repartidor": el delivery no salió (15-10-2026) | `JefeDeliverys` | **Suma**; sin viaje |
+| *(casi cualquiera)* | `ELIMINADO` | **Encargado** desde F3 (la jornada) o **admin** desde el Historial (cualquier fecha) — nunca un delivery con el repartidor en la calle (lo rechazan también las reglas) | `BuscarPedido` / `HistorialPedidos` | **Sale** del cálculo, si estaba entregado |
 
 **Ninguna transición escribe el arqueo.** Desde el 26-09-2026 el arqueo se calcula desde los
 pedidos de la jornada: la columna de arriba dice si el pedido **entra** al cálculo, no qué se
@@ -79,15 +80,19 @@ suma o se resta. Ver [[Decisiones tecnicas#El arqueo se calcula desde los pedido
 >
 > 1. **Tiene `cajeroID`** — lo cobró un cajero. Una solicitud web que nadie atendió nunca movió
 >    plata, así que no aparece pase lo que pase con su estado.
-> 2. **No está en `CANCELADO` ni en `ELIMINADO`** — las dos formas de anular.
+> 2. **Está `ENTREGADO`** (desde el 15-10-2026). Hasta entonces alcanzaba con no estar anulado, y
+>    sumaban también los que seguían en la cocina, esperando la transferencia o de vuelta sin
+>    entregar.
 >
-> De ahí que rechazar una solicitud web no cambie nada (nunca entró) y que los únicos `CANCELADO`
-> que mueven el número sean los que vienen de `PENDIENTEMP`: esos sí pasaron por la Caja.
+> Lo cobrado que todavía no se entregó no suma, pero no se pierde: el F4 lo muestra aparte
+> ("Cobrados todavía sin entregar", `cobradosSinEntregar`). Ver
+> [[Decisiones tecnicas#Suman solo los pedidos entregados (15-10-2026)]].
 
 > [!important] Cada pedido cuenta en SU jornada
 > El cálculo lee los pedidos por rango de `timestamp`, así que un pedido pertenece a la jornada en
 > que se cobró y no a la de hoy: eliminar hoy un pedido de ayer corrige el arqueo de ayer. Si esa
-> jornada ya tenía foto, `invalidarFotoDePedido(pedido)` la borra para que se reconstruya.
+> jornada ya tenía resumen guardado, `actualizarPedidoYResumen()` lo borra **en la misma
+> escritura** que cambia el pedido, para que se reconstruya.
 
 > [!important] El ruteo de cocina define todo lo que sigue
 > `destinoPedidoListo(envio)` decide entre `ATP` y `DELIVERY` mirando `pedido.envio.zona_envio` contra
@@ -136,6 +141,7 @@ atp*                               ← quién entregó en mostrador
 delivery* / gestorDelivery*        ← repartidor asignado y quién lo asignó
 estadoDelivery                     ← SALIO → VOLVIO, dentro del estado DELIVERY
 pagaronCon                         ← con cuánto pagó al final el cliente
+entregaSinRepartidor*              ← quién lo marcó entregado sin viaje (solo la jefa)
 cajeroElimina*                     ← quién borró el ticket
 ```
 
@@ -145,9 +151,15 @@ se ven iguales si solo se mira `estado`.
 
 **Desde el 28-09-2026 hay una combinación nueva: `DELIVERY` + `VOLVIO` + `sinEntregar`.** Es un
 viaje que volvió sin entregar: el viaje está cerrado —se paga el envío— pero el pedido no pasa a
-`ENTREGADO`, y espera en la lista de la jefa a que el encargado lo anule. Y con `SALIO`, F3 no deja
-anular: primero la jefa marca que volvió. Ver
-[[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].
+`ENTREGADO`, y espera en la lista de la jefa a que el encargado lo anule. Como no está entregado,
+no suma al arqueo (15-10-2026). Y con `SALIO`, F3 no deja anular: primero la jefa marca que volvió.
+Ver [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].
+
+**Cerrar un viaje exige repartidor** (15-10-2026): "Confirmar entrega" y "Volvió sin entregar" no
+andan si el pedido se quedó sin `deliveryID` —pasa si lo desasignan con el viaje en curso—, porque
+el envío se le paga a quien hizo el viaje. Reasignarlo a otro sigue permitido. Y la combinación
+inversa, **`ENTREGADO` sin `estadoDelivery`**, es un "Entregado sin repartidor": el delivery no
+salió, no hubo viaje que pagar.
 
 ## Qué ve el cliente
 

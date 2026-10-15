@@ -1,5 +1,5 @@
 import { Timestamp } from "firebase/firestore";
-import moment from "moment";
+import { momentDeJornada } from "../../../Utils/fechaComercial";
 
 // Lógica pura del módulo de asistencia. Sin estado ni Firestore: la comparten la
 // pantalla del encargado y el panel de liquidación del admin, y así la fórmula de
@@ -55,10 +55,10 @@ export const armarRegistro = (fila = {}) => {
 // getFechaComercial(). El campo `fecha` existe aparte porque ese id no ordena
 // cronológicamente como texto y el rango del admin necesita una fecha real.
 export const fechaJornadaATimestamp = (jornadaStr) =>
-    Timestamp.fromDate(moment(jornadaStr, "DD-MM-YYYY").startOf("day").toDate());
+    Timestamp.fromDate(momentDeJornada(jornadaStr).startOf("day").toDate());
 
-// Los envíos de cada repartidor en un período, a partir de las fotos de cada noche
-// (`deliverys` de resumenDiario, que arma liquidarDeliverys). Van aparte del bruto:
+// Los envíos de cada repartidor en un período, a partir del resumen guardado de cada
+// noche (`deliverys` de resumenDiario, que arma liquidarDeliverys). Van aparte del bruto:
 // no son horas. { empleadoId: { nombre, envios } }.
 export const enviosPorRepartidor = (resumenes = []) => {
     const porId = {};

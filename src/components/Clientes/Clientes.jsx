@@ -5,7 +5,7 @@ import { fetchSucursales } from "../../Utils/sucursales";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
 import "../../style/Main.css";
-import moment from "moment";
+import { fmtFecha } from "../../Utils/formato";
 import CrearCliente from "./CrearCliente";
 import EditCliente from "./EditCliente";
 import { avisarErrorDeCarga } from "../../Utils/avisos";
@@ -180,7 +180,7 @@ const Clientes = () => {
             header: "Último pedido",
             cell: ({ getValue }) => {
                 const ts = getValue();
-                return ts?.toDate ? moment(ts.toDate()).format("DD/MM/YY") : "—";
+                return fmtFecha(ts);
             },
         },
         {

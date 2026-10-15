@@ -1,13 +1,12 @@
 import React, { useRef, useState } from "react";
 import { Modal } from "react-bootstrap";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
-import moment from "moment";
 import Swal from "sweetalert2";
 import { db } from "../../../firebaseConfig/firebase.js";
 import { invalidarSucursales } from "../../../Utils/sucursales";
 import { publicarSucursales, marcarMenuPendiente } from "../../../Utils/menuPublico";
 import {
-  errorDeHorario, excepcionDeJornada, getFechaComercial, textoRangoWeb,
+  errorDeHorario, excepcionDeJornada, getFechaComercial, textoRangoWeb, momentDeJornada,
 } from "../../../Utils/fechaComercial";
 import { guardarExcepcion, levantarExcepcion, leerExcepciones } from "../../../Utils/excepcionesHorario";
 import { useAuth } from "../../../context/AuthContext";
@@ -69,7 +68,7 @@ const estadoDeHoy = (s, jornada) => {
     };
   }
   if (!s.horario) return { texto: "(Sin horario-cerrado)", abierta: false };
-  return s.horario.dias?.includes(moment(jornada, "DD-MM-YYYY").day())
+  return s.horario.dias?.includes(momentDeJornada(jornada).day())
     ? { texto: `Abre ${textoRangoWeb(s.horario)}`, abierta: true }
     : { texto: "No abre hoy", abierta: false };
 };
@@ -280,7 +279,7 @@ const Sucursales = ({ sucursales, setSucursales }) => {
   const quitarExcepcion = async (sucursal, jornada) => {
     const { isConfirmed } = await Swal.fire({
       title: "¿Quitar la excepción?",
-      text: `La web de ${sucursal.nombre} vuelve a su horario de siempre para el ${moment(jornada, "DD-MM-YYYY").format("dddd DD/MM")}. En el historial queda como quitada.`,
+      text: `La web de ${sucursal.nombre} vuelve a su horario de siempre para el ${momentDeJornada(jornada).format("dddd DD/MM")}. En el historial queda como quitada.`,
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#198754",

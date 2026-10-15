@@ -4,11 +4,10 @@ import { colSucursal, docSucursal } from "../../../../firebaseConfig/firebase";
 import { useAuth } from "../../../../context/AuthContext";
 import { Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
-import moment from "moment";
-import { ESTADOS, METODOS_PAGO } from "../../../../Utils/Constantes";
-import { invalidarFotoDePedido } from "../../pos_hooks/useResumenDiario";
+import { ESTADOS, METODOS_PAGO, etiquetaPago } from "../../../../Utils/Constantes";
+import { actualizarPedidoYResumen } from "../../pos_hooks/useResumenDiario";
 import { useAccionUnica } from "../../../../Utils/useAccionUnica";
-import { fmtPesos } from "../../../../Utils/formato";
+import { fmtPesos, fmtFechaHora } from "../../../../Utils/formato";
 import { estadoAlConfirmar } from "../../../../Utils/ruteoPedido";
 import { sinConexion } from "../../../../Utils/avisos";
 
@@ -111,17 +110,16 @@ const PendientesMP = ({ isOpen, onClose }) => {
             const pedido = pendientesVigentes.current.find(p => p.id === pedidoId);
             if (!pedido) return;
 
-            await updateDoc(docSucursal("pedidos", pedidoId), {
+            // CANCELADO ya lo saca del arqueo, que se calcula desde los pedidos. El
+            // resumen guardado solo cambia si el pedido es de una jornada cerrada —al
+            // cierre no deberia quedar ningun PENDIENTEMP—, pero va en la misma
+            // escritura por si queda uno.
+            await actualizarPedidoYResumen(docSucursal("pedidos", pedidoId), pedido, {
                 estado: ESTADOS.CANCELADO,
                 cajeroCancelaMPID: userData.id,
                 cajeroCancelaMP: userData.nombreCompleto,
                 cajeroCancelaMPTimestamp: serverTimestamp(),
             });
-
-            // CANCELADO ya lo saca del arqueo, que se calcula desde los pedidos. Esto
-            // solo hace falta si el pedido es de una jornada cerrada, que no es el
-            // caso: al cierre no queda ningun PENDIENTEMP sin resolver.
-            await invalidarFotoDePedido(pedido);
         } catch (error) {
             console.error('Error rechazando el pedido:', error);
             Swal.fire({
@@ -160,7 +158,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                             <strong>Pedido #{pedido.codigo}</strong>
                                         </h6>
                                         <small className="text-body-secondary">
-                                            {moment(pedido.timestamp?.toDate()).format("DD/MM/YYYY HH:mm")}
+                                            {fmtFechaHora(pedido.timestamp)}
                                         </small>
                                     </div>
                                     <div className="card-body h-auto">
@@ -192,7 +190,7 @@ const PendientesMP = ({ isOpen, onClose }) => {
                                             </div>
                                             <div className="col-6">
                                                 <p className="mb-1">
-                                                    <strong>Método:</strong> {pedido.metodoPago}
+                                                    <strong>Método:</strong> {etiquetaPago(pedido.metodoPago)}
                                                 </p>
                                                 {pedido.metodoPago === METODOS_PAGO.DIVIDIDO.key && (
                                                     <p className="mb-1">

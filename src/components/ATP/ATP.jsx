@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { query, where, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
+import { query, where, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { colSucursal, docSucursal } from "../../firebaseConfig/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { ESTADOS, ENVIOS_LOCALES } from "../../Utils/Constantes";
 import TablaGenerica from "../../Utils/TablaGenerica";
 import Swal from "sweetalert2";
-import moment from "moment";
+import { fmtHora } from "../../Utils/formato";
 import "../../style/Main.css";
 import { avisarSinConexion, sinConexion } from "../../Utils/avisos";
+import { actualizarPedidoYResumen } from "../POS/pos_hooks/useResumenDiario";
+import { getItemsCocina } from "../../Utils/ruteoPedido";
+import TicketImpresion from "../Cocina/TicketImpresion";
 
 const ATP = () => {
     const { userData } = useAuth();
@@ -16,6 +19,7 @@ const ATP = () => {
     // cartel pregunta el encargado anula el pedido, ya no hay que entregarlo.
     const idsVigentes = useRef(new Set());
     const [isLoading, setIsLoading] = useState(true);
+    const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
 
     const queryRef = useRef(
         query(colSucursal("pedidos"), where("estado", "==", ESTADOS.ATP))
@@ -59,7 +63,10 @@ const ATP = () => {
         }
 
         try {
-            await updateDoc(docSucursal("pedidos", pedido.id), {
+            // Entregar es lo que lo hace sumar al arqueo (solo suman los ENTREGADOS).
+            // Si es de una noche que ya cerró, su resumen guardado se borra en la
+            // misma escritura y se recalcula al mirarlo.
+            await actualizarPedidoYResumen(docSucursal("pedidos", pedido.id), pedido, {
                 estado: ESTADOS.FINAL,
                 atpCompletadoPor: userData.nombreCompleto,
                 atpCompletadoPorID: userData.id,
@@ -79,7 +86,7 @@ const ATP = () => {
         {
             accessorKey: "timestamp",
             header: "Hora",
-            cell: ({ getValue }) => moment(getValue()?.toDate()).format("HH:mm"),
+            cell: ({ getValue }) => fmtHora(getValue()),
         },
         {
             accessorKey: "envio.zona_envio",
@@ -95,8 +102,21 @@ const ATP = () => {
                 // es obligatorio, ver validarPedido—.
                 const whatsappUrl = `https://api.whatsapp.com/send?phone=549${pedido.telefono}&text=${encodeURIComponent(`Hola ${pedido.nombre}, tu pedido #${pedido.codigo} está listo para retirar.`)}`;
 
+                // El ticket se imprime en la cocina. Un pedido sin nada que cocinar
+                // (hoy, solo bebidas) la saltea y llegaba acá sin ticket.
+                const salteoLaCocina = getItemsCocina(pedido.carrito).length === 0;
+
                 return (
                     <div className="d-flex justify-content-center gap-1">
+                        {salteoLaCocina && (
+                            <button
+                                className="btn btn-outline-dark"
+                                onClick={() => setPedidoParaImprimir(pedido)}
+                                title="Este pedido no pasó por la cocina: imprimí el ticket desde acá"
+                            >
+                                <i className="fa-solid fa-print me-1"></i> Imprimir
+                            </button>
+                        )}
                         {pedido.telefono && (
                             <a
                                 href={whatsappUrl}
@@ -157,6 +177,13 @@ const ATP = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {pedidoParaImprimir && (
+                <TicketImpresion
+                    pedido={pedidoParaImprimir}
+                    onClose={() => setPedidoParaImprimir(null)}
+                />
             )}
         </>
     );

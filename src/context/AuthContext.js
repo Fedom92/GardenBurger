@@ -95,6 +95,10 @@ export function AuthContextProvider({ children }) {
       // Validamos y obtenemos datos antes de retornar para evitar navegación prematura
       const data = await fetchUserData(credential.user);
       if (!data) {
+        // Sin perfil en `usuarios` (o sin poder leerlo) el login falla, pero la
+        // sesión de Auth ya quedó abierta: se cierra, para que no siga logueado a
+        // medias. Solo acá y no al recargar: ahí un corte de red echaría al usuario.
+        await signOut(auth);
         throw new Error("Usuario bloqueado o sin permisos");
       }
       setUserData({

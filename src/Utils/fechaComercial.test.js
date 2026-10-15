@@ -3,6 +3,7 @@
 import moment from "moment-timezone/builds/moment-timezone-with-data-10-year-range";
 import {
     webRecibePedidos, textoExcepcionWeb, errorDeHorario, getFechaComercialDe,
+    momentDeJornada, jornadaQueEmpieza, textoCorteWeb,
     opcionesHorarioEspecial, HORARIOS_ESPECIALES,
 } from "./fechaComercial";
 
@@ -132,5 +133,34 @@ describe("opcionesHorarioEspecial", () => {
         expect(opcionesHorarioEspecial(a("14-10-2026 23:45"))).toEqual([]);
         expect(opcionesHorarioEspecial(a("15-10-2026 00:30"))).toEqual([]);
         expect(opcionesHorarioEspecial(a("15-10-2026 01:59"))).toEqual([]);
+    });
+});
+
+describe("el id de una jornada", () => {
+    test("se lee y se escribe en DD-MM-YYYY", () => {
+        expect(momentDeJornada("10-10-2026").day()).toBe(6);   // sábado
+        expect(jornadaQueEmpieza(moment("2026-10-10"))).toBe("10-10-2026");
+    });
+    test("jornadaQueEmpieza no corre el día: eso es getFechaComercialDe", () => {
+        expect(jornadaQueEmpieza(a("11-10-2026 00:30"))).toBe("11-10-2026");
+        expect(getFechaComercialDe(a("11-10-2026 00:30"))).toBe("10-10-2026");
+    });
+});
+
+describe("textoCorteWeb: hasta cuándo toma pedidos hoy", () => {
+    test("del horario de siempre: el corte es horasCorte antes del cierre", () => {
+        expect(textoCorteWeb(davinci, a("14-10-2026 21:00"))).toBe("hasta las 23:00");
+        const hastaLas3 = { horario: { dias: [0, 3, 4, 5, 6], abre: 19, cierra: 3, horasCorte: 2 } };
+        expect(textoCorteWeb(hastaLas3, a("14-10-2026 21:00"))).toBe("hasta la 01:00");
+    });
+    test("la excepción de hoy manda", () => {
+        const abreDistinto = conExcepciones({ "14-10-2026": { abierta: true, abre: 20, cierra: 23, horasCorte: 1 } });
+        expect(textoCorteWeb(abreDistinto, a("14-10-2026 21:00"))).toBe("hasta las 22:00");
+        const cerrada = conExcepciones({ "14-10-2026": { abierta: false, motivo: "Inventario" } });
+        expect(textoCorteWeb(cerrada, a("14-10-2026 21:00"))).toBe("");
+    });
+    test("sin horario no dice nada", () => {
+        expect(textoCorteWeb({ id: "luro" }, a("14-10-2026 21:00"))).toBe("");
+        expect(textoCorteWeb(null, a("14-10-2026 21:00"))).toBe("");
     });
 });

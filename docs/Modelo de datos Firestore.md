@@ -126,7 +126,8 @@ Cada paso deja `<actor>ID`, `<actor>` (nombre) y `<actor>Timestamp`:
 | `estadoDelivery` | `JefeDeliverys` | `"SALIO"` / `"VOLVIO"` |
 | `deliverySalidaTimestamp`, `deliveryFinTimestamp` | `JefeDeliverys` | salida y regreso |
 | `pagaronCon` | `JefeDeliverys` | con cuánto pagó **al final** el cliente (hasta sep-2026, `pagoRepartidorCon`). Hace par con `pagaCon` |
-| `sinEntregar` | `JefeDeliverys` | `true` si el repartidor **volvió sin entregar**: cierra el viaje (`estadoDelivery: VOLVIO`, se paga el envío) y el pedido sigue en `DELIVERY` hasta que el encargado lo anule |
+| `sinEntregar` | `JefeDeliverys` | `true` si el repartidor **volvió sin entregar**: cierra el viaje (`estadoDelivery: VOLVIO`, se paga el envío) y el pedido sigue en `DELIVERY` hasta que el encargado lo anule. No suma al arqueo |
+| `entregaSinRepartidor*` (`ID`, `Timestamp`) | `JefeDeliverys` | quién marcó **"Entregado sin repartidor"** (solo la jefa, 15-10-2026): un delivery que no salió pasa a `ENTREGADO` sin viaje y sin `estadoDelivery`; si tenía repartidor asignado, se le borra |
 | ~~`fijoDelivery`~~ | — | **en desuso** desde el 28-09-2026: ya no hay fijo. Los pedidos viejos lo tienen y se ignora |
 
 ### Solo si `origen === "WEB"`
@@ -155,7 +156,7 @@ cliente: {
   id, descripcion, categoria, precio, cantidad, subtotal,   // y el resto de la ficha del producto
   carritoItemId,        // uuid por línea: lo pone la Caja (también a las líneas de una solicitud al cargarla)
   grupo: 0,             // solo líneas armadas en la web: identifica la línea mientras se arma el carrito
-  tipoExtra: "HAMBURGUESA" | "GENERAL",   // solo categoria EXTRA
+  tipoExtra: "HAMBURGUESA" | "GENERAL" | "PAPAS",   // solo categoria EXTRA (PAPAS: hoy solo desde la Caja)
   observaciones: "Sin pepino"
 }
 ```
@@ -167,9 +168,9 @@ en el pedido). Las solicitudes anteriores al 04-10-2026 pueden traer `combo` en 
 
 ## `sucursales/{id}/resumenDiario/{DD-MM-YYYY}`
 
-> [!important] La foto v1 (26-09-2026): todo lo que usan Métricas y Estadísticas
-> Además de los campos del arqueo de abajo, cada foto guarda: `fecha` (Timestamp, inicio de la
-> noche: permite pedir rangos), `version` (`VERSION_FOTO`), `eliminados`, `cancelados`, `unidades`,
+> [!important] El resumen guardado (v1 26-09-2026, v2 15-10-2026): todo lo que usan Métricas y Estadísticas
+> Además de los campos del arqueo de abajo, cada resumen guardado lleva: `fecha` (Timestamp, inicio
+> de la noche: permite pedir rangos), `version` (`VERSION_RESUMEN_DIARIO`), `eliminados`, `cancelados`, `unidades`,
 > `conObservaciones`, `porCanal` (`delivery`/`mostrador`: `{pedidos, monto}`), `porMetodo`
 > (`EFECTIVO`/`MP`/`DIVIDIDO`: `{pedidos, monto}`), `porZona` (`{zona: pedidos}`), `porHora`
 > (`{"20": {pedidos, monto, efectivo, mp, combos, delivery, mostrador}}`), `productos`
@@ -177,13 +178,15 @@ en el pedido). Las solicitudes anteriores al 04-10-2026 pueden traer `combo` en 
 > pantalla solo nombre y pedidos). Unos 5-10 KB por noche.
 >
 > **Es versionable.** Si Estadísticas necesita un campo nuevo, se agrega en `calcularArqueo`, se
-> sube `VERSION_FOTO`, y las fotos viejas se reconstruyen solas la próxima vez que alguien las
-> mira (una lectura por pedido, una vez). Lo que ya existía da igual, porque sale de los hechos
-> congelados en cada pedido. Lo que no se hace es cambiar el significado de un campo existente.
+> sube `VERSION_RESUMEN_DIARIO`, y los resúmenes viejos se reconstruyen solos la próxima vez que
+> alguien los mira (una lectura por pedido, una vez). Lo que ya existía da igual, porque sale de
+> los hechos congelados en cada pedido. Si cambia el **significado** de un campo, también se sube la
+> versión: pasó en la **v2 (15-10-2026)**, cuando pasaron a sumar solo los pedidos ENTREGADOS.
 
-Un doc por [[Reglas de negocio#Jornada comercial|jornada comercial]]. **No es un contador: es una
-foto.** El arqueo se calcula desde los pedidos de la jornada (`calcularArqueo`), y el documento
-guarda ese resultado para no tener que releerlos. Desde el 26-09-2026: antes se acumulaba con
+Un doc por [[Reglas de negocio#Jornada comercial|jornada comercial]]. **No es un contador: es el
+resumen guardado** (hasta el 15-10-2026 se le decía "foto"). El arqueo se calcula desde los
+pedidos de la jornada (`calcularArqueo`), y el documento guarda ese resultado para no tener que
+releerlos. Desde el 26-09-2026: antes se acumulaba con
 `increment()` y cada camino que tocaba un pedido tenía que acordarse de moverlo. Ver
 [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]].
 
@@ -193,7 +196,7 @@ guarda ese resultado para no tener que releerlos. Desde el 26-09-2026: antes se 
   efectivoLocal: 15000,   // zonas de ENVIOS_LOCALES: cobrado en el mostrador
   efectivoEnvio: 25000,   // el resto: la plata vuelve con el repartidor
   mp: 10000,
-  totalPedidos: 12,
+  totalPedidos: 12,       // desde la v2, solo los ENTREGADOS (cobrar no alcanza)
   totalCombos: 9,         // unidades, no renglones del carrito
   deliverys: {            // liquidarDeliverys(): viajes cerrados (estadoDelivery == FIN)
     "<deliveryID>": {
@@ -202,23 +205,26 @@ guarda ese resultado para no tener que releerlos. Desde el 26-09-2026: antes se 
       efectivoCobrado,      // lo que rinde: total, montoEfectivo, o 0 (MP, sin entregar, anulado)
     }                       // hasta el 28-09-2026 también `fijo` y `aPagar`: ya no hay fijo
   },
-  generadoEl: Timestamp,  // serverTimestamp() del cálculo. Sin este campo no es una foto
+  generadoEl: Timestamp,  // serverTimestamp() del cálculo. Sin este campo no es un resumen guardado
 }
 // invariante: efectivoLocal + efectivoEnvio === totalEfectivo
 ```
 
 **Cuándo existe el documento.** Solo para jornadas **cerradas**, y solo desde que alguien la miró
 por primera vez: Métricas, Estadísticas Generales o la Liquidación de asistencias. La jornada en
-curso no tiene foto: se calcula cada vez, porque congelarla daría un número que enseguida es falso.
-Una noche sin pedidos también guarda su foto (en cero), para no volver a leerla.
+curso no tiene resumen guardado: se calcula cada vez, porque congelarla daría un número que
+enseguida es falso. Una noche sin pedidos también guarda su resumen (en cero), para no volver a
+leerla.
 
-**Cuándo se regenera.** Nunca sola. La borra `invalidarFotoDePedido(pedido)` cuando alguien cancela
-un pedido, elimina un ticket o cierra un delivery **de una jornada ya cerrada** —cambiaron los
-hechos— y el siguiente que la mire la reconstruye. Cambiar código no regenera nada: si mañana se
-agrega una categoría a `CATEGORIAS_COMBOS`, agosto sigue diciendo lo que era cierto en agosto.
+**Cuándo se regenera.** Nunca solo. Lo borra `actualizarPedidoYResumen()`, **en la misma
+escritura** que corrige el pedido, cuando alguien entrega, anula, rechaza un MP, cierra un viaje o
+restaura un pedido **de una jornada ya cerrada** —cambiaron los hechos—, y el siguiente que la
+mire lo reconstruye. También se rehace si sube `VERSION_RESUMEN_DIARIO`. Cambiar código sin subir
+la versión no regenera nada: si mañana se agrega una categoría a `CATEGORIAS_COMBOS`, agosto sigue
+diciendo lo que era cierto en agosto.
 
-> [!note] El detalle de cada entrega no está en la foto
-> Las Métricas de la jefa de deliverys muestran cada viaje con su dirección, pero la foto guarda
+> [!note] El detalle de cada entrega no está en el resumen guardado
+> Las Métricas de la jefa de deliverys muestran cada viaje con su dirección, pero el resumen guarda
 > solo el resumen por repartidor: el detalle ya está en los pedidos. Hasta sep-2026 este bloque
 > tenía `totalMonto` y `totalCobrado`, que sumaban el total aunque fuera MP. Ver
 > [[Reglas de negocio#Deliverys: qué se cobra en la puerta y cuánto cobra el repartidor]].

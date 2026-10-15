@@ -16,14 +16,16 @@ const baseDe = (registro) => {
 
 // Muestra el arqueo de la jornada en curso. Los datos los trae la Caja al abrir, con
 // obtenerArqueo(): los calcula desde los pedidos, no los lee de un contador. No hace
-// falta que se actualice solo, porque el arqueo se mira al cierre.
+// falta que se actualice solo, porque el arqueo se mira al cierre. Suman solo los
+// pedidos ENTREGADOS (auditoría 11-10-2026).
 //
 // Es también lo que el encargado necesita para cerrar la noche:
+// - lo cobrado que todavía no se entregó, aparte: no suma hasta que se entrega;
 // - lo que se le paga a cada repartidor: la base de su asistencia (`registros`, el
 //   documento de asistencias de la noche) más sus envíos;
 // - los viajes que volvieron sin entregar y siguen sin anular;
 // - los vueltos que los admins tienen que transferir, con un botón para copiarlos.
-const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinEntregar = [], fecha, isLoading }) => {
+const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinEntregar = [], cobradosSinEntregar = null, fecha, isLoading }) => {
     const totalEfectivo = resumen?.totalEfectivo || 0;
     const efectivoLocal = resumen?.efectivoLocal || 0;
     const efectivoEnvio = resumen?.efectivoEnvio || 0;
@@ -122,13 +124,24 @@ const ResumenDiario = ({ isOpen, onClose, resumen, registros, vueltos = [], sinE
                             </div>
                         </div>
 
+                        {/* Lo que el arqueo de arriba todavía no cuenta: cobrado, pero en la
+                            cocina, en el mostrador o en la calle. */}
+                        {cobradosSinEntregar?.pedidos > 0 && (
+                            <div className="alert alert-warning mt-4 mb-0" role="alert">
+                                <i className="fa-solid fa-hourglass-half me-1"></i>
+                                Cobrados todavía sin entregar: <strong>{cobradosSinEntregar.pedidos}</strong>{" "}
+                                {cobradosSinEntregar.pedidos === 1 ? "pedido" : "pedidos"},{" "}
+                                <strong>{fmtPesos(cobradosSinEntregar.monto)}</strong>. No suman al arqueo hasta que se entregan.
+                            </div>
+                        )}
+
                         {sinEntregar.length > 0 && (
                             <div className="alert alert-danger mt-4 mb-0" role="alert">
                                 <i className="fa-solid fa-rotate-left me-1"></i>
                                 <strong>{sinEntregar.length}</strong> {sinEntregar.length === 1 ? "pedido volvió" : "pedidos volvieron"} sin
                                 entregar y {sinEntregar.length === 1 ? "sigue" : "siguen"} sin anular
-                                ({sinEntregar.map((p) => p.codigo).join(", ")}). Mientras tanto suman al arqueo como
-                                cobrados: anulalos desde F3.
+                                ({sinEntregar.map((p) => p.codigo).join(", ")}). No suman al arqueo, pero siguen abiertos
+                                en la lista de deliverys: anulalos desde F3.
                             </div>
                         )}
 

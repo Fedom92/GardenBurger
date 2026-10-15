@@ -1,8 +1,7 @@
 import React from "react";
 import { Modal, Accordion } from "react-bootstrap";
-import moment from "moment";
 import { METODOS_PAGO, etiquetaPago } from "../../../Utils/Constantes";
-import { fmtPesos } from "../../../Utils/formato";
+import { fmtPesos, fmtHora } from "../../../Utils/formato";
 
 // Una cifra del resumen de la noche.
 const Resumen = ({ titulo, valor, destacado = false }) => (
@@ -104,8 +103,8 @@ const ModalMetricasDelivery = ({ isOpen, onClose, liquidacion, jornada, enCurso 
                                                                 {e.sinEntregar && <small className="d-block text-danger">Sin entregar</small>}
                                                                 {!e.sinEntregar && e.anulado && <small className="d-block text-danger">Anulado</small>}
                                                             </td>
-                                                            <td>{e.salidaTimestamp?.toDate ? moment(e.salidaTimestamp.toDate()).format("HH:mm") : "—"}</td>
-                                                            <td>{e.finTimestamp?.toDate ? moment(e.finTimestamp.toDate()).format("HH:mm") : "—"}</td>
+                                                            <td>{fmtHora(e.salidaTimestamp)}</td>
+                                                            <td>{fmtHora(e.finTimestamp)}</td>
                                                             <td>{e.direccion || "—"}</td>
                                                             <td>{e.zona}</td>
                                                             <td>{fmtPesos(e.envio)}</td>

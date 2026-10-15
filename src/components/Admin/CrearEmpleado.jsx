@@ -39,7 +39,9 @@ const CrearEmpleado = (props) => {
     // Un empleado sin acceso no tiene correo ni contraseña que validar.
     if (ROLES[data.rol]?.sinAcceso) return null;
 
-    if (!data.correo || !/@[^.]+\.com(\.\w+)?$/.test(data.correo)) {
+    // Cualquier dominio con forma de correo (auditoría 11-10-2026): la regla vieja
+    // exigía ".com" y rechazaba un @outlook.es o un @dominio.net válidos.
+    if (!data.correo || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.correo)) {
       return "Correo electrónico inválido";
     }
 

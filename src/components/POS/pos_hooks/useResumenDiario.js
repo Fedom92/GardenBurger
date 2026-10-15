@@ -1,7 +1,8 @@
 import moment from "moment";
-import { getDocs, getDoc, setDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, writeBatch, Timestamp } from "firebase/firestore";
+import { getDocs, getDoc, setDoc, query, where, orderBy, limit, serverTimestamp, writeBatch, Timestamp } from "firebase/firestore";
 import { db, colSucursal, docSucursal, colDeSucursal, docDeSucursal } from "../../../firebaseConfig/firebase";
-import { getFechaComercial, getFechaComercialDe, getRangoDeJornada, jornadaEstaAbierta } from "../../../Utils/fechaComercial";
+import { getFechaComercial, getFechaComercialDe, getRangoDeJornada, jornadaEstaAbierta, momentDeJornada, jornadaQueEmpieza, momentDeHoy } from "../../../Utils/fechaComercial";
+import { FORMATO_INPUT_FECHA } from "../../../Utils/formato";
 import { CATEGORIAS_COMBOS, ENVIOS_LOCALES, ESTADOS, SUBESTADOS_MOTODELIVERY, METODOS_PAGO, DESTINO_VUELTO } from "../../../Utils/Constantes";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,36 +18,40 @@ import { CATEGORIAS_COMBOS, ENVIOS_LOCALES, ESTADOS, SUBESTADOS_MOTODELIVERY, ME
 // mal, es porque los pedidos están mal, y eso se ve mirando los pedidos.
 //
 // El resultado se guarda en `resumenDiario/{DD-MM-YYYY}`, un DOCUMENTO de Firestore
-// con los números de esa noche ya calculados. En el código y en el vault se le dice
-// FOTO: queda congelado como estaba. Sirve para que Métricas y Estadísticas cuesten
-// 1 lectura por noche y sucursal en vez de releer todos sus pedidos.
+// con los números de esa noche ya calculados: el RESUMEN GUARDADO. Queda congelado
+// como estaba. Sirve para que Métricas y Estadísticas cuesten 1 lectura por noche y
+// sucursal en vez de releer todos sus pedidos.
 //
-// Las reglas de la foto, y el porqué de cada una:
+// Las reglas del resumen guardado, y el porqué de cada una:
 //
 //  1. Jornada ABIERTA: se calcula siempre, no se guarda nada. Todavía se está
 //     moviendo, congelarla daría un número que enseguida es falso.
-//  2. Jornada CERRADA sin foto: se calcula una vez y se guarda. Las noches sin
-//     ventas también: una escritura, y no se vuelven a leer.
-//  3. Jornada CERRADA con foto: se usa la foto. No se recalcula sola, salvo que
-//     cambie VERSION_FOTO (ver abajo).
-//  4. Si alguien corrige LOS HECHOS —cancela o elimina un pedido de una jornada
-//     cerrada— borra su foto con `invalidarFotoDePedido()`, y el siguiente que la
-//     mire la reconstruye con los pedidos corregidos.
+//  2. Jornada CERRADA sin resumen guardado: se calcula una vez y se guarda. Las
+//     noches sin ventas también: una escritura, y no se vuelven a leer.
+//  3. Jornada CERRADA con resumen guardado: se usa ese. No se recalcula solo, salvo
+//     que cambie VERSION_RESUMEN_DIARIO (ver abajo).
+//  4. Si alguien corrige LOS HECHOS —entrega o anula un pedido de una jornada
+//     cerrada— lo escribe con `actualizarPedidoYResumen()`, que borra el resumen de
+//     esa noche en la misma escritura, y el siguiente que la mire lo reconstruye
+//     con los pedidos corregidos.
 //
 // Cambiar CÓDIGO no cambia la historia. Lo que depende de reglas que cambian —qué
 // cuenta como combo, qué zona cobra en mostrador, cuánto cuesta el envío— se
 // CONGELA en el pedido al escribirlo (`combos`, `esLocal`, `envio`), igual que el
-// valorHora en asistencias. Así una foto da lo mismo la saque quien la saque
-// y cuando la saque: es un caché de lecturas, no la que guarda la historia.
+// valorHora en asistencias. Así un resumen da lo mismo lo saque quien lo saque y
+// cuando lo saque: es un caché de lecturas, no el que guarda la historia.
 //
 // Por eso se puede VERSIONAR: si mañana Estadísticas necesita un campo nuevo, se
-// agrega acá, se sube VERSION_FOTO, y las fotos viejas se reconstruyen solas la
-// próxima vez que alguien las mire —una lectura por pedido, una sola vez—. Lo que
-// ya existía da exactamente igual, porque sale de los mismos hechos congelados.
-// Lo que NO se hace es cambiar el significado de un campo existente.
+// agrega acá, se sube VERSION_RESUMEN_DIARIO, y los resúmenes viejos se reconstruyen
+// solos la próxima vez que alguien los mire —una lectura por pedido, una sola vez—.
+// Lo que ya existía da exactamente igual, porque sale de los mismos hechos
+// congelados. Lo que NO se hace es cambiar el significado de un campo sin subir la
+// versión: las noches ya guardadas quedarían contadas con la regla anterior.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const VERSION_FOTO = 1;
+// 2 (auditoría 11-10-2026): suman solo los pedidos ENTREGADOS. Las noches guardadas
+// con la regla anterior —cobrado y no anulado— se recalculan solas al mirarlas.
+export const VERSION_RESUMEN_DIARIO = 2;
 
 // Si un renglón del carrito cuenta como combo. Los productos que comparten
 // categoría con los combos pero se venden sueltos salen de la lista `excludes`
@@ -61,13 +66,15 @@ export const esCombo = (item) => {
 export const contarCombos = (carrito = []) =>
     carrito.reduce((total, item) => (esCombo(item) ? total + (Number(item.cantidad) || 1) : total), 0);
 
-// Un pedido entra al arqueo si lo cobró un cajero y no quedó anulado.
+// Un pedido entra al arqueo cuando se ENTREGÓ (auditoría 11-10-2026). Antes
+// alcanzaba con que lo cobrara un cajero y no estuviera anulado, así que sumaban
+// también los que seguían en la cocina, esperando la transferencia o de vuelta sin
+// entregar. Lo cobrado que todavía no se entregó el F4 lo muestra aparte
+// (`cobradosSinEntregar`).
 //
 // `cajeroID` es lo que distingue un pedido cobrado de una solicitud web que nadie
-// atendió: esas nunca movieron plata, así que no suman ni restan. Y CANCELADO y
-// ELIMINADO son las dos formas de anular: la plata no entró.
-const entraAlArqueo = (p) =>
-    !!p.cajeroID && ![ESTADOS.CANCELADO, ESTADOS.ELIMINADO].includes(p.estado);
+// atendió: esas nunca movieron plata.
+const entraAlArqueo = (p) => !!p.cajeroID && p.estado === ESTADOS.FINAL;
 
 // Cuánto de un pedido fue efectivo y cuánto Mercado Pago.
 //
@@ -109,8 +116,8 @@ export const enLaCalle = (p) =>
 // Un viaje sin entregar (`sinEntregar`) o un pedido anulado no suma efectivo: no
 // hubo cobro.
 //
-// `entregas` es el detalle para la pantalla de la jefa (con las direcciones). La
-// foto del arqueo lo descarta: ya está en los pedidos y no hace falta duplicarlo.
+// `entregas` es el detalle para la pantalla de la jefa (con las direcciones). El
+// resumen guardado lo descarta: ya está en los pedidos y no hace falta duplicarlo.
 export const liquidarDeliverys = (pedidos = []) => {
     const porRepartidor = {};
 
@@ -155,11 +162,22 @@ export const liquidarDeliverys = (pedidos = []) => {
     return porRepartidor;
 };
 
-// Los viajes que volvieron sin entregar y todavía no se anularon. Mientras el
-// encargado no los elimine desde F3, el arqueo los sigue sumando como cobrados: el
-// F4 los muestra para que no se escapen.
+// Los viajes que volvieron sin entregar y todavía no se anularon. No suman al
+// arqueo —no se entregaron—, pero el pedido sigue abierto en la lista de la jefa
+// hasta que el encargado lo anule desde F3: el F4 los muestra para que no se escapen.
 export const sinEntregarPendientes = (pedidos = []) =>
     pedidos.filter((p) => p.sinEntregar && !estaAnulado(p));
+
+// Lo que un cajero cobró y todavía no se entregó: en la cocina, en el mostrador, en
+// la calle o esperando la transferencia. No suma al arqueo hasta que se entrega; el
+// F4 lo muestra aparte, para que el cierre sepa cuánta plata falta confirmar.
+export const cobradosSinEntregar = (pedidos = []) => {
+    const pendientes = pedidos.filter((p) => p.cajeroID && !estaAnulado(p) && p.estado !== ESTADOS.FINAL);
+    return {
+        pedidos: pendientes.length,
+        monto: pendientes.reduce((total, p) => total + (Number(p.total) || 0), 0),
+    };
+};
 
 // Los vueltos que los admins tienen que transferir al cierre: deliverys en efectivo
 // donde el cliente pidió el vuelto. El monto es el real si el repartidor ya volvió
@@ -208,7 +226,8 @@ const sumarEn = (mapa, k, valores) => {
 };
 
 // El resumen de una noche, calculado. Función pura: sin Firestore y sin estado,
-// así se puede verificar a mano con casos. Es lo que se guarda como foto.
+// así se puede verificar con casos (useResumenDiario.test.js). Es lo que se guarda
+// como resumen guardado.
 //
 // Tiene todo lo que usan Métricas (una parte) y Estadísticas (casi todo). Las
 // cifras principales van además hora por hora (`porHora`), para que un filtro de
@@ -235,7 +254,7 @@ export const calcularArqueo = (pedidos = []) => {
         deliverys: {},
     };
 
-    // La foto guarda el resumen de cada repartidor, sin el detalle de entregas.
+    // El resumen guardado lleva lo de cada repartidor, sin el detalle de entregas.
     const liquidacion = liquidarDeliverys(pedidos);
     for (const id of Object.keys(liquidacion)) {
         const { entregas, ...resumen } = liquidacion[id];
@@ -305,10 +324,10 @@ export const calcularArqueo = (pedidos = []) => {
 // <input type="date">), como ids DD-MM-YYYY. Cada día es la noche que empieza ese día.
 export const jornadasEntre = (desde, hasta) => {
     const lista = [];
-    const dia = moment(desde, "YYYY-MM-DD");
-    const fin = moment(hasta, "YYYY-MM-DD");
+    const dia = moment(desde, FORMATO_INPUT_FECHA);
+    const fin = moment(hasta, FORMATO_INPUT_FECHA);
     while (dia.isSameOrBefore(fin, "day")) {
-        lista.push(dia.format("DD-MM-YYYY"));
+        lista.push(jornadaQueEmpieza(dia));
         dia.add(1, "day");
     }
     return lista;
@@ -336,7 +355,7 @@ export const bloquesDeDias = (jornadas = []) => {
     const bloques = [];
     let anterior = null;
     for (const j of jornadas) {
-        const dia = moment(j, "DD-MM-YYYY");
+        const dia = momentDeJornada(j);
         if (anterior && dia.diff(anterior, "days") === 1) bloques[bloques.length - 1].push(j);
         else bloques.push([j]);
         anterior = dia;
@@ -344,7 +363,7 @@ export const bloquesDeDias = (jornadas = []) => {
     return bloques;
 };
 
-// Suma varias fotos —noches o sucursales— en una sola. Números se suman y los
+// Suma varios resúmenes —noches o sucursales— en uno solo. Números se suman y los
 // mapas se suman clave por clave; los textos (nombres, categorías) quedan con el
 // último no vacío. No suma lo que no es una cifra del período.
 const NO_SE_SUMA = ["fecha", "generadoEl", "version", "deliverys", "jornada", "sucursal"];
@@ -377,19 +396,20 @@ export const sumarResumenes = (resumenes = []) => {
 // cualquier sucursal (Métricas, Estadísticas, Historial).
 
 const refPedidos = (sucursal) => (sucursal ? colDeSucursal(sucursal, "pedidos") : colSucursal("pedidos"));
-const refFotos = (sucursal) => (sucursal ? colDeSucursal(sucursal, "resumenDiario") : colSucursal("resumenDiario"));
-const refFoto = (jornada, sucursal) =>
+const refResumenes = (sucursal) => (sucursal ? colDeSucursal(sucursal, "resumenDiario") : colSucursal("resumenDiario"));
+const refResumenDiario = (jornada, sucursal) =>
     sucursal ? docDeSucursal(sucursal, "resumenDiario", jornada) : docSucursal("resumenDiario", jornada);
 
-// Una foto sirve si es de este mecanismo (`generadoEl`) y de la versión actual.
-const fotoVigente = (data) => !!data?.generadoEl && data.version === VERSION_FOTO;
+// Un resumen guardado sirve si es de este mecanismo (`generadoEl`) y de la versión
+// actual.
+const resumenDiarioVigente = (data) => !!data?.generadoEl && data.version === VERSION_RESUMEN_DIARIO;
 
-// `fecha` es el inicio de la noche: es lo que permite pedir "las fotos entre tal y
-// tal día" en una sola consulta. El id DD-MM-YYYY no se puede ordenar por fecha.
-const armarFoto = (jornada, resumen) => ({
+// `fecha` es el inicio de la noche: es lo que permite pedir "los resúmenes entre tal
+// y tal día" en una sola consulta. El id DD-MM-YYYY no se puede ordenar por fecha.
+const armarResumenDiario = (jornada, resumen) => ({
     ...resumen,
     fecha: Timestamp.fromDate(getRangoDeJornada(jornada).inicio),
-    version: VERSION_FOTO,
+    version: VERSION_RESUMEN_DIARIO,
     generadoEl: serverTimestamp(),
 });
 
@@ -410,19 +430,20 @@ export const traerPedidosDeJornada = async (jornada, sucursal) => {
     return traerPedidosEntre(inicio, fin, sucursal);
 };
 
-// El arqueo de UNA jornada, con la foto como caché. Ver las reglas de arriba.
+// El arqueo de UNA jornada, con el resumen guardado como caché. Ver las reglas de
+// arriba.
 //
 // Devuelve { arqueo, calculado, pedidos }: `calculado` dice si salió de los pedidos
-// (true) o de la foto (false), para que la pantalla pueda avisar que es
+// (true) o del resumen guardado (false), para que la pantalla pueda avisar que es
 // provisorio. `pedidos` viene solo cuando se leyeron: el F4 arma con ellos la lista
-// de vueltos y los viajes sin entregar, sin volver a leer.
+// de vueltos, los viajes sin entregar y lo cobrado sin entregar, sin volver a leer.
 export const obtenerArqueo = async (jornada = getFechaComercial(), sucursal) => {
     const abierta = jornadaEstaAbierta(jornada);
 
     if (!abierta) {
-        const foto = await getDoc(refFoto(jornada, sucursal));
-        if (foto.exists() && fotoVigente(foto.data())) {
-            return { arqueo: foto.data(), calculado: false, pedidos: null };
+        const guardado = await getDoc(refResumenDiario(jornada, sucursal));
+        if (guardado.exists() && resumenDiarioVigente(guardado.data())) {
+            return { arqueo: guardado.data(), calculado: false, pedidos: null };
         }
     }
 
@@ -431,34 +452,34 @@ export const obtenerArqueo = async (jornada = getFechaComercial(), sucursal) => 
 
     // La jornada abierta no se congela: el número cambia con cada pedido.
     if (!abierta) {
-        await setDoc(refFoto(jornada, sucursal), armarFoto(jornada, arqueo));
+        await setDoc(refResumenDiario(jornada, sucursal), armarResumenDiario(jornada, arqueo));
     }
 
     return { arqueo, calculado: true, pedidos };
 };
 
-// Las fotos de un RANGO de noches de una sucursal, para Métricas y Estadísticas.
-// `desde` y `hasta` son "YYYY-MM-DD". La noche en curso y las futuras no entran:
-// la de hoy tiene su propio botón, y se calcula sin guardarse (regla 1).
+// Los resúmenes de un RANGO de noches de una sucursal, para Métricas y
+// Estadísticas. `desde` y `hasta` son "YYYY-MM-DD". La noche en curso y las futuras
+// no entran: la de hoy tiene su propio botón, y se calcula sin guardarse (regla 1).
 //
-// Costo: 1 lectura por noche que ya tiene foto. Las que no, se calculan UNA vez
-// leyendo sus pedidos —una consulta por tanda de noches seguidas— y se guardan,
-// incluidas las que dan cero. Devuelve [{ jornada, ...resumen }] en orden.
+// Costo: 1 lectura por noche que ya tiene resumen guardado. Las que no, se calculan
+// UNA vez leyendo sus pedidos —una consulta por tanda de noches seguidas— y se
+// guardan, incluidas las que dan cero. Devuelve [{ jornada, ...resumen }] en orden.
 export const obtenerResumenes = async (desde, hasta, sucursal) => {
-    const hoy = moment(getFechaComercial(), "DD-MM-YYYY");
+    const hoy = momentDeHoy();
     const jornadas = jornadasEntre(desde, hasta)
-        .filter((j) => moment(j, "DD-MM-YYYY").isBefore(hoy, "day"));
+        .filter((j) => momentDeJornada(j).isBefore(hoy, "day"));
     if (!jornadas.length) return [];
 
-    const fotos = {};
+    const guardados = {};
     const snap = await getDocs(query(
-        refFotos(sucursal),
+        refResumenes(sucursal),
         where("fecha", ">=", Timestamp.fromDate(getRangoDeJornada(jornadas[0]).inicio)),
         where("fecha", "<=", Timestamp.fromDate(getRangoDeJornada(jornadas[jornadas.length - 1]).inicio))
     ));
-    snap.docs.forEach((d) => { if (fotoVigente(d.data())) fotos[d.id] = d.data(); });
+    snap.docs.forEach((d) => { if (resumenDiarioVigente(d.data())) guardados[d.id] = d.data(); });
 
-    const faltan = jornadas.filter((j) => !fotos[j]);
+    const faltan = jornadas.filter((j) => !guardados[j]);
     for (const bloque of bloquesDeDias(faltan)) {
         const pedidos = await traerPedidosEntre(
             getRangoDeJornada(bloque[0]).inicio,
@@ -471,15 +492,15 @@ export const obtenerResumenes = async (desde, hasta, sucursal) => {
         // De a 400 por batch: el límite de Firestore son 500 operaciones.
         for (let i = 0; i < nuevas.length; i += 400) {
             const batch = writeBatch(db);
-            nuevas.slice(i, i + 400).forEach(([j, r]) => batch.set(refFoto(j, sucursal), armarFoto(j, r)));
+            nuevas.slice(i, i + 400).forEach(([j, r]) => batch.set(refResumenDiario(j, sucursal), armarResumenDiario(j, r)));
             await batch.commit();
         }
         nuevas.forEach(([j, r]) => {
-            fotos[j] = { ...r, fecha: Timestamp.fromDate(getRangoDeJornada(j).inicio) };
+            guardados[j] = { ...r, fecha: Timestamp.fromDate(getRangoDeJornada(j).inicio) };
         });
     }
 
-    return jornadas.map((j) => ({ jornada: j, ...fotos[j] }));
+    return jornadas.map((j) => ({ jornada: j, ...guardados[j] }));
 };
 
 // La primera noche con pedidos de una sucursal: desde ahí arranca la evolución
@@ -490,22 +511,27 @@ export const primeraJornadaConPedidos = async (sucursal) => {
     return d ? getFechaComercialDe(d) : null;
 };
 
-// La llama quien corrija un pedido de una jornada ya cerrada: al cambiar los
-// hechos, la foto quedó vieja. Se borra y el siguiente que la mire la reconstruye.
-export const invalidarFoto = async (jornada, sucursal) => {
-    if (jornadaEstaAbierta(jornada)) return;   // la abierta no tiene foto
-    try {
-        await deleteDoc(refFoto(jornada, sucursal));
-    } catch (error) {
-        console.error("No se pudo invalidar el arqueo de la jornada", jornada, error);
-    }
+// El resumen guardado que deja viejo un cambio en el pedido: el de SU noche, no el
+// de hoy. Un pedido de las 00:30 de anoche que se anula a las 20:00 cambia la noche
+// anterior. Null si esa noche sigue abierta: todavía no tiene resumen guardado.
+const refResumenDeSuNoche = (pedido, sucursal) => {
+    const fecha = pedido?.timestamp?.toDate?.();
+    if (!fecha) return null;
+    const jornada = getFechaComercialDe(fecha);
+    return jornadaEstaAbierta(jornada) ? null : refResumenDiario(jornada, sucursal);
 };
 
-// Lo mismo, pero a partir del pedido que se acaba de corregir: la foto que queda
-// vieja es la de SU jornada, no la de hoy. Un pedido de las 00:30 de anoche que se
-// elimina a las 20:00 tiene que invalidar la noche anterior. Vive aca y no en cada
-// pantalla para que ningun camino nuevo tenga que acordarse de calcular la jornada.
-export const invalidarFotoDePedido = (pedido, sucursal) => {
-    if (!pedido?.timestamp?.toDate) return Promise.resolve();
-    return invalidarFoto(getFechaComercialDe(pedido.timestamp.toDate()), sucursal);
+// Cambia un pedido y, si su noche ya cerró, borra el resumen guardado de esa noche
+// en la MISMA escritura (auditoría 11-10-2026). Separadas, un corte entre las dos
+// dejaba el pedido corregido y el resumen viejo, y Métricas seguía mostrando el
+// número anterior; y si fallaba el borrado, nadie se enteraba. Lo usan los caminos
+// que cambian lo que cuenta el arqueo: entregar, anular, rechazar un MP, cerrar un
+// viaje y restaurar. Vive acá y no en cada pantalla para que ningún camino nuevo
+// tenga que acordarse de calcular la jornada del pedido.
+export const actualizarPedidoYResumen = (refPedido, pedido, cambios, sucursal) => {
+    const batch = writeBatch(db);
+    batch.update(refPedido, cambios);
+    const resumen = refResumenDeSuNoche(pedido, sucursal);
+    if (resumen) batch.delete(resumen);
+    return batch.commit();
 };

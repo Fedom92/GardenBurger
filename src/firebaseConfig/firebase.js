@@ -70,7 +70,7 @@ export const auth = initializeAuth(app, { persistence: browserSessionPersistence
 export const storage = getStorage(app);
 
 export const verifCredenciales = EmailAuthProvider.credential;
-export { signOut, reauthenticateWithCredential, updatePassword, updateProfile, updateEmail, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
+export { signOut, reauthenticateWithCredential, updatePassword, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
 
 // ── Sucursal del staff ─────────────────────────────────────────────────
 // La setea únicamente AuthContext al loguear (userData.sucursal) y la limpia

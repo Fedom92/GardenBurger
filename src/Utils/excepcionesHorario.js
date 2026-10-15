@@ -23,21 +23,19 @@ import {
     collection, doc, writeBatch, serverTimestamp, deleteField, Timestamp,
     getDocs, query, orderBy, limit, startAfter,
 } from "firebase/firestore";
-import moment from "moment";
 import { db } from "../firebaseConfig/firebase";
-import { getFechaComercial } from "./fechaComercial";
+import { momentDeJornada, momentDeHoy } from "./fechaComercial";
 
 export const EXCEPCIONES_POR_PAGINA = 20;
 
 const colExcepciones = (sucursalId) => collection(db, "sucursales", sucursalId, "excepcionesHorario");
-const aMoment = (jornada) => moment(jornada, "DD-MM-YYYY");
 
 // Las jornadas que ya pasaron salen de la copia de la web: la web solo mira la de
 // hoy, y el registro sigue en la subcolección. Se aprovecha cada escritura para
 // limpiarlas, así que el mapa no crece.
 const jornadasVencidas = (excepcionesWeb = {}) => {
-    const hoy = aMoment(getFechaComercial());
-    return Object.keys(excepcionesWeb).filter((j) => aMoment(j).isBefore(hoy, "day"));
+    const hoy = momentDeHoy();
+    return Object.keys(excepcionesWeb).filter((j) => momentDeJornada(j).isBefore(hoy, "day"));
 };
 
 const sinVencidas = (excepcionesWeb = {}) => {
@@ -65,7 +63,7 @@ export const guardarExcepcion = async (sucursal, { jornada, abierta, abre, cierr
     const registro = {
         jornada,
         // Para ordenar: el id DD-MM-YYYY no ordena por fecha.
-        fecha: Timestamp.fromDate(aMoment(jornada).toDate()),
+        fecha: Timestamp.fromDate(momentDeJornada(jornada).toDate()),
         abierta,
         ...horario,
         ...motivoCierre,

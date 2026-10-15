@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import '../../style/Main.css';
 import TicketImpresion from './TicketImpresion';
 import VerPedidoModal from './VerPedidoModal';
-import moment from "moment";
+import { fmtHora } from "../../Utils/formato";
 import { ESTADOS } from "../../Utils/Constantes";
 import { getItemsCocina, destinoPedidoListo } from "../../Utils/ruteoPedido";
 import { avisarSinConexion, sinConexion } from "../../Utils/avisos";
@@ -186,7 +186,7 @@ const PedidosCocinando = ({ onCountChange, onVolverAEspera }) => {
                                         <div className="card border border-warning h-100">
                                             <div className="card-header bg-warning bg-opacity-25">
                                                 <div className="d-flex justify-content-between align-items-center">
-                                                    <strong>{moment(pedido.timestamp?.toDate()).format("HH:mm")}</strong>
+                                                    <strong>{fmtHora(pedido.timestamp)}</strong>
                                                     <span className="badge bg-dark fs-5 p-2">{pedido.codigo}</span>
                                                 </div>
                                                 <h6 className="mb-0">{pedido.nombre}</h6>

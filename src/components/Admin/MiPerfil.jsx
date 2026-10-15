@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { ROLES } from "../../Utils/Constantes";
 import EditClave from "./EditClave";
 import "../../style/Main.css"
-import moment from 'moment';
+import { fmtFecha } from "../../Utils/formato";
 
 // Perfil de solo lectura. El empleado no edita sus propios datos: si algo está
 // mal se lo avisa al administrador, que lo corrige desde el PanelAdmin. Lo
@@ -26,11 +26,9 @@ const MiPerfil = () => {
   const [mostrarPerfil, setMostrarPerfil] = useState(true);
   const [modalShowEditClave, setModalShowEditClave] = useState(false);
 
-  // Los documentos viejos no tienen timestamp: sin el guard, moment(undefined)
-  // devuelve la fecha de hoy y la muestra como si fuera el alta.
-  const fechaAlta = userData?.timestamp?.toDate
-    ? moment(userData.timestamp.toDate()).format("DD/MM/YYYY")
-    : "—";
+  // Los documentos viejos no tienen timestamp: fmtFecha devuelve "—" en vez de la
+  // fecha de hoy (que es lo que da moment(undefined)).
+  const fechaAlta = fmtFecha(userData?.timestamp);
 
   const llevaMoto = !!(userData?.patente || userData?.marcaMoto);
 

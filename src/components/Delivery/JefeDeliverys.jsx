@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { collection, updateDoc, query, getDocs, where, orderBy, serverTimestamp, onSnapshot, Timestamp } from "firebase/firestore";
 import { db, colSucursal, docSucursal } from "../../firebaseConfig/firebase";
-import { liquidarDeliverys, repartirPago, invalidarFotoDePedido } from "../POS/pos_hooks/useResumenDiario";
+import { liquidarDeliverys, repartirPago, actualizarPedidoYResumen } from "../POS/pos_hooks/useResumenDiario";
 import { getFechaComercial, getFechaComercialDe, getRangoDeJornada } from "../../Utils/fechaComercial";
 import '../../style/Main.css';
 import TablaGenerica from "../../Utils/TablaGenerica";
 import ModalPedidoDelivery from "./delivery_modales/ModalPedidoDelivery";
 import ModalMetricasDelivery from "./delivery_modales/ModalMetricasDelivery";
 import Swal from "sweetalert2";
-import moment from "moment";
 import { ESTADOS, SUBESTADOS_MOTODELIVERY, METODOS_PAGO, DESTINO_VUELTO, etiquetaPago } from "../../Utils/Constantes";
 import { useAuth } from "../../context/AuthContext";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
-import { fmtPesos } from "../../Utils/formato";
-import { avisarSinConexion, sinConexion } from "../../Utils/avisos";
+import { fmtPesos, fmtHora } from "../../Utils/formato";
+import { avisarSinConexion, avisarErrorDeCarga, sinConexion } from "../../Utils/avisos";
 
 // La columna "Vuelto": qué pasa con la diferencia cuando el cliente paga con un
 // billete más grande. La moto no lleva cambio: o el repartidor trae esa plata (los
@@ -29,7 +28,14 @@ const textoVuelto = (p) => {
 
 const JefeDeliverys = () => {
     const { userData } = useAuth();
+    // "Entregado sin repartidor" es solo de la jefa (decidido 13-10-2026): el
+    // encargado entra al módulo pero no ve el botón.
+    const esJefaDeliverys = userData?.rol === process.env.REACT_APP_jefeDeliverys;
     const [pedidos, setPedidos] = useState([]);
+    // La lista del último snapshot, para leerla DESPUÉS de un Swal: la del render
+    // del click puede estar vieja si mientras el cartel preguntaba salió el
+    // repartidor (igual que en PendientesMP y ATP).
+    const pedidosVigentes = useRef([]);
     const [cerrados, setCerrados] = useState([]);
     const [deliverys, setDeliverys] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -77,7 +83,9 @@ const JefeDeliverys = () => {
     useEffect(() => {
         setIsLoading(true);
         const unsubscribe = onSnapshot(pedidosCollection.current, (snap) => {
-            setPedidos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            pedidosVigentes.current = lista;
+            setPedidos(lista);
             setIsLoading(false);
         }, (error) => {
             console.error('Error listener deliverys:', error);
@@ -92,7 +100,14 @@ const JefeDeliverys = () => {
             avisarSinConexion("las métricas de delivery");
         });
 
-        getDocs(deliverysCollection.current).then(snap => getDeliverys(snap));
+        // Sin repartidores no se puede asignar ningún pedido: que se sepa por qué el
+        // selector está vacío.
+        getDocs(deliverysCollection.current)
+            .then(snap => getDeliverys(snap))
+            .catch((error) => {
+                console.error('Error cargando los repartidores:', error);
+                avisarErrorDeCarga("los repartidores");
+            });
 
         return () => {
             unsubscribe();
@@ -101,7 +116,7 @@ const JefeDeliverys = () => {
     }, [getDeliverys]);
 
     // Las Métricas: la misma cuenta que ve el encargado en su F4. Solo los pedidos de
-    // ESTA noche: uno de anoche que se cerró hoy es de la foto de anoche, igual que
+    // ESTA noche: uno de anoche que se cerró hoy es del resumen de anoche, igual que
     // en el arqueo.
     const liquidacion = useMemo(() => liquidarDeliverys(
         cerrados.filter((p) => p.timestamp?.toDate && getFechaComercialDe(p.timestamp.toDate()) === jornada)
@@ -157,6 +172,13 @@ const JefeDeliverys = () => {
                 Swal.fire({ title: '¡Listo!', text: 'Repartidor en camino.', icon: 'success', timer: 1500, showConfirmButton: false });
 
             } else if (nuevoEstado === SUBESTADOS_MOTODELIVERY.FIN) {
+                // Un viaje sin repartidor no se le paga a nadie ni queda quién lo
+                // hizo: pasa si se lo desasignó con el viaje en curso (auditoría
+                // 11-10-2026). Reasignarlo a otro sigue permitido.
+                if (!pedido.deliveryID) {
+                    Swal.fire('Falta el repartidor', 'Asigná quién hizo el viaje antes de confirmar la entrega.', 'warning');
+                    return;
+                }
                 updates.estado = ESTADOS.FINAL;
                 updates.deliveryFinTimestamp = serverTimestamp();
                 const monto = Number(pagaronCon);
@@ -164,16 +186,12 @@ const JefeDeliverys = () => {
                     updates.pagaronCon = monto;
                 }
 
-                // Una sola escritura: el pedido. Las metricas del repartidor se
-                // calculan desde los pedidos de la jornada (ver useResumenDiario), asi
-                // que no hay contador que mantener en paralelo ni riesgo de que el
-                // pedido quede finalizado y la metrica perdida.
-                await updateDoc(pedidoDoc, updates);
-
-                // Cerrar la entrega cambia las metricas de ese repartidor. Si el pedido
-                // es de una jornada ya cerrada -un delivery de anoche que se rinde hoy-,
-                // su foto quedo vieja y hay que borrarla.
-                await invalidarFotoDePedido(pedido);
+                // Una sola escritura. Las metricas del repartidor se calculan desde los
+                // pedidos de la jornada (ver useResumenDiario), asi que no hay contador
+                // que mantener en paralelo. Si el pedido es de una jornada ya cerrada
+                // -un delivery de anoche que se rinde hoy-, su resumen guardado se
+                // borra en la misma escritura.
+                await actualizarPedidoYResumen(pedidoDoc, pedido, updates);
 
                 Swal.fire('¡Éxito!', 'Pedido entregado y finalizado.', 'success');
             }
@@ -194,6 +212,11 @@ const JefeDeliverys = () => {
     const volvioSinEntregar = async (pedidoId) => {
         const pedido = pedidos.find(p => p.id === pedidoId);
         if (!pedido) return;
+        // Igual que al confirmar la entrega: el envío se le paga a quien hizo el viaje.
+        if (!pedido.deliveryID) {
+            Swal.fire('Falta el repartidor', 'Asigná quién hizo el viaje antes de cerrarlo.', 'warning');
+            return;
+        }
 
         const { isConfirmed } = await Swal.fire({
             title: '¿Volvió sin entregar?',
@@ -209,17 +232,63 @@ const JefeDeliverys = () => {
 
         await ejecutar(async () => {
             try {
-                await updateDoc(docSucursal("pedidos", pedidoId), {
+                await actualizarPedidoYResumen(docSucursal("pedidos", pedidoId), pedido, {
                     estadoDelivery: SUBESTADOS_MOTODELIVERY.FIN,
                     deliveryFinTimestamp: serverTimestamp(),
                     sinEntregar: true,
                 });
-                await invalidarFotoDePedido(pedido);
                 setPedidoSeleccionado(null);
                 Swal.fire('Viaje cerrado', 'Avisale al encargado para que anule el pedido desde F3.', 'success');
             } catch (error) {
                 console.error('Error cerrando el viaje sin entregar:', error);
                 Swal.fire('Error', 'No se pudo cerrar el viaje. Revisá la conexión e intentá de nuevo.', 'error');
+            }
+        });
+    };
+
+    // Un delivery que no salió: el cliente lo vino a buscar o lo llevó alguien del
+    // local (auditoría 11-10-2026). Pasa a ENTREGADO sin viaje: no cuenta en la
+    // liquidación de ningún repartidor —no hubo envío que pagar—, pero sí en el
+    // arqueo. Si tenía un repartidor asignado se le saca, para que no figure un viaje
+    // que no hizo. Queda quién lo marcó y cuándo.
+    const entregadoSinRepartidor = async (pedidoId) => {
+        const pedido = pedidos.find(p => p.id === pedidoId);
+        if (!pedido) return;
+
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Entregado sin repartidor?',
+            text: `El pedido ${pedido.codigo} pasa a entregado sin viaje: no se le paga envío a ningún repartidor y la plata cuenta en la caja.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, se entregó',
+            cancelButtonText: 'Cancelar',
+        });
+        if (!isConfirmed || sinConexion()) return;
+
+        await ejecutar(async () => {
+            // Va contra la lista vigente: mientras el cartel preguntaba pudo salir
+            // el repartidor o cerrarse el pedido.
+            const actual = pedidosVigentes.current.find(p => p.id === pedidoId);
+            if (!actual || actual.estadoDelivery) {
+                Swal.fire('El pedido cambió', 'Ya salió con un repartidor o se cerró. Revisalo en la lista.', 'info');
+                return;
+            }
+            try {
+                await actualizarPedidoYResumen(docSucursal("pedidos", pedidoId), actual, {
+                    estado: ESTADOS.FINAL,
+                    deliveryAsignado: "",
+                    deliveryID: "",
+                    entregaSinRepartidor: userData.nombreCompleto,
+                    entregaSinRepartidorID: userData.id,
+                    entregaSinRepartidorTimestamp: serverTimestamp(),
+                });
+                setPedidoSeleccionado(null);
+                Swal.fire('¡Entregado!', 'El pedido quedó entregado, sin viaje.', 'success');
+            } catch (error) {
+                console.error('Error marcando entregado sin repartidor:', error);
+                Swal.fire('Error', 'No se pudo marcar el pedido. Revisá la conexión e intentá de nuevo.', 'error');
             }
         });
     };
@@ -243,7 +312,7 @@ const JefeDeliverys = () => {
         {
             accessorKey: "timestamp",
             header: "Hora",
-            cell: ({ getValue }) => moment(getValue()?.toDate()).format("HH:mm"),
+            cell: ({ getValue }) => fmtHora(getValue()),
         },
         {
             accessorKey: "envio.zona_envio",
@@ -359,6 +428,7 @@ const JefeDeliverys = () => {
                 onAsignarDelivery={asignarDelivery}
                 onMarcarEstado={marcarEstado}
                 onVolvioSinEntregar={volvioSinEntregar}
+                onEntregadoSinRepartidor={esJefaDeliverys ? entregadoSinRepartidor : undefined}
                 procesando={procesando}
             />
 

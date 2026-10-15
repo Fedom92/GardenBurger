@@ -67,7 +67,7 @@ valores en el tooltip: poner uno solo sería mentir.
 | Bruto | suma de `horas × valorHora` por día |
 | Descuentos | suma de `descuento` (monto en pesos) |
 | Neto | bruto − descuentos |
-| Envíos | solo repartidores: la suma de sus envíos en el período, de las fotos de cada noche (`deliverys[id].totalEnvios`) |
+| Envíos | solo repartidores: la suma de sus envíos en el período, del resumen guardado de cada noche (`deliverys[id].totalEnvios`) |
 | Total por empleado | neto + envíos |
 | **Total** | suma de los totales de todos los empleados del período y la sucursal |
 

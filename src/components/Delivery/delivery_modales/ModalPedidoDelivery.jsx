@@ -13,7 +13,9 @@ import { fmtPesos } from "../../../Utils/formato";
 // - Pago dividido: solo la parte en efectivo, que es también su pagaCon. El resto
 //   ya entró por MP.
 // - MP: nada. No se muestran ni el total ni pagaCon: no hay plata que manejar.
-const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDelivery, onMarcarEstado, onVolvioSinEntregar, procesando = false }) => {
+// `onEntregadoSinRepartidor` llega solo para la jefa de deliverys: sin él, el botón
+// no se muestra (el encargado entra al módulo pero no lo usa).
+const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDelivery, onMarcarEstado, onVolvioSinEntregar, onEntregadoSinRepartidor, procesando = false }) => {
     // Se carga a mano y sin precargar: con pagaCon ya escrito, confirmar sin mirar
     // es un error humano que no se ve. Por ahora el monto es libre.
     const [pagaronConInput, setPagaronConInput] = useState(pedido?.pagaronCon || "");
@@ -29,6 +31,9 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
     const tieneAsignado = Boolean(p.deliveryAsignado);
     // El selector va por `deliveryID`, que es lo que guarda el pedido. Por nombre,
     // corregir el nombre de un repartidor dejaba sus pedidos como "Sin asignar".
+    // Cerrar un viaje exige repartidor: es a quien se le paga el envío. Se puede
+    // quedar sin él si lo desasignan con el viaje en curso.
+    const sinRepartidor = !p.deliveryID;
 
     const esMP = p.metodoPago === METODOS_PAGO.MP.key;
     const esDividido = p.metodoPago === METODOS_PAGO.DIVIDIDO.key;
@@ -175,6 +180,19 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
 
             </Modal.Body>
             <Modal.Footer>
+                {/* Un delivery que no salió y se entregó igual: el cliente lo vino a
+                    buscar o lo llevó alguien del local. A la izquierda, lejos de
+                    Marcar Salida: es la excepción, no el camino de todos los días. */}
+                {onEntregadoSinRepartidor && !salio && !cerrado && (
+                    <button
+                        className="btn btn-outline-success me-auto"
+                        onClick={() => onEntregadoSinRepartidor(p.id)}
+                        disabled={procesando}
+                        title="Pasa a entregado sin viaje: no se le paga envío a ningún repartidor"
+                    >
+                        <i className="fa-solid fa-store"></i> Entregado sin repartidor
+                    </button>
+                )}
                 {tieneAsignado && !salio && !cerrado && (
                     <button
                         className="btn btn-warning"
@@ -184,13 +202,16 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                         <i className="fa-solid fa-motorcycle"></i> Marcar Salida
                     </button>
                 )}
+                {salio && sinRepartidor && (
+                    <small className="text-danger me-auto">Asigná quién hizo el viaje para poder cerrarlo.</small>
+                )}
                 {/* Sin cobro no hay "Pagaron con": este camino cierra el viaje igual,
                     porque se hizo y el envío se paga. */}
                 {salio && (
                     <button
-                        className="btn btn-outline-danger me-auto"
+                        className={`btn btn-outline-danger ${sinRepartidor ? "" : "me-auto"}`}
                         onClick={() => onVolvioSinEntregar(p.id)}
-                        disabled={procesando}
+                        disabled={procesando || sinRepartidor}
                     >
                         <i className="fa-solid fa-rotate-left"></i> Volvió sin entregar
                     </button>
@@ -199,7 +220,7 @@ const ModalPedidoDelivery = ({ isOpen, pedido, deliverys, onClose, onAsignarDeli
                     <button
                         className="btn btn-success"
                         onClick={confirmarEntrega}
-                        disabled={procesando}
+                        disabled={procesando || sinRepartidor}
                     >
                         <i className="fa-solid fa-check"></i> Confirmar Entrega
                     </button>
