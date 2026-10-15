@@ -103,3 +103,31 @@ export const fetchMenuPublico = () => {
     }
     return menuPromise;
 };
+
+// El catálogo de las pantallas públicas (el pedido web y /menu): productos,
+// categorías en su nroOrden y sucursales, de menu.json. Si el JSON no está, de
+// Firestore, con el mismo filtro con que se publica: todos los productos visibles y
+// todas las categorías en cada visita, y sin sucursales. Estaba escrito dos veces,
+// en el contexto del carrito y en /menu. Ojo (docs/Decisiones tecnicas.md): el
+// respaldo tapa la falla en silencio, y lo único que la delata es la factura.
+export const fetchCatalogoPublico = async () => {
+    try {
+        const menu = await fetchMenuPublico();
+        return {
+            productos: menu.productos || [],
+            categorias: [...(menu.categorias || [])].sort((a, b) => a.nroOrden - b.nroOrden),
+            sucursales: menu.sucursales || [],
+        };
+    } catch (error) {
+        console.warn("menu.json no disponible, se lee Firestore:", error);
+    }
+    const [productosSnap, categoriasSnap] = await Promise.all([
+        getDocs(query(collection(db, "productos"), where("visible", "==", true))),
+        getDocs(query(collection(db, "categorias"), orderBy("nroOrden", "asc"))),
+    ]);
+    return {
+        productos: productosSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !CATEGORIAS_SOLO_CAJA.includes(p.categoria)),
+        categorias: categoriasSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((c) => !CATEGORIAS_SOLO_CAJA.includes(c.nombre)),
+        sucursales: [],
+    };
+};

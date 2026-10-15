@@ -16,12 +16,15 @@ rutas del staff. Las páginas públicas no montan nada de sesión. Ver
 
 ```
 <App>
- └── <CartProvider>              ← global: carrito del menú público (localStorage)
-      └── <BrowserRouter>
-           ├── rutas públicas    ← SIN AuthContext
-           └── <Route element={<AuthContextProvider><LayoutStaff/></AuthContextProvider>}>
-                └── rutas de staff
+ └── <BrowserRouter>
+      ├── rutas públicas    ← SIN AuthContext ni ningún otro contexto
+      └── <Route element={<AuthContextProvider><LayoutStaff/></AuthContextProvider>}>
+           └── rutas de staff
 ```
+
+El carrito de la web no es un contexto: es un hook (`useCarritoWeb`) de la página del pedido.
+Hasta el 16-10-2026 había un `CartProvider` envolviendo toda la app, staff incluido. Ver
+[[Web publica#El carrito]].
 
 `LayoutStaff` ([[Mapa de archivos|RutasProtegidas.jsx]]) es el único lugar donde se llama a
 `sincronizarHoraServidor()`: así los visitantes públicos no gastan invocaciones de la Cloud
@@ -38,8 +41,8 @@ agrega con `lazy(() => import(...))`, no con `import` estático. Ver
 | Ruta | Componente | Guard |
 |---|---|---|
 | `/crear-solicitud` | `SeleccionSucursal` | **pública**, cerrada fuera de horario ([[Reglas de negocio#La web pública solo toma pedidos en horario]]) |
-| `/crear-solicitud/:sucursal` | `CrearSolicitud` | **pública**, cerrada fuera de horario. Código heredado: ver [[Web publica]] |
-| `/menu` | `Menu` | **pública**, pero sin links: todavía no está terminado |
+| `/crear-solicitud/:sucursal` | `CrearSolicitud` | **pública**, cerrada fuera de horario. Ver [[Web publica]] |
+| `/menu` | `Menu` | **pública**: la carta al día, con descarga en imagen y PDF. Ninguna pantalla la enlaza: la URL la comparte la dueña |
 | `/ver-pedido/:sucursal/:id` | `PaginaDetalle` | **pública**; el link vence a las 48 h |
 | `/` | `Login` | staff (sin guard) |
 | `/admin` | `PanelAdmin` | `RequireAuth` + `RequireAdmin`. En pestañas desde el 12-10-2026: `?tab=personal` (por defecto), `?tab=sucursales`, `?tab=envios` |

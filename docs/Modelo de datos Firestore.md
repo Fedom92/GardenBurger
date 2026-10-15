@@ -155,16 +155,16 @@ cliente: {
 {
   id, descripcion, categoria, precio, cantidad, subtotal,   // y el resto de la ficha del producto
   carritoItemId,        // uuid por línea: lo pone la Caja (también a las líneas de una solicitud al cargarla)
-  grupo: 0,             // solo líneas armadas en la web: identifica la línea mientras se arma el carrito
-  tipoExtra: "HAMBURGUESA" | "GENERAL" | "PAPAS",   // solo categoria EXTRA (PAPAS: hoy solo desde la Caja)
+  tipoExtra: "HAMBURGUESA" | "GENERAL" | "PAPAS",   // solo categoria EXTRA
   observaciones: "Sin pepino"
 }
 ```
 
 Los extras se asocian a su producto **por posición**: cada extra va inmediatamente después del
-producto al que pertenece. `grupo` no es un combo del arqueo (eso es `combos`, el número congelado
-en el pedido). Las solicitudes anteriores al 04-10-2026 pueden traer `combo` en vez de `grupo`, y
-`productoAsociado` (sacado el 14-10-2026): no los lee nadie.
+producto al que pertenece. La web arma el carrito con los extras dentro de cada línea y lo aplana
+así al confirmar (ver [[Web publica#El carrito]]). Las solicitudes viejas pueden traer `grupo`
+(hasta el 16-10-2026), `combo` (antes del 04-10-2026) o `productoAsociado` (hasta el 14-10-2026):
+no los lee nadie.
 
 ## `sucursales/{id}/resumenDiario/{DD-MM-YYYY}`
 
@@ -373,6 +373,6 @@ resto del bucket: lectura staff, escritura admin **y solo imágenes de hasta 5 M
 bucket tiene **CORS** configurado por `gsutil`, que es una capa aparte de las reglas — ver
 [[Decisiones tecnicas#`menu.json` depende de tres capas]].
 
-La sucursal de la URL pública **no se valida en las reglas** sino en el front: `Crearsolicitud`
-lee el doc de `sucursales` antes de crear (1 lectura) y rechaza si no existe. Ver
+La sucursal de la URL pública **no se valida en las reglas** sino en el front: `comprar`
+(`TuPedido`) lee el doc de `sucursales` antes de crear (1 lectura) y rechaza si no existe. Ver
 [[Mapa de operaciones Firestore]].

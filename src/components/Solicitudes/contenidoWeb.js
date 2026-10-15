@@ -2,18 +2,23 @@
 // web muestra su lugar marcado ("Foto pendiente", la red apagada), para que se
 // note qué falta.
 //
-// Para poner una foto: copiarla (JPG o WebP, unos 1200 px de ancho) a
-// src/img/marca/fotos/ e importarla acá, por ejemplo:
-//   import fotoSelector from "../../img/marca/fotos/selector.webp";
-//   export const FOTO_SELECTOR = fotoSelector;
+// Para cambiar una foto: copiarla (WebP o JPG, unos 1080 px de ancho) a
+// src/img/marca/fotos/ e importarla acá en lugar de la actual. Para sacarla, dejar
+// la constante en null.
+import fotoCocinero from "../../img/marca/fotos/cocinero.webp";
+import fotoHamburguesa from "../../img/marca/fotos/hamburguesa.webp";
 
-export const FOTO_SELECTOR = null; // arriba del selector de sucursal
-export const FOTO_CATALOGO = null; // arriba del catálogo
-export const FOTO_COCINA = null;   // en el seguimiento, mientras el pedido se cocina
+// El cocinero de espaldas (recorte de la pieza de redes "cocinero_espaldas"): la
+// misma foto arriba del selector y en el seguimiento mientras se cocina, así baja
+// una sola vez.
+export const FOTO_SELECTOR = fotoCocinero;
+export const FOTO_COCINA = fotoCocinero;
+// La hamburguesa de "Unite al club", recortada debajo del texto.
+export const FOTO_CATALOGO = fotoHamburguesa;
 
 // Las redes del pie, con la URL completa (https://www.instagram.com/…). Sin URL se
-// muestran apagadas, como lugar a completar.
+// muestran apagadas, como lugar a completar. El WhatsApp no va acá: sale del
+// teléfono de cada sucursal.
 export const REDES = [
-    { nombre: "Instagram", url: "" },
-    { nombre: "Facebook", url: "" },
+    { nombre: "Instagram", url: "https://www.instagram.com/garden_burger_" },
 ];

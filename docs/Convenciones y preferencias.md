@@ -103,7 +103,7 @@ del hook se bloquean mutuamente, que es lo que se quiere en `PendientesMP` (apro
 > [!important] Lo que crea un documento no se puede repetir
 > Casi todas las escrituras sobre pedidos son `updateDoc` de un campo a un valor fijo: repetirlas
 > da el mismo resultado. Lo peligroso es lo que **crea** un documento, porque el id se genera en
-> cada llamada: `Caja.guardarBD` y `Crearsolicitud.comprar` crean pedidos, y las altas del admin
+> cada llamada: `Caja.guardarBD` y `comprar` de la web (`TuPedido`) crean pedidos, y las altas del admin
 > (`addDoc` de producto, categoría, envío, cliente y repartidor) crean el resto. Todas necesitan
 > `useAccionUnica`; un `useState` con `disabled` no alcanza. Todas lo tienen: las altas del admin
 > desde el 26-09-2026, por el [[Auditoria 2026-09-26#13 · P3 · Las altas del admin no tienen guard contra doble click|hallazgo #13]].

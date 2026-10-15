@@ -5,7 +5,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Login queda en el chunk principal: es la landing del staff y trae Main.css.
 import Login from './Login_Navs/Login';
-import { CartProvider } from './context/CartContext';
 import { AuthContextProvider } from "./context/AuthContext";
 import { Cargando, RequireAuth, RequireSucursal, RequireAdmin, RequireRole, LayoutStaff } from './Login_Navs/RutasProtegidas';
 import { ToastContainer } from 'react-toastify';
@@ -31,60 +30,57 @@ const Metricas = lazy(() => import("./components/Metricas/Metricas"));
 const ATP = lazy(() => import("./components/ATP/ATP"));
 const Asistencias = lazy(() => import("./components/Asistencias/Asistencias"));
 const LiquidacionAsistencias = lazy(() => import("./components/Asistencias/LiquidacionAsistencias"));
-// Export nombrado: lazy() necesita un default.
-const PaginaDetalle = lazy(() => import('./components/Solicitudes/PaginaDetalle.jsx').then(m => ({ default: m.PaginaDetalle })));
+const PaginaDetalle = lazy(() => import("./components/Solicitudes/PaginaDetalle"));
 
 function App() {
   return (
     <div className="App mainpage">
-      <CartProvider>
-        <BrowserRouter>
-          <ToastContainer
-            autoClose={3000}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss={false}
-          />
-          {/* Esta frontera cubre las públicas y el Login. Las pantallas de staff
-              tienen la suya dentro de RequireAuth, para que la navegación no
-              parpadee mientras baja el chunk. */}
-          <Suspense fallback={<Cargando />}>
-            <Routes>
-              {/* Públicas: quedan fuera de AuthContext. No montan nada de sesión. */}
-              <Route path="/crear-solicitud" element={<SeleccionSucursal />} />
-              <Route path="/crear-solicitud/:sucursal" element={<CrearSolicitud />} />
-              <Route path="/menu" element={<Menu />} />
-              <Route path="/ver-pedido/:sucursal/:id" element={<PaginaDetalle />} />
-  
-              {/* Staff: AuthContext vive únicamente sobre esta rama */}
-              <Route element={<AuthContextProvider><LayoutStaff /></AuthContextProvider>}>
-                <Route path="/" element={<Login />} />
-                <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
-                <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
-                <Route path="/estadisticas" element={<RequireAuth><RequireAdmin><EstadisticasGenerales /></RequireAdmin></RequireAuth>} />
-                <Route path="/estadisticas-viejas" element={<RequireAuth><RequireAdmin><Estadisticas /></RequireAdmin></RequireAuth>} />
-                <Route path="/metricas" element={<RequireAuth><RequireAdmin><Metricas /></RequireAdmin></RequireAuth>} />
-                <Route path="/liquidacion" element={<RequireAuth><RequireAdmin><LiquidacionAsistencias /></RequireAdmin></RequireAuth>} />
-  
-                {/* Cada módulo, solo para su rol; el encargado entra a todos (auditoría
-                    11-10-2026). Son los mismos roles que muestra el menú (Navigation):
-                    sin esto, un cajero que escribía /gestion-cocina en la barra entraba. */}
-                <Route path="/pedidos-caja" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_cajero, process.env.REACT_APP_encargado]}><RequireSucursal><Caja /></RequireSucursal></RequireRole></RequireAuth>} />
-                <Route path="/jefe-deliverys" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_jefeDeliverys, process.env.REACT_APP_encargado]}><RequireSucursal><JefeDeliverys /></RequireSucursal></RequireRole></RequireAuth>} />
-                <Route path="/gestion-cocina" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_cocina, process.env.REACT_APP_encargado]}><RequireSucursal><Cocina /></RequireSucursal></RequireRole></RequireAuth>} />
-                <Route path="/historial-pedidos" element={<RequireAuth><RequireAdmin><HistorialPedidos /></RequireAdmin></RequireAuth>} />
-                <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />
-                <Route path="/gestion-atp" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_atp, process.env.REACT_APP_encargado]}><RequireSucursal><ATP /></RequireSucursal></RequireRole></RequireAuth>} />
-                {/* Solo el encargado carga asistencias; el admin las ve y corrige desde /liquidacion */}
-                <Route path="/asistencias" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_encargado]}><RequireSucursal><Asistencias /></RequireSucursal></RequireRole></RequireAuth>} />
-  
-                <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </CartProvider>
+      <BrowserRouter>
+        <ToastContainer
+          autoClose={3000}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss={false}
+        />
+        {/* Esta frontera cubre las públicas y el Login. Las pantallas de staff
+            tienen la suya dentro de RequireAuth, para que la navegación no
+            parpadee mientras baja el chunk. */}
+        <Suspense fallback={<Cargando />}>
+          <Routes>
+            {/* Públicas: quedan fuera de AuthContext. No montan nada de sesión. */}
+            <Route path="/crear-solicitud" element={<SeleccionSucursal />} />
+            <Route path="/crear-solicitud/:sucursal" element={<CrearSolicitud />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/ver-pedido/:sucursal/:id" element={<PaginaDetalle />} />
+
+            {/* Staff: AuthContext vive únicamente sobre esta rama */}
+            <Route element={<AuthContextProvider><LayoutStaff /></AuthContextProvider>}>
+              <Route path="/" element={<Login />} />
+              <Route path="/admin" element={<RequireAuth><RequireAdmin><PanelAdmin /></RequireAdmin></RequireAuth>} />
+              <Route path="/productos" element={<RequireAuth><RequireAdmin><Productos /></RequireAdmin></RequireAuth>} />
+              <Route path="/estadisticas" element={<RequireAuth><RequireAdmin><EstadisticasGenerales /></RequireAdmin></RequireAuth>} />
+              <Route path="/estadisticas-viejas" element={<RequireAuth><RequireAdmin><Estadisticas /></RequireAdmin></RequireAuth>} />
+              <Route path="/metricas" element={<RequireAuth><RequireAdmin><Metricas /></RequireAdmin></RequireAuth>} />
+              <Route path="/liquidacion" element={<RequireAuth><RequireAdmin><LiquidacionAsistencias /></RequireAdmin></RequireAuth>} />
+
+              {/* Cada módulo, solo para su rol; el encargado entra a todos (auditoría
+                  11-10-2026). Son los mismos roles que muestra el menú (Navigation):
+                  sin esto, un cajero que escribía /gestion-cocina en la barra entraba. */}
+              <Route path="/pedidos-caja" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_cajero, process.env.REACT_APP_encargado]}><RequireSucursal><Caja /></RequireSucursal></RequireRole></RequireAuth>} />
+              <Route path="/jefe-deliverys" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_jefeDeliverys, process.env.REACT_APP_encargado]}><RequireSucursal><JefeDeliverys /></RequireSucursal></RequireRole></RequireAuth>} />
+              <Route path="/gestion-cocina" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_cocina, process.env.REACT_APP_encargado]}><RequireSucursal><Cocina /></RequireSucursal></RequireRole></RequireAuth>} />
+              <Route path="/historial-pedidos" element={<RequireAuth><RequireAdmin><HistorialPedidos /></RequireAdmin></RequireAuth>} />
+              <Route path="/clientes" element={<RequireAuth><RequireAdmin><Clientes /></RequireAdmin></RequireAuth>} />
+              <Route path="/gestion-atp" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_atp, process.env.REACT_APP_encargado]}><RequireSucursal><ATP /></RequireSucursal></RequireRole></RequireAuth>} />
+              {/* Solo el encargado carga asistencias; el admin las ve y corrige desde /liquidacion */}
+              <Route path="/asistencias" element={<RequireAuth><RequireRole roles={[process.env.REACT_APP_encargado]}><RequireSucursal><Asistencias /></RequireSucursal></RequireRole></RequireAuth>} />
+
+              <Route path="/miPerfil" element={<RequireAuth><MiPerfil /></RequireAuth>} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
 
     </div>
   );

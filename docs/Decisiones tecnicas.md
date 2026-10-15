@@ -74,10 +74,10 @@ nunca. CRA hace el split solo con `import()`: no hace falta configurar nada.
 El fallback es `Cargando` (en `RutasProtegidas.jsx`), con el mismo `.loader` de `Main.css` que
 usan las pantallas. El CSS llega con `Login` y `Navigation`, que siguen en el chunk principal.
 
-> [!note] `PaginaDetalle` es export nombrado
-> `lazy()` necesita un default, así que se envuelve:
-> `import('./…/PaginaDetalle.jsx').then(m => ({ default: m.PaginaDetalle }))`. Si se agrega otra
-> pantalla con export nombrado, mismo truco.
+> [!note] `lazy()` necesita un export por defecto
+> Todas las pantallas lo tienen. Si alguna vez una exporta con nombre, se envuelve:
+> `import('./…/Pantalla').then(m => ({ default: m.Pantalla }))` (así estuvo `PaginaDetalle` hasta
+> el 16-10-2026).
 
 **Consecuencia**: la primera visita a cada pantalla muestra el loader un instante mientras baja su
 chunk; las siguientes no (queda cacheado). `Login` sigue eager a propósito: es la landing del staff
@@ -205,21 +205,34 @@ formato. Cero lecturas de Firestore, y menos descarga de Storage que antes.
 > La salida es "Subir archivo" y después **Publicar Menú**. Por decisión del dueño (28-09-2026) el
 > campo **no** rechaza links de Drive.
 
-## `html2pdf` se carga al tocar "Exportar a PDF"
+## Las páginas de /menu se arman con html2canvas
 
-**Qué**: `Menu.jsx` hace `await import('html2pdf.js/dist/html2pdf.min.js')` dentro de
-`exportarPDF`, no arriba.
+**Qué**: "Descargar imagen" y "Descargar PDF" de `/menu` (`exportarMenu.js`) copian la carta, la
+reparten en páginas de 450 × 800 fuera de la vista y sacan cada una con `html2canvas` al 2,4x:
+**1080 × 1920**, el tamaño de un estado de WhatsApp. El PDF (`jsPDF`) lleva las mismas páginas.
 
-**Por qué**: `html2pdf` arrastra `jspdf` y pesa varios cientos de KB, y solo sirve para ese botón
-(jspdf tenía además un advisory crítico, que se cerró al pasar a html2pdf 0.14 el 04-10-2026). Con el import dinámico queda en su propio chunk y el menú público no lo
-descarga hasta que alguien exporta. Se mantiene la dependencia porque la exportación **se usa**.
+**Por qué páginas y no una imagen larga**: la dueña sube la carta a sus estados, y un estado es
+una pantalla vertical; una imagen de 4.000 px de alto se ve diminuta. El PDF sirve para mandar
+por chat (los estados no aceptan PDF).
 
-**Por qué el `.min`**: el import apunta a `html2pdf.js/dist/html2pdf.min.js`, no al `main` del
-paquete. El `dist/html2pdf.js` de la 0.14 trae sus dependencias embebidas con comentarios
-`sourceMappingURL` a `.map` que el paquete no publica, y el `source-map-loader` de CRA tira un
-warning por cada uno en cada compilación. El `.min` es el mismo UMD (exporta la misma función,
-`html2canvas` externo) y sí trae su `.map`. Si una versión futura arregla el empaquetado, se puede
-volver a `import('html2pdf.js')`.
+**Cómo reparte**: agrega los ítems de a uno y, si el cuerpo de la página desborda, pasa el ítem a
+una página nueva. Mide con el layout real del navegador, así no hay alturas estimadas. La cabecera
+y el pie van en todas las páginas (cada estado se ve solo); un título nunca queda solo al pie, y
+una sección partida repite su título.
+
+**Lo que html2canvas no sabe dibujar**, y por eso:
+- **`font-stretch`**: los títulos son Archivo al 62% de ancho. Con la fuente variable de Google
+  se veían bien en pantalla, pero en la imagen salían anchos y encimados. Se usa "GB Display", un
+  recorte estático de Archivo (wdth 62, wght 900) en `src/fonts/`, con su licencia OFL al lado.
+- **Los gradientes cónicos**: el damero del CSS es un `repeating-conic-gradient`; en las páginas
+  se reemplaza por un mosaico dibujado en un canvas.
+- **`object-fit`**: no usarlo dentro de la carta.
+
+**Carga diferida**: `Menu.jsx` importa `exportarMenu.js` recién al tocar un botón, así
+`html2canvas` y `jspdf` quedan en su propio chunk y la página no los baja. Están declarados como
+dependencias propias desde el 16-10-2026; antes llegaban dentro de `html2pdf.js`, que se sacó
+porque solo armaba un PDF de la carta entera. `jspdf` 4 es la versión que cierra el advisory
+crítico de jspdf.
 
 ## App Check está "Aplicada"
 
@@ -325,7 +338,7 @@ Para que el menú público funcione tienen que estar bien **las tres**:
 3. El **archivo publicado** — el botón "Publicar Menú" de Productos.
 
 > [!caution] El fallback tapa la falla
-> Si algo de eso está mal, `CartContext` y `Menu` caen al fallback de Firestore y **la pantalla
+> Si algo de eso está mal, la web y `/menu` caen al fallback de Firestore y **la pantalla
 > sigue andando**: la falla solo se ve como un warning en consola, mientras se pagan lecturas
 > que se suponía ahorradas.
 

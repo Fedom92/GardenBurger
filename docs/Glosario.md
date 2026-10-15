@@ -52,8 +52,8 @@ Una línea cada una y el enlace a la nota que la desarrolla.
 | **Entregado sin repartidor** | Un delivery que no salió y se entregó igual: el cliente lo vino a buscar o lo llevó alguien del local. Lo marca **solo la jefa de deliverys**; pasa a ENTREGADO sin viaje: suma al arqueo, pero no se le paga envío a ningún repartidor (15-10-2026). → [[Flujo del pedido]] |
 | **Solicitud liberada** | Una solicitud web que un cajero tomó y no terminó en 15 minutos: las demás cajas la ven libre, como cualquier otra, y pueden tomarla. → [[Flujo del pedido#Asignación de solicitudes web — un solo dueño]] |
 | **Corte de la web** | La hora en que una sucursal deja de tomar pedidos web: `horasCorte` antes de su cierre, dato de la sucursal. No habilita el F4, que va con `HORA_HABILITA_STATS`. → [[Reglas de negocio#La web pública solo toma pedidos en horario]] |
-| **Combo** | Unidad de conteo del arqueo, no un producto. Se cuentan **unidades**: un ítem con cantidad 3 son 3 combos. Qué categorías cuentan sale de `CATEGORIAS_COMBOS`. El carrito web tenía un campo `combo` que no tenía nada que ver: era un contador para identificar cada línea, y desde el 04-10-2026 se llama `grupo` ([[Web publica#El campo `grupo`]]). → [[Reglas de negocio#Combos]] |
-| **Extra** | Producto de categoría `EXTRA` que se cuelga de otro (`tipoExtra: HAMBURGUESA` o `GENERAL`). En el carrito es una fila propia, aunque se muestre sangrado bajo su producto. |
+| **Combo** | Unidad de conteo del arqueo, no un producto. Se cuentan **unidades**: un ítem con cantidad 3 son 3 combos. Qué categorías cuentan sale de `CATEGORIAS_COMBOS`. El carrito web viejo tenía un campo `combo` (después `grupo`) que no tenía nada que ver: era un contador para identificar cada línea, y se fue con el rehecho de la web (16-10-2026). → [[Reglas de negocio#Combos]] |
+| **Extra** | Producto de categoría `EXTRA` que se cuelga de otro (`tipoExtra`: `HAMBURGUESA`, `PAPAS` o `GENERAL`). En el pedido guardado es una fila propia, debajo de su producto; en el carrito web, mientras se arma, va adentro de la línea. → [[Web publica#Qué extras ofrece cada producto]] |
 | **`esPrueba`** | Marca de los pedidos que insertaba la herramienta de pruebas, eliminada el 24-09-2026. Cuentan en el arqueo igual que los reales, así que los que quedaron en Firestore siguen contando. |
 
 ## La gente
@@ -76,6 +76,8 @@ Una línea cada una y el enlace a la nota que la desarrolla.
 | **Publicar menú** | El botón de Productos que regenera `menu.json`. Mientras haya cambios sin publicar, **parpadea**. Hasta que no se toca, el cliente sigue viendo los precios viejos. El JSON lleva también las sucursales, pero esas **se publican solas** al guardarlas desde el Panel Admin (12-10-2026): el botón quedó para el catálogo. |
 | **Excepción de horario** | Una noche en que la web de una sucursal no sigue su horario de siempre: un feriado que se abre (con el horario de siempre) o una noche que se cierra. Vale para esa jornada sola. La de cierre lleva motivo, y el admin elige si se ve en la web; la de apertura, no. → [[Reglas de negocio#Excepciones: feriados y noches puntuales]] |
 | **Variante** | Las versiones de una hamburguesa (SIMPLE / DOBLE / TRIPLE). Cada una es un producto propio en Firestore; la web las agrupa para mostrarlas juntas. |
+| **Ficha** | En la web, la hoja que se abre al tocar "Agregar": tamaño, extras, nota para la cocina y cantidad. Solo se abre si hay algo para elegir. → [[Web publica]] |
+| **Carta** (`/menu`) | El menú público siempre al día, que la dueña comparte por link o baja como imágenes de 1080 × 1920 (una por estado de WhatsApp) o como PDF. → [[Web publica#`/menu`: la carta y sus descargas]] |
 
 ## Palabras del código
 

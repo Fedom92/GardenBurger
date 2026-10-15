@@ -1,14 +1,14 @@
 ---
 tags: [gardenburger, deuda, auditoria]
 aliases: [Pendientes, Que falta]
-actualizado: 2026-10-15
+actualizado: 2026-10-16
 ---
 
 # Deuda técnica
 
 ← [[GardenBurger]]
 
-Estado al **15-10-2026**. Las cuatro auditorías integrales están procesadas: la
+Estado al **16-10-2026**. Las cuatro auditorías integrales están procesadas: la
 [[Auditoria 2026-09|del 09-09]] (11 hallazgos), la [[Auditoria 2026-09-15|del 15-09]] (23), la
 [[Auditoria 2026-09-26|del 26-09]] y la [[Auditoria 2026-10-11|del 11-10]], aplicada entera el 14 y
 15-10-2026. Lo que sigue es lo que queda abierto **por decisión**, con el motivo, para que nadie lo
@@ -147,7 +147,7 @@ app usa:
 | `react-router-dom` | 6.14 → 7.18 | Nada: la app usa `BrowserRouter` (no las APIs de datos) y no tiene rutas comodín ni links relativos, que son lo único que cambia de comportamiento |
 | `@tanstack/react-table` | 8 → 9 | `TablaGenerica` —el único archivo que la importa— migró a `useTable` + `tableFeatures`. Las columnas de las pantallas no cambian |
 | `react-icons` | 4 → 5 | Nada: los 20 íconos de `react-icons/fa` que se usan siguen existiendo |
-| `html2pdf.js` | 0.12 → 0.14 | Nada. Trae jspdf 4, que **cierra el advisory crítico** de jspdf |
+| `html2pdf.js` | 0.12 → 0.14 | Nada. Trae jspdf 4, que **cierra el advisory crítico** de jspdf. El 16-10-2026 se sacó: `/menu` usa `html2canvas` y `jspdf` directos |
 | resto | — | Última versión de su mayor: react-hook-form, recharts, sweetalert2, moment, react-toastify |
 | `functions/`: `firebase-admin` | 13 → 14 | La 14 quitó `import * as admin`: cada servicio sale de su entrada (`firebase-admin/app`, `/auth`, `/firestore`). Unas 13 líneas, la lógica igual. Los códigos de error que se chequean (`auth/user-not-found`, `auth/email-already-exists`) no cambiaron. Pide Node 22+, y las funciones corren en 24 |
 | `functions/`: `firebase-functions` / `typescript` | 7.2 → 7.4 / 6 → 7 | Nada: compila igual con TypeScript 7. Se sacó `firebase-functions-test`, que venía de la plantilla de `firebase init`, no tenía tests y no acepta admin 14 |
@@ -189,29 +189,19 @@ hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó e
 - **`Caja.jsx` (779 líneas)** — ya extrajo nueve hooks, que era lo importante. Lo que queda por
   separar es el **render**: el panel de productos y el ticket son dos componentes conviviendo en un
   archivo.
-- **La web pública entera** (`Solicitudes/` + `CartContext.jsx`) — código heredado: `CartContext`
-  tiene 16 `useState`, nueve de los cuales son una máquina de estados de modales, y expone 49 cosas
-  de las que 13 nadie usa. Está anotada para rehacer al 100% (abajo, en **A futuro**). El análisis
-  completo, con los bugs conocidos, está en [[Web publica]].
 
 ## Funcionalidad pendiente
 
 ### A futuro
 
-- **Rehacer la web pública al 100%** — **es el próximo trabajo** (15-10-2026), con el diseño
-  "Opción B · Carbón" de Claude Design. `Solicitudes/` y `CartContext.jsx` los escribió otro
-  desarrollador (`PaginaDetalle` lo mejoramos un poco; `SeleccionSucursal` y `WebCerrada` los
-  hicimos nosotros sobre sus ejemplos). Funciona, pero la lógica no convence, está poco
-  modularizada, el front es pobre y de ahí salen los 6 avisos del lint del proyecto. Decisión del
-  dueño (04-10-2026): algún día se rehace entera; hasta entonces, arreglos puntuales. El mapa para
-  ese día —qué hace cada pieza, el contrato con la Caja, los bugs conocidos (los dos que afectaban
-  a la cocina ya se arreglaron, el 04-10-2026) y una propuesta de orden— está en [[Web publica]].
 - **Que el encargado pueda cerrar la web de su sucursal.** Las excepciones de horario
   (12-10-2026) son solo del admin: escribir en `sucursales` lo es en las reglas, y ser encargado
   no es un claim. Haría falta un claim `encargado` y una regla que le deje tocar solo
   `excepcionesWeb` de su sucursal. Ver [[Reglas de negocio#Excepciones: feriados y noches puntuales]].
 - **CRM de clientes.** El módulo Clientes (ya solo del admin) tendrá su propio CRM. Sin diseñar.
-- **Menú público** (`/menu`). Su fondo ya quedó optimizado (03-10-2026).
+- **Compartir las páginas de `/menu` desde el celular.** Hoy "Descargar imagen" baja una imagen
+  por página; en el celular, el botón podría abrir el menú de compartir (`navigator.share` con
+  archivos) y mandarlas directo a un estado de WhatsApp. No cuesta lecturas.
 - **Qué hace el sistema fuera del horario laboral** (auditoría 11-10-2026): un pedido cobrado
   antes de las 19 o después del cierre no entra en ningún arqueo. ¿Bloquear la Caja, avisar? A
   definir.
@@ -227,7 +217,7 @@ la cocina**, que se imprime desde ATP (15-10-2026). Ver [[Mapa de archivos]] y
 
 ## Tests
 
-**Hay seis baterías** (`npm test`), todas sobre funciones puras:
+**Hay ocho baterías** (`npm test`), todas sobre funciones puras:
 
 | Batería | Qué cubre | Desde |
 |---|---|---|
@@ -237,6 +227,8 @@ la cocina**, que se imprime desde ATP (15-10-2026). Ver [[Mapa de archivos]] y
 | `Estadisticas/Generales/calculos.test.js` | las noches con "Todas" y la categoría de bebidas | 15-10-2026 |
 | `Utils/agruparExtras.test.js` | cada extra con su producto | 15-10-2026 |
 | `Utils/formato.test.js` | montos, números y fechas en pantalla; que los días y meses salgan en castellano (del locale de moment) | 15-10-2026 |
+| `Solicitudes/catalogo.test.js` | la web: agrupar hamburguesas, las secciones del filtro, qué extras ofrece cada producto, la carta de `/menu` | 16-10-2026 |
+| `Solicitudes/carritoWeb.test.js` | la web: juntar líneas iguales, el aplanado que lee la Caja (cada extra debajo de su producto), el recargo de MP, la solicitud | 16-10-2026 |
 
 Nacieron porque esos casos solo se veían esperando la noche real, o eran de la clase que **un test
 detecta y una prueba manual no**. Las pantallas se siguen verificando a mano, por decisión del

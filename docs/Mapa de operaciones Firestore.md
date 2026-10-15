@@ -63,7 +63,7 @@ actualizado: 2026-10-12
 | `Asistencias` | el doc de la jornada | al entrar | **1** | ✅ el mapa `registros` trae a todos |
 | `ModalCargarJornada` | empleados de la sucursal | **solo al abrir el formulario** | N | ✅ editar un renglón cuesta 0 |
 | `LiquidacionAsistencias` | rango de jornadas, y los resúmenes guardados del rango para los envíos de los repartidores | por búsqueda | 2 × D días | ✅ un mes ≈ 60, y **no lee `usuarios`**. Los resúmenes que falten se calculan una vez |
-| `Crearsolicitud` | 1 sucursal, para validarla y controlar su horario | al confirmar el pedido | 1 | ✅ evita subcolecciones huérfanas, y de ahí sale el teléfono para el WhatsApp. Al entrar, el horario sale de `menu.json` (Storage): fuera de horario no lee Firestore. Solo si la sucursal no está en el JSON, 1 lectura |
+| `TuPedido` (web) | 1 sucursal, para validarla y controlar su horario | al confirmar el pedido | 1 | ✅ evita subcolecciones huérfanas, y de ahí sale el teléfono para el WhatsApp. Al entrar, el horario sale de `menu.json` (Storage): fuera de horario no lee Firestore. Solo si la sucursal no está en el JSON, 1 lectura |
 | `SeleccionSucursal` | — | — | **0** | ✅ las sucursales y su horario salen de `menu.json`; de Firestore solo si el JSON falla |
 | `Estadisticas` | — | — | **0** | ✅ lee dos TSV de Storage (`getBytes`), no Firestore. 10,5 MB la primera vez; después el navegador revalida con `If-None-Match` y Storage responde **304 con cuerpo vacío** |
 

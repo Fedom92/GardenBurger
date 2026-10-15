@@ -359,6 +359,12 @@ que abrirlas no cuesta nada y no tienen ventana horaria. Ver
 - **El precio va entero** (`soloEnteros` + `step={1}`) y **la descripción se guarda sin espacios
   al principio ni al final**: "Hamburguesa " y "Hamburguesa" serían dos productos distintos, y la
   exclusión de combos (`excludes`) compara el nombre exacto.
+- **Un producto o un extra de $0 se ve igual** en la web ("sin cargo"): la web no decide qué
+  ocultar. Para sacarlo, `visible: false` desde Productos (decisión del dueño, 15-10-2026).
+- **Qué extras ofrece la web a cada producto** depende de su categoría y del `tipoExtra` del extra:
+  a las hamburguesas y al pollo crispy, los de hamburguesa y los de las papas del combo; a las
+  cajas de papas, los de papas y los generales; a los nuggets y al resto, los generales. Detalle en
+  [[Web publica#Qué extras ofrece cada producto]].
 ## Combos
 
 `CATEGORIAS_COMBOS` en `Constantes.jsx`. Cada categoría puede llevar un array **opcional**

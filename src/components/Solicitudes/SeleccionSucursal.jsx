@@ -7,6 +7,7 @@ import isotipo from "../../img/marca/logos/isotipo-lino.svg";
 import { FOTO_SELECTOR } from "./contenidoWeb";
 import PieWeb from "./PieWeb";
 import CargandoWeb from "./CargandoWeb";
+import { BotonWhatsApp } from "./piezasWeb";
 import "./webPublica.css";
 
 // Pantalla pública: el cliente elige la sucursal antes de armar su pedido.
@@ -66,6 +67,7 @@ const SeleccionSucursal = () => {
                 </main>
             </div>
             <PieWeb />
+            <BotonWhatsApp sucursales={sucursales} />
         </div>
     );
 };

@@ -7,7 +7,6 @@ import App from './App';
 import moment from 'moment-timezone/builds/moment-timezone-with-data-10-year-range';
 import 'moment/locale/es';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 moment.locale('es');
 // Toda la app trabaja en hora argentina, sin importar la timezone configurada en

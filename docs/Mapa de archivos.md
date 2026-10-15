@@ -23,7 +23,6 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 | Archivo | Qué hace |
 |---|---|
 | `context/AuthContext.js` | `useAuth() → {userData, login, logout}`. Lee `usuarios/{uid}`, desloguea inactivos, setea la sucursal del staff |
-| `context/CartContext.jsx` | (577 líneas, de otro dev) Todo el estado del menú público: carrito en localStorage, el contador `grupo` (antes `combo`) y el flujo de modales hamburguesa → extras. Montado en `App.js` sobre toda la app. Ver [[Web publica]] |
 
 ## `Login_Navs/`
 
@@ -95,19 +94,29 @@ Qué hace cada archivo, para no tener que abrirlo. Los tamaños son orientativos
 
 ## `components/Solicitudes/` — la web pública
 
-Código heredado de otro desarrollador, anotado para rehacer: el análisis completo está en
-[[Web publica]].
+Rehecha entera el 14-16/10/2026. Cómo funciona y el contrato con la Caja: [[Web publica]].
 
 | Archivo | Qué hace |
 |---|---|
-| `SeleccionSucursal.jsx` | El cliente elige sucursal. Las lista todas desde `menu.json`: la cerrada, deshabilitada y con su horario |
-| `Crearsolicitud.jsx` | (504 líneas) Menú por acordeones + formulario + creación de la solicitud |
-| `WebCerrada.jsx` | El cartel de sucursal cerrada, con su horario y un link para ver las otras |
-| `Card.jsx` | Tarjeta de producto; decide qué modal abrir |
-| `ModalHamburguesa.jsx` / `ModalExtras.jsx` / `ModalExtrasGenericos.jsx` | Flujo de variantes y extras |
-| `PaginaDetalle.jsx` | `/ver-pedido` — barra de progreso del pedido para el cliente |
-| `Menu.jsx` | Carta pública, exportable a PDF |
-| `Footer.jsx` | Pie con contacto |
+| `SeleccionSucursal.jsx` | `/crear-solicitud`: el cliente elige sucursal, desde `menu.json`. La cerrada, apagada y con su horario |
+| `Crearsolicitud.jsx` | `/crear-solicitud/:sucursal`: carga sucursal y catálogo, el filtro por categorías, la lista de bebidas y la ficha |
+| `WebCerrada.jsx` | La sucursal fuera de horario: su horario y un link para ver las otras |
+| `catalogo.js` (+ `.test.js`) | Reglas puras del catálogo: agrupar hamburguesas, secciones del filtro, extras de cada producto, la carta de `/menu` |
+| `carritoWeb.js` (+ `.test.js`) | El carrito puro y `useCarritoWeb`: líneas con extras adentro, aplanado para la Caja, la solicitud y el mensaje de WhatsApp |
+| `FichaProducto.jsx` | La ficha: tamaño, extras, nota y cantidad (`Modal` de react-bootstrap) |
+| `TuPedido.jsx` | Las líneas del pedido, el formulario y `comprar` (crea la solicitud) |
+| `ProductoCard.jsx` | La tarjeta del catálogo y `FotoProducto` (la ilustración si no hay foto o no carga) |
+| `piezasWeb.jsx` | Íconos de trazo, `− N +`, el botón del carrito y los subtítulos `//.01` |
+| `HeaderWeb.jsx` / `PieWeb.jsx` / `CargandoWeb.jsx` | Cabecera fija, pie con damero y esqueleto de carga, de todas las pantallas públicas |
+| `PaginaDetalle.jsx` | `/ver-pedido`: el seguimiento del pedido, en pasos |
+| `Menu.jsx` | `/menu`: la carta al día |
+| `exportarMenu.js` | Las páginas de 1080 × 1920 de `/menu` (imagen y PDF), con html2canvas y jsPDF. Se carga al tocar el botón |
+| `contenidoWeb.js` | Las fotos propias y las redes del pie: lo que completa la dueña |
+| `ilustraciones.js` | Las ilustraciones de categoría, en WebP |
+| `webPublica.css` | Todo el estilo de la web, bajo `.gb-web` / `.gb-modal` |
+
+Los recursos de marca están en `src/img/marca/` (`logos/`, `ilustraciones/`, `fotos/`) y la
+fuente de los títulos ("GB Display", con su licencia OFL) en `src/fonts/`.
 
 ## Resto
 

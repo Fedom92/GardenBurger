@@ -82,7 +82,7 @@ todavía no se entregó el F4 lo muestra aparte ("Cobrados todavía sin entregar
 
 | Paso | Componente | Escribe |
 |---|---|---|
-| Cliente arma pedido web | `Crearsolicitud` | doc nuevo `PENDIENTE`, `clienteTimestamp`, `mensajeWsp`, `cliente{}` |
+| Cliente arma pedido web | `Crearsolicitud` → `TuPedido.comprar` | doc nuevo `PENDIENTE`, `clienteTimestamp`, `mensajeWsp`, `cliente{}` |
 | Cajero toma la solicitud | `useRevisarSolicitud` | `cajeroRevisaID`, `cajeroRevisa`, `cajeroRevisaTimestamp` |
 | Cajero cancela el ticket | `Caja.cancelarTicket` | borra `cajeroRevisa*` (solo si es suyo) |
 | Cajero guarda | `Caja.guardarBD` | todo el pedido + `codigo` + estado (`PENDIENTEMP`, `CONFIRMADO`, o `ATP`/`DELIVERY` si no hay nada que cocinar); **borra** `cajeroRevisa*`. El arqueo no se escribe: se calcula |
@@ -102,22 +102,19 @@ misma escritura. Ver [[Mapa de operaciones Firestore#Escrituras que mueven plata
 
 ## Cómo el cliente arma el carrito (menú público)
 
-`CartContext` (577 líneas, de otro desarrollador) es el estado central del menú online. El resumen
-del flujo de modales:
+El carrito web (`carritoWeb.js`) guarda **cada línea con sus extras adentro** mientras el cliente
+arma el pedido, y al confirmar lo **aplana** a la lista que lee la Caja: cada producto seguido de
+sus extras, en ese orden.
 
-1. **Hamburguesas** tienen variantes (SIMPLE / DOBLE / TRIPLE). Al agregar una se abre
-   `ModalHamburguesa` y después `ModalExtras`.
-2. **Pollo Crispy** usa directamente el flujo de extras de hamburguesa.
-3. **Otros productos**: si existe algún extra `GENERAL` en el catálogo, se abre
-   `ModalExtrasGenericos`.
-4. **Bebidas**: se acumula la cantidad en el ítem existente en vez de crear un renglón nuevo.
-5. El campo `grupo` de cada línea es un contador que, junto con el `id`, identifica la línea.
-   Hasta el 04-10-2026 se llamaba `combo`, y no tiene nada que ver con los combos del arqueo. La
-   Caja no lo usa: agrupa los extras por posición.
-6. El carrito se persiste en `localStorage`.
+1. **Hamburguesas** (SIMPLE / DOBLE / TRIPLE agrupadas por nombre) y **Pollo crispy**: la ficha
+   ofrece el tamaño (solo hamburguesas), los extras de hamburguesa y los de las papas del combo.
+2. **Caja de papas**: los extras de papas y los generales. **Otros productos** (nuggets…): los
+   generales. Sin extras, se agregan directo.
+3. **Bebidas**: van directo, y una bebida repetida suma `cantidad` en su línea.
+4. El carrito se persiste en `localStorage` (`pedidoWeb`).
 
-El detalle —el documento que escribe, lo que la Caja usa de él, los bugs conocidos y por qué está
-anotado para rehacer— está en [[Web publica]].
+El detalle —qué extras ofrece cada producto, el documento que escribe y lo que la Caja usa de
+él— está en [[Web publica]].
 
 > [!caution] `handleAgregarAlCarrito` solo acumula sobre el último ítem
 > Por eso el rediseño de Caja descartó el control `− 2 +` por línea: en una fila del medio, el `+`
@@ -137,11 +134,13 @@ mapea al paso equivalente, porque si no `indexOf` devuelve `-1` y la barra queda
 - `PENDIENTEMP` → `PENDIENTE` (todavía falta verificar la transferencia, no está confirmado)
 - `ATP` → `DELIVERY` ("listo y esperando al cliente", mismo avance que un delivery en camino)
 
-En los pedidos de retiro, el cuarto paso se muestra como **"LISTO"** en vez de "DELIVERY".
-`PaginaDetalle` decide con `pedido.envio.zona_envio` y, mientras el cajero no haya cargado el
-pedido (no existe `envio` todavía), cae a `pedido.cliente.opcion`.
+Los pasos se leen **Recibido · Confirmado · En cocina · Listo · Retirado** en un retiro y
+**… · En camino · Entregado** en un delivery. `PaginaDetalle` decide con `pedido.envio.zona_envio`
+y, mientras el cajero no haya cargado el pedido (no existe `envio` todavía), cae a
+`pedido.cliente.opcion`.
 
-`CANCELADO` y `ELIMINADO` no muestran la barra: muestran un cartel rojo.
+`CANCELADO` y `ELIMINADO` no muestran los pasos: "Tu pedido fue cancelado" y lo pedido, tachado.
+El resto de los casos está en [[Web publica#El seguimiento (`/ver-pedido`)]].
 
 ## Asignación de solicitudes web — un solo dueño
 

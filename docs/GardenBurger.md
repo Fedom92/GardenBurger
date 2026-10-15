@@ -69,10 +69,10 @@ Según qué vengas a hacer, con esto alcanza:
 - **Firebase 12** modular (12.19.0 desde el 04-10-2026; venía de la 9.23) — Firestore, Auth, Storage, Functions, App Check
 - **React Bootstrap** (modales) + **Bootstrap 5.3** (grid y utilidades)
 - **SweetAlert2** para confirmaciones · **React Toastify** para avisos rápidos
-- **React Hook Form** en Caja y CrearSolicitud
+- **React Hook Form** en Caja y en el pedido web
 - **Moment.js** (+ moment-timezone) — formato `DD/MM/YYYY`
 - **@tanstack/react-table v9** debajo de `TablaGenerica`
-- **Recharts** en Estadísticas · **html2pdf.js** para exportar el menú (se carga al tocar el botón)
+- **Recharts** en Estadísticas · **html2canvas** + **jsPDF** para las descargas de `/menu` (se cargan al tocar el botón)
 
 ## Todas las notas
 

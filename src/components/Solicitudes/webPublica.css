@@ -7,7 +7,22 @@
    través de sus variables (la raíz lleva data-bs-theme="dark"). El CSS propio es
    para lo que Bootstrap no tiene: el damero, los títulos, las tarjetas, los chips. */
 
-.gb-web {
+/* Los títulos: Archivo al 62% de ancho y peso 900, como archivo propio (src/fonts,
+   con su licencia OFL al lado). Con la variable de Google y font-stretch se veían
+   igual en pantalla, pero el PDF y la imagen de /menu —html2canvas no conoce
+   font-stretch— los sacaban anchos y encimados. */
+@font-face {
+  font-family: "GB Display";
+  src: url("../../fonts/gb-display-black.woff") format("woff");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Los tokens y la tipografía valen en la página (.gb-web) y en los modales, que
+   react-bootstrap dibuja fuera de ella (.gb-modal). Lo de página va aparte, abajo:
+   en un modal taparía el fondo semitransparente. */
+:is(.gb-web, .gb-modal) {
   --gb-carbon: #262423;
   --gb-carbon-2: #322f2d;
   --gb-carbon-3: #3a3634;
@@ -37,14 +52,21 @@
   --bs-link-hover-color-rgb: 248, 162, 27;
   --bs-focus-ring-color: rgba(248, 162, 27, 0.45);
 
-  width: 100%;          /* .App.mainpage es un flex en fila */
-  min-height: 100vh;
-  background: var(--gb-carbon);
   color: var(--gb-lino);
   font-family: var(--gb-sans);
   font-size: 16px;
   line-height: 1.4;
   text-align: left;     /* corta el .App { text-align: center } de CRA */
+}
+
+/* Una columna de alto completo: con poco contenido (el selector, un aviso) el pie
+   queda abajo de la pantalla y no a la mitad (ver .gb-pie). */
+.gb-web {
+  display: flex;
+  flex-direction: column;
+  width: 100%;          /* .App.mainpage es un flex en fila */
+  min-height: 100vh;
+  background: var(--gb-carbon);
 }
 
 /* Al estirar la página en el celular, que no asome el blanco del body. */
@@ -53,32 +75,34 @@ body:has(.gb-web) {
 }
 
 /* Main.css (el del staff) pinta de negro párrafos, títulos, links e inputs —estos
-   con !important—: sobre el carbón no se leerían. */
-.gb-web p,
-.gb-web h1,
-.gb-web h2,
-.gb-web h3,
-.gb-web h4 {
+   con !important—: sobre el carbón no se leerían. Con :where() estas reglas pesan
+   como una clase sola, así cualquier clase de más abajo (.gb-epigrafe, .gb-paso…)
+   les gana sin !important. */
+:is(.gb-web, .gb-modal) :where(p, h1, h2, h3, h4) {
   color: inherit;
   margin: 0;
 }
 
-.gb-web h3 {
+:is(.gb-web, .gb-modal) h3 {
   letter-spacing: normal !important;
-  font-weight: inherit !important;
+  font-weight: 800 !important;  /* los h3 de la web: nombre de producto y subtítulos */
 }
 
-.gb-web a {
+:is(.gb-web, .gb-modal) :where(a) {
   color: inherit;
 }
 
-.gb-web input,
-.gb-web select,
-.gb-web textarea {
+:is(.gb-web, .gb-modal) :is(input, select, textarea) {
   color: var(--gb-lino) !important;
 }
 
-.gb-web :focus-visible {
+:is(.gb-web, .gb-modal) input::placeholder {
+  color: var(--gb-muted);
+  font-style: normal;   /* Main.css los pone en cursiva */
+  opacity: 0.85;
+}
+
+:is(.gb-web, .gb-modal) :focus-visible {
   outline: 2px solid var(--gb-ambar);
   outline-offset: 2px;
 }
@@ -93,7 +117,7 @@ body:has(.gb-web) {
 /* ── Tipografía ─────────────────────────────────────────────────────────── */
 
 .gb-display {
-  font-stretch: 62%;
+  font-family: "GB Display", var(--gb-sans);
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.01em;
@@ -130,7 +154,7 @@ body:has(.gb-web) {
 
 /* El de acción: rojo terracota con texto lino. El rojo es solo fondo: como texto
    sobre el carbón no se lee (2,8:1). Deshabilitado, al .45 como el resto de la app. */
-.gb-web .btn-gb {
+:is(.gb-web, .gb-modal) .btn-gb {
   --bs-btn-color: var(--gb-lino);
   --bs-btn-bg: var(--gb-rojo);
   --bs-btn-border-color: var(--gb-rojo);
@@ -151,7 +175,7 @@ body:has(.gb-web) {
 }
 
 /* El claro: lino con texto carbón. */
-.gb-web .btn-gb-claro {
+:is(.gb-web, .gb-modal) .btn-gb-claro {
   --bs-btn-color: var(--gb-carbon);
   --bs-btn-bg: var(--gb-lino);
   --bs-btn-border-color: var(--gb-lino);
@@ -205,6 +229,12 @@ body:has(.gb-web) {
   font-weight: 800;
   font-size: 16px;
   line-height: 1.2;
+}
+
+/* "Pedido en Luro", arriba del código del pedido */
+.gb-header-ante {
+  font-size: 13px;
+  color: var(--gb-muted);
 }
 
 .gb-header-sub {
@@ -301,9 +331,9 @@ a.gb-sucursal:hover {
   flex-shrink: 0;
 }
 
-/* ── Cerrada ────────────────────────────────────────────────────────────── */
+/* ── Avisos: la sucursal cerrada, el pedido que ya no está ──────────────── */
 
-.gb-cerrada-ilustracion {
+.gb-ilustracion-aviso {
   width: 120px;
   height: auto;
 }
@@ -311,16 +341,23 @@ a.gb-sucursal:hover {
 /* ── Pie ────────────────────────────────────────────────────────────────── */
 
 .gb-pie {
-  margin-top: 40px;
+  margin-top: auto;     /* al fondo de la columna de .gb-web */
+  padding-top: 40px;
 }
 
+/* Abajo, lugar para el botón flotante de WhatsApp: que no tape el final del pie. */
 .gb-pie-contenido {
   display: grid;
   gap: 6px;
-  padding: 20px 20px 28px;
+  padding: 20px 20px 100px;
   color: var(--gb-muted);
   font-size: 13px;
   text-align: center;
+}
+
+.gb-pie-legal {
+  margin-top: 6px !important;
+  font-size: 12px;
 }
 
 .gb-redes {
@@ -354,6 +391,1133 @@ a.gb-sucursal:hover {
   opacity: 0.6;
 }
 
+/* ── Catálogo (B2) ──────────────────────────────────────────────────────── */
+
+.gb-hero-catalogo {
+  height: 180px;
+  margin: 16px 16px 0;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.gb-titulo-catalogo {
+  font-size: 40px;
+}
+
+.gb-titulo-seccion {
+  font-size: 34px;
+}
+
+/* Lo que se alcanza con scroll —el filtro, la sección, "Tu pedido"— no queda
+   tapado por la cabecera fija. */
+.gb-ancla,
+.gb-pedido {
+  scroll-margin-top: 80px;
+}
+
+/* Las tarjetas de categoría: filtran el catálogo. */
+.gb-categorias {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gb-categoria {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 108px;
+  padding: 12px;
+  border: 1.5px solid var(--gb-linea);
+  border-radius: 16px;
+  background: var(--gb-carbon-2);
+  color: var(--gb-lino);
+  text-align: left;
+  overflow-wrap: anywhere;  /* último recurso para un nombre largo: no desborda la tarjeta */
+}
+
+.gb-categoria:hover {
+  border-color: var(--gb-borde);
+}
+
+.gb-categoria[aria-pressed="true"] {
+  border: 2px solid var(--gb-ambar);
+  color: var(--gb-ambar);
+}
+
+.gb-categoria-ilustracion {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.gb-categoria-nombre {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+/* Hamburguesas a dos columnas: el nombre grande a la izquierda y la ilustración a
+   la derecha. */
+.gb-categoria.is-ancha {
+  grid-column: span 2;
+  flex-direction: row-reverse;
+  align-items: center;
+}
+
+.gb-categoria.is-ancha .gb-categoria-ilustracion {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+}
+
+.gb-categoria-nombre-ancha {
+  font-size: 28px;
+}
+
+/* La grilla de productos: 12px entre tarjetas, en lugar de los 16 de g-3. */
+.gb-grilla {
+  --bs-gutter-x: 12px;
+  --bs-gutter-y: 12px;
+}
+
+.gb-producto {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--gb-carbon-2);
+}
+
+.gb-producto-foto {
+  aspect-ratio: 1 / 1;
+  background: var(--gb-carbon-3);
+}
+
+.gb-producto-foto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Sin foto: la ilustración de la categoría, centrada al 58%. */
+.gb-producto-foto.is-ilustracion {
+  display: grid;
+  place-items: center;
+}
+
+.gb-producto-foto.is-ilustracion img {
+  width: 58%;
+  height: 58%;
+  object-fit: contain;
+}
+
+.gb-producto-cuerpo {
+  flex: 1;
+  padding: 12px 12px 10px;
+}
+
+.gb-producto-nombre {
+  font-size: 16px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.gb-producto-precio {
+  margin-top: 4px;
+  color: var(--gb-ambar);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn-gb.gb-producto-boton {
+  --bs-btn-font-size: 15px;
+  --bs-btn-font-weight: 700;
+  --bs-btn-border-radius: 12px;
+  margin: 0 12px 12px;
+}
+
+/* Las bebidas, en lista */
+.gb-lista-fila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gb-linea);
+}
+
+.gb-boton-mas {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--gb-rojo);
+  color: var(--gb-lino);
+}
+
+.gb-boton-mas:hover {
+  background: var(--gb-rojo-oscuro);
+}
+
+/* "− N +" */
+.gb-cantidad {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  border: 1.5px solid var(--gb-borde);
+  border-radius: 12px;
+}
+
+.gb-cantidad-boton {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--gb-lino);
+}
+
+.gb-cantidad-boton:disabled {
+  opacity: 0.45;
+}
+
+.gb-cantidad-valor {
+  min-width: 24px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* El carrito de la cabecera: lleva hasta "Tu pedido". Vacío, apagado. */
+.gb-boton-carrito {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border: 1.5px solid var(--gb-lino);
+  border-radius: 99px;
+  background: var(--gb-lino);
+  color: var(--gb-carbon);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.gb-boton-carrito.is-vacio {
+  border-color: var(--gb-borde);
+  background: transparent;
+  color: var(--gb-muted);
+}
+
+.gb-boton-carrito-icono {
+  position: relative;
+  display: grid;
+}
+
+.gb-badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: var(--gb-rojo);
+  color: var(--gb-lino);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ── Ficha de producto (B3) ─────────────────────────────────────────────── */
+
+.gb-ficha .modal-dialog {
+  max-width: 520px;
+}
+
+.gb-ficha .modal-content {
+  max-height: 92vh;
+  max-height: 92dvh;        /* sin contar la barra del navegador del celular */
+  overflow: hidden;
+  border: 0;
+  border-radius: 24px;
+  background: var(--gb-carbon);
+  color: var(--gb-lino);
+}
+
+/* En el celular, una hoja que sube desde abajo. */
+@media (max-width: 575.98px) {
+  .gb-ficha .modal-dialog {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-height: 0;          /* el de .modal-dialog-centered la estiraba a toda la pantalla */
+    max-width: none;
+    margin: 0;
+  }
+
+  .gb-ficha.fade .modal-dialog {
+    transform: translateY(100%);
+  }
+
+  .gb-ficha.show .modal-dialog {
+    transform: none;
+  }
+
+  .gb-ficha .modal-content {
+    border-radius: 24px 24px 0 0;
+  }
+
+  /* El tirador solo tiene sentido en la hoja. */
+  .gb-tirador {
+    flex-shrink: 0;
+    width: 44px;
+    height: 5px;
+    margin: 8px auto 0;
+    border-radius: 99px;
+    background: var(--gb-borde);
+  }
+}
+
+.gb-ficha-cuerpo {
+  overflow-y: auto;
+  padding: 8px 16px 20px;
+}
+
+.gb-ficha-foto {
+  position: relative;
+  height: 190px;
+  margin: 8px 0 16px;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.gb-ficha-foto .gb-producto-foto {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+/* Sin foto, la ilustración va sobre carbon-2 (en la tarjeta, sobre carbon-3). */
+.gb-ficha-foto .gb-producto-foto.is-ilustracion {
+  background: var(--gb-carbon-2);
+}
+
+.gb-boton-cerrar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 99px;
+  background: rgba(28, 27, 26, 0.8);
+  color: var(--gb-lino);
+}
+
+/* "01 · TAMAÑO" */
+.gb-paso {
+  margin: 22px 0 10px;
+  color: var(--gb-muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Simple / Doble / Triple: la elegida, en ámbar. */
+.gb-segmento {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--gb-carbon-2);
+}
+
+.gb-segmento-opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  border-radius: 12px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.gb-segmento-opcion.is-on {
+  background: var(--gb-ambar);
+  color: var(--gb-carbon);
+}
+
+.gb-segmento-precio {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Los radios van escondidos: el foco del teclado se marca en la opción entera. */
+:is(.gb-segmento-opcion, .gb-opcion):has(input:focus-visible) {
+  outline: 2px solid var(--gb-ambar);
+  outline-offset: 2px;
+}
+
+.gb-chip {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--gb-borde);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--gb-lino);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.gb-chip[aria-pressed="true"] {
+  border-color: var(--gb-lino);
+  background: var(--gb-lino);
+  color: var(--gb-carbon);
+}
+
+.gb-ficha-pie {
+  flex-shrink: 0;
+}
+
+.gb-ficha-pie .gb-damero {
+  height: 14px;
+  background-size: 14px 14px;
+}
+
+.gb-ficha-barra {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  background: var(--gb-carbon-hondo);
+}
+
+.btn-gb.gb-ficha-agregar {
+  --bs-btn-font-size: 17px;
+  flex: 1;
+  min-height: 56px;
+}
+
+/* ── Formularios ────────────────────────────────────────────────────────── */
+
+:is(.gb-web, .gb-modal) .form-control {
+  min-height: 52px;
+  border: 1.5px solid var(--gb-borde);
+  border-radius: 14px;
+  background-color: var(--gb-carbon-2);
+}
+
+/* Un solo anillo: el de Bootstrap en ámbar, sin el contorno de :focus-visible. */
+:is(.gb-web, .gb-modal) .form-control:focus {
+  outline: 0;
+  border-color: var(--gb-ambar);
+  background-color: var(--gb-carbon-2);
+  box-shadow: 0 0 0 0.2rem rgba(248, 162, 27, 0.25);
+}
+
+/* Un ícono adentro del campo, a la izquierda (Nombre, Celular). */
+.gb-campo-icono {
+  position: relative;
+}
+
+.gb-campo-icono > svg {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  color: var(--gb-muted);
+  font-size: 18px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.gb-campo-icono > .form-control {
+  padding-left: 46px;
+}
+
+.gb-label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gb-ayuda {
+  margin-top: 6px;
+  color: var(--gb-muted);
+  font-size: 13px;
+}
+
+/* Los errores, en ámbar: el rojo sobre el carbón no se lee. */
+.gb-error {
+  margin-top: 6px;
+  color: var(--gb-ambar);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ── Tu pedido (B4) ─────────────────────────────────────────────────────── */
+
+/* "//.01 Lo que pediste" */
+.gb-subtitulo {
+  margin: 28px 0 12px;
+  font-size: 20px;
+}
+
+.gb-numero {
+  margin-right: 8px;
+  color: var(--gb-ambar);
+  font-family: var(--gb-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.gb-boton-icono {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--gb-borde);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--gb-lino);
+}
+
+.gb-tarjeta {
+  padding: 4px 16px;
+  border-radius: 18px;
+  background: var(--gb-carbon-2);
+}
+
+.gb-fila {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gb-linea);
+}
+
+.gb-fila:last-child {
+  border-bottom: 0;
+}
+
+.gb-fila-titulo {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 800;
+}
+
+.gb-fila-precio {
+  color: var(--gb-ambar);
+  white-space: nowrap;
+}
+
+.gb-fila-extras {
+  margin-top: 2px;
+  color: var(--gb-muted);
+  font-size: 14px;
+}
+
+.gb-nota {
+  margin-top: 2px;
+  color: var(--gb-muted);
+  font-family: var(--gb-serif);
+  font-style: italic;
+}
+
+/* Las acciones de texto: "Quitar", "Editar", "+ Agregar algo más". */
+/* Las líneas de "Tu pedido": se tocan para mostrar su contador. El ⋮ tiene 44px
+   para el dedo, sin agrandar la fila. */
+.gb-fila-editable {
+  cursor: pointer;
+}
+
+.gb-fila-menu {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px -14px -10px 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gb-muted);
+}
+
+.gb-fila-editable.is-abierta .gb-fila-menu {
+  color: var(--gb-ambar);
+}
+
+.gb-link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gb-lino);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.gb-link.is-apagado {
+  color: var(--gb-muted);
+}
+
+/* Retiro / Delivery y Efectivo / MercadoPago: el radio va escondido adentro. */
+.gb-opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 8px;
+  border: 1.5px solid var(--gb-borde);
+  border-radius: 14px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.gb-opcion:has(.gb-opcion-detalle) {
+  min-height: 64px;
+}
+
+.gb-opcion.is-on {
+  border: 2px solid var(--gb-ambar);
+  background: var(--gb-carbon-2);
+}
+
+/* Los íconos de Retiro y Delivery: en ámbar cuando la opción está elegida. */
+.gb-opcion-icono {
+  font-size: 20px;
+}
+
+.gb-opcion-icono.is-grande {
+  font-size: 26px;
+}
+
+.gb-opcion.is-on .gb-opcion-icono {
+  color: var(--gb-ambar);
+}
+
+/* Los íconos de las formas de pago */
+.gb-icono-efectivo {
+  color: #3bb273;
+  font-size: 22px;
+}
+
+.gb-logo-mp {
+  width: 32px;
+  height: auto;
+}
+
+.gb-opcion-detalle {
+  color: var(--gb-muted);
+  font-size: 13px;
+}
+
+.gb-opcion.is-on .gb-opcion-detalle {
+  color: var(--gb-ambar);
+}
+
+.gb-aviso {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--gb-ambar);
+  border-radius: 14px;
+}
+
+/* El resumen: la única tarjeta clara, lino con texto carbón. */
+.gb-resumen {
+  margin-top: 28px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--gb-lino);
+  color: var(--gb-carbon);
+}
+
+.gb-resumen-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+
+.gb-resumen-fila > :last-child {
+  text-align: right;
+}
+
+.gb-resumen-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1.5px solid var(--gb-carbon);
+}
+
+.gb-resumen-total-etiqueta {
+  font-size: 26px;
+}
+
+.gb-resumen-total-monto {
+  font-size: 30px;
+}
+
+.btn-gb.gb-resumen-boton {
+  --bs-btn-font-size: 18px;
+  width: 100%;
+  min-height: 58px;
+  margin-top: 14px;
+}
+
+.gb-resumen-leyenda {
+  margin-top: 10px;
+  color: var(--gb-muted-claro);
+  font-size: 13px;
+  text-align: center;
+}
+
+.gb-error-envio {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--gb-ambar);
+  border-radius: 12px;
+}
+
+/* ── Seguimiento del pedido (B5–B8) ─────────────────────────────────────── */
+
+/* Los cinco pasos, en horizontal: la línea hasta el paso siguiente pasa por detrás
+   de los círculos. */
+.gb-etapas {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 18px 6px 16px;
+  border-radius: 18px;
+  background: var(--gb-carbon-2);
+  list-style: none;
+}
+
+.gb-etapa {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--gb-muted);
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.gb-etapa:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--gb-linea);
+}
+
+.gb-etapa-circulo {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--gb-borde);
+  border-radius: 50%;
+  background: var(--gb-carbon-2);
+  color: var(--gb-carbon);
+}
+
+.gb-etapa.is-hecha {
+  color: var(--gb-lino);
+  font-weight: 600;
+}
+
+.gb-etapa.is-hecha::after {
+  background: var(--gb-ambar);
+}
+
+.gb-etapa.is-hecha .gb-etapa-circulo {
+  border-color: var(--gb-ambar);
+  background: var(--gb-ambar);
+}
+
+.gb-etapa.is-actual {
+  color: var(--gb-ambar);
+  font-weight: 800;
+}
+
+.gb-etapa.is-actual .gb-etapa-circulo {
+  border: 3px solid var(--gb-ambar);
+  box-shadow: 0 0 0 5px rgba(248, 162, 27, 0.18);
+}
+
+/* "Confirmado" no entra en una quinta parte de 320px a 12px. */
+@media (max-width: 374.98px) {
+  .gb-etapa {
+    font-size: 11px;
+  }
+}
+
+.gb-banda-foto {
+  height: 170px;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* "Monto a transferir" */
+.gb-pago {
+  padding: 16px;
+  border: 1.5px solid var(--gb-ambar);
+  border-radius: 18px;
+}
+
+.gb-pago-monto {
+  color: var(--gb-ambar);
+  font-size: 32px;
+}
+
+/* Los totales y los datos van adentro de la tarjeta de "Tu pedido". */
+.gb-totales {
+  padding: 10px 0;
+  border-top: 1px solid var(--gb-linea);
+  color: var(--gb-muted);
+}
+
+.gb-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 1px solid var(--gb-linea);
+}
+
+.gb-totales + .gb-total {
+  border-top: 1.5px solid var(--gb-borde);
+}
+
+.gb-datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+  margin: 0;
+  padding: 16px 0 12px;
+  border-top: 1px solid var(--gb-linea);
+}
+
+.gb-datos dt {
+  color: var(--gb-muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.gb-datos dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.gb-dato-ancho {
+  grid-column: 1 / -1;
+}
+
+.btn-gb.gb-boton-grande {
+  --bs-btn-font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+}
+
+.gb-cancelado-icono {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 2.5px solid var(--gb-lino);
+  border-radius: 50%;
+}
+
+/* "Lo que habías pedido": tachado y un poco apagado. */
+.gb-tarjeta.is-tachada {
+  opacity: 0.85;
+}
+
+.gb-tarjeta.is-tachada .gb-fila-titulo > :first-child {
+  text-decoration: line-through;
+}
+
+.gb-tarjeta.is-tachada .gb-fila-precio {
+  color: var(--gb-muted);
+  font-weight: 400;
+}
+
+/* El botón flotante de WhatsApp, en todas las pantallas públicas (BotonWhatsApp).
+   El verde azulado de WhatsApp, porque el ícono blanco sobre el verde claro
+   (#25d366) no llega a 3:1. */
+.gb-whatsapp-flotante {
+  position: fixed;
+  right: 16px;
+  bottom: 24px;
+  z-index: 20;
+}
+
+.gb-whatsapp {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 0;
+  background: #128c7e;
+  color: #ffffff;
+  font-size: 30px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* Sin el triángulo de Bootstrap: el botón es el ícono solo. */
+.gb-whatsapp.dropdown-toggle::after {
+  display: none;
+}
+
+/* Sin sucursal elegida, la lista para elegir a cuál escribir. */
+.gb-whatsapp-menu {
+  min-width: 220px;
+  margin-bottom: 8px !important;
+  border-radius: 14px;
+}
+
+.gb-whatsapp-menu .dropdown-item {
+  padding: 10px 16px;
+  font-weight: 700;
+}
+
+.gb-whatsapp:hover {
+  background: #0f7a6e;
+  color: #ffffff;
+}
+
+
+/* ── La carta de /menu ──────────────────────────────────────────────────── */
+
+/* Lo que se dibuja acá también se exporta con html2canvas (exportarMenu.js), que no
+   conoce object-fit ni los gradientes cónicos: no usarlos dentro de la carta. */
+.gb-carta {
+  container-type: inline-size;
+  overflow: hidden;
+  border: 1.5px solid var(--gb-linea);
+  border-radius: 18px;
+}
+
+.gb-carta-cabecera {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 20px 12px;
+  text-align: center;
+}
+
+.gb-carta-logo {
+  width: 160px;
+  height: auto;
+}
+
+.gb-carta-cuerpo {
+  padding: 4px 20px 8px;
+}
+
+.gb-carta-seccion + .gb-carta-seccion {
+  margin-top: 22px;
+}
+
+.gb-carta-titulo {
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--gb-borde);
+}
+
+.gb-carta-titulo h2 {
+  font-size: 30px;
+}
+
+.gb-carta-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gb-linea);
+}
+
+.gb-carta-item:last-child {
+  border-bottom: 0;
+}
+
+.gb-carta-descripcion {
+  min-width: 0;
+}
+
+.gb-carta-nombre {
+  font-size: 15px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.gb-carta-ingredientes {
+  margin-top: 2px;
+  color: var(--gb-muted);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.gb-carta-precio {
+  color: var(--gb-ambar);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Las hamburguesas en el celular: los precios debajo del nombre, cada uno con su
+   variante. */
+.gb-carta-hamburguesa {
+  display: block;
+}
+
+.gb-carta-precios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin-top: 6px;
+}
+
+.gb-carta-precio-variante {
+  color: var(--gb-muted);
+  font-weight: 600;
+}
+
+.gb-carta-variantes {
+  display: none;
+}
+
+/* Con la carta ancha, una columna por variante y el nombre de cada una arriba,
+   una sola vez. */
+@container (min-width: 400px) {
+  .gb-carta-hamburguesa {
+    display: flex;
+  }
+
+  .gb-carta-precios,
+  .gb-carta-variantes {
+    display: grid;
+    flex-shrink: 0;
+    grid-template-columns: repeat(var(--variantes, 3), 62px);
+    column-gap: 6px;
+    justify-content: end;
+    margin: 0;
+    text-align: right;
+  }
+
+  .gb-carta-variantes {
+    margin-top: 4px;
+    color: var(--gb-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .gb-carta-precio-variante {
+    display: none;
+  }
+}
+
+.gb-carta-pie {
+  display: grid;
+  gap: 2px;
+  padding: 14px 20px 16px;
+  color: var(--gb-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Las páginas que exporta /menu: se arman fuera de la vista (exportarMenu.js). */
+.gb-web.gb-escenario-menu {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: -10000px;
+  width: auto;
+  min-height: 0;
+}
+
+/* El ancho y el alto los pone exportarMenu.js, que es el que sabe cuánto mide un
+   estado de WhatsApp. */
+.gb-pagina-menu {
+  container-type: inline-size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--gb-carbon);
+}
+
+/* La cabecera y el pie van en todas las páginas: más chicos que en la pantalla,
+   para que entre más carta en cada una. */
+.gb-pagina-menu .gb-carta-cabecera {
+  padding: 14px 20px 6px;
+}
+
+.gb-pagina-menu .gb-carta-logo {
+  width: 124px;
+}
+
+.gb-pagina-menu .gb-epigrafe {
+  font-size: 17px;
+}
+
+.gb-pagina-menu .gb-carta-pie {
+  gap: 0;
+  padding: 8px 20px 10px;
+  font-size: 12px;
+}
+
+.gb-pagina-menu .gb-carta-item {
+  padding: 8px 0;
+}
+
+.gb-pagina-menu-cuerpo {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 20px;
+}
+
+.gb-pagina-menu-numero {
+  position: absolute;
+  top: 26px;
+  right: 18px;
+  color: var(--gb-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 /* ── Cargando: bloques con un pulso leve ────────────────────────────────── */
 
 .gb-esqueleto {
@@ -369,9 +1533,9 @@ a.gb-sucursal:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gb-web *,
-  .gb-web *::before,
-  .gb-web *::after {
+  :is(.gb-web, .gb-modal) *,
+  :is(.gb-web, .gb-modal) *::before,
+  :is(.gb-web, .gb-modal) *::after {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;

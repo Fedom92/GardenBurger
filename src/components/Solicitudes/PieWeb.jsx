@@ -1,13 +1,14 @@
 import React from "react";
-import { FaInstagram, FaFacebookF, FaTiktok } from "react-icons/fa";
+import { FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa";
 import { textoHorarioWeb, textoExcepcionWeb } from "../../Utils/fechaComercial";
 import { REDES } from "./contenidoWeb";
+import { urlWhatsApp } from "./piezasWeb";
 
-const ICONOS = { Instagram: FaInstagram, Facebook: FaFacebookF, TikTok: FaTiktok };
+const ICONOS = { Instagram: FaInstagram, TikTok: FaTiktok };
 
-// El pie de la web pública. Con `sucursal` muestra sus datos y el mismo horario que
-// decide si la web abre; sin ella (el selector, donde todavía no se eligió), solo
-// las redes. Una red sin URL va apagada: es el lugar que falta completar en
+// El pie de la web pública. Con `sucursal` muestra sus datos, el mismo horario que
+// decide si la web abre y su WhatsApp; sin ella (el selector, /menu), solo las
+// redes. Una red sin URL va apagada: es el lugar que falta completar en
 // contenidoWeb.js.
 const PieWeb = ({ sucursal = null }) => {
     const horario = textoHorarioWeb(sucursal);
@@ -36,8 +37,14 @@ const PieWeb = ({ sucursal = null }) => {
                             </span>
                         );
                     })}
+                    {sucursal?.telefono && (
+                        <a href={urlWhatsApp(sucursal.telefono, "Hola, tengo una consulta.")} className="gb-red"
+                            target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp de ${sucursal.nombre || "la sucursal"}`}>
+                            <FaWhatsapp aria-hidden="true" />
+                        </a>
+                    )}
                 </div>
-                <p>© {new Date().getFullYear()} Garden Burger</p>
+                <p className="gb-pie-legal">© {new Date().getFullYear()} Garden Burger - Todos los derechos reservados.</p>
             </div>
         </footer>
     );

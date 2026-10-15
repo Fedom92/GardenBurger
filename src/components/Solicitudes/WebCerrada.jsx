@@ -4,6 +4,7 @@ import { textoHorarioWeb, textoExcepcionWeb } from "../../Utils/fechaComercial";
 import llama from "../../img/marca/ilustraciones/llama.webp";
 import HeaderWeb from "./HeaderWeb";
 import PieWeb from "./PieWeb";
+import { BotonWhatsApp } from "./piezasWeb";
 import "./webPublica.css";
 
 // Una sucursal fuera de horario no toma pedidos por la web: no se arma el carrito.
@@ -24,7 +25,7 @@ const WebCerrada = ({ sucursal = null }) => {
         <div className="gb-web" data-bs-theme="dark">
             <HeaderWeb titulo={sucursal?.nombre} subtitulo="Cerrada" subtituloApagado />
             <main className="gb-col px-3 py-5 d-flex flex-column align-items-start gap-3">
-                <img src={llama} alt="" className="gb-cerrada-ilustracion" width="120" />
+                <img src={llama} alt="" className="gb-ilustracion-aviso" width="120" />
                 <h1 className="gb-display gb-titulo">
                     {sucursal ? "Ahora estamos cerrados" : "Ahora no estamos tomando pedidos"}
                 </h1>
@@ -35,6 +36,7 @@ const WebCerrada = ({ sucursal = null }) => {
                 </Link>
             </main>
             <PieWeb sucursal={sucursal} />
+            <BotonWhatsApp sucursales={[sucursal]} />
         </div>
     );
 };
