@@ -17,6 +17,10 @@ const CALIDAD_WEBP = 0.85;
 export const IMAGEN_ILEGIBLE = "No se pudo abrir la imagen. Usá una JPG, PNG o WebP: las HEIC del iPhone no se abren en Windows.";
 
 const optimizar = async (archivo) => {
+    // createImageBitmap convierte el color al sRGB del canvas (colorSpaceConversion
+    // "default"): las fotos del fotógrafo vienen en ProPhoto RGB, y sin esa conversión
+    // salen verdosas y apagadas. Verificado en Chrome el 16-10-2026. No pasarle
+    // { colorSpaceConversion: "none" }.
     const bitmap = await createImageBitmap(archivo).catch(() => { throw new Error(IMAGEN_ILEGIBLE); });
     const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");

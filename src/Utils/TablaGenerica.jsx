@@ -75,11 +75,17 @@ function calcularPaginas(total, actual) {
 const SIN_CLASE = () => '';
 
 const SIN_ETIQUETAS = {};
+const SIN_ORDEN = {};
+const alfabetico = (a, b) => String(a).localeCompare(String(b));
 
 // `etiquetasFiltros` (opcional): cómo mostrar en el select los valores de un campo
 // que se guarda crudo, ej. { metodoPago: etiquetaPago } para que "%" se lea
 // "Dividido". El filtro sigue comparando contra el valor guardado.
-const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, camposBusqueda = [], camposFiltros = [], etiquetasFiltros = SIN_ETIQUETAS, rowClassName = SIN_CLASE }) => {
+//
+// `ordenFiltros` (opcional): el orden de las opciones de un campo, como función de
+// comparación, ej. las categorías por su nroOrden. Sin él, alfabético. Pasarlo
+// memoizado: si cambia, se rearman las opciones.
+const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, camposBusqueda = [], camposFiltros = [], etiquetasFiltros = SIN_ETIQUETAS, ordenFiltros = SIN_ORDEN, rowClassName = SIN_CLASE }) => {
     const columnasProcesadas = useMemo(() => generarColumnas(columnas), [columnas]);
     const [search, setSearch] = useState("");
     const [filtrosActivos, setFiltrosActivos] = useState({});
@@ -156,14 +162,14 @@ const TablaGenerica = ({ data = [], columnas = [], sortBy, ordenDescendente, cam
             acc[campo] = [...new Set(
                 data.map(item => leerCampo(item, campo))
                     .filter(val => val != null && String(val).trim() !== "")
-            )].sort((a, b) => String(a).localeCompare(String(b)))
+            )].sort(ordenFiltros[campo] || alfabetico)
                 .map(v => ({ valor: String(v), etiqueta: (etiquetasFiltros[campo] || formatearEtiqueta)(v) }));
             return acc;
         }, {}),
         // Ídem: filtrosKey representa a camposFiltros. Las etiquetas se pasan inline
         // y cambian de identidad en cada render, pero no cambian lo que devuelven.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [data, filtrosKey]);
+        [data, filtrosKey, ordenFiltros]);
 
     const filas = table.getRowModel().rows;
     const paginas = calcularPaginas(table.getPageCount(), pagination.pageIndex);

@@ -156,6 +156,19 @@ const Productos = () => {
     filtro: { categoria: CATEGORIAS_HAMBURGUESA.includes(p.categoria) ? "HAMBURGUESAS" : p.categoria },
   })), [productos]);
 
+  // El filtro de categoría, en el nroOrden de las categorías y no alfabético.
+  // HAMBURGUESAS toma el lugar de la primera de sus variantes (SIMPLE). Lo que no es
+  // una categoría cargada va al final.
+  const ordenFiltros = useMemo(() => {
+    const orden = new Map(categorias.map((c) => [c.nombre, Number(c.nroOrden) || 0]));
+    const variantes = CATEGORIAS_HAMBURGUESA.filter((v) => orden.has(v)).map((v) => orden.get(v));
+    if (variantes.length) orden.set("HAMBURGUESAS", Math.min(...variantes));
+    const posicion = (nombre) => (orden.has(nombre) ? orden.get(nombre) : Infinity);
+    return {
+      "filtro.categoria": (a, b) => posicion(a) - posicion(b) || String(a).localeCompare(String(b)),
+    };
+  }, [categorias]);
+
   const columnasProductos = [
     { columnasBasicas: ["descripcion", "categoria", "precio"] },
     {
@@ -270,6 +283,7 @@ const Productos = () => {
                   ordenDescendente={false}
                   camposBusqueda={["descripcion", "categoria", "filtro.categoria"]}
                   camposFiltros={["filtro.categoria", "tipoExtra", "oferta", "privado"]}
+                  ordenFiltros={ordenFiltros}
                   // Amarillo claro: privado, se vende solo en la Caja (la web no lo muestra).
                   rowClassName={(p) => (p.privado ? "bg-warning-subtle" : "")}
                 />

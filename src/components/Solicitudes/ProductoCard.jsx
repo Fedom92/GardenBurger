@@ -3,13 +3,16 @@ import { fmtPesos } from "../../Utils/formato";
 import { ilustracionDe } from "./catalogo";
 import { ilustracion } from "./ilustraciones";
 
-// La foto de un producto, o la ilustración de su categoría si no tiene o si no carga:
-// muchas son links de Drive, que a la larga responden 429. La usan la tarjeta y la
-// ficha. `alt` vacío: el nombre del producto está escrito al lado.
+// La foto de un producto, o la ilustración de su categoría si no tiene o si no carga
+// (un link externo puede caerse; los de Drive, a la larga, responden 429). La usan la
+// tarjeta y la ficha. `alt` vacío: el nombre del producto está escrito al lado.
+//
+// Recuerda QUÉ foto falló y no un sí/no: en la ficha, al cambiar de tamaño cambia la
+// foto, y la nueva se prueba en el mismo <img>, sin desmontarlo (así no parpadea).
 export const FotoProducto = ({ producto, className = "" }) => {
-    const [rota, setRota] = useState(false);
+    const [rota, setRota] = useState(null);
     const src = producto?.imagen;
-    if (!src || rota) {
+    if (!src || rota === src) {
         return (
             <div className={`gb-producto-foto is-ilustracion ${className}`}>
                 <img src={ilustracion(ilustracionDe(producto))} alt="" />
@@ -18,7 +21,7 @@ export const FotoProducto = ({ producto, className = "" }) => {
     }
     return (
         <div className={`gb-producto-foto ${className}`}>
-            <img src={src} alt="" loading="lazy" onError={() => setRota(true)} />
+            <img src={src} alt="" loading="lazy" onError={() => setRota(src)} />
         </div>
     );
 };

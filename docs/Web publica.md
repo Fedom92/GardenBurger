@@ -87,6 +87,11 @@ Las hamburguesas se agrupan **por el nombre**: cada variante es un producto prop
 compartida por el pedido web y `/menu` (antes estaba escrita tres veces, distinta en cada una). Un
 producto cargado sin el sufijo queda como hamburguesa suelta.
 
+**La foto y los ingredientes de una hamburguesa son los del DOBLE**, en todos lados: la tarjeta
+del catálogo, la ficha (elegir el tamaño cambia el precio, no lo que se ve) y la fila de `/menu`
+(decisión del dueño, 16-10-2026). Si el DOBLE no los tiene, los del primer tamaño que sí. Lo
+cargado en el SIMPLE y el TRIPLE no se muestra en la web.
+
 ## El carrito
 
 Mientras se arma, **cada línea lleva sus extras adentro**:
@@ -231,8 +236,8 @@ nota es la factura. Ver [[Decisiones tecnicas#`menu.json` depende de tres capas]
 
 ## Lo que completa la dueña
 
-- **Fotos** (`contenidoWeb.js`): el selector y la banda "en la cocina" usan el cocinero de
-  espaldas; el catálogo, vasos, caja y hamburguesa de la marca (`elementos-garden.webp`, 16:9,
+- **Fotos** (`contenidoWeb.js`): el selector y la banda "en la cocina" usan la pieza "Hay
+  razones para venir" (`hamburguesa-razones.webp`); el catálogo, vasos, caja y hamburguesa de la marca (`elementos-garden.webp`, 16:9,
 la misma proporción del banner: se ve entera). Para cambiar una, copiarla a
   `src/img/marca/fotos/` (WebP, ~1080 px) e importarla ahí.
 - **Redes del pie** (`REDES` en `contenidoWeb.js`): Instagram (`@garden_burger_`). Una red sin
@@ -246,6 +251,8 @@ la misma proporción del banner: se ve entera). Para cambiar una, copiarla a
   tiene dirección.
 
 ## El estilo
+
+Los colores, las letras, las medidas y la voz de la marca, con su porqué: [[Marca web]].
 
 `webPublica.css`, importado solo por las pantallas públicas. Bootstrap se usa como en el resto de
 la app —grilla, utilidades, `Modal`, botones e inputs— y acá solo se le dan los colores y la

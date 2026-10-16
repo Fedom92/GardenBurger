@@ -31,6 +31,9 @@ const FichaProducto = ({ ficha, onAgregar, onCerrada }) => {
     const base = variantes ? variante : producto;          // el producto real que se agrega
     const extras = grupos.flatMap((g) => g.extras).filter((e) => elegidos.has(e.id));
     const precioUnidad = (Number(base?.precio) || 0) + extras.reduce((t, e) => t + (Number(e.precio) || 0), 0);
+    // La foto y los ingredientes son los de la tarjeta para todos los tamaños: en una
+    // hamburguesa, los del DOBLE (ver agruparHamburguesas). Elegir el tamaño cambia el
+    // precio, no lo que se ve (decisión del dueño, 16-10-2026).
     const { ingredientes } = producto;
 
     const alternar = (id) => setElegidos((actual) => {
@@ -57,7 +60,7 @@ const FichaProducto = ({ ficha, onAgregar, onCerrada }) => {
             <div className="gb-tirador" aria-hidden="true" />
             <div className="gb-ficha-cuerpo">
                 <div className="gb-ficha-foto">
-                    <FotoProducto producto={base || producto} />
+                    <FotoProducto producto={producto} />
                     <button type="button" className="gb-boton-cerrar" onClick={() => setAbierta(false)} aria-label="Cerrar">
                         <Icono nombre="cruz" />
                     </button>

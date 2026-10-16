@@ -194,6 +194,28 @@ hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó e
 
 ### A futuro
 
+- **La foto de la ficha de producto se ve chica** (pedido del dueño, 16-10-2026). Es una banda
+  de 190px de alto a todo el ancho (`.gb-ficha-foto`), y las fotos de las hamburguesas son
+  verticales: el recorte del centro deja solo una franja (el pan y un poco de lechuga) y la
+  hamburguesa no se reconoce. Opciones: una foto más alta (cuadrada, ~300px en el celular), o
+  centrar el recorte en la hamburguesa (`object-position`). Medir que la ficha siga entrando en la
+  pantalla del celular con los extras.
+- **Calcular el envío en la web con Google Maps** (pedido del dueño, 16-10-2026). Hoy la web no
+  sabe cuánto sale el envío: con Delivery dice "lo suma la sucursal según tu zona" y el cajero
+  elige la zona ([[Web publica#El documento que escribe]]). La idea: que el cliente marque su
+  dirección, se mida la distancia hasta la sucursal y se elija la zona de `envios`
+  (`zona_envio: "0-1"` son kilómetros) con su `costo_envio`. Lo que hay que decidir antes:
+  - **Las zonas viajan en `menu.json`**, como las sucursales: leerlas de Firestore en cada visita
+    costaría 1 lectura por zona y por cliente. Se republican al guardarlas en la pestaña Envíos.
+  - **Cada sucursal necesita sus coordenadas** (hoy solo tiene dirección en texto).
+  - **Distancia en línea recta o por calle.** En línea recta (fórmula, sin API) es gratis pero
+    da menos que la real; por calle necesita la Distance Matrix / Routes API, que se factura por
+    consulta. El autocompletado de direcciones (Places) también se factura. Hace falta una clave
+    de Maps restringida al dominio.
+  - **Qué manda la web y qué decide la Caja.** El envío que calcule la web es una sugerencia: el
+    cajero lo confirma al revisar la solicitud, como hoy el precio (las reglas no validan
+    contenido). Si se guarda en la solicitud (`envio`), `useRevisarSolicitud` podría
+    preseleccionar la zona, y el total del cliente pasaría a incluirlo.
 - **Que el encargado pueda cerrar la web de su sucursal.** Las excepciones de horario
   (12-10-2026) son solo del admin: escribir en `sucursales` lo es en las reglas, y ser encargado
   no es un claim. Haría falta un claim `encargado` y una regla que le deje tocar solo

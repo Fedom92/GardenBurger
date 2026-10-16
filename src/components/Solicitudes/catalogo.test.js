@@ -39,6 +39,26 @@ describe("las hamburguesas se agrupan por el nombre", () => {
         expect(big.imagen).toBe("big.jpg");
         expect(agruparHamburguesas(PRODUCTOS)).toHaveLength(2);
     });
+
+    test("la tarjeta usa la foto y los ingredientes del DOBLE, aunque el SIMPLE tenga otros", () => {
+        const tasty = [
+            p("t1", "TASTY SIMPLE", "SIMPLE", 14700, { imagen: "simple.webp", ingredientes: "Uno" }),
+            p("t2", "TASTY DOBLE", "DOBLE", 16200, { imagen: "doble.webp", ingredientes: "Dos" }),
+            p("t3", "TASTY TRIPLE", "TRIPLE", 17900, { imagen: "triple.webp", ingredientes: "Tres" }),
+        ];
+        const [grupo] = agruparHamburguesas(tasty);
+        expect(grupo.imagen).toBe("doble.webp");
+        expect(grupo.ingredientes).toBe("Dos");
+    });
+
+    test("si el DOBLE no tiene foto o ingredientes, los del primer tamaño que sí", () => {
+        const [grupo] = agruparHamburguesas([
+            p("c1", "CHEESE SIMPLE", "SIMPLE", 14000, { imagen: "simple.webp", ingredientes: "Uno" }),
+            p("c2", "CHEESE DOBLE", "DOBLE", 15500),
+        ]);
+        expect(grupo.imagen).toBe("simple.webp");
+        expect(grupo.ingredientes).toBe("Uno");
+    });
 });
 
 describe("las secciones del filtro", () => {

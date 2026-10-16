@@ -10,6 +10,9 @@ export const POLLO = "POLLO CRISPY";
 export const BEBIDAS = "BEBIDAS";
 export const EXTRA = "EXTRA";
 export const CAJA_PAPAS = "CAJA PAPAS";
+// El tamaño que representa a la hamburguesa en la tarjeta del catálogo y en /menu: su
+// foto y sus ingredientes (decisión del dueño, 16-10-2026).
+const VARIANTE_DE_LA_TARJETA = "DOBLE";
 
 // La ilustración de cada categoría, cuando no hay foto. La que no figura usa la bolsa.
 const ILUSTRACION_DE_CATEGORIA = {
@@ -36,7 +39,9 @@ export const quitarVariante = (descripcion = "") => descripcion.replace(SUFIJO, 
 // Las variantes de cada hamburguesa, juntas en una tarjeta:
 // [{ id, nombre, variantes, precioDesde, imagen, ingredientes }]. Las variantes van
 // como CATEGORIAS_HAMBURGUESA (simple, doble, triple); las hamburguesas, en el orden
-// del catálogo. La foto y los ingredientes, de la primera variante que los tenga.
+// del catálogo. La foto y los ingredientes son los del DOBLE (VARIANTE_DE_LA_TARJETA);
+// si el DOBLE no los tiene, los de la primera variante que sí. La ficha, en cambio,
+// muestra los del tamaño elegido.
 export const agruparHamburguesas = (productos = []) => {
     const porNombre = new Map();
     for (const p of productos) {
@@ -48,13 +53,14 @@ export const agruparHamburguesas = (productos = []) => {
     const orden = (p) => CATEGORIAS_HAMBURGUESA.indexOf(p.categoria);
     return [...porNombre.entries()].map(([nombre, variantes]) => {
         const ordenadas = [...variantes].sort((a, b) => orden(a) - orden(b));
+        const doble = ordenadas.find((v) => v.categoria === VARIANTE_DE_LA_TARJETA);
         return {
             id: `hamburguesa-${aClave(nombre)}`,
             nombre,
             variantes: ordenadas,
             precioDesde: Math.min(...ordenadas.map((v) => Number(v.precio) || 0)),
-            imagen: ordenadas.find((v) => v.imagen)?.imagen || "",
-            ingredientes: ordenadas.find((v) => v.ingredientes)?.ingredientes || "",
+            imagen: doble?.imagen || ordenadas.find((v) => v.imagen)?.imagen || "",
+            ingredientes: doble?.ingredientes || ordenadas.find((v) => v.ingredientes)?.ingredientes || "",
         };
     });
 };

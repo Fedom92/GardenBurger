@@ -205,6 +205,12 @@ formato. Cero lecturas de Firestore, y menos descarga de Storage que antes.
 > Caja pide todas las fotos de golpe, así que corta enseguida. Ninguna otra URL de Drive lo evita.
 > La salida es "Subir archivo" y después **Publicar Menú**. Por decisión del dueño (28-09-2026) el
 > campo **no** rechaza links de Drive.
+>
+> Medido el 16-10-2026, con 27 de las 30 hamburguesas en Drive: cada link responde con una
+> redirección marcada `no-store` (un viaje de más en **cada** visita, sin caché) y la foto final
+> es de **220 px** (`=s220`), borrosa en la ficha de la web. Lo subido con "Subir archivo" queda en
+> Storage como WebP con `max-age` de un año: después de la primera vez sale de la caché. La ficha
+> baja las fotos de todos los tamaños al abrirse, pero una de Drive puede no llegar a tiempo.
 
 ## Las páginas de /menu se arman con html2canvas
 

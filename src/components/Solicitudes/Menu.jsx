@@ -155,7 +155,6 @@ const Carta = ({ ref, hamburguesas, variantes, secciones, sucursales }) => (
             {sucursales.map((s) => (
                 <p key={s.id}>{s.nombre}{s.direccion ? ` · ${s.direccion}` : ""}</p>
             ))}
-            <p>Pedí online en <span className="gb-ambar fw-bold">{window.location.host}/crear-solicitud</span></p>
         </footer>
         <div className="gb-damero" aria-hidden="true" />
     </article>
