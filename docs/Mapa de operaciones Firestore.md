@@ -37,7 +37,7 @@ actualizado: 2026-10-12
 
 | Dónde | Qué lee | Cuándo | Volumen | Nota |
 |---|---|---|---|---|
-| `useTraerDatos` | 3 listeners: productos (`visible==true`), categorías y envíos | mientras Caja está abierta | solo los cambios al re-montar | ✅ era el mayor costo recurrente; ahora resume por token y queda en vivo |
+| `useTraerDatos` | 3 listeners: productos (todos), categorías y envíos | mientras Caja está abierta | solo los cambios al re-montar | ✅ era el mayor costo recurrente; ahora resume por token y queda en vivo |
 | `Clientes.jsx` | teléfono exacto, prefijo de nombre o sucursal | **por búsqueda**, no al entrar | con tope | ✅ era la colección entera |
 | `AuthContext.fetchUserData` | `usuarios/{uid}` | **1 por login** | 1 | ✅ `login()` y `onAuthStateChanged` comparten la promesa en vuelo |
 | `MiPerfil` | — | — | **0** | ✅ consume `useAuth()` |

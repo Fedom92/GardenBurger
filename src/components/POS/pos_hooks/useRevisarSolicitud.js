@@ -88,7 +88,7 @@ const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
             // desactualizado (o editado): manda el catalogo en vivo, que la Caja ya
             // tiene en memoria. Cada variante y cada extra es un documento propio de
             // productos, asi que el match por id cubre todo el carrito. Si el producto
-            // ya no esta (visible: false), se mantiene el precio del cliente.
+            // ya no esta (se elimino), se mantiene el precio del cliente.
             //
             // carritoItemId: la Caja quita cada linea por ese id, y la web no lo
             // pone. Sin el, todas las lineas quedaban en undefined y la ✕ de una

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { collection, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, deleteDoc, doc, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig/firebase";
 import CrearProducto from "./CrearProducto";
 import EditProducto from "./EditProducto";
@@ -27,7 +27,8 @@ const Productos = () => {
   // sobrevive a salir de la pantalla. Ver marcarPendiente.
   const [menuPendiente, setMenuPendiente] = useState(hayMenuPendiente);
 
-  // Todos los productos, ocultos incluidos (la Caja escucha solo los visibles). Sin
+  // Todos los productos, los privados incluidos: la MISMA consulta que la Caja
+  // (useTraerDatos), así una PC que abre las dos pantallas comparte la caché. Sin
   // orderBy: la lista se ordena abajo con localeCompare, que respeta los acentos.
   const productosCollection = useRef(collection(db, "productos"));
   // La MISMA consulta que useTraerDatos: en una PC que abre Caja y Productos, las
@@ -85,45 +86,6 @@ const Productos = () => {
   }, []);
 
 
-
-  const toggleVisibilidad = (id, visible) => {
-    Swal.fire({
-      title: visible ? '¿Quiere desactivar el producto?' : '¿Quiere activar el producto?',
-      text: visible ? '(Esto ocultará el producto)' : '(Esto volverá a mostrar el producto en el menú)',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#198754',
-      confirmButtonText: 'Si',
-      cancelButtonText: 'No'
-    }).then(async (result) => {
-      if (!result.isConfirmed) return;
-      // El éxito salía sin esperar la escritura: decía "Producto Desactivado"
-      // aunque Firestore hubiera fallado, y la tarjeta cambiaba igual.
-      try {
-        await actualizarVisibilidad(id, !visible);
-        Swal.fire({
-          title: 'Éxito!',
-          text: visible ? 'Producto Desactivado.' : 'Producto Activado.',
-          icon: 'success',
-          confirmButtonColor: '#198754'
-        });
-      } catch (error) {
-        console.error('Error cambiando la visibilidad:', error);
-        Swal.fire({
-          title: 'Error',
-          text: 'No se pudo cambiar la visibilidad del producto.',
-          icon: 'error',
-          confirmButtonColor: '#dc3545'
-        });
-      }
-    })
-  }
-
-  const actualizarVisibilidad = async (id, nuevoEstado) => {
-    const productoDoc = doc(db, 'productos', id);
-    await updateDoc(productoDoc, { visible: nuevoEstado });
-    marcarPendiente();
-  };
 
   const confirmeDelete = async (id) => {
     const result = await Swal.fire({
@@ -233,13 +195,6 @@ const Productos = () => {
         return (
           <>
             <button
-              className={`btn mx-1 ${producto.visible ? 'btn-dark' : 'btn-light'}`}
-              title={producto.visible ? 'DESACTIVAR' : 'ACTIVAR'}
-              onClick={() => toggleVisibilidad(producto.id, producto.visible)}
-            >
-              <i className="fa-solid fa-power-off"></i>
-            </button>
-            <button
               className="btn btn-success mx-1"
               title="EDITAR"
               onClick={() => {
@@ -304,6 +259,7 @@ const Productos = () => {
                     >
                       {publicando ? "Publicando..." : "Publicar Menú"}
                     </button>
+
                   </div>
                 </div>
 
@@ -313,9 +269,9 @@ const Productos = () => {
                   sortBy="descripcion"
                   ordenDescendente={false}
                   camposBusqueda={["descripcion", "categoria", "filtro.categoria"]}
-                  camposFiltros={["filtro.categoria", "tipoExtra", "oferta", "visible"]}
-                  // Rojo claro: pausado (visible false), no se vende ni en la Caja ni en la web.
-                  rowClassName={(p) => (p.visible === false ? "bg-danger-subtle" : "")}
+                  camposFiltros={["filtro.categoria", "tipoExtra", "oferta", "privado"]}
+                  // Amarillo claro: privado, se vende solo en la Caja (la web no lo muestra).
+                  rowClassName={(p) => (p.privado ? "bg-warning-subtle" : "")}
                 />
               </div>
             </div>

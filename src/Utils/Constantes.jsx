@@ -20,13 +20,6 @@ export const CATEGORIAS_COMBOS = [
   { key: "NUGGETS", label: "Nuggets" }
 ];
 
-// Categorías que se venden SOLO en la Caja —los productos para empleados—: la web
-// pública no las muestra, ni en menu.json ni en sus respaldos contra Firestore.
-// Hardcodeadas por decisión del dueño (26-09-2026). Si algún día son muchas, el
-// camino es una casilla "solo en Caja" en el producto.
-export const CATEGORIAS_SOLO_CAJA = ["COMBO GARDEN", "GARDEN SIN PAPAS"];
-
-
 export const CANTIDAD_CARNES = {
   TRIPLE: 3,
   DOBLE: 2,

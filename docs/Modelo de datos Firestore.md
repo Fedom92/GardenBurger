@@ -283,18 +283,28 @@ que en `updateDoc` **sí** navega el mapa. En `setDoc` los puntos serían parte 
 ## `productos` (global)
 
 ```js
-{ descripcion, categoria, precio, visible, oferta,
+{ descripcion, categoria, precio, oferta,
+  privado: false,      // true: solo en la Caja, la web pública no lo muestra (16-10-2026)
   ingredientes,        // se muestra en el menú público
   imagen: "url",        // Storage (productos/…, WebP de 1200 px) o un link externo pegado a mano
-  tipoExtra: "HAMBURGUESA" | "GENERAL"   // solo si categoria === "EXTRA"
+  tipoExtra: "HAMBURGUESA" | "GENERAL" | "PAPAS"   // solo si categoria === "EXTRA"
 }
 ```
+
+Hasta el 16-10-2026 había un campo `visible` (el "pausar" que se sacó). Un botón temporal de
+Productos ("Actualizar campo", `migrarPrivado`) lo borra de todos los productos y les pone
+`privado` (true donde `visible` era false). Se corrió el 16-10-2026 (99 productos) y se borró. Ver
+[[Reglas de negocio#Qué producto se ve dónde]].
 
 ## `categorias` (global)
 
 ```js
-{ nombre: "SIMPLE", nroOrden: 1 }
+{ nombre: "SIMPLE", nroOrden: 1,
+  privado: false }   // true: la categoría entera se vende solo en la Caja (las de empleados, 16-10-2026)
 ```
+
+Los productos apuntan a su categoría **por el nombre** (`producto.categoria === categoria.nombre`).
+Ver [[Reglas de negocio#Qué producto se ve dónde]].
 
 ## `usuarios` (global)
 

@@ -14,7 +14,11 @@ import { useAccionUnica } from "../../../Utils/useAccionUnica";
 //
 // Dos vistas en el mismo modal, como Sucursales: la lista, y el formulario solo al
 // crear o editar una categoria.
-const VALORES_INICIALES = { nroOrden: "", nombre: "" };
+//
+// `privado`: la categoría entera se vende solo en la Caja (las de empleados, como
+// COMBO GARDEN): la web pública no la muestra, ni a sus productos. Ver
+// filtrarPublico en Utils/menuPublico.js.
+const VALORES_INICIALES = { nroOrden: "", nombre: "", privado: false };
 
 const Categorias = ({ show, onHide, categorias, onCambio }) => {
   const { register, handleSubmit, reset } = useForm({ defaultValues: VALORES_INICIALES });
@@ -42,7 +46,8 @@ const Categorias = ({ show, onHide, categorias, onCambio }) => {
     }
     const newState = {
       nombre: data.nombre,
-      nroOrden: Number(data.nroOrden)
+      nroOrden: Number(data.nroOrden),
+      privado: Boolean(data.privado),
     };
 
     try {
@@ -77,7 +82,7 @@ const Categorias = ({ show, onHide, categorias, onCambio }) => {
   // Con reset y no con setValue: el formulario todavía no está montado (se ve la
   // lista), y reset deja los valores listos para cuando aparezca.
   const handleEdit = (item) => {
-    reset({ nombre: item.nombre, nroOrden: Number(item.nroOrden) });
+    reset({ nombre: item.nombre, nroOrden: Number(item.nroOrden), privado: item.privado === true });
     setIdAEditar(item.id);
     setError("");
     setModo("formulario");
@@ -89,9 +94,11 @@ const Categorias = ({ show, onHide, categorias, onCambio }) => {
     const categoriaToUpdate = categorias.find((item) => item.id === idAEditar);
     if (!categoriaToUpdate) return;
 
+    // setDoc reemplaza el documento entero: lo que no va acá se borra.
     const newState = {
       nombre: data.nombre,
-      nroOrden: Number(data.nroOrden)
+      nroOrden: Number(data.nroOrden),
+      privado: Boolean(data.privado),
     };
 
     try {
@@ -175,7 +182,12 @@ const Categorias = ({ show, onHide, categorias, onCambio }) => {
                 {categorias.map((categoria) => (
                   <tr key={categoria.id}>
                     <td className="text-center">{categoria.nroOrden}</td>
-                    <td>{categoria.nombre}</td>
+                    <td>
+                      {categoria.nombre}
+                      {categoria.privado && (
+                        <span className="badge bg-warning text-dark ms-2" title="Solo en la Caja: la web no la muestra">Privada</span>
+                      )}
+                    </td>
                     <td className="text-end text-nowrap">
                       <button
                         type="button"
@@ -207,6 +219,13 @@ const Categorias = ({ show, onHide, categorias, onCambio }) => {
 
               <label className="form-label">Nombre Categoria*</label>
               <input type="text" className="form-control" required {...register("nombre")} />
+
+              <div className="form-check mt-3">
+                <input className="form-check-input" type="checkbox" id="privadaCategoria" {...register("privado")} />
+                <label className="form-check-label" htmlFor="privadaCategoria">
+                  ¿Privada? <span className="text-body-secondary small">(solo en la Caja: la web no muestra la categoría ni sus productos)</span>
+                </label>
+              </div>
               {error && <small className="text-danger">{error}</small>}
             </div>
 

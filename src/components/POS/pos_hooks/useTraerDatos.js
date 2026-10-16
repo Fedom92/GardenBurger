@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { collection, query, orderBy, onSnapshot, where } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../../firebaseConfig/firebase";
 import { avisarSinConexion } from "../../../Utils/avisos";
 
@@ -18,7 +18,9 @@ const useTraerDatos = () => {
     const [envios, setEnvios] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const productosCollection = useRef(query(collection(db, "productos"), where("visible", "==", true)));
+    // Todos, los privados incluidos: privado es solo para la web. La misma consulta
+    // que Productos, así comparten la caché en una PC que abre las dos pantallas.
+    const productosCollection = useRef(collection(db, "productos"));
     const categoriasCollection = useRef(query(collection(db, "categorias"), orderBy("nroOrden", "asc")));
     const enviosCollection = useRef(query(collection(db, "envios"), orderBy("zona_envio", "asc")));
 

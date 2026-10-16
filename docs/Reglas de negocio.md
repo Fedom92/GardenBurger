@@ -347,20 +347,33 @@ que abrirlas no cuesta nada y no tienen ventana horaria. Ver
 
 | Producto | Pantalla de Productos (admin) | Caja | Web pública |
 |---|---|---|---|
-| `visible: true` | sí | sí | sí |
-| `visible: false` | sí | **no** | **no** |
-| Categoría de `CATEGORIAS_SOLO_CAJA` (`COMBO GARDEN`, `GARDEN SIN PAPAS`) | sí | sí | **no** |
+| Común | sí | sí | sí |
+| **Producto privado** (`privado: true`, la casilla "¿Privado?" de Productos) | sí, en amarillo | sí | **no** |
+| De una **categoría privada** (`privado: true`, la casilla "¿Privada?" de Categorías) | sí | sí | **no** |
 
-- **`visible: false` es "pausado"**: no se vende en ningún lado. Sirve para un producto sin stock o
-  de temporada. Los pedidos viejos no cambian: cada uno guarda su copia del producto.
-- **Los productos para empleados** van en las categorías de `CATEGORIAS_SOLO_CAJA`: se cobran en
-  la Caja y la web no los muestra, ni en `menu.json` ni en sus respaldos contra Firestore. Como no
-  son categorías de combo, **no cuentan como combos**. Hardcodeadas por decisión (26-09-2026).
+- **Privado = solo en la Caja**, en dos niveles:
+  - **la categoría**, para una familia entera: los productos para empleados (`COMBO GARDEN`,
+    `GARDEN SIN PAPAS`). Todo lo que se cargue ahí queda fuera de la web sin tildar nada más;
+  - **el producto**, para uno suelto de una categoría pública: el extra "Cheddar y bacon en papas
+    S/cargo", que usan los cajeros.
+- Lo filtra `filtrarPublico` (`Utils/menuPublico.js`) al publicar `menu.json` y en su respaldo
+  contra Firestore: **hay que publicar el menú** después de marcar o desmarcar algo. Los
+  productos van a su categoría por el nombre, como en todo el sistema. No es secreto: las
+  colecciones `productos` y `categorias` son de lectura pública.
+- **No hay "pausar".** Hasta el 16-10-2026 un botón de Productos ponía `visible: false` y el
+  producto dejaba de venderse en todos lados; se sacó por decisión del dueño: un producto que no
+  se vende **se elimina** y, si vuelve, se crea de nuevo. Los pedidos viejos no cambian: cada uno
+  guarda su copia del producto. El campo `visible` se borró de todos los productos con un
+  botón temporal de Productos ("Actualizar campo"): el único pausado (el "S/cargo") pasó a
+  privado.
+- **Los productos para empleados** van en sus categorías privadas: se cobran en la Caja y la web
+  no los muestra. Como no son categorías de combo, **no cuentan como combos**.
 - **El precio va entero** (`soloEnteros` + `step={1}`) y **la descripción se guarda sin espacios
   al principio ni al final**: "Hamburguesa " y "Hamburguesa" serían dos productos distintos, y la
   exclusión de combos (`excludes`) compara el nombre exacto.
 - **Un producto o un extra de $0 se ve igual** en la web ("sin cargo"): la web no decide qué
-  ocultar. Para sacarlo, `visible: false` desde Productos (decisión del dueño, 15-10-2026).
+  ocultar. Para que no se vea, la casilla "¿Privado?" o eliminarlo (decisión del dueño,
+  15/16-10-2026).
 - **Qué extras ofrece la web a cada producto** depende de su categoría y del `tipoExtra` del extra:
   a las hamburguesas y al pollo crispy, los de hamburguesa y los de las papas del combo; a las
   cajas de papas, los de papas y los generales; a los nuggets y al resto, los generales. Detalle en
@@ -514,7 +527,7 @@ Está bien que sea así —validar precios en las reglas exigiría un `get()` fa
 precio definitivo lo pone la Caja al Revisar**: `useRevisarSolicitud` reemplaza el precio de cada
 ítem por el del catálogo en vivo (`productos`, ya en memoria), en silencio. El cliente pudo haber
 visto otro en un `menu.json` viejo; el total que vale es el del ticket. Un producto que ya no está
-en el catálogo (`visible: false`) conserva el precio del cliente.
+en el catálogo (se eliminó) conserva el precio del cliente.
 
 ## Pago dividido: la validación corre dos veces
 

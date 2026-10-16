@@ -259,6 +259,7 @@ body:has(.gb-web) {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform: scale(1.1);
 }
 
 /* Lo pidió la dueña: que se note qué foto falta. Se completa en contenidoWeb.js. */
@@ -393,8 +394,9 @@ a.gb-sucursal:hover {
 
 /* ── Catálogo (B2) ──────────────────────────────────────────────────────── */
 
+/* 16:9, la proporción de la foto (contenidoWeb.js): se ve entera, sin recorte. */
 .gb-hero-catalogo {
-  height: 180px;
+  aspect-ratio: 16 / 9;
   margin: 16px 16px 0;
   overflow: hidden;
   border-radius: 20px;

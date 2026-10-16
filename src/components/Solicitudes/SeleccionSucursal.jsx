@@ -47,7 +47,7 @@ const SeleccionSucursal = () => {
 
                 <main className="px-3 pt-4">
                     <p className="gb-epigrafe mb-1">Garden Burger, sabemos lo que hacemos.</p>
-                    <h1 className="gb-display gb-titulo mb-4">¿Desde dónde pedís?</h1>
+                    <h1 className="gb-display gb-titulo mb-4">¿Donde querés pedir?</h1>
 
                     {loading ? (
                         <CargandoWeb />

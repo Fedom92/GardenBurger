@@ -6,15 +6,16 @@
 // src/img/marca/fotos/ e importarla acá en lugar de la actual. Para sacarla, dejar
 // la constante en null.
 import fotoCocinero from "../../img/marca/fotos/cocinero.webp";
-import fotoHamburguesa from "../../img/marca/fotos/hamburguesa.webp";
+import fotoElementos from "../../img/marca/fotos/elementos-garden.webp";
 
 // El cocinero de espaldas (recorte de la pieza de redes "cocinero_espaldas"): la
 // misma foto arriba del selector y en el seguimiento mientras se cocina, así baja
 // una sola vez.
 export const FOTO_SELECTOR = fotoCocinero;
 export const FOTO_COCINA = fotoCocinero;
-// La hamburguesa de "Unite al club", recortada debajo del texto.
-export const FOTO_CATALOGO = fotoHamburguesa;
+// Vasos, caja y hamburguesa de la marca, en horizontal (16:9): el banner del
+// catálogo tiene esa proporción, así se ve entera.
+export const FOTO_CATALOGO = fotoElementos;
 
 // Las redes del pie, con la URL completa (https://www.instagram.com/…). Sin URL se
 // muestran apagadas, como lugar a completar. El WhatsApp no va acá: sale del

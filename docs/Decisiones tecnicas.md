@@ -141,12 +141,13 @@ paquete: el build de 10 años se regenera con cada versión.
 
 **Qué**: en Productos, el botón "Publicar Menú" **parpadea** mientras haya cambios en el catálogo
 que la web pública todavía no ve. La bandera (`menuSinPublicar`) vive en `localStorage`: la
-prenden `onGuardado` de Crear/Editar producto, `actualizarVisibilidad`, `confirmeDelete` y los tres
+prenden `onGuardado` de Crear/Editar producto, `confirmeDelete` y los tres
 handlers del modal `Categorias` (vía `onCambio`); la apaga `handlePublicarMenu` en el camino feliz.
 Helpers en `menuPublico.js`.
 
-También la prenden los productos de `CATEGORIAS_SOLO_CAJA`, aunque no estén en `menu.json`: se
-probó filtrarlos y el dueño prefirió lo simple (28-09-2026). Publicar de más no rompe nada.
+También la prenden los productos privados (o de una categoría privada), aunque no estén en
+`menu.json`: se probó filtrarlos y el dueño prefirió lo simple (28-09-2026). Publicar de más no
+rompe nada.
 
 **Por qué así y no de otra forma**:
 
@@ -618,9 +619,9 @@ ocultamiento o borrado (ni la de productos ni la del modal Categorías). El list
 escritura al instante y la vuelve atrás si falla. Crear y Editar solo avisan con `onGuardado`, para
 que titile "Publicar Menú". Detalles:
 
-- La consulta de productos **no filtra `visible`** (el admin ve los ocultos), así que no comparte
-  caché con la de la Caja. La de categorías es **idéntica** a la de `useTraerDatos`: en una PC
-  que abre las dos pantallas, se comparte.
+- Las consultas de productos y de categorías son **idénticas** a las de `useTraerDatos`: en una
+  PC que abre las dos pantallas, se comparte la caché. (La de productos no lo era hasta el
+  16-10-2026: la Caja filtraba `visible`.)
 - Se fue el `orderBy("descripcion", "desc")`: la lista se ordena igual con `localeCompare`.
 
 ## El pedido de Caja tiene id fijo, y solo el reintento lee

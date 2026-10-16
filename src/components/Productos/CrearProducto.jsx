@@ -49,8 +49,8 @@ const CrearProducto = (props) => {
         precio: Number(data.precio),
         imagen: urlImagen,
         ingredientes: data.ingredientes,
-        visible: true,
         oferta: data.oferta || false,
+        privado: data.privado || false,
         tipoExtra: data.categoria === "EXTRA" ? data.tipoExtra : "",
       };
 
@@ -119,7 +119,7 @@ const CrearProducto = (props) => {
               </div>
 
               <div className="row mt-2">
-                <div className="col-9">
+                <div className="col-12">
                   <label className="form-label me-3">Imagen*</label>
                   <div className="btn-group" role="group">
                     <button
@@ -158,15 +158,21 @@ const CrearProducto = (props) => {
                     />
                   )}
                 </div>
+              </div>
 
-                <div className="col-3 text-center">
-                  <label className="form-check-label" htmlFor="ofertaCrear">¿Oferta?</label>
-                  <input
-                    className="form-check-input mt-2 p-3"
-                    type="checkbox"
-                    id="ofertaCrear"
-                    {...register("oferta")}
-                  />
+              <div className="row mt-3">
+                <div className="col-12 d-flex flex-wrap gap-4">
+                  <div className="form-check">
+                    <input className="form-check-input" type="checkbox" id="ofertaCrear" {...register("oferta")} />
+                    <label className="form-check-label" htmlFor="ofertaCrear">¿Oferta?</label>
+                  </div>
+                  {/* Privado: se vende solo en la Caja, la web pública no lo muestra. */}
+                  <div className="form-check">
+                    <input className="form-check-input" type="checkbox" id="privadoCrear" {...register("privado")} />
+                    <label className="form-check-label" htmlFor="privadoCrear">
+                      ¿Privado? <span className="text-body-secondary small">(solo en la Caja, no se ve en la web)</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 

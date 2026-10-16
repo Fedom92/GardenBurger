@@ -79,7 +79,8 @@ categoría desde el ABM le cambia el comportamiento):
 | `BEBIDAS`, `EXTRA` | Ninguno |
 
 Los extras de **$0 se muestran** ("sin cargo"): ocultar un producto es cosa del admin desde
-Productos, no de la web (decisión del dueño, 15-10-2026).
+Productos, con la casilla "¿Privado?", no de la web (decisión del dueño, 15/16-10-2026). Lo
+privado no llega a `menu.json`.
 
 Las hamburguesas se agrupan **por el nombre**: cada variante es un producto propio
 (`"BLT DOBLE"`, categoría `DOBLE`), y `quitarVariante()` le saca el sufijo. Es la única regla,
@@ -220,7 +221,7 @@ Cómo se arman, en [[Decisiones tecnicas#Las páginas de /menu se arman con html
 | Pantalla | Normal | Si `menu.json` falla |
 |---|---|---|
 | `SeleccionSucursal` | 0 | 2-3 (las sucursales) |
-| `Crearsolicitud`, al navegar | 0 | 1 (la sucursal) + **todos los productos visibles y todas las categorías**, en cada visita |
+| `Crearsolicitud`, al navegar | 0 | 1 (la sucursal) + **todos los productos y todas las categorías**, en cada visita |
 | `Crearsolicitud`, al confirmar | 1 lectura + 1 escritura | ídem |
 | `PaginaDetalle` | 1 por visita, y 1 por cada recarga o "Reintentar" | — |
 | `Menu` | 0 | todos los productos y las categorías |
@@ -231,14 +232,18 @@ nota es la factura. Ver [[Decisiones tecnicas#`menu.json` depende de tres capas]
 ## Lo que completa la dueña
 
 - **Fotos** (`contenidoWeb.js`): el selector y la banda "en la cocina" usan el cocinero de
-  espaldas; el catálogo, la hamburguesa de "Unite al club". Para cambiar una, copiarla a
+  espaldas; el catálogo, vasos, caja y hamburguesa de la marca (`elementos-garden.webp`, 16:9,
+la misma proporción del banner: se ve entera). Para cambiar una, copiarla a
   `src/img/marca/fotos/` (WebP, ~1080 px) e importarla ahí.
 - **Redes del pie** (`REDES` en `contenidoWeb.js`): Instagram (`@garden_burger_`). Una red sin
   URL se ve apagada, como lugar a completar. El WhatsApp no va ahí: sale del teléfono de cada
   sucursal.
-- **Datos del panel** que se ven raros en la web: el extra "Cheddar y bacon en papas **S/cargo**"
-  sale "s/cargo sin cargo" en la ficha (alcanza con sacarle el "S/cargo" al nombre); la BLT tiene
-  los ingredientes repetidos; Luro no tiene dirección.
+- **Lo que no tiene que ver el cliente** (un extra que solo usan los cajeros, como "Cheddar y
+  bacon en papas S/cargo"): la casilla "¿Privado?" de Productos; una categoría entera (las de
+  empleados, como COMBO GARDEN): la casilla "¿Privada?" de Categorías. Después, **Publicar Menú**. Ver
+  [[Reglas de negocio#Qué producto se ve dónde]].
+- **Datos del panel** que se ven raros en la web: la BLT tiene los ingredientes repetidos; Luro no
+  tiene dirección.
 
 ## El estilo
 

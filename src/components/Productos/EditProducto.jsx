@@ -28,6 +28,7 @@ const EditProducto = (props) => {
       imagen: producto.imagen || "",
       ingredientes: producto.ingredientes || "",
       oferta: producto.oferta || false,
+      privado: producto.privado || false,
       tipoExtra: producto.tipoExtra || ""
     });
   }, [producto, reset]);
@@ -52,6 +53,7 @@ const EditProducto = (props) => {
         imagen: urlImagen,
         ingredientes: data.ingredientes || producto.ingredientes,
         oferta: data.oferta || false,
+        privado: data.privado || false,
         tipoExtra: data.categoria === "EXTRA" ? (data.tipoExtra || producto.tipoExtra) : "",
       };
 
@@ -122,7 +124,7 @@ const EditProducto = (props) => {
 
               {/* Imagen: toggle Link / Subir archivo */}
               <div className="row mt-2">
-                <div className="col-9">
+                <div className="col-12">
                   <label className="form-label me-3">Imagen*</label>
                   <div className="btn-group" role="group">
                     <button
@@ -158,15 +160,21 @@ const EditProducto = (props) => {
                     />
                   )}
                 </div>
+              </div>
 
-                <div className="col-3 text-center">
-                  <label className="form-check-label" htmlFor="ofertaEditar">¿Oferta?</label>
-                  <input
-                    className="form-check-input mt-2 p-3"
-                    type="checkbox"
-                    id="ofertaEditar"
-                    {...register("oferta")}
-                  />
+              <div className="row mt-3">
+                <div className="col-12 d-flex flex-wrap gap-4">
+                  <div className="form-check">
+                    <input className="form-check-input" type="checkbox" id="ofertaEditar" {...register("oferta")} />
+                    <label className="form-check-label" htmlFor="ofertaEditar">¿Oferta?</label>
+                  </div>
+                  {/* Privado: se vende solo en la Caja, la web pública no lo muestra. */}
+                  <div className="form-check">
+                    <input className="form-check-input" type="checkbox" id="privadoEditar" {...register("privado")} />
+                    <label className="form-check-label" htmlFor="privadoEditar">
+                      ¿Privado? <span className="text-body-secondary small fst-italic">(solo para Caja)</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 
