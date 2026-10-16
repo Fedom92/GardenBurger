@@ -194,12 +194,6 @@ hace webpack, `TablaGenerica` renderizada con React 19), y el dueño lo probó e
 
 ### A futuro
 
-- **La foto de la ficha de producto se ve chica** (pedido del dueño, 16-10-2026). Es una banda
-  de 190px de alto a todo el ancho (`.gb-ficha-foto`), y las fotos de las hamburguesas son
-  verticales: el recorte del centro deja solo una franja (el pan y un poco de lechuga) y la
-  hamburguesa no se reconoce. Opciones: una foto más alta (cuadrada, ~300px en el celular), o
-  centrar el recorte en la hamburguesa (`object-position`). Medir que la ficha siga entrando en la
-  pantalla del celular con los extras.
 - **Calcular el envío en la web con Google Maps** (pedido del dueño, 16-10-2026). Hoy la web no
   sabe cuánto sale el envío: con Delivery dice "lo suma la sucursal según tu zona" y el cajero
   elige la zona ([[Web publica#El documento que escribe]]). La idea: que el cliente marque su

@@ -696,9 +696,14 @@ a.gb-sucursal:hover {
   padding: 8px 16px 20px;
 }
 
+/* 4:3 y no una banda baja: las fotos de producto son verticales y con 190px de alto
+   solo se veía el pan. El tope es para la PC, donde la ficha es más ancha; con el
+   ancho fijo, el tope recorta el alto y la foto sigue a todo el ancho. */
 .gb-ficha-foto {
   position: relative;
-  height: 190px;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 300px;
   margin: 8px 0 16px;
   overflow: hidden;
   border-radius: 18px;
@@ -712,6 +717,12 @@ a.gb-sucursal:hover {
 /* Sin foto, la ilustración va sobre carbon-2 (en la tarjeta, sobre carbon-3). */
 .gb-ficha-foto .gb-producto-foto.is-ilustracion {
   background: var(--gb-carbon-2);
+}
+
+/* El recorte, corrido hacia abajo: en las fotos el producto está apoyado en la parte
+   de abajo, y el centro dejaba afuera la base. */
+.gb-ficha-foto .gb-producto-foto:not(.is-ilustracion) img {
+  object-position: center 70%;
 }
 
 .gb-boton-cerrar {
