@@ -206,8 +206,8 @@ const Navigation = () => {
                                         <Nav title="Estadísticas" Icon={FaChartBar} />
                                     </div>
                                     <div className="sidebar-content">
-                                        <NavLink to="/estadisticas" className={claseLink}><Nav title="Generales" Icon={FaChartLine} /></NavLink>
-                                        <NavLink to="/estadisticas-viejas" className={claseLink}><Nav title="Histórico" Icon={FaHistory} /></NavLink>
+                                        <NavLink to="/estadisticas" className={claseLink}><Nav title="Actuales" Icon={FaChartLine} /></NavLink>
+                                        <NavLink to="/estadisticas-viejas" className={claseLink}><Nav title="Históricas" Icon={FaHistory} /></NavLink>
                                     </div>
                                 </div>
                             </div>

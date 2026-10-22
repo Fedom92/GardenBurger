@@ -1,114 +1,90 @@
 ---
 tags: [moc, gardenburger]
 aliases: [GardenBurger MOC, Indice GardenBurger, Inicio]
-actualizado: 2026-10-16
+actualizado: 2026-10-22
 ---
 
-# GardenBurger — Mapa del proyecto
+# GardenBurger
 
-Sistema de gestión para una hamburguesería multi-sucursal: POS (Caja), Cocina, ATP (mostrador),
-Delivery, asistencias y sueldos, menú online público y panel de administración. SPA en React 19
-(CRA) con Firebase.
+Sistema de gestión para una hamburguesería **multi-sucursal** (hoy Davinci y Luro): la Caja, la
+Cocina, el mostrador (ATP), los deliverys, las asistencias y sueldos, el menú online y el panel
+de administración. SPA en React 19 con Firebase.
 
-**Repo**: `d:\Escritorio\Proyectos\GardenBurger` · **Rama**: `main`
+**Todavía no está en producción** (22-10-2026): en los locales se sigue usando el sistema viejo,
+hecho con App Script y Google Sheets. Lo único que el sistema nuevo toma de él son los exports que
+alimentan las Estadísticas Históricas (*Arqueo y estadísticas › Estadísticas Históricas: los TSV del sistema viejo*).
 
 > [!info] Para qué sirve este vault
-> Es el contexto destilado del proyecto: leer estas notas evita releer `src/` entero. Si una nota
-> contradice al código, **gana el código** — y hay que corregir la nota.
+> Es el conocimiento del proyecto destilado: leer la nota justa evita releer `src/`. Si una nota
+> contradice al código, **gana el código** y hay que corregir la nota. El `CLAUDE.md` de la raíz
+> es la puerta de entrada para un asistente; este nodo es la de Obsidian.
 
-> [!tip] Cómo llega acá un asistente
-> El repo tiene un `CLAUDE.md` en la raíz que **se carga solo en cada sesión** y apunta a este
-> vault, con las reglas que no se negocian. El vault no se carga solo: hay que abrirlo. Si el
-> `CLAUDE.md` cambia de reglas, sincronizar con [[Convenciones y preferencias]].
+## Las áreas
 
-## Por dónde empezar
-
-> [!tip] Si es tu primera vez acá
-> Leé **[[Glosario]]** y mirá **[[Mapa del sistema.canvas|el mapa del sistema]]**. Diez minutos, y
-> el resto de las notas se entiende de corrido. El vault usa "arqueo", "solicitud" y "jornada
-> comercial" como si fueran obvios, y no lo son.
-
-Según qué vengas a hacer, con esto alcanza:
-
-| Vengo a… | Leer |
+| Área | Qué hay |
 |---|---|
-| Entender las palabras que usa todo el mundo | [[Glosario]] |
-| Ver el sistema de un vistazo | [[Mapa del sistema.canvas\|Mapa del sistema]] ← canvas: el pipeline y qué pantalla toca cada estado |
-| Entender el negocio | [[Reglas de negocio]] → [[Flujo del pedido]] |
-| Tocar la Caja o Cocina | [[Flujo del pedido]] + [[Reglas de negocio]] + [[Mapa de operaciones Firestore]] |
-| Cambiar el `estado` de un pedido | [[Modelo de estados]] ← transiciones, quién las dispara, qué le hace al arqueo |
-| Agregar o cambiar una pantalla | [[Arquitectura y rutas]] + [[Mapa de archivos]] + [[Convenciones y preferencias]] |
-| Tocar datos o reglas | [[Modelo de datos Firestore]] + [[Reglas de seguridad]] |
-| Sueldos y horas | [[Asistencias y liquidacion]] |
-| Tocar la web pública (selector, carrito, seguimiento, carta) | [[Web publica]] ← el contrato con la Caja + [[Marca web]] para colores, letras y tono |
-| Entender por qué algo está "raro" | [[Decisiones tecnicas]] ← **leer antes de "arreglar" nada** |
-| Saber qué falta | [[Deuda tecnica]] |
-| Ver el diagnóstico completo | [[Auditoria 2026-10-11]] ← la última, aplicada entera el 14 y 15-10-2026 |
+| [[Reglas de negocio]] | El negocio en una página, los **sectores** (cliente, cajero, cocinero, ATP, jefa de deliverys, repartidor, encargado, admin), la jornada, el flujo y los estados del pedido, la logística de deliverys, el catálogo, el arqueo y los sueldos |
+| [[Frontend]] | Rutas, guards y providers; las convenciones; el mapa de archivos; la **gestión interna** (las pantallas del staff) y la **web pública** |
+| [[Firebase]] | App Check y la configuración; **Firestore** (datos, reglas, costo de cada operación), **Authentication**, **Storage** y **Cloud Functions**, cada uno con su seguridad |
+| [[Deuda tecnica]] | Lo que queda abierto, lo cerrado por decisión y el historial de decisiones |
+| [[Auditorias]] | Las cuatro auditorías integrales: fotos fechadas, no se actualizan |
+| [[Glosario]] | Las palabras del negocio y del código, con la nota que desarrolla cada una |
 
-## Las cinco cosas que hay que saber sí o sí
+Dos notas cruzan todas las áreas:
 
-1. **La jornada comercial va de las 19 a las 2**, y es lo que significa "hoy" en todo el sistema.
-   Un pedido de las 00:30 pertenece a la noche anterior. Nunca `new Date()`: va por
-   `ahoraServidor()`, porque **hay PCs en el local con el reloj mal**.
-2. **Minimizar lecturas de Firestore es un requisito de primer orden**, no una optimización. El
-   proyecto vive con un límite ajustado. Antes de agregar una consulta, preguntarse si el dato ya
-   está en memoria.
-3. **El arqueo se calcula desde los pedidos**, no se acumula con `increment()`, y **suman solo los
-   pedidos ENTREGADOS** (15-10-2026). Ningún camino escribe `resumenDiario`: se escribe el pedido
-   y el número sale de ahí. Ver
-   [[Decisiones tecnicas#El arqueo se calcula desde los pedidos]] para el porqué y el costo, y
-   [[Modelo de estados]] para saber qué pedido entra al cálculo.
-4. **El sistema es multi-sucursal**: las colecciones operativas son subcolecciones de
-   `sucursales/{id}/…`, y el scope lo dan `colSucursal`/`docSucursal` (staff) o la URL (público).
-5. **Varios cajeros trabajan en paralelo** sobre la misma sucursal. De ahí el modelo de asignación
-   de solicitudes web y los guards contra doble ejecución.
+- [[Invariantes y dependencias]] — lo que no se puede romper, dónde se hace cumplir, y "si
+  cambiás X, revisá Y". **Leerla antes de tocar plata, estados, reglas o sucursales.**
+- [[Integraciones]] — los servicios de afuera: WhatsApp, Mercado Pago, Google Fonts, el sistema
+  viejo.
+
+## Lo principal, en cinco líneas
+
+1. **"Hoy" es la jornada comercial, de 19 a 2**: un pedido de las 00:30 es de la noche anterior.
+   Nada que se grabe usa `new Date()`, porque hay PCs con el reloj mal: va por `ahoraServidor()`.
+2. **Las lecturas de Firestore se cuidan como requisito**, no como optimización.
+3. **El arqueo se calcula desde los pedidos ENTREGADOS**; nadie lo acumula.
+4. **Cada sucursal tiene sus pedidos, resúmenes, asistencias y contadores**; el catálogo, el
+   personal y los clientes son de todas.
+5. **Varios cajeros trabajan a la vez** sobre la misma sucursal: de ahí que una solicitud web
+   tenga un solo dueño y que las acciones tengan guard contra doble click.
+
+El detalle y el porqué, en [[Invariantes y dependencias]].
 
 ## Stack
 
-- **React 19** (Create React App, no Vite) + **React Router v7** (los dos desde el 04-10-2026)
-- **Firebase 12** modular (12.19.0 desde el 04-10-2026; venía de la 9.23) — Firestore, Auth, Storage, Functions, App Check
-- **React Bootstrap** (modales) + **Bootstrap 5.3** (grid y utilidades)
-- **SweetAlert2** para confirmaciones · **React Toastify** para avisos rápidos
-- **React Hook Form** en Caja y en el pedido web
-- **Moment.js** (+ moment-timezone) — formato `DD/MM/YYYY`
-- **@tanstack/react-table v9** debajo de `TablaGenerica`
-- **Recharts** en Estadísticas · **html2canvas** + **jsPDF** para las descargas de `/menu` (se cargan al tocar el botón)
+React 19 (Create React App) · React Router 7 · Firebase 12 modular (Firestore, Auth, Storage,
+Functions, App Check) · React Bootstrap y Bootstrap 5.3 · SweetAlert2 y React Toastify · React
+Hook Form · Moment.js con moment-timezone · `@tanstack/react-table` 9 (debajo de `TablaGenerica`)
+· Recharts · html2canvas y jsPDF (descargas de `/menu`). Cloud Functions en TypeScript, Node 24.
 
-## Todas las notas
+## Cómo se mantiene este vault
 
-**Entrada**
+Cuando cambia algo de fondo —una regla de negocio, una estructura de datos, una regla de
+seguridad, cómo se calcula un número, una integración—:
 
-- [[Glosario]] — las palabras del negocio, con el enlace a la nota que desarrolla cada una
-- [[Mapa del sistema.canvas|Mapa del sistema]] — el pipeline en un canvas, con los nodos enlazados
+1. **Buscar qué notas lo nombran** (un grep del nombre de la función o del campo en `docs/`) y
+   actualizar solo esas. Cada tema vive en **una** nota; las demás la nombran.
+2. **Si es una decisión** —se eligió algo entre alternativas—, el porqué va en la nota del tema y
+   una línea con la fecha en *Historial de decisiones*.
+3. **Si cambia algo que no se puede romper**, actualizar [[Invariantes y dependencias]].
+4. Poner la fecha en `actualizado:` de cada nota tocada.
+5. **Verificar los enlaces**: `node docs/.herramientas/verificar-enlaces.mjs` desde la raíz del
+   repo (también chequea las rutas del `CLAUDE.md`).
+6. El `CLAUDE.md` se toca solo si cambia una instrucción, una regla crítica o la ubicación de
+   una nota.
 
-**El negocio y el pedido**
+**No se registra:** un arreglo menor, un cambio de estilo, ni el diario de una sesión. El
+historial de cambios es git; el vault guarda **cómo funciona hoy y por qué**. Las auditorías no se
+editan: son fotos.
 
-- [[Reglas de negocio]] — jornada, combos, métodos de pago, horario especial
-- [[Flujo del pedido]] — el recorrido feliz: quién escribe qué en cada paso
-- [[Modelo de estados]] — el pipeline como máquina de estados, y las transiciones que no deberían existir
-- [[Asistencias y liquidacion]] — horas trabajadas y sueldos
+**El vault es un árbol, también en el grafo.** Los únicos enlaces internos son los del árbol:
+cada nota abre con una línea `↑` hacia su hub, y cada hub enlaza a sus hijas. Cualquier otra
+referencia va **en cursiva con el nombre de la nota**, *Nota › Sección*, y se abre con Ctrl+O. Una
+nota nueva va en la carpeta de su área, con su `↑`, enlazada desde su hub y agregada al mapa. El
+verificador marca como error cualquier enlace fuera del árbol.
 
-**La web pública**
+## La vista organizada
 
-- [[Web publica]] — el pedido, el seguimiento y `/menu`: cómo funcionan y el contrato con la Caja
-- [[Marca web]] — paleta con sus contrastes, tipografía, medidas, logos y voz de la marca
-
-**Los datos**
-
-- [[Modelo de datos Firestore]] — colecciones y campos reales
-- [[Reglas de seguridad]] — el porqué de `firestore.rules` y `storage.rules`
-- [[Mapa de operaciones Firestore]] — cada lectura y escritura, con su costo
-
-**El código**
-
-- [[Arquitectura y rutas]] — rutas, guards, roles, providers, multi-sucursal
-- [[Mapa de archivos]] — qué hace cada archivo, sin abrirlo
-- [[Convenciones y preferencias]] — cómo escribir código en este repo
-- [[Decisiones tecnicas]] — el porqué de lo que parece raro
-
-**Estado del proyecto**
-
-- [[Deuda tecnica]] — lo que queda abierto, y por qué decisión ← **el documento vivo**
-- `auditorias/` — fotos fechadas, no se actualizan:
-  [[Auditoria 2026-10-11]] (la última) · [[Auditoria 2026-09-26]] · [[Auditoria 2026-09-15]] ·
-  [[Auditoria 2026-09]] (la primera)
+[[Mapa del vault.canvas|Mapa del vault]]: el árbol dibujado, con un color por área y cada nota
+clickeable. El grafo automático muestra el mismo árbol, con los mismos colores (el mapa está
+oculto en el grafo con un filtro).
