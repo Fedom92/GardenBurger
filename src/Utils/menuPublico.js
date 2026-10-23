@@ -33,6 +33,10 @@ const sucursalesPublicas = (snap) => snap.docs
     .filter(s => s.activa !== false)
     .sort((a, b) => (a.nombre || a.id).localeCompare(b.nombre || b.id));
 
+// Las zonas de envío tal como viajan en el JSON: solo lo que la web necesita para
+// calcular el envío por distancia (Utils/zonasEnvio.js).
+const enviosPublicos = (envios) => envios.map(({ zona_envio, costo_envio }) => ({ zona_envio, costo_envio }));
+
 const subirMenu = async (menu) => {
     const blob = new Blob([JSON.stringify(menu)], { type: "application/json" });
     // 60 segundos de caché: durante ese minuto el navegador ni pregunta, así que un
@@ -51,13 +55,16 @@ const subirMenu = async (menu) => {
 
 export const publicarMenu = async () => {
     // Las sucursales viajan dentro del JSON a propósito: la web necesita su
-    // horario para saber si toma pedidos, y su dirección y teléfono para el pie. Así
-    // los tiene sin pagar una lectura por visita. El costo es de 2-3 documentos y
-    // solo cuando el admin publica.
-    const [productosSnap, categoriasSnap, sucursalesSnap] = await Promise.all([
+    // horario para saber si toma pedidos, su dirección y teléfono para el pie, y su
+    // ubicación para el envío. Así los tiene sin pagar una lectura por visita. Las
+    // zonas de envío, por lo mismo: leerlas en cada visita sería 1 lectura por zona
+    // y por cliente. El costo es de 2-3 sucursales y ~10 zonas, solo cuando el admin
+    // publica.
+    const [productosSnap, categoriasSnap, sucursalesSnap, enviosSnap] = await Promise.all([
         getDocs(collection(db, "productos")),
         getDocs(query(collection(db, "categorias"), orderBy("nroOrden", "asc"))),
         getDocs(collection(db, "sucursales")),
+        getDocs(collection(db, "envios")),
     ]);
 
     const menu = {
@@ -65,10 +72,19 @@ export const publicarMenu = async () => {
         // Lo privado se vende solo en la Caja: no se publica.
         ...filtrarPublico(conId(productosSnap), conId(categoriasSnap)),
         sucursales: sucursalesPublicas(sucursalesSnap),
+        envios: enviosPublicos(conId(enviosSnap)),
     };
 
     await subirMenu(menu);
     return menu;
+};
+
+// no-store: el JSON tiene un minuto de caché, y partir de una copia vieja borraría
+// lo que se publicó en ese minuto.
+const leerMenuPublicado = async () => {
+    const res = await fetch(URL_MENU_PUBLICO, { cache: "no-store" });
+    if (!res.ok) throw new Error(`menu.json no disponible (${res.status})`);
+    return res.json();
 };
 
 // Republica SOLO las sucursales, sin tocar productos ni categorías. La llama el
@@ -80,15 +96,18 @@ export const publicarMenu = async () => {
 // lecturas (las sucursales). Si todavía no hay menu.json falla, y el que llama
 // avisa que hay que publicar el menú.
 export const publicarSucursales = async () => {
-    // no-store: el JSON tiene un minuto de caché, y partir de una copia vieja
-    // borraría lo que se publicó en ese minuto.
-    const res = await fetch(URL_MENU_PUBLICO, { cache: "no-store" });
-    if (!res.ok) throw new Error(`menu.json no disponible (${res.status})`);
     const [menu, sucursalesSnap] = await Promise.all([
-        res.json(),
+        leerMenuPublicado(),
         getDocs(collection(db, "sucursales")),
     ]);
     await subirMenu({ ...menu, sucursales: sucursalesPublicas(sucursalesSnap) });
+};
+
+// Republica SOLO las zonas de envío, como publicarSucursales. La llama el ABM de
+// Envíos con la lista que ya tiene en memoria: 0 lecturas.
+export const publicarEnvios = async (envios) => {
+    const menu = await leerMenuPublicado();
+    await subirMenu({ ...menu, envios: enviosPublicos(envios) });
 };
 
 // Bandera "hay cambios sin publicar". Vive en localStorage: la prende Productos
@@ -120,9 +139,10 @@ export const fetchMenuPublico = () => {
 };
 
 // El catálogo de las pantallas públicas (el pedido web y /menu): productos,
-// categorías en su nroOrden y sucursales, de menu.json. Si el JSON no está, de
-// Firestore, con el mismo filtro con que se publica: todos los productos y todas las
-// categorías en cada visita, y sin sucursales. Estaba escrito dos veces,
+// categorías en su nroOrden, sucursales y zonas de envío, de menu.json. Si el JSON no
+// está, de Firestore, con el mismo filtro con que se publica: todos los productos y
+// todas las categorías en cada visita, y sin sucursales ni zonas (el envío lo suma
+// el cajero). Estaba escrito dos veces,
 // en el contexto del carrito y en /menu. Ojo (docs/Decisiones tecnicas.md): el
 // respaldo tapa la falla en silencio, y lo único que la delata es la factura.
 export const fetchCatalogoPublico = async () => {
@@ -132,6 +152,7 @@ export const fetchCatalogoPublico = async () => {
             productos: menu.productos || [],
             categorias: [...(menu.categorias || [])].sort((a, b) => a.nroOrden - b.nroOrden),
             sucursales: menu.sucursales || [],
+            envios: menu.envios || [],
         };
     } catch (error) {
         console.warn("menu.json no disponible, se lee Firestore:", error);
@@ -143,5 +164,6 @@ export const fetchCatalogoPublico = async () => {
     return {
         ...filtrarPublico(conId(productosSnap), conId(categoriasSnap)),
         sucursales: [],
+        envios: [],
     };
 };

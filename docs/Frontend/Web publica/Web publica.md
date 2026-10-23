@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, frontend, web-publica, hub]
 aliases: [Web pública, Menú online, Carrito web, Solicitudes web]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Web pública
@@ -34,6 +34,7 @@ están en el historial de git de esta nota, antes del 16-10-2026.
 | `carritoWeb.js` | El carrito, **puro** (con tests), y el hook `useCarritoWeb`: agregar, sumar, aplanar para la Caja, armar la solicitud y el mensaje de WhatsApp |
 | `FichaProducto.jsx` | La ficha (tamaño, extras, nota, cantidad): un `Modal` de react-bootstrap, hoja desde abajo en el celular |
 | `TuPedido.jsx` | Las líneas del pedido, el formulario y `comprar` |
+| `BuscadorDireccion.jsx` | La dirección del delivery, elegida de las sugerencias de Google Maps (*El envío por distancia*) |
 | `ProductoCard.jsx`, `piezasWeb.jsx` | La tarjeta y la foto; íconos, `− N +`, el botón del carrito, `BotonWhatsApp`, los subtítulos `//.01` |
 | `HeaderWeb`, `PieWeb`, `CargandoWeb` | Cabecera fija, pie con damero y esqueleto de carga |
 | `exportarMenu.js` | Las páginas de `/menu` para los estados de WhatsApp y el PDF |
@@ -41,8 +42,9 @@ están en el historial de git de esta nota, antes del 16-10-2026.
 | `ilustraciones.js` | Las ilustraciones de categoría (WebP, en `src/img/marca/ilustraciones/`) |
 
 Los datos salen de `Utils/menuPublico.js`: `fetchMenuPublico` (el JSON entero) y
-`fetchCatalogoPublico` (productos, categorías y sucursales, con respaldo en Firestore). Ver
-*Storage › menu.json*.
+`fetchCatalogoPublico` (productos, categorías, sucursales y zonas de envío, con respaldo en
+Firestore). Ver *Storage › menu.json*. El envío: `Utils/zonasEnvio.js` (puro, con tests) y
+`Utils/googleMaps.js`.
 
 ## Cómo fluye un pedido web
 
@@ -110,6 +112,8 @@ una sin extras sale como una línea con `cantidad`.
 >   Cocina agrupan por posición (`agruparExtras`).
 > - **Los valores de `cliente.opcion`** (`"Retira"` / `"delivery"`) y de `metodoPago`: los leen
 >   `useRevisarSolicitud`, `PendientesSolicitudes` y `PaginaDetalle`.
+> - **`envioWeb.zona_envio`**: la Caja busca la zona **por nombre** en `envios` para
+>   preseleccionarla. Renombrar una zona deja sin preselección a las solicitudes pendientes.
 > - **Lo que exige `esCreacionPublicaValida()`**: `cliente`, `carrito` (1 a 50 líneas), `total`
 >   (mayor que 0 y hasta 1.000.000), `estado`, `origen` y `clienteTimestamp`. Ver
 >   *Reglas de Firestore › Qué valida la creación pública y qué no*.
@@ -130,10 +134,12 @@ una sin extras sale como una línea con `cantidad`.
     nombre, telefono,               // nombre sin espacios de más; teléfono: 10 dígitos, sin 0 ni 15
     opcion: "Retira" | "delivery",  // ENVIOS_LOCALES[0], o "delivery"
     direccion?, entreCalles?,       // solo con delivery
+    ubicacion?: { lat, lng },       // solo si la dirección salió de Google Maps
     metodoPago: "EFECTIVO" | "MP",
   },
+  envioWeb?: { zona_envio, costo_envio, distanciaKm },   // ídem: la zona que calculó la web
   carrito: [{ ...producto, cantidad, subtotal, observaciones? }],   // aplanado
-  total,                            // con el recargo de MP redondeado (REACT_APP_recargoMP)
+  total,                            // con el envío y el recargo de MP redondeado (REACT_APP_recargoMP)
   estado: "PENDIENTE",              // ESTADOS.WEB_PENDIENTE
   origen: "WEB",
   clienteTimestamp: serverTimestamp(),   // ⚠ no `timestamp`: ese lo escribe la Caja al cobrar
@@ -142,8 +148,7 @@ una sin extras sale como una línea con `cantidad`.
 }
 ```
 
-- **El envío no se calcula en la web**: depende de la zona, que elige el cajero ("Envío: lo suma
-  la sucursal según tu zona"). Calcularlo con Google Maps está pendiente: *Deuda tecnica › A futuro*.
+- **El envío lo calcula la web por distancia**, si puede: *El envío por distancia*, abajo.
 - **El recargo de MercadoPago se muestra como porcentaje** ("+10%"), no en pesos: el monto ya está
   en el total (dueño, 16-10-2026).
 - **El teléfono de la sucursal viaja en la solicitud.** Al confirmar, la web ya lee el documento de
@@ -153,10 +158,53 @@ una sin extras sale como una línea con `cantidad`.
   Sin teléfono cargado, el pedido se registra igual y no se abre WhatsApp.
 - **Qué hace la Caja con esto** (`useRevisarSolicitud`): pasa los datos del cliente al formulario,
   junta las `observaciones` en el campo general y copia el carrito **línea por línea, en el mismo
-  orden**, con el precio del catálogo en vivo y un `carritoItemId` por línea. Al guardar escribe
-  sobre el mismo documento con `merge: true`: el pedido conserva `cliente` y suma `codigo`,
-  `envio`, `metodoPago` y el `total` final. Las solicitudes viejas pueden traer `grupo`, `combo` o
+  orden**, con el precio del catálogo en vivo y un `carritoItemId` por línea. Con `envioWeb`,
+  preselecciona esa zona con el costo de hoy de `envios`. Al guardar escribe
+  sobre el mismo documento con `merge: true`: el pedido conserva `cliente` y `envioWeb`, y suma
+  `codigo`, `envio`, `metodoPago` y el `total` final. Las solicitudes viejas pueden traer `grupo`, `combo` o
   `productoAsociado`: no los lee nadie.
+
+## El envío por distancia
+
+Desde el 23-10-2026 (pedido del dueño). El cliente elige **Delivery** y escribe "Jara 12…";
+aparecen las sugerencias de Google y elige "Jara 1250". La web mide la distancia **en
+línea recta** desde la sucursal (3,4 km), busca la zona que la cubre en `envios` ("3-4") y muestra
+"Envío: $2.300", sumado al total. En la Caja esa zona viene elegida.
+
+- **Qué hace Google y qué no.** Google da las sugerencias y, al elegir una, la dirección y sus
+  coordenadas (`Utils/googleMaps.js`). La distancia y la zona se calculan sin Google
+  (`Utils/zonasEnvio.js`): es gratis, y es lo que el negocio llama "radio".
+- **Línea recta, no por calle.** Por calle siempre da igual o más, así que nadie dentro del radio
+  queda afuera. Medir por calle necesitaría otro servicio de Google, facturado por consulta.
+- **La dirección se elige de la lista, sí o sí** (dueño, 23-10-2026): así todo pedido trae su zona.
+  Una calle sin altura no se acepta: el punto caería en el medio de la calle.
+- **Se sugiere hasta la última zona + 4 km** (12 km con la última en "7-8"). No hace falta por la
+  línea recta: es para que el que vive a 8,5 km encuentre su calle y lea **"No llegamos hasta tu
+  dirección, podés retirarlo en el local"**, en vez de pensar que la web no la conoce. Fuera de zona
+  no se puede confirmar el delivery. Si se agrega una zona "8-9", el radio pasa a 13 solo.
+- **Una zona es un rango en km**, `desde-hasta`: la web lee ese texto. El ABM de Envíos no deja
+  guardar otro formato. Un borde exacto (3 km justos) cae en la zona más barata; si faltara una
+  zona en el medio, cobra la siguiente.
+- **El costo que vale es el de la Caja**, como el de los productos: la web usa el de `menu.json` y
+  la Caja preselecciona la zona con el de `envios`.
+- **El recargo de MP va sobre productos + envío**, igual que en la Caja.
+- **Sin Google, como antes.** Si falta la clave, la sucursal no tiene ubicación, `menu.json` no
+  trae zonas o Google no responde, la dirección es texto libre, el resumen dice "Envío: a
+  confirmar" y la zona la elige el cajero. El pedido nunca se pierde por culpa de Maps.
+
+**Lo que se factura** es la búsqueda, no cada sugerencia mostrada. Para que sean pocas consultas: el
+script de Google se carga recién al elegir Delivery; el buscador espera 300 ms sin teclear y al
+menos 3 letras; y todas las consultas hasta elegir una dirección van en una **sesión**, que Google
+cobra como una sola búsqueda al pedir los datos del lugar. Esos datos son solo los de la categoría
+básica (dirección, coordenadas y componentes): pedir otros sube el precio. Con el cupo gratuito
+mensual de Google, el volumen de dos locales debería quedar en $0; confirmarlo en la consola de
+Google Cloud.
+
+**La clave** es `REACT_APP_googleMapsKey` (*Convenciones y preferencias › Variables de entorno*).
+Va en el navegador, así que es pública por diseño: la protege su restricción, por dominio (el del
+hosting y `localhost`) y por API (Maps JavaScript API y Places API (New)), en la consola de Google
+Cloud del proyecto. **La ubicación de cada sucursal** la carga el admin pegando las coordenadas de
+Google Maps (*Gestion interna › Panel Admin: personal, sucursales y envíos*).
 
 ## El seguimiento (`/ver-pedido`)
 

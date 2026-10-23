@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, referencia]
 aliases: [Vocabulario, Terminos]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Glosario
@@ -77,7 +77,7 @@ Cada sector tiene su nota, con lo que hace en la noche: *Sectores*.
 | Término | Qué es |
 |---|---|
 | **`menu.json`** | Una **copia** del catálogo publicada en Storage. Es lo que ve el cliente en la web, y por eso puede estar desactualizado respecto de Firestore. Ahorra todas las lecturas del tráfico público. → *Storage › menu.json* |
-| **Publicar menú** | El botón de Productos que regenera `menu.json`. Mientras haya cambios sin publicar, **parpadea**. Hasta que no se toca, el cliente sigue viendo los precios viejos. El JSON lleva también las sucursales, pero esas **se publican solas** al guardarlas desde el Panel Admin (12-10-2026): el botón quedó para el catálogo. |
+| **Publicar menú** | El botón de Productos que regenera `menu.json`. Mientras haya cambios sin publicar, **parpadea**. Hasta que no se toca, el cliente sigue viendo los precios viejos. El JSON lleva también las sucursales y las zonas de envío, pero esas **se publican solas** al guardarlas desde el Panel Admin (12-10-2026 y 23-10-2026): el botón quedó para el catálogo. |
 | **Excepción de horario** | Una noche en que la web de una sucursal no sigue su horario de siempre: un feriado que se abre (con el horario de siempre) o una noche que se cierra. Vale para esa jornada sola. La de cierre lleva motivo, y el admin elige si se ve en la web; la de apertura, no. → *Jornada y horarios › Excepciones: feriados y noches puntuales* |
 | **Variante** | Las versiones de una hamburguesa (SIMPLE / DOBLE / TRIPLE). Cada una es un producto propio en Firestore; la web las agrupa para mostrarlas juntas. |
 | **Privado** | Lo que se vende **solo en la Caja**: la web pública y `/menu` no lo muestran. Una **categoría** privada (casilla "¿Privada?" de Categorías: las de empleados) o un **producto** privado (casilla "¿Privado?" de Productos: un extra de los cajeros). El de producto reemplazó al "activar / desactivar" (`visible`), que se sacó el 16-10-2026. → *Catálogo › Qué producto se ve dónde* |

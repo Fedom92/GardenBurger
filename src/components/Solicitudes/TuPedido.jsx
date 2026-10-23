@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { collection, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
@@ -7,17 +7,31 @@ import { FaMoneyBillWave, FaStore, FaUser, FaMobileAlt, FaMapMarkerAlt, FaMapSig
 import { MdDeliveryDining } from "react-icons/md";
 import { db } from "../../firebaseConfig/firebase";
 import { ENVIOS_LOCALES, METODOS_PAGO } from "../../Utils/Constantes";
-import { fmtPesos } from "../../Utils/formato";
+import { fmtPesos, fmtNumero } from "../../Utils/formato";
 import { useAccionUnica } from "../../Utils/useAccionUnica";
 import { webRecibePedidos, textoHorarioWeb, textoExcepcionWeb } from "../../Utils/fechaComercial";
+import { alcanceKm, distanciaKm, esUbicacion, radioSugerenciasKm, zonaPorDistancia } from "../../Utils/zonasEnvio";
+import { hayGoogleMaps } from "../../Utils/googleMaps";
 import { capitalizar } from "./catalogo";
 import {
     precioLinea, totalCarrito, totalConPago, armarSolicitud, mensajeWhatsApp, MAX_LINEAS_SOLICITUD,
 } from "./carritoWeb";
 import { Cantidad, Icono, Subtitulo, urlWhatsApp } from "./piezasWeb";
+import BuscadorDireccion from "./BuscadorDireccion";
 import logoMP from "../../img/mercado-pago.webp";
 
 const RECARGO_MP = process.env.REACT_APP_recargoMP;
+
+const FUERA_DE_ZONA = "No llegamos hasta tu dirección, podés retirarlo en el local.";
+
+// Lo que exige la dirección de Google para confirmar un delivery.
+const validarEntrega = (entrega) => {
+    if (!entrega) return "Elegí tu dirección de la lista";
+    if (!entrega.envio) return FUERA_DE_ZONA;
+    return true;
+};
+
+const textoKm = (km) => `a ${fmtNumero(Math.round(km * 10) / 10)} km`;
 
 // Las confirmaciones de la web pública: con los colores de la marca, no los del staff.
 const confirmar = (titulo, texto, boton) => Swal.fire({
@@ -36,8 +50,19 @@ const confirmar = (titulo, texto, boton) => Swal.fire({
 // "Tu pedido": lo que el cliente eligió, cómo lo recibe, sus datos, cómo paga y el
 // resumen con el botón de confirmar. Vive en la misma página que el catálogo; el
 // botón del carrito de la cabecera trae hasta acá.
-const TuPedido = ({ sucursal, sucursalInfo, carrito, quitarLinea, sumar, restar, vaciar, onVolverAlMenu }) => {
+//
+// El envío: con la ubicación de la sucursal, las zonas de menu.json y la clave de
+// Google, el cliente elige su dirección de las sugerencias de Google Maps y la web
+// calcula la zona por distancia (Utils/zonasEnvio.js). Si falta algo de eso, o Google
+// no responde, la dirección es texto libre y el envío lo suma el cajero, como antes.
+const TuPedido = ({ sucursal, sucursalInfo, envios = [], carrito, quitarLinea, sumar, restar, vaciar, onVolverAlMenu }) => {
     const [errorEnvio, setErrorEnvio] = useState("");
+    // La dirección elegida en Google: { direccion, ubicacion, distanciaKm, envio }.
+    // `envio` es null si queda fuera del reparto.
+    const [entrega, setEntrega] = useState(null);
+    const entregaActual = useRef(entrega);
+    entregaActual.current = entrega;
+    const [sinGoogle, setSinGoogle] = useState(false);
     // Un useState no alcanza: entre dos toques rápidos el botón todavía figura
     // habilitado y salían DOS solicitudes con ids distintos, que el cajero ve
     // duplicadas en F1. useAccionUnica corta en el mismo tick.
@@ -46,13 +71,34 @@ const TuPedido = ({ sucursal, sucursalInfo, carrito, quitarLinea, sumar, restar,
 
     // shouldUnregister: al volver de Delivery a Retiro, dirección y entre calles se
     // olvidan (antes viajaban igual). armarSolicitud tampoco las manda con Retiro.
-    const { register, handleSubmit, watch, formState: { errors } } = useForm({ shouldUnregister: true });
+    const { register, handleSubmit, watch, clearErrors, formState: { errors } } = useForm({ shouldUnregister: true });
     const opcion = watch("opcion");
     const metodoPago = watch("metodoPago");
 
+    const centro = sucursalInfo?.ubicacion;
+    const conGoogle = hayGoogleMaps() && !sinGoogle && esUbicacion(centro) && alcanceKm(envios) > 0;
+    const entregaWeb = opcion === "delivery" && conGoogle ? entrega : null;
+    const costoEnvio = entregaWeb?.envio?.costo_envio ?? 0;
+
     const total = totalCarrito(carrito);
-    const totalFinal = totalConPago(total, metodoPago, RECARGO_MP);
+    const totalFinal = totalConPago(total + costoEnvio, metodoPago, RECARGO_MP);
     const nombreSucursal = sucursalInfo?.nombre || sucursal;
+
+    const elegirDireccion = (datos) => {
+        const km = distanciaKm(centro, datos.ubicacion);
+        setEntrega({ ...datos, distanciaKm: km, envio: zonaPorDistancia(km, envios) });
+        clearErrors("direccionGoogle");
+    };
+
+    // Google no cargó o rechazó la consulta: el pedido no se pierde por eso.
+    const seguirSinGoogle = (error) => {
+        console.warn("Google Maps no disponible, la dirección queda como texto:", error);
+        setSinGoogle(true);
+        setEntrega(null);
+    };
+
+    // Fuera de zona se avisa apenas se elige la dirección, sin esperar a confirmar.
+    const errorDireccion = errors.direccionGoogle || (entrega && !entrega.envio ? { message: FUERA_DE_ZONA } : null);
 
     const avisarCerrada = (datosSucursal) => {
         const horario = textoHorarioWeb(datosSucursal);
@@ -72,14 +118,14 @@ const TuPedido = ({ sucursal, sucursalInfo, carrito, quitarLinea, sumar, restar,
             return;
         }
 
-        const solicitud = armarSolicitud(datos, carrito, RECARGO_MP);
+        const solicitud = armarSolicitud(datos, carrito, RECARGO_MP, entregaWeb);
         if (solicitud.carrito.length > MAX_LINEAS_SOLICITUD) {
             setErrorEnvio("Tu pedido es muy grande para la web. Escribinos por WhatsApp y te lo tomamos por ahí.");
             return;
         }
 
         const nuevoPedido = doc(collection(db, "sucursales", sucursal, "pedidos"));
-        const texto = mensajeWhatsApp(solicitud.cliente, `${window.location.origin}/ver-pedido/${sucursal}/${nuevoPedido.id}`);
+        const texto = mensajeWhatsApp(solicitud.cliente, `${window.location.origin}/ver-pedido/${sucursal}/${nuevoPedido.id}`, solicitud.envioWeb);
         const mensajeWsp = encodeURIComponent(texto);
 
         try {
@@ -179,10 +225,21 @@ const TuPedido = ({ sucursal, sucursalInfo, carrito, quitarLinea, sumar, restar,
 
                 {opcion === "delivery" && (
                     <>
-                        <Campo id="direccion" etiqueta="Dirección" error={errors.direccion} icono={<FaMapMarkerAlt aria-hidden="true" />}>
-                            <input id="direccion" type="text" className="form-control" placeholder="Calle y número" autoComplete="street-address"
-                                {...register("direccion", { validate: (v) => (v || "").trim() !== "" || "Necesitamos la dirección" })} />
-                        </Campo>
+                        {conGoogle ? (
+                            <Campo id="direccion" etiqueta="Dirección" error={errorDireccion}>
+                                <BuscadorDireccion id="direccion" centro={centro} radioKm={radioSugerenciasKm(envios)}
+                                    elegida={entrega} detalle={entrega && textoKm(entrega.distanciaKm)}
+                                    onElegir={elegirDireccion} onCambiar={() => setEntrega(null)} onFalla={seguirSinGoogle} />
+                                {/* Sin valor propio: está para que react-hook-form frene el
+                                    envío y muestre el error junto con los de los demás campos. */}
+                                <input type="hidden" {...register("direccionGoogle", { validate: () => validarEntrega(entregaActual.current) })} />
+                            </Campo>
+                        ) : (
+                            <Campo id="direccion" etiqueta="Dirección" error={errors.direccion} icono={<FaMapMarkerAlt aria-hidden="true" />}>
+                                <input id="direccion" type="text" className="form-control" placeholder="Calle y número" autoComplete="street-address"
+                                    {...register("direccion", { validate: (v) => (v || "").trim() !== "" || "Necesitamos la dirección" })} />
+                            </Campo>
+                        )}
                         <Campo id="entreCalles" etiqueta="Entre calles" error={errors.entreCalles} icono={<FaMapSigns aria-hidden="true" />}>
                             <input id="entreCalles" type="text" className="form-control" placeholder="Para encontrarte más rápido"
                                 {...register("entreCalles", { validate: (v) => (v || "").trim() !== "" || "Necesitamos las entre calles" })} />
@@ -220,7 +277,7 @@ const TuPedido = ({ sucursal, sucursalInfo, carrito, quitarLinea, sumar, restar,
                 {/* El recargo no es un error: antes salía en rojo. */}
                 {metodoPago === METODOS_PAGO.MP.key && (
                     <p className="gb-aviso fst-italic small text-center">
-                        (Tomamos el pedido cuando recibimos la transferencia)
+                        (Enviar comprobante MP para confirmar)
                     </p>
                 )}
 
@@ -230,10 +287,8 @@ const TuPedido = ({ sucursal, sucursalInfo, carrito, quitarLinea, sumar, restar,
                     {metodoPago === METODOS_PAGO.MP.key && (
                         <div className="gb-resumen-fila"><span>Recargo MercadoPago</span><span>+{RECARGO_MP}%</span></div>
                     )}
-                    {/* La web no sabe cuánto sale el envío: la zona la elige el cajero,
-                        porque el costo depende de la distancia. */}
                     {opcion === "delivery" && (
-                        <div className="gb-resumen-fila"><span>Envío</span><span>lo suma la sucursal según tu zona</span></div>
+                        <div className="gb-resumen-fila"><span>Envío aprox</span><span>{textoEnvio(conGoogle, entrega)}</span></div>
                     )}
                     <div className="gb-resumen-total">
                         <span className="gb-display gb-resumen-total-etiqueta">Total</span>
@@ -253,6 +308,15 @@ const TuPedido = ({ sucursal, sucursalInfo, carrito, quitarLinea, sumar, restar,
             </form>
         </section>
     );
+};
+
+// El envío en el resumen. Sin Google, la web no sabe la zona: la elige el cajero.
+// Lo que no es un monto va en chico: en grande ocupaba la fila entera.
+const textoEnvio = (conGoogle, entrega) => {
+    if (!conGoogle) return <small>(a confirmar por wsp)</small>;
+    if (!entrega) return <small>(elegí tu dirección)</small>;
+    if (!entrega.envio) return <small>(fuera de zona)</small>;
+    return fmtPesos(entrega.envio.costo_envio);
 };
 
 // Una línea del pedido: cantidad, producto, extras, nota y precio. Con ⋮ —o tocando

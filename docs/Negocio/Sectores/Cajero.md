@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, negocio, sectores]
 aliases: [Caja (negocio), Cobro, Metodos de pago]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Cajero
@@ -79,6 +79,10 @@ cualquier pedido, sobre el mismo documento.
 
 - **Los precios se reemplazan por los del catálogo en vivo**, en silencio: el cliente pudo ver un
   menú publicado viejo. Si un producto ya no existe, conserva el precio del cliente.
+- **La zona de envío viene elegida** si la web la calculó con Google Maps (`envioWeb`), con el
+  costo vigente de `envios`; el cajero puede cambiarla. En el F1 se ve como "Envío: 3-4 km
+  ($2.300, a 3,4 km)", y el botón de Maps abre las coordenadas exactas. Sin `envioWeb` (Google no
+  cargó), la elige el cajero como siempre.
 - **La toma dura 15 minutos.** Pasado ese tiempo la Caja limpia el ticket sola y cualquier otro
   cajero puede tomarla.
 - **Cancelar** libera la solicitud. **Rechazar** la cancela.

@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, deuda, hub]
 aliases: [Pendientes, Que falta, Estado del proyecto]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Deuda técnica
@@ -126,16 +126,30 @@ CRA (`react-scripts` 5.0.1) sigue siendo el techo. El dueño lo probó en pantal
 
 ## A futuro
 
-- **Calcular el envío en la web con Google Maps** (pedido del dueño, 16-10-2026). Hoy el cajero elige
-  la zona. Lo que hay que decidir antes:
-  - **Las zonas viajarían en `menu.json`**, como las sucursales: leerlas en cada visita costaría 1
-    lectura por zona y por cliente.
-  - **Cada sucursal necesita coordenadas** (hoy solo tiene dirección en texto).
-  - **Distancia en línea recta o por calle**: en línea recta es gratis pero da menos; por calle
-    necesita la API de rutas, que se factura por consulta, igual que el autocompletado de
-    direcciones. Hace falta una clave de Maps restringida al dominio.
-  - **El envío de la web sería una sugerencia**: el cajero lo confirma al revisar, como hoy el
-    precio. Guardado en la solicitud, `useRevisarSolicitud` podría preseleccionar la zona.
+- **El buscador de direcciones de Google en la Caja** (pedido del dueño, 23-10-2026): que el cajero
+  cargue la dirección de un pedido telefónico como la web (*Web publica › El envío por
+  distancia*), con la zona calculada y `cliente.ubicacion` guardada, para que la jefa de deliverys
+  tenga las coordenadas de cada pedido como referencia para las motos (un link a Maps exacto, y
+  más adelante agrupar viajes por cercanía). Lo que hay que decidir antes:
+  - **La ubicación no se guarda en `clientes`** (dueño, 23-10-2026): un mismo cliente pide desde
+    lugares distintos. Cada pedido con delivery es una búsqueda en Google.
+  - **El componente**: `BuscadorDireccion` está estilado para la web (`gb-*`); en la Caja
+    haría falta su versión con los estilos `pos-*`, o separar la lógica en un hook.
+  - **Antecedente**: en junio de 2026 se sacó un autocompletado de Google que había en la Caja
+    (commit `0be7247`): el dueño prefería que los cajeros copiaran y pegaran la dirección tal
+    como la manda el cliente por WhatsApp. Hoy ve que eso trae problemas (direcciones mal
+    escritas, sin zona ni coordenadas), y por eso vuelve.
+- **Un mapa en tiempo real** (pedido del dueño, 23-10-2026): un módulo nuevo con las sucursales
+  y los pedidos entrantes como puntos, públicos y de la Caja, a medida que llegan. Depende del
+  ítem anterior: sin el buscador en la Caja, los pedidos telefónicos no tienen coordenadas. Lo que
+  hay que decidir antes:
+  - **Qué pedidos y hasta cuándo**: los de la jornada en curso, por estado (pendientes, en
+    cocina, en la calle), con un listener por `estado` como Cocina o Deliverys. Cuesta 1 lectura
+    por pedido que entra o cambia, y la pantalla abierta toda la noche no relee.
+  - **El mapa**: Google Maps cobra por cada mapa que se dibuja (una pantalla abierta toda la noche
+    es 1), con cupo gratuito mensual. La alternativa sin costo es Leaflet con OpenStreetMap.
+  - **Quién lo ve**: el admin, el encargado o la jefa de deliverys; y si es por sucursal o de todas
+    a la vez (el dashboard general, que tampoco existe todavía).
 - **Que el encargado pueda cerrar la web de su sucursal**: las excepciones son solo del admin; haría
   falta un claim `encargado` y una regla que le deje tocar solo `excepcionesWeb` de su sucursal.
 - **CRM de clientes**, sin diseñar.

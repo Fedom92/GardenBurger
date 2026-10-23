@@ -46,6 +46,13 @@ const FormularioSucursal = ({ valoresIniciales, esEdicion, error, onGuardar, onC
         <label className="form-label">Dirección*</label>
         <input type="text" className="form-control" required placeholder="..." {...register("direccion")} />
 
+        {/* De acá mide la web la distancia hasta el cliente para calcular el envío. */}
+        <label className="form-label">Ubicación</label>
+        <input type="text" className="form-control" placeholder="Ej: -34.7455, -58.5909" {...register("ubicacion")} />
+        <small className="text-body-secondary d-block mb-2">
+          En Google Maps, click derecho sobre el local y click en las coordenadas.
+        </small>
+
         {/* El de atención al público: la web manda ahí el WhatsApp de cada pedido. */}
         <label className="form-label">Teléfono de atención*</label>
         <input type="tel" className="form-control" required placeholder="10 dígitos, sin 0 ni 15. Ej: 1134567890" {...register("telefono")} />

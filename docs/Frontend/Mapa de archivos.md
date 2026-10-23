@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, referencia]
 aliases: [Que hace cada archivo]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Mapa de archivos
@@ -40,10 +40,12 @@ nombre en `src/` que abrir el archivo entero.
 |---|---|
 | `Constantes.jsx` | `ESTADOS`, `ENVIOS_LOCALES`, `CATEGORIAS_COMBOS`, `CATEGORIAS_HAMBURGUESA`, `CANTIDAD_CARNES`, `FLUJO_PUB_ESTADOS`, `TIEMPO_MIN_PEDIDOESP`, `getCurrentStepIndex()`, **`HORARIO`** (la jornada comercial), **`HORA_HABILITA_STATS`** (desde cuándo se ve el F4), `METODOS_PAGO`, `DESTINO_VUELTO`, `SUBESTADOS_MOTODELIVERY`, `MINUTOS_SOLICITUD_TOMADA`, `EMAIL_SUPERADMIN`, `etiquetaPago()` y **`ROLES`** (nombre, `nroOrden`, ruta inicial, `editable` y `llevaMoto` de cada rol, en un solo objeto), con `ROLES_EDITABLES` y `ordenDeRol()` derivados |
 | `fechaComercial.js` | Jornada comercial, hora del servidor, ventana del F4 y horario web de cada sucursal con sus excepciones (`webRecibePedidos`, `textoHorarioWeb`, `textoExcepcionWeb`, `errorDeHorario`). El id de jornada: `momentDeJornada`, `jornadaQueEmpieza`, `momentDeHoy`. `MODO_TEST` para probar de día. Ver *Jornada y horarios* |
-| `fechaComercial.test.js` | Tests de los bordes del horario web, las excepciones y el id de jornada. `npm test` corre las ocho baterías: *Convenciones y preferencias › Tests* |
+| `fechaComercial.test.js` | Tests de los bordes del horario web, las excepciones y el id de jornada. `npm test` corre las nueve baterías: *Convenciones y preferencias › Tests* |
 | `agruparExtras.js` (+ `.test.js`) | `agruparExtras(carrito)`: cada EXTRA con el producto que tiene arriba, para mostrar. La única copia de la regla (15-10-2026): la usan la Caja y `VerPedidoModal` |
 | `excepcionesHorario.js` | Guardar, levantar y leer las excepciones al horario de la web: un batch que escribe el registro y la copia de la sucursal. Ver *Jornada y horarios › Excepciones: feriados y noches puntuales* |
-| `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`), `publicarSucursales()` (republica solo las sucursales; la llama el Panel Admin), `fetchMenuPublico()` (lo consume, con promesa cacheada), `fetchCatalogoPublico()` (catálogo y sucursales, con respaldo en Firestore), `filtrarPublico` (saca lo privado) y la bandera `menuSinPublicar` en localStorage (`marcarMenuPendiente`/`limpiarMenuPendiente`/`hayMenuPendiente`) |
+| `menuPublico.js` | `publicarMenu()` (genera y sube `menu.json`), `publicarSucursales()` y `publicarEnvios()` (republican solo las sucursales o las zonas; las llama el Panel Admin), `fetchMenuPublico()` (lo consume, con promesa cacheada), `fetchCatalogoPublico()` (catálogo, sucursales y zonas, con respaldo en Firestore), `filtrarPublico` (saca lo privado) y la bandera `menuSinPublicar` en localStorage (`marcarMenuPendiente`/`limpiarMenuPendiente`/`hayMenuPendiente`) |
+| `zonasEnvio.js` (+ `.test.js`) | El envío por distancia, puro: `rangoDeZona` ("3-4"), `zonaPorDistancia`, `distanciaKm` (línea recta), `radioSugerenciasKm`, `limitesDeBusqueda`, y `leerUbicacion`/`textoUbicacion` para las coordenadas de la sucursal. Ver *Web publica › El envío por distancia* |
+| `googleMaps.js` | Lo único que habla con Google: carga el script (`REACT_APP_googleMapsKey`), `sugerirDirecciones` (con sesión) y `datosDeDireccion` (dirección corta y coordenadas) |
 | `sucursales.js` | `fetchSucursales()` — lista ordenada de la colección global, con la promesa cacheada. `invalidarSucursales()` la suelta cuando el ABM guarda |
 | `TablaGenerica.jsx` | Tabla reutilizable sobre `@tanstack/react-table` v9 (registra solo orden y paginación): búsqueda, filtros por columna, orden y paginación. `etiquetasFiltros` (opcional) muestra legible en el select un valor guardado crudo (`{ metodoPago: etiquetaPago }`). Si la lista se achica, la página se corre a la última que existe. Exporta `quitarAcentos` |
 | `formato.js` (+ `.test.js`) | **Único lugar** donde se formatean montos (`fmtPesos`, `fmtPesosRedondeado`), números (`fmtNumero`) y fechas (`fmtFecha`, `fmtHora`, `fmtFechaHora`, `aInputFecha`). Los nombres de días y meses (`NOMBRES_DIAS`, `DIAS_CORTOS`, `MESES_CORTOS`) salen del locale `es` de moment |
@@ -105,7 +107,8 @@ Rehecha entera el 14-16/10/2026. Cómo funciona y el contrato con la Caja: *Web 
 | `catalogo.js` (+ `.test.js`) | Reglas puras del catálogo: agrupar hamburguesas, secciones del filtro, extras de cada producto, la carta de `/menu` |
 | `carritoWeb.js` (+ `.test.js`) | El carrito puro y `useCarritoWeb`: líneas con extras adentro, aplanado para la Caja, la solicitud y el mensaje de WhatsApp |
 | `FichaProducto.jsx` | La ficha: tamaño, extras, nota y cantidad (`Modal` de react-bootstrap) |
-| `TuPedido.jsx` | Las líneas del pedido, el formulario y `comprar` (crea la solicitud) |
+| `TuPedido.jsx` | Las líneas del pedido, el formulario y `comprar` (crea la solicitud). Calcula el envío con la dirección elegida |
+| `BuscadorDireccion.jsx` | La dirección del delivery: sugerencias de Google Maps mientras se escribe, y la elegida como tarjeta con "Cambiar" |
 | `ProductoCard.jsx` | La tarjeta del catálogo y `FotoProducto` (la ilustración si no hay foto o no carga) |
 | `piezasWeb.jsx` | Íconos de trazo, `− N +`, el botón del carrito y los subtítulos `//.01` |
 | `HeaderWeb.jsx` / `PieWeb.jsx` / `CargandoWeb.jsx` | Cabecera fija, pie con damero y esqueleto de carga, de todas las pantallas públicas |

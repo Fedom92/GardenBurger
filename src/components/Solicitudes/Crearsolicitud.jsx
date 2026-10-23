@@ -173,7 +173,7 @@ const CrearSolicitud = () => {
                         </section>
 
                         <div className="px-3 pt-5">
-                            <TuPedido sucursal={sucursal} sucursalInfo={sucursalInfo} carrito={carrito}
+                            <TuPedido sucursal={sucursal} sucursalInfo={sucursalInfo} envios={catalogo.envios} carrito={carrito}
                                 quitarLinea={quitarLinea} sumar={sumar} restar={restar} vaciar={vaciar}
                                 onVolverAlMenu={() => irA("menu")} />
                         </div>

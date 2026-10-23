@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, frontend, convenciones]
 aliases: [Convenciones, Estilo de codigo, Comandos, Variables de entorno]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Convenciones y preferencias
@@ -130,6 +130,7 @@ hacer el build**: no son secretas, y cambiarlas es un build y un deploy.
 | `REACT_APP_gardenAppCheck` · `REACT_APP_appCheckDebug` | site key de reCAPTCHA Enterprise · debug token para localhost (*Firebase › App Check*) |
 | `REACT_APP_admin`, `_encargado`, `_cajero`, `_cocina`, `_jefeDeliverys`, `_delivery`, `_atp` | valores de rol. `REACT_APP_admin` es igual a `ADMIN_ROL` de `functions/.env` |
 | `REACT_APP_recargoMP` | % de recargo de Mercado Pago. Constante por decisión del dueño (26-09-2026) |
+| `REACT_APP_googleMapsKey` | clave de Google Maps del buscador de direcciones de la web, restringida por dominio y por API en Google Cloud. Sin ella, la dirección es texto libre (*Web publica › El envío por distancia*) |
 | `REACT_APP_modoTest` | **solo con `npm start`**: desarrollar sin límites de horario (*Jornada y horarios › Probar de día: REACT_APP_modoTest*) |
 | `REACT_APP_saludo` | pensada para el saludo del ticket impreso del cliente. **Hoy ningún archivo la lee**: el ticket dice "Gracias por su compra!" escrito en `TicketImpresion.jsx` |
 
@@ -141,7 +142,7 @@ Ya no existen: `REACT_APP_horaAbre` / `_horaCierre` (el horario está en `HORARI
 
 ```bash
 npm start                                          # dev en localhost:3000
-npm test                                           # las 8 baterías de tests (funciones puras)
+npm test                                           # las 9 baterías de tests (funciones puras)
 npx eslint --ext .js,.jsx --max-warnings=0 src     # la verificación sin build
 node docs/.herramientas/verificar-enlaces.mjs      # los enlaces del vault
 npm run build                                      # build de producción: solo si el dueño lo pide
@@ -157,18 +158,19 @@ npx firebase deploy --only firestore:rules,storage # reglas: solo si el dueño l
 
 ## Tests
 
-**Ocho baterías** con Jest (`npm test`), todas sobre funciones puras, sin Firebase:
+**Nueve baterías** con Jest (`npm test`), todas sobre funciones puras, sin Firebase:
 
 | Batería | Qué cubre |
 |---|---|
 | `Utils/fechaComercial.test.js` | los bordes del horario web y las excepciones: el corte de las 23, el lunes a las 00:30, un feriado; el id de jornada |
 | `Utils/formato.test.js` | montos, números y fechas; que días y meses salgan en castellano |
 | `Utils/agruparExtras.test.js` | cada extra con su producto |
+| `Utils/zonasEnvio.test.js` | el envío por distancia: leer las zonas, cada distancia en su zona, los bordes, fuera de zona, las coordenadas que pega el admin |
 | `POS/pos_hooks/validarPedido.test.js` | lo que la Caja exige antes de guardar |
 | `POS/pos_hooks/useResumenDiario.test.js` | **`calcularArqueo`**: suman solo los entregados, los anulados aparte, el viaje sin entregar, el entregado sin repartidor |
 | `Estadisticas/Generales/calculos.test.js` | las noches con "Todas" y la categoría de bebidas |
 | `Solicitudes/catalogo.test.js` | agrupar hamburguesas, secciones del filtro, extras de cada producto, la carta |
-| `Solicitudes/carritoWeb.test.js` | juntar líneas, el aplanado que lee la Caja, el recargo, la solicitud |
+| `Solicitudes/carritoWeb.test.js` | juntar líneas, el aplanado que lee la Caja, el recargo, la solicitud con su envío |
 
 Nacieron para los casos que solo se veían esperando la noche, o que un test detecta y una prueba
 manual no. **Las pantallas se verifican a mano**, por decisión del dueño. Sin tests todavía, y donde

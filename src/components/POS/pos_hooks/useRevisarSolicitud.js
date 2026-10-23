@@ -68,10 +68,15 @@ const useRevisarSolicitud = ({ setValue, setCarrito, setShowPendientesSolicitude
 
             // Mapear opcion a zona_envio
             if (solicitud.cliente?.opcion === "delivery") {
-                // La zona la elige el cajero, porque el costo depende de la distancia.
-                // Acá solo se activa el modo para que se vean direccion y entre calles.
                 setModoDelivery(true);
-                setValue("envio", "");
+                // La zona que calculó la web con Google Maps (envioWeb) viene elegida,
+                // con el costo de hoy de `envios` y no el del cliente, igual que los
+                // precios de abajo. Sin ella —una solicitud de antes, o Google no
+                // cargó— la elige el cajero. Si la zona ya no existe, también.
+                const zonaWeb = envios.find(e => e.zona_envio === solicitud.envioWeb?.zona_envio);
+                setValue("envio", zonaWeb
+                    ? JSON.stringify({ zona_envio: zonaWeb.zona_envio, costo_envio: zonaWeb.costo_envio })
+                    : "");
             } else if (solicitud.cliente?.opcion === ENVIOS_LOCALES[0]) {
                 setModoDelivery(false);
                 const envioRetira = envios.find(e => e.zona_envio === ENVIOS_LOCALES[0]);

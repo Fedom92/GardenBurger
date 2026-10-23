@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, frontend, staff, hub]
 aliases: [Pantallas del staff, Gestion interna, Staff]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Gestión interna
@@ -62,9 +62,12 @@ crea y actualiza la Caja al cobrar (*Cajero › La ficha del cliente*); un CRM p
 - **Sucursales**: la tabla dice qué hace la web hoy (solo informa); en Acciones, encender o apagar,
   las excepciones (botón naranja) y editar. **Todo cambio se publica solo** (`publicarSucursales`).
   El alta va con `setDoc` y la edición con `updateDoc` solo de los campos del formulario: antes
-  era un `setDoc` sin merge que borraba las excepciones vigentes.
+  era un `setDoc` sin merge que borraba las excepciones vigentes. La **Ubicación** son las
+  coordenadas del local pegadas de Google Maps (clic derecho sobre el local → clic en las
+  coordenadas): de ahí mide la web el envío. Es opcional; sin ella la tabla avisa "Falta ubicación".
 - **Envíos**: las zonas en `TablaGenerica` y el alta y edición en un modal. **No muestra Retira
-  ni Espera Afuera**: sus nombres deciden el ruteo de cocina y el arqueo.
+  ni Espera Afuera**: sus nombres deciden el ruteo de cocina y el arqueo. Las demás tienen que ser
+  un rango en km (`3-4`): la web lo lee. **Todo cambio se publica solo** (`publicarEnvios`).
 
 ## Cómo se ve el staff
 

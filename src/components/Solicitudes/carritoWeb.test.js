@@ -103,6 +103,28 @@ describe("la solicitud", () => {
         expect(s.cliente).toMatchObject({ direccion: "Calle 123", entreCalles: "A y B" });
     });
 
+    test("con la dirección de Google Maps viajan sus coordenadas y el envío, sumado al total", () => {
+        const entrega = {
+            direccion: "Jara 1250, Localidad", ubicacion: { lat: -34.76, lng: -58.60 },
+            distanciaKm: 3.4567, envio: { zona_envio: "3-4", costo_envio: 2300 },
+        };
+        const datos = { nombre: "Martina", telefono: "1123456789", opcion: "delivery", metodoPago: "MP", entreCalles: "A y B" };
+        const s = armarSolicitud(datos, carrito, 10, entrega);
+        expect(s.cliente).toMatchObject({ direccion: "Jara 1250, Localidad", entreCalles: "A y B", ubicacion: entrega.ubicacion });
+        expect(s.envioWeb).toEqual({ zona_envio: "3-4", costo_envio: 2300, distanciaKm: 3.5 });
+        // El recargo va sobre productos + envío, como en la Caja.
+        expect(s.total).toBe(Math.round((15700 + 400 + 4400 + 2300) * 1.1));
+        expect(s).not.toHaveProperty("envio");
+    });
+
+    test("con retiro no viaja el envío aunque se haya elegido una dirección", () => {
+        const entrega = { direccion: "Jara 1250", ubicacion: { lat: 0, lng: 0 }, distanciaKm: 3, envio: { zona_envio: "2-3", costo_envio: 2100 } };
+        const s = armarSolicitud({ nombre: "M", telefono: "1123456789", opcion: "Retira", metodoPago: "EFECTIVO" }, carrito, 10, entrega);
+        expect(s).not.toHaveProperty("envioWeb");
+        expect(s.cliente).not.toHaveProperty("ubicacion");
+        expect(s.total).toBe(15700 + 400 + 4400);
+    });
+
     test("Mercado Pago suma el recargo, redondeado como en la Caja", () => {
         expect(totalConPago(21000, "MP", 10)).toBe(23100);
         expect(totalConPago(21005, "MP", 10)).toBe(23106);
@@ -115,5 +137,12 @@ describe("la solicitud", () => {
         expect(texto).toContain("Pago: Mercado Pago");
         expect(texto).toContain("Delivery: Calle 123 (entre A y B)");
         expect(texto.endsWith("https://x/ver-pedido/d/1")).toBe(true);
+        expect(texto).not.toContain("Envío");
+    });
+
+    test("el mensaje lleva el envío si la web lo calculó", () => {
+        const cliente = { nombre: "Martina", telefono: "1123456789", opcion: "delivery", metodoPago: "EFECTIVO", direccion: "Jara 1250" };
+        const texto = mensajeWhatsApp(cliente, "https://x", { zona_envio: "3-4", costo_envio: 2300, distanciaKm: 3.5 });
+        expect(texto).toMatch(/Envío: .*2\.300 \(3,5 km\)/);
     });
 });

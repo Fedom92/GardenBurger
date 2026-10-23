@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firebase, storage, seguridad]
 aliases: [Cloud Storage, storage.rules, menu.json]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Storage
@@ -10,18 +10,20 @@ actualizado: 2026-10-22
 
 | Carpeta | Qué tiene | Lectura | Escritura |
 |---|---|---|---|
-| `publico/` | **`menu.json`**: la copia del catálogo y las sucursales que lee la web | pública | admin, y solo ese archivo |
+| `publico/` | **`menu.json`**: la copia del catálogo, las sucursales y las zonas de envío que lee la web | pública | admin, y solo ese archivo |
 | `productos/` | las fotos de producto, en WebP | staff (el público las ve por URL con token) | admin, solo imágenes de hasta 5 MB |
 | `privado/estadisticas/` | `ventas.tsv` y `pagos.tsv` del sistema viejo | **solo admin** | solo admin |
 
 ## `menu.json`
 
 La web pública no lee el catálogo de Firestore: lee **`publico/menu.json`**, que genera "Publicar
-Menú" (`publicarMenu()` en `Utils/menuPublico.js`) con los productos y categorías **no privados** y
-las sucursales activas. Ahorra todas las lecturas del tráfico público, que es el de más volumen. A
+Menú" (`publicarMenu()` en `Utils/menuPublico.js`) con los productos y categorías **no privados**,
+las sucursales activas y las zonas de envío. Ahorra todas las lecturas del tráfico público, que es el de más volumen. A
 cambio, **puede estar desactualizado** respecto de Firestore hasta que alguien publique. Las
 sucursales se republican solas al guardarlas (`publicarSucursales()`, que parte del JSON ya
-publicado: llamar a `publicarMenu()` publicaría de rebote cambios de productos a medio hacer).
+publicado: llamar a `publicarMenu()` publicaría de rebote cambios de productos a medio hacer). Las
+zonas de envío, igual, al guardarlas en Envíos (`publicarEnvios()`, con la lista que el ABM ya
+tiene en memoria: 0 lecturas).
 
 Para que funcione tienen que estar bien **las tres capas**:
 

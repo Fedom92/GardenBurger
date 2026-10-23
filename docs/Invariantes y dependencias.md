@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, invariantes, referencia]
 aliases: [Invariantes, Lo que no se rompe, Dependencias, Impacto de cambios]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Invariantes y dependencias
@@ -45,6 +45,8 @@ alternativa mejor se discute con su motivo y su costo en lecturas. El detalle, e
 | Una solicitud web tiene un solo dueño a la vez, por 15 minutos | `asignacionValida()` + temporizador de la Caja | Dos cajeros cobran el mismo pedido | *Flujo del pedido › Una solicitud web tiene un solo dueño* |
 | El ruteo lo decide `envio.zona_envio` contra `ENVIOS_LOCALES`, con `.includes()` | `ruteoPedido.js` | Pedidos al mostrador que eran delivery, o al revés | *Flujo del pedido › Pipeline* |
 | Las zonas "Retira" y "Espera Afuera" se llaman exactamente así en `envios` | `ENVIOS_LOCALES`; Envíos no las muestra | Se rompen el ruteo, el arqueo y la Caja | *Gestion interna › Panel Admin: personal, sucursales y envíos* |
+| Las demás zonas de `envios` son un rango en km, `desde-hasta` | `rangoDeZona` en el ABM de Envíos | La web no ve la zona: cobra la siguiente, o dice "No llegamos" a quien sí llega | *Web publica › El envío por distancia* |
+| La web guarda su zona en `envioWeb`, nunca en `envio` | `armarSolicitud` | Una solicitud sin cobrar parecería un pedido con envío congelado | *Web publica › El documento que escribe* |
 | En el carrito guardado, cada extra va inmediatamente después de su producto | `aplanarCarrito`, `useCarrito`, `agruparExtras` | La Caja y la Cocina asignan extras al producto equivocado | *Web publica › El carrito* |
 
 ### Sucursales, seguridad y costo
@@ -67,7 +69,7 @@ alternativa mejor se discute con su motivo y su costo en lecturas. El detalle, e
 | **`HORARIO` o `HORA_HABILITA_STATS`** | todo `fechaComercial.js` y sus tests; `HORAS_JORNADA` (el ABM de sucursales); el horario especial; que los horarios de cada sucursal sigan cayendo adentro. Los resúmenes ya guardados no se recalculan |
 | **`CATEGORIAS_COMBOS` o sus `excludes`** | solo cuenta para los pedidos nuevos (`combos` está congelado); `esComboConta` del Histórico; el top de combos de Métricas |
 | **El nombre de una categoría** | sus productos (se relacionan por nombre); los extras que ofrece la web (`extrasDe`); `CATEGORIAS_HAMBURGUESA`, `CATEGORIAS_COMBOS`, `CANTIDAD_CARNES`; `getItemsCocina` si es `BEBIDAS`; si es privada |
-| **`ENVIOS_LOCALES` o una zona de `envios`** | el ruteo de cocina, `esLocal` (que se congela al cobrar), el desglose del arqueo, la UI de la Caja, `cliente.opcion` de la web |
+| **`ENVIOS_LOCALES` o una zona de `envios`** | el ruteo de cocina, `esLocal` (que se congela al cobrar), el desglose del arqueo, la UI de la Caja, `cliente.opcion` de la web; el envío por distancia de la web (el formato `desde-hasta`, `menu.json`, la preselección por nombre de `envioWeb`) |
 | **La forma de un ítem del carrito web** | la clave de `localStorage` (`pedidoWeb:<sucursal>`); `aplanarCarrito`; `useRevisarSolicitud`; `agruparExtras`; `esCreacionPublicaValida()` |
 | **Un campo que suma `calcularArqueo`** | subir `VERSION_RESUMEN_DIARIO` (cada noche guardada se recalcula una vez: ~60-100 lecturas por noche y sucursal) |
 | **Un campo nuevo en la solicitud web** | nada en las reglas (lista negra); que la Caja lo conserve al guardar con `merge` |

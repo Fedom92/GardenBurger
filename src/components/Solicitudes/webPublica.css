@@ -881,6 +881,75 @@ a.gb-sucursal:hover {
   font-weight: 600;
 }
 
+/* El buscador de direcciones (BuscadorDireccion): las sugerencias de Google en una
+   lista que flota debajo del campo, y la dirección elegida como tarjeta. */
+.gb-buscador {
+  position: relative;
+}
+
+.gb-sugerencias {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  padding: 6px 0;
+  border: 1.5px solid var(--gb-borde);
+  border-radius: 14px;
+  background: var(--gb-carbon-hondo);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.gb-sugerencia {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.gb-sugerencia.is-activa,
+.gb-sugerencia[role="option"]:hover {
+  background: var(--gb-carbon-2);
+}
+
+.gb-sugerencia-principal {
+  font-weight: 700;
+}
+
+.gb-sugerencia-secundario {
+  color: var(--gb-muted);
+  font-size: 13px;
+}
+
+.gb-sugerencias-pie {
+  padding: 4px 16px 2px;
+  color: var(--gb-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+.gb-direccion-elegida {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--gb-borde);
+  border-radius: 14px;
+  background: var(--gb-carbon-2);
+}
+
+.gb-direccion-icono {
+  flex-shrink: 0;
+  color: var(--gb-ambar);
+  font-size: 18px;
+}
+
+.gb-direccion-detalle {
+  color: var(--gb-muted);
+  font-size: 13px;
+}
+
 /* ── Tu pedido (B4) ─────────────────────────────────────────────────────── */
 
 /* "//.01 Lo que pediste" */

@@ -9,6 +9,7 @@ import {
   errorDeHorario, excepcionDeJornada, getFechaComercial, textoRangoWeb, momentDeJornada,
 } from "../../../Utils/fechaComercial";
 import { guardarExcepcion, levantarExcepcion, leerExcepciones } from "../../../Utils/excepcionesHorario";
+import { esUbicacion, leerUbicacion, textoUbicacion } from "../../../Utils/zonasEnvio";
 import { useAuth } from "../../../context/AuthContext";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
 import { avisarErrorDeCarga } from "../../../Utils/avisos";
@@ -40,7 +41,7 @@ const slugify = (texto = "") =>
 // (con miércoles a domingo prendidos, igual que las sucursales de hoy, parecía que
 // no se había limpiado), y el horario de siempre en las horas.
 const VALORES_INICIALES = {
-  nombre: "", direccion: "", telefono: "",
+  nombre: "", direccion: "", ubicacion: "", telefono: "",
   dias: [], abre: "20", cierra: "0", horasCorte: 1,
 };
 
@@ -51,6 +52,7 @@ const porNombre = (a, b) => (a.nombre || a.id).localeCompare(b.nombre || b.id);
 // El teléfono y la dirección avisan en su propia columna.
 const faltantes = (s) => [
   !s.horario && "Falta horario (la web figura cerrada)",
+  !esUbicacion(s.ubicacion) && "Falta ubicación (la web no calcula el envío)",
 ].filter(Boolean);
 
 // Lo que la web hace hoy con una sucursal, para la columna "Estado Web": junta el
@@ -163,7 +165,15 @@ const Sucursales = ({ sucursales, setSucursales }) => {
       return;
     }
 
-    const datos = { nombre: data.nombre, direccion: data.direccion || "", telefono, horario };
+    // Las coordenadas del local, para el envío por distancia de la web. Opcional: sin
+    // ellas, el cliente escribe la dirección a mano y la zona la elige el cajero.
+    const ubicacion = leerUbicacion(data.ubicacion);
+    if ((data.ubicacion || "").trim() && !ubicacion) {
+      setError("La ubicación va como la copia Google Maps: latitud, longitud. Ej: -34.7455, -58.5909");
+      return;
+    }
+
+    const datos = { nombre: data.nombre, direccion: data.direccion || "", ubicacion, telefono, horario };
 
     try {
       // Editar va con updateDoc: toca solo estos campos, así que no se lleva puestos
@@ -206,6 +216,7 @@ const Sucursales = ({ sucursales, setSucursales }) => {
     abrirFormulario(item.id, {
       nombre: item.nombre || "",
       direccion: item.direccion || "",
+      ubicacion: textoUbicacion(item.ubicacion),
       telefono: item.telefono || "",
       dias: (horario.dias || VALORES_INICIALES.dias).map(String),
       abre: String(horario.abre ?? VALORES_INICIALES.abre),

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ESTADOS, METODOS_PAGO, etiquetaPago } from "../../Utils/Constantes";
+import { fmtPesos, fmtNumero } from "../../Utils/formato";
 
 // El carrito de la web pública. Cada línea lleva su producto y sus extras ADENTRO
 // mientras se arma el pedido —quitar una hamburguesa se lleva sus extras sin
@@ -99,25 +100,39 @@ export const totalConPago = (total, metodoPago, recargoMP) =>
 // La solicitud, sin lo que pone Firestore (clienteTimestamp) ni lo que sale de la
 // sucursal leída al confirmar (telefonoSucursal, mensajeWsp). Con "Retiro" no viajan
 // dirección ni entre calles, aunque se hayan escrito antes de cambiar de opción.
-export const armarSolicitud = (datos, carrito, recargoMP) => {
+//
+// `entrega`: la dirección elegida en Google Maps, con su distancia y su zona
+// ({ direccion, ubicacion, distanciaKm, envio }, de TuPedido). Con ella el envío se
+// suma al total —antes del recargo de MP, como en la Caja— y viaja en `envioWeb`,
+// que la Caja usa para preseleccionar la zona. No va en `envio`: ese lo escribe la
+// Caja al cobrar, y lo leen el ruteo de cocina y el arqueo. Sin `entrega` (Google no
+// cargó, o la sucursal no tiene ubicación) la dirección es la escrita y el envío lo
+// suma el cajero.
+export const armarSolicitud = (datos, carrito, recargoMP, entrega = null) => {
     const { nombre = "", telefono = "", opcion, metodoPago, direccion = "", entreCalles = "" } = datos;
     const cliente = { nombre: nombre.trim(), telefono, opcion, metodoPago };
+    const conEnvio = opcion === "delivery" && Boolean(entrega?.envio);
     if (opcion === "delivery") {
-        cliente.direccion = direccion.trim();
+        cliente.direccion = (conEnvio ? entrega.direccion : direccion).trim();
         cliente.entreCalles = entreCalles.trim();
+        if (conEnvio) cliente.ubicacion = entrega.ubicacion;
     }
-    return {
+    const costoEnvio = conEnvio ? entrega.envio.costo_envio : 0;
+    const solicitud = {
         cliente,
         carrito: aplanarCarrito(carrito),
-        total: totalConPago(totalCarrito(carrito), metodoPago, recargoMP),
+        total: totalConPago(totalCarrito(carrito) + costoEnvio, metodoPago, recargoMP),
         estado: ESTADOS.WEB_PENDIENTE,
         origen: "WEB",
     };
+    if (conEnvio) solicitud.envioWeb = { ...entrega.envio, distanciaKm: Math.round(entrega.distanciaKm * 10) / 10 };
+    return solicitud;
 };
 
 // El resumen que se abre en WhatsApp al confirmar, y que /ver-pedido reusa con su
 // botón. Línea por línea: el template indentado de antes lo mandaba con sangría.
-export const mensajeWhatsApp = (cliente, urlDetalle) => [
+// `envioWeb`, si la web calculó el envío.
+export const mensajeWhatsApp = (cliente, urlDetalle, envioWeb = null) => [
     "🍔 *NUEVO PEDIDO WEB*",
     "",
     `👤 Nombre: ${cliente.nombre}`,
@@ -126,6 +141,7 @@ export const mensajeWhatsApp = (cliente, urlDetalle) => [
     cliente.opcion === "delivery"
         ? `🛵 Delivery: ${cliente.direccion}${cliente.entreCalles ? ` (entre ${cliente.entreCalles})` : ""}`
         : "🏪 Retiro en el local",
+    ...(envioWeb ? [`📍 Envío: ${fmtPesos(envioWeb.costo_envio)} (${fmtNumero(envioWeb.distanciaKm)} km)`] : []),
     "",
     "🔎 *Ver detalle del pedido*",
     urlDetalle,

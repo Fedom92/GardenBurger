@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, costos]
 aliases: [Costos, Lecturas y escrituras]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Mapa de operaciones Firestore
@@ -38,6 +38,7 @@ Cómo factura el SDK (por qué `getDocs` siempre cuesta y un listener al re-mont
 | `Personal` / `Envios` | su colección entera | la primera vez que se abre su pestaña del Panel Admin | acotado | ✅ desde el 12-10-2026 en pestañas con `mountOnEnter`: entrar por `/admin?tab=sucursales` no lee los empleados, y volver a una pestaña no relee |
 | `Sucursales` → excepciones | el historial de una sucursal, de a 20 | **solo al tocar "Ver historial"** en el modal | ≤ 20 por página | ✅ abrir el modal no lee: las próximas salen de `excepcionesWeb`, en memoria. Con 50 excepciones cargadas, verlas cuesta 20 lecturas y solo si se piden. Cargar una excepción **no lee** |
 | `publicarSucursales` | `sucursales` + el `menu.json` publicado (Storage, no Firestore) | después de cada cambio de una sucursal | 2-3 | ✅ reemplaza a "Publicar Menú" para las sucursales, que leía el catálogo entero |
+| `publicarEnvios` | el `menu.json` publicado (Storage, no Firestore) | después de cada cambio de una zona | **0** | ✅ las zonas ya están en memoria en el ABM |
 | `Parametros/Categorias` (modal) | — | — | **0** | ✅ recibe las categorías del listener de `Productos` por props; antes releía la colección al montar |
 | `EditProducto` / `EditCliente` | — | — | **0** | ✅ completan con la fila que ya está en pantalla; antes releían el documento en cada edición (28-09-2026) |
 | `sucursales.js` | `sucursales` | selectores del admin, la pestaña Sucursales, y el selector público solo si `menu.json` falla | pocas | ✅ promesa cacheada: 1 vez por sesión. El ABM la usa desde el 28-09-2026 (antes releía en cada apertura) y la invalida al guardar |
@@ -70,8 +71,10 @@ lista. Verificado sobre los 42 puntos de acceso.
   `permission-denied` como "no era mía". Antes hacía un `getDoc` por cada Cancelar.
 - **`fetchSucursales` cachea la promesa** — PanelAdmin la disparaba dos veces al montar y cada
   pantalla con selector pagaba la suya. La pestaña Sucursales la invalida al guardar.
-- **`menu.json` incluye las sucursales** — el pie del menú público muestra las direcciones sin
-  pagar una lectura por visita. El costo es de 2-3 documentos, y solo cuando el admin publica.
+- **`menu.json` incluye las sucursales y las zonas de envío** — el pie del menú público muestra
+  las direcciones, y la web calcula el envío, sin pagar una lectura por visita. El costo es de 2-3
+  sucursales y ~10 zonas, y solo cuando el admin publica. El buscador de direcciones de la web
+  tampoco lee Firestore: lo que cuesta es Google (*Web publica › El envío por distancia*).
 
 ## Escrituras que mueven plata
 

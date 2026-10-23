@@ -287,11 +287,14 @@ const LineasPedido = ({ carrito = [] }) => (
     </ul>
 );
 
+// El envío que cargó la Caja; mientras no lo cargue, el que calculó la web
+// (envioWeb). Sin ninguno de los dos —Google no cargó— la zona la elige el cajero.
+const envioDe = (pedido) => pedido.envio || pedido.envioWeb;
+
 const textoEnvio = (pedido, esRetiro) => {
     if (esRetiro) return null;
-    // Todavía no lo confirmó la Caja: la web no sabe la zona.
-    if (!pedido.envio) return "lo suma la sucursal según tu zona";
-    const envio = Number(pedido.envio.costo_envio) || 0;
+    if (!envioDe(pedido)) return "a confirmar";
+    const envio = Number(envioDe(pedido).costo_envio) || 0;
     return envio > 0 ? fmtPesos(envio) : "sin cargo";
 };
 
@@ -301,7 +304,7 @@ const textoEnvio = (pedido, esRetiro) => {
 const Totales = ({ pedido, metodoPago, esRetiro }) => {
     const total = Number(pedido.total) || 0;
     const productos = (pedido.carrito || []).reduce((t, l) => t + subtotalDe(l), 0);
-    const envio = Number(pedido.envio?.costo_envio) || 0;
+    const envio = Number(envioDe(pedido)?.costo_envio) || 0;
     const conRecargo = metodoPago === METODOS_PAGO.MP.key || metodoPago === METODOS_PAGO.DIVIDIDO.key;
     const recargo = conRecargo ? Math.max(0, total - productos - envio) : 0;
     const filas = [

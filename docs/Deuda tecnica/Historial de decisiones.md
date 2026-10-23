@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, decisiones, adr]
 aliases: [Decisiones tecnicas, ADR, Cronologia, Por que esta asi]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Historial de decisiones
@@ -63,3 +63,4 @@ que cambia cómo hay que pensar el sistema. Una decisión nueva va con su fecha 
 | 16-10-2026 | "¿Privado?" reemplaza a "pausar" (`visible`); lo de $0 se muestra | *Catálogo › Qué producto se ve dónde* |
 | 16-10-2026 | `/menu` descarga páginas de 1080 × 1920 con html2canvas y jsPDF | *Web publica › /menu: la carta y sus descargas* |
 | 22-10-2026 | En el menú, las Estadísticas se llaman "Actuales" e "Históricas" | *Arqueo y estadísticas › Métricas y Estadísticas* |
+| 23-10-2026 | El envío web se calcula en línea recta desde la sucursal, con la dirección elegida de Google Maps; fuera de zona no hay delivery | *Web publica › El envío por distancia* |

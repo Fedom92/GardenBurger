@@ -131,7 +131,7 @@ ves una alternativa mejor, proponela. El detalle está en `docs/Invariantes y de
 
 ```bash
 npm start                                          # dev en localhost:3000
-npm test                                           # 8 baterías de tests, funciones puras
+npm test                                           # 9 baterías de tests, funciones puras
 npx eslint --ext .js,.jsx --max-warnings=0 src     # verificación sin build
 node docs/.herramientas/verificar-enlaces.mjs      # enlaces del vault y rutas de este archivo
 ```

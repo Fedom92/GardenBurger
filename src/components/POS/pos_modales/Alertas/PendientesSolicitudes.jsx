@@ -7,15 +7,19 @@ import moment from 'moment';
 import 'moment/locale/es';
 import { useAuth } from "../../../../context/AuthContext";
 import { ESTADOS, MINUTOS_SOLICITUD_TOMADA } from "../../../../Utils/Constantes";
-import { fmtPesos, fmtFechaHora } from "../../../../Utils/formato";
+import { fmtPesos, fmtNumero, fmtFechaHora } from "../../../../Utils/formato";
 import { ahoraServidor } from "../../../../Utils/fechaComercial";
 import { sinConexion } from "../../../../Utils/avisos";
 
-// Busqueda de Google Maps por texto libre. Es una URL comun, no la API con key que se
-// saco del proyecto: no necesita SDK ni se factura. Google resuelve el texto como puede,
-// asi que una direccion mal escrita puede caer en otra ciudad sin avisar.
-const mapsHref = (direccion) =>
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`;
+// Busqueda de Google Maps. Es una URL comun, no la API con key: no necesita SDK ni se
+// factura. Si la direccion se eligio en Google desde la web, va con sus coordenadas y
+// cae justo en la puerta; si no, por texto libre, y Google lo resuelve como puede (una
+// direccion mal escrita puede caer en otra ciudad sin avisar).
+const mapsHref = (cliente) => {
+    const { lat, lng } = cliente.ubicacion || {};
+    const consulta = Number.isFinite(lat) && Number.isFinite(lng) ? `${lat},${lng}` : cliente.direccion;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(consulta)}`;
+};
 
 const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
     const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
@@ -184,7 +188,7 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
                                             </a>
                                             {solicitud.cliente?.opcion === "delivery" && solicitud.cliente?.direccion && (
                                                 <a
-                                                    href={mapsHref(solicitud.cliente.direccion)}
+                                                    href={mapsHref(solicitud.cliente)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="btn btn-warning btn-sm py-0 px-1 flex-shrink-0"
@@ -231,6 +235,13 @@ const PendientesSolicitudes = ({ isOpen, onClose, onRevisarSolicitud }) => {
                                                 <p className="mb-1">
                                                     <strong>Método de pago:</strong> {solicitud.cliente?.metodoPago}
                                                 </p>
+                                                {/* Lo que calculó la web por distancia. Al tomarla, la Caja
+                                                    preselecciona esta zona con el costo de hoy. */}
+                                                {solicitud.envioWeb && (
+                                                    <p className="mb-1">
+                                                        <strong>Envío:</strong> {solicitud.envioWeb.zona_envio} km ({fmtPesos(solicitud.envioWeb.costo_envio)}, a {fmtNumero(solicitud.envioWeb.distanciaKm)} km)
+                                                    </p>
+                                                )}
                                                 <p className="mb-1">
                                                     <strong>Total:</strong> <span className="text-success fw-bold">{fmtPesos(solicitud.total)}</span>
                                                 </p>

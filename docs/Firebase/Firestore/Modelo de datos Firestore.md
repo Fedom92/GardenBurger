@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, firestore, datos]
 aliases: [Colecciones, Esquema Firestore, Campos]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Modelo de datos Firestore
@@ -28,6 +28,7 @@ Doc ID = slug usado en las URLs públicas, generado solo desde el nombre (el ABM
 
 ```js
 { nombre: "Luro", direccion: "Av. Luro 3300", activa: true,
+  ubicacion: { lat: -34.7455, lng: -58.5909 },   // 23-10-2026: de acá mide la web el envío. null sin cargar
   telefono: "1134567890",    // de atención: 10 dígitos, sin 0 ni 15. La web le antepone el 549
   horario: {                 // el de la web pública (28-09-2026). Sin él, la web la muestra cerrada
     dias: [0, 3, 4, 5, 6],   // de atención, 0 = domingo, por JORNADA
@@ -137,9 +138,12 @@ mensajeWsp: "..."             // mensaje ya encodeURIComponent
 telefonoSucursal: "1134567890" // el de la sucursal al crear la solicitud: /ver-pedido arma su WhatsApp sin leer la sucursal
 cliente: {
   nombre, telefono, direccion, entreCalles,
+  ubicacion: { lat, lng },         // solo si la dirección salió de Google Maps (23-10-2026)
   metodoPago: "EFECTIVO" | "MP",
   opcion: "delivery" | "Retira"    // ⚠ minúscula / ENVIOS_LOCALES[0]
 }
+envioWeb: { zona_envio: "3-4", costo_envio: 2300, distanciaKm: 3.4 }   // la zona que calculó la web.
+                                 // NO es `envio`: ese lo escribe la Caja al cobrar
 ```
 
 > [!warning] `timestamp` vs `clienteTimestamp`
@@ -362,5 +366,9 @@ Zonas iguales para todas las sucursales. ABM en la pestaña Envíos del Panel Ad
 
 Las dos últimas son `ENVIOS_LOCALES` en `Constantes.jsx` y definen el ruteo de cocina y el
 desglose de efectivo. Ver *Arqueo y estadísticas › Cómo se separa la plata*.
+
+Las demás son **rangos en km**, `desde-hasta`: la web los lee para calcular el envío por distancia,
+y el ABM no deja guardar otro formato. Viajan en `menu.json` y se republican al guardarlas. Ver
+*Web publica › El envío por distancia*.
 
 Quién puede leer y escribir cada colección: *Reglas de Firestore › Quién puede qué*.

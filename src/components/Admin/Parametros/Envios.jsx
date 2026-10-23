@@ -5,6 +5,8 @@ import { db } from "../../../firebaseConfig/firebase.js";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import { ENVIOS_LOCALES } from "../../../Utils/Constantes";
+import { rangoDeZona } from "../../../Utils/zonasEnvio";
+import { publicarEnvios, marcarMenuPendiente } from "../../../Utils/menuPublico";
 import { fmtPesos } from "../../../Utils/formato";
 import { useAccionUnica } from "../../../Utils/useAccionUnica";
 import { avisarErrorDeCarga } from "../../../Utils/avisos";
@@ -31,7 +33,7 @@ const FormularioEnvio = ({ valoresIniciales, esEdicion, error, procesando, onGua
     <form name="envios" onSubmit={handleSubmit(onGuardar)}>
       <div className="mb-3">
         <label className="form-label">Zona Envío*</label>
-        <input type="text" className="form-control" required {...register("zona_envio")} />
+        <input type="text" className="form-control" required placeholder="Desde-hasta, en km. Ej: 3-4" {...register("zona_envio")} />
       </div>
 
       <div className="mb-3">
@@ -115,7 +117,32 @@ const Envios = () => {
   // El estado local se toca DESPUES de que la escritura salio bien: antes se
   // actualizaba primero y sin catch, asi que un fallo dejaba la pantalla
   // mostrando un dato que Firestore nunca guardo.
+  // Después de cada escritura, con la lista ya actualizada: la web lee las zonas de
+  // menu.json. Si no se pudo republicar, lo guardado vale igual (la Caja lee
+  // Firestore), pero la web calcula con las zonas viejas: se avisa y queda prendida
+  // la bandera de "Publicar Menú". Como en Sucursales.
+  const publicarEnLaWeb = async (lista) => {
+    try {
+      await publicarEnvios(lista);
+    } catch (error) {
+      console.error("No se pudo publicar las zonas en menu.json:", error);
+      marcarMenuPendiente();
+      Swal.fire({
+        title: "Guardado, pero la web no se actualizó",
+        text: "Usá «Publicar Menú» en Productos para que la web lo vea.",
+        icon: "warning",
+        confirmButtonColor: "#198754",
+      });
+    }
+  };
+
   const guardar = (data) => ejecutar(async () => {
+    // La web calcula el envío leyendo este texto como un rango en km
+    // (Utils/zonasEnvio.js): "3 a 4" o "3-4 km" la dejarían afuera sin aviso.
+    if (!rangoDeZona(data.zona_envio)) {
+      setError("La zona va en kilómetros, desde-hasta: por ejemplo 3-4");
+      return;
+    }
     if (zonaRepetida(data.zona_envio, idAEditar)) {
       setError("Ya existe una zona con ese nombre");
       return;
@@ -126,14 +153,17 @@ const Envios = () => {
     };
 
     try {
+      let lista;
       if (idAEditar !== null) {
         await setDoc(doc(enviosCollection, idAEditar), datos);
-        setEnvios((prev) => prev.map((item) => (item.id === idAEditar ? { ...item, ...datos } : item)));
+        lista = envios.map((item) => (item.id === idAEditar ? { ...item, ...datos } : item));
       } else {
         const docRef = await addDoc(enviosCollection, datos);
-        setEnvios((prev) => [...prev, { id: docRef.id, ...datos }]);
+        lista = [...envios, { id: docRef.id, ...datos }];
       }
+      setEnvios(lista);
       cerrarModal();
+      await publicarEnLaWeb(lista);
     } catch (error) {
       console.error("Error al guardar el Envío: ", error);
       setError("No se pudo guardar la zona. Revisá la conexión e intentá de nuevo.");
@@ -155,7 +185,9 @@ const Envios = () => {
 
     try {
       await deleteDoc(doc(enviosCollection, envio.id));
-      setEnvios((prev) => prev.filter((item) => item.id !== envio.id));
+      const lista = envios.filter((item) => item.id !== envio.id);
+      setEnvios(lista);
+      await publicarEnLaWeb(lista);
     } catch (error) {
       console.error("Error al borrar el Envío: ", error);
       Swal.fire({

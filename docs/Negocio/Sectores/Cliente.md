@@ -1,7 +1,7 @@
 ---
 tags: [gardenburger, negocio, sectores]
 aliases: [Cliente web]
-actualizado: 2026-10-22
+actualizado: 2026-10-23
 ---
 
 # Cliente
@@ -18,8 +18,10 @@ lo confirma y lo sigue por un link. Cómo está hecho: *Web publica*.
   *Jornada y horarios › Horario de la web de cada sucursal*.
 - **Elegir retiro o delivery** y **efectivo o Mercado Pago**. En Mercado Pago ve el recargo como
   porcentaje ("+10%") y, después, el monto a transferir.
-- **No sabe cuánto sale el envío**: lo suma la sucursal según la zona, que elige el cajero. El
-  resumen dice "lo suma la sucursal según tu zona".
+- **Ve cuánto sale el envío** antes de confirmar: elige su dirección de las sugerencias de Google
+  Maps y la web calcula la zona por distancia. Si está fuera del reparto, lee "No llegamos hasta tu
+  dirección, podés retirarlo en el local" y no puede pedir delivery. Si Google no anda, escribe la
+  dirección a mano y el envío lo suma la sucursal. Ver *Web publica › El envío por distancia*.
 - **Tiene un carrito por sucursal**: si cambia de sucursal arranca vacío, y al volver encuentra lo
   que había elegido.
 - **Escribirle a la sucursal por WhatsApp** desde cualquier pantalla. Al confirmar, la web le
